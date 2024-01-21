@@ -1,0 +1,4 @@
+{
+  "name": "iac-terragrunt",
+  "sdk": "go"
+}
