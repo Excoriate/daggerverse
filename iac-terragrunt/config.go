@@ -1,6 +1,6 @@
 package main
 
-import "github.com/excoriate/daggerverse/daggercommon/pkg/container"
+import "main/container"
 
 const (
 	defaultContainerVersion = "latest"

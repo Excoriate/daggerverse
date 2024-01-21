@@ -1,0 +1,4 @@
+.idea
+.terragrunt-cache/
+.terraform/
+.querybuilder/
