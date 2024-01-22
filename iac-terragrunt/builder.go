@@ -54,9 +54,9 @@ func (b *IACTerraGruntBuilder) Build(optFns ...func(fn *IACTerraGruntOptions) er
 
 	ctr := dag.Container().
 		From(imageAddr).
-		//From("alpine/terragrunt").
-		//WithDirectory(mountPath, dag.Host().Directory(b.src)).
-		WithDirectory(mountPath, b.srcDir).
+		WithDirectory(mountPath, b.srcDir, ContainerWithDirectoryOpts{
+			Exclude: []string{".git", ".terragrunt-cache/**", ".terraform/**", ".terraform.lock.hcl"},
+		}).
 		WithWorkdir(workDir)
 
 	if len(b.shellCommands) > 0 {

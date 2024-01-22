@@ -20,13 +20,14 @@
 
 .vscode.scannerwork
 .scannerwork
+.idea/**
 .idea
+.idea/aws.xml
 
 # Dev builds
 **/build/
 **/dist/
 
-.idea/
 .vscode/
 
 # Ignore related terraform, and terragrunt files
