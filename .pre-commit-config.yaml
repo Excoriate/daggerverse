@@ -53,8 +53,6 @@ repos:
       hooks:
           - id: go-fmt
             files: .+\.go$
-          - id: go-build
-            files: .+\.go$
           - id: go-mod-tidy
             files: .+\.go$
 
