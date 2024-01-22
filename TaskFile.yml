@@ -1,0 +1,57 @@
+---
+version: '3'
+
+dotenv: ['.env.{{.ENV}}.aws', '.env.{{.ENV}}.terraform', '.env.{{.ENV}}.terragrunt']
+
+includes:
+    dx:
+        taskfile: ./taskfiles/taskfile.dx.yml
+    precommit:
+        taskfile: ./taskfiles/taskfile.precommit.yml
+
+tasks:
+    default:
+        cmds:
+            - task: dx:default
+    pc-init:
+        desc: Initialize and install required hooks
+        cmds:
+            - task: precommit:hooks-init
+    pc-run:
+        desc: Run all the hooks described in the .pre-commit-config.yaml file
+        cmds:
+            - task: precommit:hooks-run
+    go-tidy:
+        desc: Tidy go modules
+        cmds:
+            - go mod tidy
+    go-fmt:
+        desc: Run go fmt against code
+        cmds:
+            - go fmt -x ./...
+    go-vet:
+        desc: Run go vet against code
+        cmds:
+            - go vet ./...
+    go-lint:
+        desc: Run go lint against code
+        cmds:
+            - golangci-lint run -v -E gofmt --config .golangci.yml
+    go-style:
+        desc: Code style -> fmt,vet,lint
+        deps: [go-fmt, go-vet, go-lint]
+    go-test:
+        desc: Run unit test-data
+        cmds:
+            - echo "===========> Run unit test-data"
+            - go test-data -race -v ./...
+    go-test-nocache:
+        desc: Run unit test without cache
+        cmds:
+            - echo "===========> Run unit test-data"
+            - go test ./... -count=1 -v
+    go-ci:
+        desc: Run all the test-data and code checks
+        cmds:
+            - task: go-style
+            - task: go-tidy
