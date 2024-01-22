@@ -5,3 +5,8 @@ tasks:
         desc: Run Dagger Sync in the target module
         cmds:
             - dagger mod sync -m .
+
+    publish:
+        desc: Run Dagger Publish in the target module
+        cmds:
+            - dagger mod publish -m {{.module}}

@@ -3,4 +3,5 @@ go 1.21.0
 use (
 	./iac-terragrunt
 	./daggercommon
+	./test/iac-terragrunt/ci-client
 )
