@@ -11,8 +11,10 @@ A simple _Zenith_ [Dagger](https://dagger.io) module to manage your Terragrunt p
 | Provide a custom `version` for Terragrunt               | ✅             |
 | Set an specific path for the target Terragrunt `module` | ✅             |
 
-## Usage 
-### Dagger CLI 
+## Usage
+
+### Dagger CLI
+
 ```sh
 dagger -m iac-terragrunt call new \
 --version="" --src=$(pwd) \
