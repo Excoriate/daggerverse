@@ -1,6 +1,11 @@
-# Daggerverse
+<h1 align="center">Daggerverse</h1>
 
-Set of [Dagger](https://dagger.io) modules that serve different purposes; with a slight deviation for infrastructure automation; made with ❤️.
+<p align="center">
+  <img src="docs/img/daggerverse-logo.jpg" alt="daggerverse-logo.png">
+Set of [Dagger](https://dagger.io) **modules** that serve different purposes; with a slight deviation for infrastructure automation; made with ❤️.
+
+</p>
+
 
 
 | Module                             | Status | What it does? |
@@ -9,3 +14,19 @@ Set of [Dagger](https://dagger.io) modules that serve different purposes; with a
 
 
 >**NOTE**: ⚠️ These modules are experimental, feel free to open an issue for any requests or bug report.
+
+---
+
+## How to contribute 🤔 ?
+
+First, read the [contribution guidelines](./CONTRIBUTING.md). Then, if you're already a ninja, it means you enjoy using [Taskfile](https://taskfile.dev) so just run:
+
+```sh
+# This initialises the hooks, and ensure you're always using their latest version.
+task pc-init
+
+# This is just a sanity check. It will run all the checks on the codebase.
+task pc-run
+```
+
+The current workflows in [GitHub Actions](./.github/workflows) will do the rest ;).
