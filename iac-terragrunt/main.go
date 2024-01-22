@@ -21,7 +21,8 @@ func (tg *IacTerragrunt) Run(module string, cmds []string) *Container {
 	}
 
 	for _, cmd := range cmds {
-		cmdBuilt := append(shellEntryPoint, cmd)
+		cmdBuilt := append([]string(nil), shellEntryPoint...) // Create a new slice
+		cmdBuilt = append(cmdBuilt, cmd)                      // Append the command
 		tg.Ctr = tg.Ctr.WithExec(cmdBuilt)
 	}
 
@@ -36,8 +37,8 @@ func (tg *IacTerragrunt) New(version string, src *Directory) (*IacTerragrunt, er
 
 	// Adding options.
 	apiOpts = append(apiOpts, b.WithVersion(version))
-	//apiOpts = append(apiOpts, b.WithModule(module))
-	//apiOpts = append(apiOpts, b.WithSRC(src))
+	// apiOpts = append(apiOpts, b.WithModule(module))
+	// apiOpts = append(apiOpts, b.WithSRC(src))
 	apiOpts = append(apiOpts, b.WithHostDir(src))
 
 	// Build the damn thing.

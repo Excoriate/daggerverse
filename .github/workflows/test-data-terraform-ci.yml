@@ -8,7 +8,7 @@ on:
         types: [opened, edited, synchronize]
 
 env:
-    TF_ROOT: test-data/terraform
+    TF_ROOT: test
 
 jobs:
     set_up_job:
@@ -24,16 +24,12 @@ jobs:
             - name: Set matrix
               id: set-matrix
               run: |
-                  MODULES_DIR="${{ env.TF_ROOT }}/*"
-                  MODULES=$(find $MODULES_DIR -maxdepth 1 -type d | sed "s|${{ env.TF_ROOT }}/||") # Exclude base TF_ROOT from list
+                  MODULES=$(find ${{ env.TF_ROOT }} -name '*.tf' -exec dirname {} \; | sort -u | sed "s|${{ env.TF_ROOT }}/||")
                   DIRS_ARRAY=()
 
                   for module in $MODULES
                   do
-                    # Exclude certain directories as needed.
-                    if [[ "$module" != "_env" ]]; then
-                      DIRS_ARRAY+=("$module")
-                    fi
+                    DIRS_ARRAY+=("$module")
                   done
                   MODULES_JSON=$(echo "${DIRS_ARRAY[@]}" | jq -R -s -c 'split(" ")')
                   echo "::set-output name=matrix::${MODULES_JSON}"

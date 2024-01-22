@@ -1,0 +1,7 @@
+---
+version: '3'
+tasks:
+    sync:
+        desc: Run Dagger Sync in the target module
+        cmds:
+            - dagger mod sync -m .
