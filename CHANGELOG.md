@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.1](https://github.com/Excoriate/daggerverse/compare/v1.0.0...v1.0.1) (2024-01-22)
+
+
+### Docs
+
+* add README.md, add reusable taskfile for dagger common operations ([a09f56b](https://github.com/Excoriate/daggerverse/commit/a09f56b63c91be5c7ff1b856fe46de1bede38d89))
+* add README.md, add reusable taskfile for dagger common operations ([8a21d4f](https://github.com/Excoriate/daggerverse/commit/8a21d4fbe76ef0a8ba861aebf1af3c53340acf5d))
+
 ## 1.0.0 (2024-01-22)
 
 
