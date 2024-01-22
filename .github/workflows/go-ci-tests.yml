@@ -10,6 +10,10 @@ jobs:
     golangci:
         name: Go Tests
         runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                dagger-module:
+                    - iac-terragrunt
         steps:
             - uses: actions/checkout@v3
             - name: Set up Go
@@ -17,4 +21,4 @@ jobs:
               with:
                   go-version: ${{ env.GO_VERSION }}
             - name: Test
-              run: go test -v ./...
+              run: go test -v ./{{ matrix.dagger-module }}

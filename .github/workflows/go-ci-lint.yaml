@@ -11,6 +11,10 @@ jobs:
     golangci:
         name: Golangci-lint
         runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                dagger-module:
+                    - iac-terragrunt
         env:
             GO_VERSION: ~1.21
         steps:
@@ -24,6 +28,5 @@ jobs:
               uses: golangci/golangci-lint-action@v3
               with:
                   version: v1.54
-                  args: --config .golangci.yml
-                  github_token: ${{ secrets.GITHUB_TOKEN }}
-                  reporter: github-pr-check
+                  args: --config .golangci.yml ./{{ matrix.dagger-module }}
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
