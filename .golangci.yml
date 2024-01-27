@@ -6,7 +6,7 @@ run:
     skip-dirs:
         - ^vendor$
         - .*_test\.go$
-        - ./internal
+        - ^internal$
     skip-files:
         - .*\.pb\.go
         - .*_generated\.go

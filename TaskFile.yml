@@ -2,16 +2,17 @@
 version: '3'
 
 dotenv: ['.env.{{.ENV}}.aws', '.env.{{.ENV}}.terraform', '.env.{{.ENV}}.terragrunt']
+vars:
+    mod:
+    fn:
 
 includes:
     dx:
         taskfile: ./taskfiles/taskfile.dx.yml
     precommit:
         taskfile: ./taskfiles/taskfile.precommit.yml
-
-    # Include dagger modules's tasks.
-    mod_iac_terragrunt:
-        taskfile: ./iac-terragrunt/TaskFile.yml
+    dagger:
+        taskfile: ./taskfiles/Taskfile.dagger.yml
 
 tasks:
     default:
@@ -29,3 +30,61 @@ tasks:
         desc: Run CI in the go code for the 'iac-terragrunt' module
         cmds:
             - task: mod_iac_terragrunt:mod-ci
+
+    # Dagger specific tasks.
+    mod-sync:
+        desc: Sync the dagger module
+        cmds:
+            - task: dagger:sync
+              vars: {module: '{{.mod}}'}
+
+    mod-publish:
+        desc: Publish the dagger module
+        cmds:
+            - task: dagger:publish
+              vars: {module: '{{.mod}}'}
+
+    mod-list-docs:
+        cmds:
+            - |
+              cat <<-EOT
+                  # List all the functions in the dagger module
+                  # ---------------------------------------------------------------
+                  #
+                  # It executes the equivalent of: dagger functions -m {{.mod}}
+                  #
+                  # Example:
+                  # task mod-list-functions mod=<my-module-path/github-repo>
+                  #
+                  # ---------------------------------------------------------------
+              EOT
+        silent: true
+
+    mod-list:
+        deps: [mod-list-docs, mod-sync]
+        desc: List all the functions in the dagger module
+        cmds:
+            - task: dagger:list-functions
+              vars: {module: '{{.mod}}'}
+
+    mod-exec-docs:
+        cmds:
+            - |
+              cat <<-EOT
+                  # Run a function in the dagger module
+                  # ---------------------------------------------------------------
+                  # It executes the equivalent of: dagger call -m {{.mod}} {{.fn}} -- --help
+                  # It propagates the CLI_ARGS variable to the dagger call command
+                  #
+                  # Example:
+                  # task mod-exec-docs mod=<my-module-path/github-repo> fn=<my-function-name> -- <flags>
+                  # ---------------------------------------------------------------
+              EOT
+        silent: true
+
+    mod-exec:
+        deps: [mod-exec-docs, mod-sync]
+        desc: Run a function in the dagger module
+        cmds:
+            - task: dagger:call
+              vars: {module: '{{.mod}}', function: '{{.fn}}'}
