@@ -38,6 +38,11 @@ tasks:
             - task: dagger:sync
               vars: {module: '{{.mod}}'}
 
+    mod-sync-all:
+        desc: Sync all the dagger modules
+        cmds:
+            - ./scripts/dagger-sync.sh
+
     mod-publish:
         desc: Publish the dagger module
         cmds:

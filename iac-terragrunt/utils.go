@@ -1,11 +1,11 @@
 package main
 
-func mergeNSlices(slices ...[]string) []string {
-	var result []string
+import "fmt"
 
-	for _, slice := range slices {
-		result = append(result, slice...)
+func getContainerImage(image, version string) string {
+	if version == "" {
+		version = "latest"
 	}
 
-	return result
+	return fmt.Sprintf("%s:%s", image, version)
 }
