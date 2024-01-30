@@ -1,6 +1,6 @@
 package main
 
-import "github.com/excoriate/daggerverse/daggerx/pkg/terragrunt"
+//import "github.com/excoriate/daggerverse/daggerx/pkg/terragrunt"
 
 // Run executes a command in the container.
 func (tg *IacTerragrunt) Run(
@@ -59,8 +59,8 @@ func (tg *IacTerragrunt) RunTG(
 	withFocusSetInTrue := toDaggerOptional(true)
 	entryPointTGOptional := toDaggerOptional(entryPointTerragrunt)
 
-	// New validtor.
-	_ = terragrunt.NewValidator()
+	// New validator.
+	//_ = terragrunt.NewValidator()
 
 	if module == "" {
 		return nil, &IacTerragruntCMDError{
