@@ -8,7 +8,7 @@ ss
 
 ## Configuration 🛠️
 
-Through the [Dagger CLI](https://dagger.io/docs/cli), or by using it directly reusing it within your module, you can configure the following options:
+Through the [Dagger CLI](https://docs.dagger.io/cli/465058/install), or by using it directly reusing it within your module, you can configure the following options:
 
 * ⚙️ `version`: The version of Terragrunt to use. If not provided, the latest version will be used. Use the `--with-version` flag or the `WithVersion()` function to set it.
 * 📁 `src`: The path to the source code of the module. Use the `--with-source` flag or the `WithSource()` function to set it.
