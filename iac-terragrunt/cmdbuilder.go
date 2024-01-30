@@ -1,18 +1,27 @@
 package main
 
-type buildDaggerCMDsOptions struct {
-	entryPoint []string // E.g.: []string{"sh", "-c"}
-	cmds       []string // E.g.: []string{"terragrunt plan", "terragrunt init"}
-}
-
 type DaggerCMD [][]string
 
-func BuilderDaggerCMDs(cmds []string, entryPoint []string) DaggerCMD {
-	var results DaggerCMD
+func buildShellCMDs(cmds []string) DaggerCMD {
+	var cmdsBuilt DaggerCMD
+
 	for _, cmd := range cmds {
-		execCmd := append([]string(nil), entryPoint...)
-		execCmd = append(execCmd, cmd)
-		results = append(results, execCmd)
+		cmdsBuilt = append(cmdsBuilt, []string{"sh", "-c", cmd})
 	}
-	return results
+
+	return cmdsBuilt
+}
+
+func concatTerragruntInCommand(cmds []string) []string {
+	var terragruntCmds []string
+
+	for _, cmd := range cmds {
+		terragruntCmds = append(terragruntCmds, "terragrunt "+cmd)
+	}
+
+	return terragruntCmds
+}
+
+func addCMDToDaggerCMD(cmd []string) [][]string {
+	return [][]string{cmd}
 }

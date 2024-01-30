@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 )
 
 type IacTerragrunt struct {
@@ -43,6 +44,56 @@ func (tg *IacTerragrunt) WithModule(module string) *IacTerragrunt {
 // WithEntrypoint returns the Terragrunt container with the given entry point.
 func (tg *IacTerragrunt) WithEntrypoint(entryPoint []string) *IacTerragrunt {
 	tg.Ctr = tg.Ctr.WithEntrypoint(entryPoint)
+	return tg
+}
+
+// WithEnvVar returns the Terragrunt container with the given environment variable.
+func (tg *IacTerragrunt) WithEnvVar( // The name of the environment variable (e.g., "HOST").
+	name string,
+
+	// The value of the environment variable (e.g., "localhost").
+	value string,
+
+	// Replace `${VAR}` or $VAR in the value according to the current environment
+	// variables defined in the container (e.g., "/opt/bin:$PATH").
+	// +optional
+	expand bool,
+) *IacTerragrunt {
+	return &IacTerragrunt{
+		Ctr: tg.Ctr.WithEnvVariable(name, value, ContainerWithEnvVariableOpts{
+			Expand: expand,
+		}),
+	}
+}
+
+// WithScannedAWSEnvVars returns the Terragrunt container with the given AWS environment variables.
+func (tg *IacTerragrunt) WithScannedAWSEnvVars() *IacTerragrunt {
+	allAWSEnvVarsScanned := scanEnvVarsFromHost()
+	if len(allAWSEnvVarsScanned) == 0 {
+		return tg
+	}
+
+	return &IacTerragrunt{
+		Ctr: tg.
+			WithEnvVar("AWS_ACCESS_KEY_ID", os.Getenv("AWS_ACCESS_KEY_ID"), false).
+			WithEnvVar("AWS_SECRET_ACCESS_KEY", os.Getenv("AWS_SECRET_ACCESS_KEY"), false).
+			WithEnvVar("AWS_SESSION_TOKEN", os.Getenv("AWS_SESSION_TOKEN"), false).Ctr,
+	}
+}
+
+// WithScannedTFVARS returns the Terragrunt container with the given Terraform variables that starts with TF_VAR scanned from the host.
+func (tg *IacTerragrunt) WithScannedTFVARS() *IacTerragrunt {
+	allTFVarsScanned := getTFVARsFromHost()
+	if len(allTFVarsScanned) == 0 {
+		return tg
+	}
+
+	for key, value := range allTFVarsScanned {
+		tg.Ctr = tg.Ctr.WithEnvVariable(key, value, ContainerWithEnvVariableOpts{
+			Expand: false,
+		})
+	}
+
 	return tg
 }
 

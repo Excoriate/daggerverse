@@ -2,15 +2,18 @@
 
 <p align="center">
   <img src="docs/img/daggerverse-logo.jpg" alt="daggerverse-logo.png">
-Set of [Dagger](https://dagger.io) **modules** that serve different purposes; with a slight deviation for infrastructure automation; made with ❤️.
+Set of Dagger modules
+that serve different purposes;
+with a slight deviation for infrastructure automation;
+made with ❤️.
 
 </p>
 
 
 
-| Module                             | Status | What it does? |
-|------------------------------------|--------|---------------|
-| [IAC Terragrunt](./iac-terragrunt) | ✅      |
+| Module                             | Status | What it does?                                               |
+|------------------------------------|--------|-------------------------------------------------------------|
+| [IAC Terragrunt](./iac-terragrunt) | ✅      | Run [Terragrunt](https://terragrunt.gruntwork.io) commands. |
 
 
 >**NOTE**: ⚠️ These modules are experimental, feel free to open an issue for any requests or bug report.
@@ -25,7 +28,7 @@ First, read the [contribution guidelines](./CONTRIBUTING.md). Then, if you're al
 # This initialises the hooks, and ensure you're always using their latest version.
 task pc-init
 
-# This is just a sanity check. It will run all the checks on the codebase.
+# This is just a check. It will run all the checks on the codebase.
 task pc-run
 ```
 
