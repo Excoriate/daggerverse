@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.1.3](https://github.com/Excoriate/daggerverse/compare/v1.1.2...v1.1.3) (2024-01-30)
+
+
+### Docs
+
+* Add final docs ([f7dd4ed](https://github.com/Excoriate/daggerverse/commit/f7dd4ed3469c49c2bd419d3d1f5200146529ac66))
+
+
+### Other
+
+* Fix dagger CLI link ([5537e21](https://github.com/Excoriate/daggerverse/commit/5537e210744c146a07d89b6fcbdc73895184eaa1))
+* Fix link that points to the actual iac-terragrunt module ([2ab9790](https://github.com/Excoriate/daggerverse/commit/2ab979079a46eee13ac32b5a43a4fd2f285f9507))
+
 ## [1.1.2](https://github.com/Excoriate/daggerverse/compare/v1.1.1...v1.1.2) (2024-01-30)
 
 
