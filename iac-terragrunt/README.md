@@ -61,34 +61,46 @@ For composing this module, each of these commands are implemented as a function 
 ## Usage
 
 ### Shell 🐚
-#### Initialize a terragrunt module:
+
+#### Initialize a terragrunt module
+
 ```bash
 # Here, we're assuming that you're calling this module from the root of this repository
 dagger -m github.com/excoriate/daggerverse/iac-terragrunt@v1.1.3 --src=$(pwd) call \
 init --module=test/iac-terragrunt/testdata/terragrunt-module-simple
 ```
-#### Run an arbitrary command (list the module's directory, and inspect the content of the terragrunt file):
+
+#### Run an arbitrary command (list the module's directory, and inspect the content of the terragrunt file)
+
 ```bash
 ```bash
 dagger -m github.com/excoriate/daggerverse/iac-terragrunt@v1.1.3 --src=$(pwd) call \
 run --module="test/iac-terragrunt/testdata/terragrunt-module-simple" \
 --cmds="ls -ltrah, cat terragrunt.hcl"
 ```
+
 >NOTE: Notice that you're running two commands, but only the latest one is printed (it's a native behaviour of Dagger). If you want to show everything, pass the `--stdout` flag.
+
 ```bash
 dagger -m github.com/excoriate/daggerverse/iac-terragrunt@v1.1.3 --src=$(pwd) call \
 run --module="test/iac-terragrunt/testdata/terragrunt-module-simple" \
 --cmds="ls -ltrah, cat terragrunt.hcl" --stdout
 ```
+
 #### Run arbitrary terragrunt commands
+
 This is a very powerful feature. You can run a single command, or multiple. Even it supports passing arguments to these commands.
+
 ```bash
 dagger -m github.com/excoriate/daggerverse/iac-terragrunt@v1.1.3 --src=$(pwd) call \
 run-tg --module="test/iac-terragrunt/testdata/terragrunt-module-simple" \
 --cmds="init -backend=false, plan" --stdout
 ```
+
 #### Run lifecycle commands
-Say you'd like to initialize the module: 
+
+Say you'd like to initialize the module:
+
 ```bash
 dagger -m github.com/excoriate/daggerverse/iac-terragrunt@v1.1.3 --src=$(pwd) call \
 init --module="test/iac-terragrunt/testdata/terragrunt-module-simple"
