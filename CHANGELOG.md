@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.4](https://github.com/Excoriate/daggerverse/compare/v1.1.3...v1.1.4) (2024-01-30)
+
+
+### Docs
+
+* Add better docs, and usage ([b78a703](https://github.com/Excoriate/daggerverse/commit/b78a7035535f6c2dcd7b435b106ea1027a1849ef))
+* Add better docs, and usage ([f75e9c3](https://github.com/Excoriate/daggerverse/commit/f75e9c314e26427ad26b714149902857a87213aa))
+
 ## [1.1.3](https://github.com/Excoriate/daggerverse/compare/v1.1.2...v1.1.3) (2024-01-30)
 
 
