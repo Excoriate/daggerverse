@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.1](https://github.com/Excoriate/daggerverse/compare/v1.1.0...v1.1.1) (2024-01-30)
+
+
+### Bug Fixes
+
+* explicit dependency for daggerx ([471e1b2](https://github.com/Excoriate/daggerverse/commit/471e1b2e289ab79fa016985226a0ab261f4febb0))
+
+
+### Other
+
+* **main:** release 1.1.0 ([#4](https://github.com/Excoriate/daggerverse/issues/4)) ([88d3729](https://github.com/Excoriate/daggerverse/commit/88d3729b25a95ea8146d2b73f9b6957717c7be7b))
+
 ## [1.1.0](https://github.com/Excoriate/daggerverse/compare/v1.0.1...v1.1.0) (2024-01-30)
 
 
