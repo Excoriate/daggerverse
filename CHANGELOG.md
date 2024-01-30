@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.2](https://github.com/Excoriate/daggerverse/compare/v1.1.1...v1.1.2) (2024-01-30)
+
+
+### Other
+
+* update dependencies, test publish ([92627e9](https://github.com/Excoriate/daggerverse/commit/92627e9c3dddab31bbcc5febb5c2866c98a9444d))
+
 ## [1.1.1](https://github.com/Excoriate/daggerverse/compare/v1.1.0...v1.1.1) (2024-01-30)
 
 
