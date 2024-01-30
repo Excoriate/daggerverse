@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.1.0](https://github.com/Excoriate/daggerverse/compare/v1.0.1...v1.1.0) (2024-01-30)
+
+
+### Features
+
+* Add common terragrunt functions ([220908d](https://github.com/Excoriate/daggerverse/commit/220908d3da331fec2a181b2aeb3a3f0f5196a5c7))
+* Add sync utility ([6f93818](https://github.com/Excoriate/daggerverse/commit/6f93818f4ab76e19d92faabd2cb03a0da444f864))
+* Add tg init, add reusable functions ([d6d87c8](https://github.com/Excoriate/daggerverse/commit/d6d87c886782997d8b0c820d6bc67a6afe740f19))
+
+
+### Other
+
+* Add required ignored files from jetbrains ([34369db](https://github.com/Excoriate/daggerverse/commit/34369db2b2bfc0b146611153c708a5abdd0fef59))
+
 ## [1.0.1](https://github.com/Excoriate/daggerverse/compare/v1.0.0...v1.0.1) (2024-01-22)
 
 
