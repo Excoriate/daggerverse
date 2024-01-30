@@ -5,6 +5,7 @@
 
 ### Features
 
+* Add common terragrunt functions ([5f95ba7](https://github.com/Excoriate/daggerverse/commit/5f95ba763efda36c807e67b41de14c911c78010f))
 * Add common terragrunt functions ([220908d](https://github.com/Excoriate/daggerverse/commit/220908d3da331fec2a181b2aeb3a3f0f5196a5c7))
 * Add sync utility ([6f93818](https://github.com/Excoriate/daggerverse/commit/6f93818f4ab76e19d92faabd2cb03a0da444f864))
 * Add tg init, add reusable functions ([d6d87c8](https://github.com/Excoriate/daggerverse/commit/d6d87c886782997d8b0c820d6bc67a6afe740f19))
