@@ -7,6 +7,7 @@ import (
 type IacTerragrunt struct {
 	Ctr *Container
 	SRC *Directory
+	//Ctx context.Context
 }
 
 // Container returns the container of IacTerragrunt.
@@ -31,20 +32,63 @@ func (tg *IacTerragrunt) WithContainer(ctr *Container) *IacTerragrunt {
 	return tg
 }
 
-// WithSource returns the Terragrunt container with source as a mounted directory.
-func (tg *IacTerragrunt) WithSource(source *Directory, enableCache Optional[bool]) *IacTerragrunt {
-	tg.SRC = source
+// WithModule returns the Terragrunt container with the given Terragrunt module.
+func (tg *IacTerragrunt) WithModule(module string) *IacTerragrunt {
+	tg.Ctr = tg.Ctr.
+		WithWorkdir(fmt.Sprintf("%s/%s", workDirDefault, module))
 
+	return tg
+}
+
+// WithEntrypoint returns the Terragrunt container with the given entry point.
+func (tg *IacTerragrunt) WithEntrypoint(entryPoint []string) *IacTerragrunt {
+	tg.Ctr = tg.Ctr.WithEntrypoint(entryPoint)
+	return tg
+}
+
+// WithSource returns the Terragrunt container with source as a mounted directory.
+func (tg *IacTerragrunt) WithSource(source *Directory, enableCache Optional[bool], workDir Optional[string]) *IacTerragrunt {
 	cachePathInContainer := fmt.Sprintf("%s/.terragrunt-cache", workDirDefault)
 	cacheVolume := dag.CacheVolume("terragrunt-cache")
 
 	if enableCache.GetOr(true) {
-		tg.Ctr = tg.Ctr.WithMountedCache(cachePathInContainer, cacheVolume)
+		tg.Ctr = tg.Ctr.
+			WithMountedCache(cachePathInContainer, cacheVolume)
+	}
+
+	var workDirToSet string
+
+	if !workDir.isSet {
+		workDirToSet = workDirDefault
+	} else {
+		workDirToSet = fmt.Sprintf("%s/%s", workDirDefault, workDir.value)
 	}
 
 	tg.Ctr = tg.Ctr.
-		WithWorkdir(workDirDefault).
+		WithWorkdir(workDirToSet).
 		WithMountedDirectory(workDirDefault, source)
+
+	return tg
+}
+
+// WithCommands returns the Terragrunt container with the given commands.
+func (tg *IacTerragrunt) WithCommands(cmds DaggerCMD, withFocus Optional[bool]) *IacTerragrunt {
+	if len(cmds) == 0 {
+		return tg
+	}
+
+	withFocusIsSet := withFocus.GetOr(false)
+
+	for _, cmd := range cmds {
+		if withFocusIsSet {
+			tg.Ctr = tg.Ctr.
+				WithFocus().
+				WithExec(cmd)
+		} else {
+			tg.Ctr = tg.Ctr.
+				WithExec(cmd)
+		}
+	}
 
 	return tg
 }
@@ -54,6 +98,8 @@ func (tg *IacTerragrunt) WithSource(source *Directory, enableCache Optional[bool
 // If no version is specified, the default version will be used.
 // If no container is specified, a new container will be created.
 func New(
+	//// ctx context.Context is the context of the command.
+	//ctx Optional[context.Context],
 	// Version (image tag) to use from the official image repository as a base container.
 	// It's an optional parameter. If it's not set, it's going to use the default version (latest).
 	version Optional[string],
@@ -83,71 +129,14 @@ func New(
 		ctr = dag.Container().From(baseImage)
 	}
 
-	tg := &IacTerragrunt{}
+	//ctxSet := ctx.GetOr(context.Background())
 
-	tg.SRC = src.GetOr(dag.Host().Directory("."))
+	tg := &IacTerragrunt{
+		SRC: src.GetOr(dag.Host().Directory(".")),
+		Ctr: ctr,
+		//Ctx: ctxSet,
+		//Ctx: context.Background(),
+	}
 
-	tg.Ctr = ctr
 	return tg, nil
 }
-
-// RunTG just run an arbitrary Terragrunt commands. The entry point is 'Terragrunt'.
-//func (tg *IacTerragrunt) RunTG(cmds []string, src Optional[*Directory], module Optional[string]) (*Container, error) {
-//	if len(cmds) == 0 {
-//		return nil, fmt.Errorf("command cannot be empty")
-//	}
-//
-//	srcDirToMount, err := isEitherGlobalOrArgSetDir(src, tg.GlobalSRC)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	var moduleToWorkOn string
-//
-//	if !module.isSet {
-//		if tg.GlobalTGModule == "" {
-//			return nil, fmt.Errorf("module directory cannot be empty, and it was not set in the constructor")
-//		}
-//	} else {
-//		moduleToWorkOn = module.value
-//	}
-//
-//	workDirWithModule := path.Join(workDirDefault, moduleToWorkOn)
-//
-//	tg.Ctr = tg.Ctr.
-//		WithWorkdir(workDirWithModule).
-//		WithMountedDirectory(workDirDefault, srcDirToMount)
-//
-//	tg.Ctr = addTGCommandsToContainer(tg.Ctr, cmds)
-//
-//	return tg.Ctr, nil
-//}
-
-// TGInit initializes a Terragrunt module.
-//func (tg *IacTerragrunt) TGInit(src Optional[*Directory], module Optional[string], args Optional[[]string]) (*Container, error) {
-//	srcDirToMount, err := isEitherGlobalOrArgSetDir(src, tg.GlobalSRC)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	moduleToWorkOn, err := isEitherGlobalOrArgSetString(module, tg.GlobalTGModule)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	workDirWithModule := path.Join(workDirDefault, moduleToWorkOn)
-//
-//	tg.Ctr = tg.Ctr.
-//		WithWorkdir(workDirWithModule).
-//		WithMountedDirectory(workDirDefault, srcDirToMount)
-//
-//	var argsToSet []string
-//
-//	if args.isSet {
-//		argsToSet = args.value
-//	}
-//
-//	tg.Ctr = addTGCommandsToContainer(tg.Ctr, []string{"init"}, argsToSet...)
-//
-//	return tg.Ctr, nil
-//}

@@ -1,18 +1,31 @@
 package main
 
-import (
-	"context"
-	"fmt"
-)
+import "github.com/excoriate/daggerverse/daggercommon/pkg/terragrunt"
 
-// Exec executes a command in the container.
-func (tg *IacTerragrunt) Exec(cmds []string, entryPointOverride Optional[[]string], src Optional[*Directory]) (*Container, error) {
-	if tg.SRC == nil {
+// Run executes a command in the container.
+func (tg *IacTerragrunt) Run(
+	// Cmds are the commands to execute. E.g.: "ls -lth, pwd"
+	cmds []string,
+	// EntryPointOverride is the entry point to use. If it's not set, it will use the default 'sh -c'.
+	entryPointOverride Optional[[]string],
+	// Src is the source directory to mount in the container.
+	src Optional[*Directory],
+	// WithFocus is a flag to enable or disable the standard output per command to execute.
+	withFocus Optional[bool],
+	// Module is the working directory to use in the container.
+	module Optional[string],
+) (*Container, error) {
+	if tg.SRC == nil && !src.isSet {
 		return nil, &IacTerragruntCMDError{
 			Message: "source directory cannot be empty, and it was not set in the constructor",
 		}
 	}
 
+	if src.isSet {
+		tg.SRC = src.value
+	}
+
+	// Set the entry point
 	entryPointToSet := entryPointOverride.GetOr(entryPointShell)
 
 	if len(cmds) == 0 {
@@ -21,54 +34,51 @@ func (tg *IacTerragrunt) Exec(cmds []string, entryPointOverride Optional[[]strin
 		}
 	}
 
-	srcDirToMount := src.GetOr(tg.SRC)
+	// Set the source directory
+	enableCacheOptional := toDaggerOptional(false)
+	tg.Ctr = tg.WithSource(tg.SRC, enableCacheOptional, module).Ctr
+	// Creating the commands, and setting them.
+	daggerCMDs := BuilderDaggerCMDs(cmds, entryPointToSet)
 
-	tg.Ctr = tg.Ctr.
-		WithWorkdir(workDirDefault).
-		WithMountedDirectory(workDirDefault, srcDirToMount)
-
-	var cmdsToExec [][]string
-
-	for _, cmd := range cmds {
-		cmdOptions := buildDaggerCMDsOptions{
-			entryPoint: entryPointToSet,
-			cmds:       []string{cmd},
-		}
-
-		cmdsToExec = append(cmdsToExec, buildDaggerCMDs([]buildDaggerCMDsOptions{cmdOptions})...)
-	}
-
-	for _, cmd := range cmdsToExec {
-		tg.Ctr = tg.Ctr.WithExec(cmd)
-	}
+	// Expose or not the standard output per command to execute.
+	withFocusOptional := toDaggerOptional(withFocus.GetOr(false))
+	tg.Ctr = tg.WithCommands(daggerCMDs, withFocusOptional).Ctr
 
 	return tg.Ctr, nil
 }
 
-// Run executes a command in the container and prints the output.
-func (tg *IacTerragrunt) Run(ctx context.Context, cmds []string, src Optional[*Directory]) (string, error) {
-	if ctx == nil {
-		ctx = context.Background()
-	}
+// RunTG executes a terragrunt command
+func (tg *IacTerragrunt) RunTG(
+	// Cmds are the commands to execute. E.g.: "ls -lth, pwd"
+	cmds []string,
+	// Src is the source directory to mount in the container.
+	src Optional[*Directory],
+	// Module is the module directory to mount in the container.
+	module string,
+) (*Container, error) {
+	withFocusSetInTrue := toDaggerOptional(true)
+	entryPointTGOptional := toDaggerOptional(entryPointTerragrunt)
 
-	var emptyEntryPoint Optional[[]string]
+	// New validtor.
+	_ = terragrunt.NewValidator()
 
-	ctr, err := tg.Exec(cmds, emptyEntryPoint, src)
-	if err != nil {
-		return "", &IacTerragruntCMDError{
-			ErrWrapped: err,
-			Message:    "failed to execute command and print the output",
+	if module == "" {
+		return nil, &IacTerragruntCMDError{
+			Message: "module directory cannot be empty. Ensure that you're passing the module directory where the target terragrunt.hcl file is located.",
 		}
 	}
 
-	output, outErr := ctr.Stdout(ctx)
-	fmt.Printf("output: %s\n", output)
-	if outErr != nil {
-		return "", &IacTerragruntCMDError{
-			ErrWrapped: outErr,
-			Message:    "failed to print the output",
+	workDirOptional := toDaggerOptional(module)
+	ctr, runErr := tg.Run(cmds, entryPointTGOptional, src, withFocusSetInTrue, workDirOptional)
+	if runErr != nil {
+		return nil, &IacTerragruntCMDError{
+			ErrWrapped: runErr,
+			Message:    "failed to run terragrunt command",
 		}
 	}
 
-	return output, nil
+	tg.Ctr = ctr
+	tg.Ctr = tg.WithModule(module).Ctr
+
+	return tg.Ctr, nil
 }

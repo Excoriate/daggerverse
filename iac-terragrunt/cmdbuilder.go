@@ -7,13 +7,12 @@ type buildDaggerCMDsOptions struct {
 
 type DaggerCMD [][]string
 
-func buildDaggerCMDs(cmds []buildDaggerCMDsOptions) DaggerCMD {
+func BuilderDaggerCMDs(cmds []string, entryPoint []string) DaggerCMD {
 	var results DaggerCMD
-	for _, c := range cmds {
-		for _, command := range c.cmds {
-			execCmd := append(c.entryPoint, command)
-			results = append(results, execCmd)
-		}
+	for _, cmd := range cmds {
+		execCmd := append([]string(nil), entryPoint...)
+		execCmd = append(execCmd, cmd)
+		results = append(results, execCmd)
 	}
 	return results
 }
