@@ -11,9 +11,9 @@ made with ❤️.
 
 
 
-| Module                             | Status | What it does?                                               |
-|------------------------------------|--------|-------------------------------------------------------------|
-| [IAC Terragrunt](./iac-terragrunt) | ✅      | Run [Terragrunt](https://terragrunt.gruntwork.io) commands. |
+| Module                                     | Status | What it does?                                               |
+|--------------------------------------------|--------|-------------------------------------------------------------|
+| [IAC Terragrunt](iac-terragrunt/README.md) | ✅      | Run [Terragrunt](https://terragrunt.gruntwork.io) commands. |
 
 
 >**NOTE**: ⚠️ These modules are experimental, feel free to open an issue for any requests or bug report.
