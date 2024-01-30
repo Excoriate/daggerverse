@@ -1,6 +1,6 @@
 package main
 
-import "github.com/excoriate/daggerverse/daggercommon/pkg/terragrunt"
+import "github.com/excoriate/daggerverse/daggerx/pkg/terragrunt"
 
 // Run executes a command in the container.
 func (tg *IacTerragrunt) Run(
