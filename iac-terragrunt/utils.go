@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"strings"
 )
 
@@ -19,34 +18,28 @@ func toDaggerOptional[T any](value T) Optional[T] {
 	return Optional[T]{value: value, isSet: true}
 }
 
-func scanEnvVarsFromHost() map[string]string {
-	envVars := map[string]string{}
+func convertSliceToMap(input []string) (map[string]string, error) {
+	result := make(map[string]string)
 
-	for _, envVar := range os.Environ() {
-		parts := strings.Split(envVar, "=")
-		envVars[parts[0]] = parts[1]
-	}
-
-	return envVars
-}
-
-func getEnvVarsFromHostWithPrefix(prefix string) map[string]string {
-	envVars := scanEnvVarsFromHost()
-	envVarsWithPrefix := map[string]string{}
-
-	for key, value := range envVars {
-		if strings.HasPrefix(key, prefix) {
-			envVarsWithPrefix[key] = value
+	for _, item := range input {
+		pairs := strings.Split(item, ",")
+		for _, pair := range pairs {
+			kv := strings.SplitN(pair, "=", 2)
+			if len(kv) != 2 {
+				return nil, fmt.Errorf("invalid format for pair: %s", pair)
+			}
+			key := strings.TrimSpace(unescape(kv[0]))
+			value := strings.TrimSpace(unescape(kv[1]))
+			result[key] = value
 		}
 	}
 
-	return envVarsWithPrefix
+	return result, nil
 }
 
-func getTFVARsFromHost() map[string]string {
-	return getEnvVarsFromHostWithPrefix("TF_VAR_")
-}
-
-func getAWSVarsFromHost() map[string]string {
-	return getEnvVarsFromHostWithPrefix("AWS_")
+func unescape(input string) string {
+	result := strings.ReplaceAll(input, `\\`, `\`)
+	result = strings.ReplaceAll(result, `\,`, `,`)
+	result = strings.ReplaceAll(result, `\=`, `=`)
+	return strings.TrimSpace(result)
 }

@@ -6,12 +6,15 @@ func (tg *IacTerragrunt) Init(
 	src Optional[*Directory],
 	// Module is the Terragrunt module to initialize.
 	module string,
-	//args Optional[string],
+	// args Optional[string],
 	args Optional[[]string], // Arguments for the "init" command.
 	// EnableCache is a flag to enable or disable the cache.
 	enableCache Optional[bool],
+	// env are the environment variables to set in the container.
+	env Optional[[]string],
+
 ) *Container {
-	c, _ := tg.execTerragrunt("init", src, module, args, enableCache)
+	c, _ := tg.execTerragrunt("init", src, module, args, enableCache, env)
 	return c
 }
 
@@ -21,12 +24,14 @@ func (tg *IacTerragrunt) InitE(
 	src Optional[*Directory],
 	// Module is the Terragrunt module to initialize.
 	module string,
-	//args Optional[string],
+	// args Optional[string],
 	args Optional[[]string], // Arguments for the "init" command.
 	// EnableCache is a flag to enable or disable the cache.
 	enableCache Optional[bool],
+	// env are the environment variables to set in the container.
+	env Optional[[]string],
 ) (*Container, error) {
-	return tg.execTerragrunt("init", src, module, args, enableCache)
+	return tg.execTerragrunt("init", src, module, args, enableCache, env)
 }
 
 // Plan plans the terragrunt module. It returns only the Container
@@ -35,12 +40,14 @@ func (tg *IacTerragrunt) Plan(
 	src Optional[*Directory],
 	// Module is the Terragrunt module to initialize.
 	module string,
-	//args Optional[string],
+	// args Optional[string],
 	args Optional[[]string], // Arguments for the "init" command.
 	// EnableCache is a flag to enable or disable the cache.
 	enableCache Optional[bool],
+	// env are the environment variables to set in the container.
+	env Optional[[]string],
 ) *Container {
-	c, _ := tg.execTerragrunt("plan", src, module, args, enableCache)
+	c, _ := tg.execTerragrunt("plan", src, module, args, enableCache, env)
 	return c
 }
 
@@ -50,12 +57,14 @@ func (tg *IacTerragrunt) PlanE(
 	src Optional[*Directory],
 	// Module is the Terragrunt module to initialize.
 	module string,
-	//args Optional[string],
+	// args Optional[string],
 	args Optional[[]string], // Arguments for the "init" command.
 	// EnableCache is a flag to enable or disable the cache.
 	enableCache Optional[bool],
+	// env are the environment variables to set in the container.
+	env Optional[[]string],
 ) (*Container, error) {
-	return tg.execTerragrunt("plan", src, module, args, enableCache)
+	return tg.execTerragrunt("plan", src, module, args, enableCache, env)
 }
 
 // Apply applies the terragrunt module. It returns only the Container
@@ -64,12 +73,14 @@ func (tg *IacTerragrunt) Apply(
 	src Optional[*Directory],
 	// Module is the Terragrunt module to initialize.
 	module string,
-	//args Optional[string],
+	// args Optional[string],
 	args Optional[[]string], // Arguments for the "init" command.
 	// EnableCache is a flag to enable or disable the cache.
 	enableCache Optional[bool],
+	// env are the environment variables to set in the container.
+	env Optional[[]string],
 ) *Container {
-	c, _ := tg.execTerragrunt("apply", src, module, args, enableCache)
+	c, _ := tg.execTerragrunt("apply", src, module, args, enableCache, env)
 	return c
 }
 
@@ -79,12 +90,14 @@ func (tg *IacTerragrunt) ApplyE(
 	src Optional[*Directory],
 	// Module is the Terragrunt module to initialize.
 	module string,
-	//args Optional[string],
+	// args Optional[string],
 	args Optional[[]string], // Arguments for the "init" command.
 	// EnableCache is a flag to enable or disable the cache.
 	enableCache Optional[bool],
+	// env are the environment variables to set in the container.
+	env Optional[[]string],
 ) (*Container, error) {
-	return tg.execTerragrunt("apply", src, module, args, enableCache)
+	return tg.execTerragrunt("apply", src, module, args, enableCache, env)
 }
 
 // Destroy destroys the terragrunt module. It returns only the Container
@@ -93,12 +106,14 @@ func (tg *IacTerragrunt) Destroy(
 	src Optional[*Directory],
 	// Module is the Terragrunt module to initialize.
 	module string,
-	//args Optional[string],
+	// args Optional[string],
 	args Optional[[]string], // Arguments for the "init" command.
 	// EnableCache is a flag to enable or disable the cache.
 	enableCache Optional[bool],
+	// env are the environment variables to set in the container.
+	env Optional[[]string],
 ) *Container {
-	c, _ := tg.execTerragrunt("destroy", src, module, args, enableCache)
+	c, _ := tg.execTerragrunt("destroy", src, module, args, enableCache, env)
 	return c
 }
 
@@ -108,12 +123,14 @@ func (tg *IacTerragrunt) DestroyE(
 	src Optional[*Directory],
 	// Module is the Terragrunt module to initialize.
 	module string,
-	//args Optional[string],
+	// args Optional[string],
 	args Optional[[]string], // Arguments for the "init" command.
 	// EnableCache is a flag to enable or disable the cache.
 	enableCache Optional[bool],
+	// env are the environment variables to set in the container.
+	env Optional[[]string],
 ) (*Container, error) {
-	return tg.execTerragrunt("destroy", src, module, args, enableCache)
+	return tg.execTerragrunt("destroy", src, module, args, enableCache, env)
 }
 
 // Validate validates the terragrunt module. It returns only the Container
@@ -122,12 +139,14 @@ func (tg *IacTerragrunt) Validate(
 	src Optional[*Directory],
 	// Module is the Terragrunt module to initialize.
 	module string,
-	//args Optional[string],
+	// args Optional[string],
 	args Optional[[]string], // Arguments for the "init" command.
 	// EnableCache is a flag to enable or disable the cache.
 	enableCache Optional[bool],
+	// env are the environment variables to set in the container.
+	env Optional[[]string],
 ) *Container {
-	c, _ := tg.execTerragrunt("validate", src, module, args, enableCache)
+	c, _ := tg.execTerragrunt("validate", src, module, args, enableCache, env)
 	return c
 }
 
@@ -137,12 +156,14 @@ func (tg *IacTerragrunt) ValidateE(
 	src Optional[*Directory],
 	// Module is the Terragrunt module to initialize.
 	module string,
-	//args Optional[string],
+	// args Optional[string],
 	args Optional[[]string], // Arguments for the "init" command.
 	// EnableCache is a flag to enable or disable the cache.
 	enableCache Optional[bool],
+	// env are the environment variables to set in the container.
+	env Optional[[]string],
 ) (*Container, error) {
-	return tg.execTerragrunt("validate", src, module, args, enableCache)
+	return tg.execTerragrunt("validate", src, module, args, enableCache, env)
 }
 
 // HCLFmt formats the terragrunt module. It returns only the Container
@@ -151,12 +172,14 @@ func (tg *IacTerragrunt) HCLFmt(
 	src Optional[*Directory],
 	// Module is the Terragrunt module to initialize.
 	module string,
-	//args Optional[string],
+	// args Optional[string],
 	args Optional[[]string], // Arguments for the "init" command.
 	// EnableCache is a flag to enable or disable the cache.
 	enableCache Optional[bool],
+	// env are the environment variables to set in the container.
+	env Optional[[]string],
 ) *Container {
-	c, _ := tg.execTerragrunt("hclfmt", src, module, args, enableCache)
+	c, _ := tg.execTerragrunt("hclfmt", src, module, args, enableCache, env)
 	return c
 }
 
@@ -166,10 +189,12 @@ func (tg *IacTerragrunt) HCLFmtE(
 	src Optional[*Directory],
 	// Module is the Terragrunt module to initialize.
 	module string,
-	//args Optional[string],
+	// args Optional[string],
 	args Optional[[]string], // Arguments for the "init" command.
 	// EnableCache is a flag to enable or disable the cache.
 	enableCache Optional[bool],
+	// env are the environment variables to set in the container.
+	env Optional[[]string],
 ) (*Container, error) {
-	return tg.execTerragrunt("hclfmt", src, module, args, enableCache)
+	return tg.execTerragrunt("hclfmt", src, module, args, enableCache, env)
 }

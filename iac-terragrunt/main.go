@@ -2,13 +2,11 @@ package main
 
 import (
 	"fmt"
-	"os"
 )
 
 type IacTerragrunt struct {
 	Ctr *Container
 	SRC *Directory
-	//Ctx context.Context
 }
 
 // Container returns the container of IacTerragrunt.
@@ -66,37 +64,6 @@ func (tg *IacTerragrunt) WithEnvVar( // The name of the environment variable (e.
 	}
 }
 
-// WithScannedAWSEnvVars returns the Terragrunt container with the given AWS environment variables.
-func (tg *IacTerragrunt) WithScannedAWSEnvVars() *IacTerragrunt {
-	allAWSEnvVarsScanned := scanEnvVarsFromHost()
-	if len(allAWSEnvVarsScanned) == 0 {
-		return tg
-	}
-
-	return &IacTerragrunt{
-		Ctr: tg.
-			WithEnvVar("AWS_ACCESS_KEY_ID", os.Getenv("AWS_ACCESS_KEY_ID"), false).
-			WithEnvVar("AWS_SECRET_ACCESS_KEY", os.Getenv("AWS_SECRET_ACCESS_KEY"), false).
-			WithEnvVar("AWS_SESSION_TOKEN", os.Getenv("AWS_SESSION_TOKEN"), false).Ctr,
-	}
-}
-
-// WithScannedTFVARS returns the Terragrunt container with the given Terraform variables that starts with TF_VAR scanned from the host.
-func (tg *IacTerragrunt) WithScannedTFVARS() *IacTerragrunt {
-	allTFVarsScanned := getTFVARsFromHost()
-	if len(allTFVarsScanned) == 0 {
-		return tg
-	}
-
-	for key, value := range allTFVarsScanned {
-		tg.Ctr = tg.Ctr.WithEnvVariable(key, value, ContainerWithEnvVariableOpts{
-			Expand: false,
-		})
-	}
-
-	return tg
-}
-
 // WithSource returns the Terragrunt container with source as a mounted directory.
 func (tg *IacTerragrunt) WithSource(source *Directory, enableCache Optional[bool], workDir Optional[string]) *IacTerragrunt {
 	cachePathInContainer := fmt.Sprintf("%s/.terragrunt-cache", workDirDefault)
@@ -149,8 +116,6 @@ func (tg *IacTerragrunt) WithCommands(cmds DaggerCMD, withFocus Optional[bool]) 
 // If no version is specified, the default version will be used.
 // If no container is specified, a new container will be created.
 func New(
-	//// ctx context.Context is the context of the command.
-	//ctx Optional[context.Context],
 	// Version (image tag) to use from the official image repository as a base container.
 	// It's an optional parameter. If it's not set, it's going to use the default version (latest).
 	version Optional[string],
@@ -160,11 +125,10 @@ func New(
 	// Container to use as a base container.
 	// It's an optional parameter. If it's not set, it's going to create a new container.
 	container Optional[*Container],
-	//enableCache bool,
 	// src *Directory is the directory that contains all the source code,
 	// including the module directory.
 	src Optional[*Directory],
-) (*IacTerragrunt, error) {
+) *IacTerragrunt {
 	var ctr *Container
 	var versionResolved string
 	var imageResolved string
@@ -180,14 +144,10 @@ func New(
 		ctr = dag.Container().From(baseImage)
 	}
 
-	//ctxSet := ctx.GetOr(context.Background())
-
 	tg := &IacTerragrunt{
 		SRC: src.GetOr(dag.Host().Directory(".")),
 		Ctr: ctr,
-		//Ctx: ctxSet,
-		//Ctx: context.Background(),
 	}
 
-	return tg, nil
+	return tg
 }

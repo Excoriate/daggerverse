@@ -1,7 +1,5 @@
 package main
 
-//import "github.com/excoriate/daggerverse/daggerx/pkg/terragrunt"
-
 // Run executes a command in the container.
 func (tg *IacTerragrunt) Run(
 	// Cmds are the commands to execute. E.g.: "ls -lth, pwd"
@@ -12,6 +10,8 @@ func (tg *IacTerragrunt) Run(
 	stdout Optional[bool],
 	// Module is the working directory to use in the container.
 	module Optional[string],
+	// EnvVars are the environment variables to set in the container.
+	env Optional[[]string],
 ) (*Container, error) {
 	if tg.SRC == nil && !src.isSet {
 		return nil, &IacTerragruntCMDError{
@@ -32,6 +32,20 @@ func (tg *IacTerragrunt) Run(
 	// Set the entry point to use shell instead of the default entry point.
 	tg.Ctr = tg.WithEntrypoint(nil).Ctr
 
+	// Convert slices to map, and inject it as environment variables.
+	if env.isSet {
+		envVarsMap, err := convertSliceToMap(env.value)
+		if err != nil {
+			return nil, &IacTerragruntCMDError{
+				ErrWrapped: err,
+				Message:    "failed to convert slice to map",
+			}
+		}
+
+		for key, value := range envVarsMap {
+			tg.Ctr = tg.WithEnvVar(key, value, false).Ctr
+		}
+	}
 	// Set the source directory
 	enableCacheOptional := toDaggerOptional(false)
 	tg.Ctr = tg.WithSource(tg.SRC, enableCacheOptional, module).Ctr
@@ -54,6 +68,8 @@ func (tg *IacTerragrunt) RunTG(
 	module string,
 	// Stdout is a flag to enable or disable the standard output per command to execute.
 	stdout Optional[bool],
+	// EnvVars are the environment variables to set in the container.
+	env Optional[[]string],
 ) (*Container, error) {
 	if module == "" {
 		return nil, &IacTerragruntCMDError{
@@ -67,7 +83,7 @@ func (tg *IacTerragrunt) RunTG(
 	tg.Ctr = tg.WithEntrypoint(nil).Ctr
 	cmds = concatTerragruntInCommand(cmds)
 
-	ctr, runErr := tg.Run(cmds, src, stdout, workDirOptional)
+	ctr, runErr := tg.Run(cmds, src, stdout, workDirOptional, env)
 
 	if runErr != nil {
 		return nil, &IacTerragruntCMDError{
@@ -90,21 +106,35 @@ func (tg *IacTerragrunt) execTerragrunt(
 	src Optional[*Directory],
 	// Module is the Terragrunt module to initialize.
 	module string,
-	//args Optional[string],
+	// args Optional[string],
 	args Optional[[]string], // Arguments for the "init" command.
 	// EnableCache is a flag to enable or disable the cache.
 	enableCache Optional[bool],
+	// EnvVars are the environment variables to set in the container.
+	env Optional[[]string],
 ) (*Container, error) {
 	var cmd []string
 	cmd = append(cmd, terragruntCMD)
 
 	if args.isSet && len(args.value) > 0 {
-		for _, arg := range args.value {
-			cmd = append(cmd, arg)
-		}
+		cmd = append(cmd, args.value...)
 	}
 
 	srcToUse := src.GetOr(tg.SRC)
+
+	if env.isSet {
+		envVarsMap, err := convertSliceToMap(env.value)
+		if err != nil {
+			return nil, &IacTerragruntCMDError{
+				ErrWrapped: err,
+				Message:    "failed to convert slice to map",
+			}
+		}
+
+		for key, value := range envVarsMap {
+			tg.Ctr = tg.WithEnvVar(key, value, false).Ctr
+		}
+	}
 
 	tg.Ctr = tg.WithSource(srcToUse, enableCache, toDaggerOptional(module)).Ctr
 	tg.Ctr = tg.WithEntrypoint(entryPointTerragrunt).

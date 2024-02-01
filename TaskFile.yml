@@ -93,3 +93,13 @@ tasks:
         cmds:
             - task: dagger:call
               vars: {module: '{{.mod}}', function: '{{.fn}}'}
+
+    go-ci:
+        desc: Execute common CI operations in a certain Dagger module (go)
+        cmds:
+            - |
+              cd {{.mod}} && go mod tidy \
+              && ls -ltrah \
+              && go fmt -x ./... \
+              && go vet ./... \
+              && golangci-lint run -v -E gofmt --config ../.golangci.yml

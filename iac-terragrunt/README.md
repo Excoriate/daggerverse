@@ -57,6 +57,24 @@ For composing this module, each of these commands are implemented as a function 
 | Run arbitrary shell commands (one or many)      | **run**      | `run --cmds="ls -ltrah, pwd"`                       | ✅      |
 | Run arbitrary terragrunt commands (one or many) | **run-tg**   | `run-tg --cmds="init -backend=false, plan"`         | ✅      |
 
+### Nice options 💚
+
+* ✅ Set environment variables
+
+These options complement the existing `commands` if they're used through `shell` (for example, by using `run` or `run-tg`).
+
+```bash
+# Export an environment variable in the host
+export CI_KEY_TEST="something-interesting-here123"
+# Call your function through the CLI.
+dagger -m . --src=$(pwd)/../ call \
+run --module="test/iac-terragrunt/testdata/terragrunt-module-simple" \
+--cmds="ls -ltrah, cat terragrunt.hcl, printenv" \
+--env="MYENV=avalue, ANOTHERENV=avalueagain, CI_KEY_TEST=$CI_KEY_TEST";
+```
+
+>**NOTE**: Dagger modules —by design— consider the modules as sandboxed. So, if you set an environment variable in the host, if it's not passed explicitly to the module through the CLI, it won't be available. If you want to pass environment variables to the module, you can use the `--with-env` flag or the `WithEnv()` function to set it or, through the CLI, use the `--env` flag.
+
 
 ## Usage
 

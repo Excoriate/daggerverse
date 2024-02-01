@@ -3,16 +3,13 @@ run:
     tests: false
     modules-download-mode: readonly
     timeout: 240s
-    skip-dirs:
-        - ^vendor$
-        - .*_test\.go$
-        - ^internal$
+    skip-dirs-use-default: true
     skip-files:
-        - .*\.pb\.go
-        - .*_generated\.go
-        - marshal.go
-        - builder.go
+        - ^querybuilder/.+\.go
         - dagger.gen.go
+    skip-dirs:
+        - ^internal/
+        - ^querybuilder/
 linters-settings:
     depguard:
         rules:
