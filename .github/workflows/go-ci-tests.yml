@@ -21,4 +21,4 @@ jobs:
               with:
                   go-version: ${{ env.GO_VERSION }}
             - name: Test
-              run: go test -v ./{{ matrix.dagger-module }}
+              run: cd {{ matrix.dagger-module }} && go test -v ./...
