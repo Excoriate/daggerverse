@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/Excoriate/daggerverse/compare/v1.1.4...v1.2.0) (2024-02-01)
+
+
+### Features
+
+* Add support for environment variables ([8b4e37c](https://github.com/Excoriate/daggerverse/commit/8b4e37c800af932eadedea6d7cfab7d5ab9f4c22))
+
 ## [1.1.4](https://github.com/Excoriate/daggerverse/compare/v1.1.3...v1.1.4) (2024-01-30)
 
 
