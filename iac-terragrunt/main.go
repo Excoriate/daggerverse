@@ -128,6 +128,8 @@ func New(
 	// src *Directory is the directory that contains all the source code,
 	// including the module directory.
 	src Optional[*Directory],
+	// enablePrivateGit is a flag to enable or disable the private git.
+	enablePrivateGit Optional[bool],
 ) *IacTerragrunt {
 	var ctr *Container
 	var versionResolved string
