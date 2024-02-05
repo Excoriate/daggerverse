@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/Excoriate/daggerverse/compare/v1.3.0...v1.3.1) (2024-02-05)
+
+
+### Other
+
+* add example with an external terraform module ([284f3a7](https://github.com/Excoriate/daggerverse/commit/284f3a7167f24a27bc81e9896a91d1e2fb935373))
+
 ## [1.3.0](https://github.com/Excoriate/daggerverse/compare/v1.2.0...v1.3.0) (2024-02-05)
 
 
