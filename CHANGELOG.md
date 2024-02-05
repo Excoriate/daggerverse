@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.3.0](https://github.com/Excoriate/daggerverse/compare/v1.2.0...v1.3.0) (2024-02-05)
+
+
+### Features
+
+* add enablePrivateGit flag in IacTerragrunt struct ([e86e583](https://github.com/Excoriate/daggerverse/commit/e86e5837c8d83f38990460f63fd7c80e49e8fead))
+* Add new apis supported for secrets, git ssh, and cache ([8ebb47b](https://github.com/Excoriate/daggerverse/commit/8ebb47b1831841861d42130f638a0333396b4970))
+* Fix order of git-ssh api ([f56789f](https://github.com/Excoriate/daggerverse/commit/f56789f387cff10313519e3709b10e4a23ffd68b))
+
+
+### Bug Fixes
+
+* Fix commands ([75a5962](https://github.com/Excoriate/daggerverse/commit/75a5962227c95f4a30d34d2b2147ddab29eea0ea))
+
+
+### Other
+
+* Add missing .gitattributes ([184b1df](https://github.com/Excoriate/daggerverse/commit/184b1df8d378a9697405c80358097f673d432633))
+
 ## [1.2.0](https://github.com/Excoriate/daggerverse/compare/v1.1.4...v1.2.0) (2024-02-01)
 
 
