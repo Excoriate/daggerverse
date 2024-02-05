@@ -8,13 +8,18 @@ func (tg *IacTerragrunt) Init(
 	module string,
 	// args Optional[string],
 	args Optional[[]string], // Arguments for the "init" command.
-	// EnableCache is a flag to enable or disable the cache.
-	enableCache Optional[bool],
-	// env are the environment variables to set in the container.
-	env Optional[[]string],
-
+	// enableCacheVolume is a flag to enable or disable the cache.
+	enableCacheVolume Optional[bool],
+	// EnvVars are the environment variables to set in the container.
+	envVars Optional[[]string],
+	// secretVars are the secret variables to set in the container.
+	secretVars Optional[[]string],
+	// invalidateCache is a flag to enable or disable the cache.
+	invalidateCache Optional[bool],
+	// enableGitSSH
+	gitSSH Optional[string],
 ) *Container {
-	c, _ := tg.execTerragrunt("init", src, module, args, enableCache, env)
+	c, _ := tg.execTerragrunt("hclfmt", src, module, args, enableCacheVolume, envVars, secretVars, invalidateCache, gitSSH)
 	return c
 }
 
@@ -26,12 +31,18 @@ func (tg *IacTerragrunt) InitE(
 	module string,
 	// args Optional[string],
 	args Optional[[]string], // Arguments for the "init" command.
-	// EnableCache is a flag to enable or disable the cache.
-	enableCache Optional[bool],
-	// env are the environment variables to set in the container.
-	env Optional[[]string],
+	// enableCacheVolume is a flag to enable or disable the cache.
+	enableCacheVolume Optional[bool],
+	// EnvVars are the environment variables to set in the container.
+	envVars Optional[[]string],
+	// secretVars are the secret variables to set in the container.
+	secretVars Optional[[]string],
+	// invalidateCache is a flag to enable or disable the cache.
+	invalidateCache Optional[bool],
+	// enableGitSSH
+	gitSSH Optional[string],
 ) (*Container, error) {
-	return tg.execTerragrunt("init", src, module, args, enableCache, env)
+	return tg.execTerragrunt("hclfmt", src, module, args, enableCacheVolume, envVars, secretVars, invalidateCache, gitSSH)
 }
 
 // Plan plans the terragrunt module. It returns only the Container
@@ -42,12 +53,18 @@ func (tg *IacTerragrunt) Plan(
 	module string,
 	// args Optional[string],
 	args Optional[[]string], // Arguments for the "init" command.
-	// EnableCache is a flag to enable or disable the cache.
-	enableCache Optional[bool],
-	// env are the environment variables to set in the container.
-	env Optional[[]string],
+	// enableCacheVolume is a flag to enable or disable the cache.
+	enableCacheVolume Optional[bool],
+	// EnvVars are the environment variables to set in the container.
+	envVars Optional[[]string],
+	// secretVars are the secret variables to set in the container.
+	secretVars Optional[[]string],
+	// invalidateCache is a flag to enable or disable the cache.
+	invalidateCache Optional[bool],
+	// enableGitSSH
+	gitSSH Optional[string],
 ) *Container {
-	c, _ := tg.execTerragrunt("plan", src, module, args, enableCache, env)
+	c, _ := tg.execTerragrunt("hclfmt", src, module, args, enableCacheVolume, envVars, secretVars, invalidateCache, gitSSH)
 	return c
 }
 
@@ -59,12 +76,18 @@ func (tg *IacTerragrunt) PlanE(
 	module string,
 	// args Optional[string],
 	args Optional[[]string], // Arguments for the "init" command.
-	// EnableCache is a flag to enable or disable the cache.
-	enableCache Optional[bool],
-	// env are the environment variables to set in the container.
-	env Optional[[]string],
+	// enableCacheVolume is a flag to enable or disable the cache.
+	enableCacheVolume Optional[bool],
+	// EnvVars are the environment variables to set in the container.
+	envVars Optional[[]string],
+	// secretVars are the secret variables to set in the container.
+	secretVars Optional[[]string],
+	// invalidateCache is a flag to enable or disable the cache.
+	invalidateCache Optional[bool],
+	// enableGitSSH
+	gitSSH Optional[string],
 ) (*Container, error) {
-	return tg.execTerragrunt("plan", src, module, args, enableCache, env)
+	return tg.execTerragrunt("hclfmt", src, module, args, enableCacheVolume, envVars, secretVars, invalidateCache, gitSSH)
 }
 
 // Apply applies the terragrunt module. It returns only the Container
@@ -75,12 +98,18 @@ func (tg *IacTerragrunt) Apply(
 	module string,
 	// args Optional[string],
 	args Optional[[]string], // Arguments for the "init" command.
-	// EnableCache is a flag to enable or disable the cache.
-	enableCache Optional[bool],
-	// env are the environment variables to set in the container.
-	env Optional[[]string],
+	// enableCacheVolume is a flag to enable or disable the cache.
+	enableCacheVolume Optional[bool],
+	// EnvVars are the environment variables to set in the container.
+	envVars Optional[[]string],
+	// secretVars are the secret variables to set in the container.
+	secretVars Optional[[]string],
+	// invalidateCache is a flag to enable or disable the cache.
+	invalidateCache Optional[bool],
+	// enableGitSSH
+	gitSSH Optional[string],
 ) *Container {
-	c, _ := tg.execTerragrunt("apply", src, module, args, enableCache, env)
+	c, _ := tg.execTerragrunt("hclfmt", src, module, args, enableCacheVolume, envVars, secretVars, invalidateCache, gitSSH)
 	return c
 }
 
@@ -92,12 +121,18 @@ func (tg *IacTerragrunt) ApplyE(
 	module string,
 	// args Optional[string],
 	args Optional[[]string], // Arguments for the "init" command.
-	// EnableCache is a flag to enable or disable the cache.
-	enableCache Optional[bool],
-	// env are the environment variables to set in the container.
-	env Optional[[]string],
+	// enableCacheVolume is a flag to enable or disable the cache.
+	enableCacheVolume Optional[bool],
+	// EnvVars are the environment variables to set in the container.
+	envVars Optional[[]string],
+	// secretVars are the secret variables to set in the container.
+	secretVars Optional[[]string],
+	// invalidateCache is a flag to enable or disable the cache.
+	invalidateCache Optional[bool],
+	// enableGitSSH
+	gitSSH Optional[string],
 ) (*Container, error) {
-	return tg.execTerragrunt("apply", src, module, args, enableCache, env)
+	return tg.execTerragrunt("hclfmt", src, module, args, enableCacheVolume, envVars, secretVars, invalidateCache, gitSSH)
 }
 
 // Destroy destroys the terragrunt module. It returns only the Container
@@ -108,12 +143,18 @@ func (tg *IacTerragrunt) Destroy(
 	module string,
 	// args Optional[string],
 	args Optional[[]string], // Arguments for the "init" command.
-	// EnableCache is a flag to enable or disable the cache.
-	enableCache Optional[bool],
-	// env are the environment variables to set in the container.
-	env Optional[[]string],
+	// enableCacheVolume is a flag to enable or disable the cache.
+	enableCacheVolume Optional[bool],
+	// EnvVars are the environment variables to set in the container.
+	envVars Optional[[]string],
+	// secretVars are the secret variables to set in the container.
+	secretVars Optional[[]string],
+	// invalidateCache is a flag to enable or disable the cache.
+	invalidateCache Optional[bool],
+	// enableGitSSH
+	gitSSH Optional[string],
 ) *Container {
-	c, _ := tg.execTerragrunt("destroy", src, module, args, enableCache, env)
+	c, _ := tg.execTerragrunt("hclfmt", src, module, args, enableCacheVolume, envVars, secretVars, invalidateCache, gitSSH)
 	return c
 }
 
@@ -125,12 +166,18 @@ func (tg *IacTerragrunt) DestroyE(
 	module string,
 	// args Optional[string],
 	args Optional[[]string], // Arguments for the "init" command.
-	// EnableCache is a flag to enable or disable the cache.
-	enableCache Optional[bool],
-	// env are the environment variables to set in the container.
-	env Optional[[]string],
+	// enableCacheVolume is a flag to enable or disable the cache.
+	enableCacheVolume Optional[bool],
+	// EnvVars are the environment variables to set in the container.
+	envVars Optional[[]string],
+	// secretVars are the secret variables to set in the container.
+	secretVars Optional[[]string],
+	// invalidateCache is a flag to enable or disable the cache.
+	invalidateCache Optional[bool],
+	// enableGitSSH
+	gitSSH Optional[string],
 ) (*Container, error) {
-	return tg.execTerragrunt("destroy", src, module, args, enableCache, env)
+	return tg.execTerragrunt("hclfmt", src, module, args, enableCacheVolume, envVars, secretVars, invalidateCache, gitSSH)
 }
 
 // Validate validates the terragrunt module. It returns only the Container
@@ -141,12 +188,18 @@ func (tg *IacTerragrunt) Validate(
 	module string,
 	// args Optional[string],
 	args Optional[[]string], // Arguments for the "init" command.
-	// EnableCache is a flag to enable or disable the cache.
-	enableCache Optional[bool],
-	// env are the environment variables to set in the container.
-	env Optional[[]string],
+	// enableCacheVolume is a flag to enable or disable the cache.
+	enableCacheVolume Optional[bool],
+	// EnvVars are the environment variables to set in the container.
+	envVars Optional[[]string],
+	// secretVars are the secret variables to set in the container.
+	secretVars Optional[[]string],
+	// invalidateCache is a flag to enable or disable the cache.
+	invalidateCache Optional[bool],
+	// enableGitSSH
+	gitSSH Optional[string],
 ) *Container {
-	c, _ := tg.execTerragrunt("validate", src, module, args, enableCache, env)
+	c, _ := tg.execTerragrunt("hclfmt", src, module, args, enableCacheVolume, envVars, secretVars, invalidateCache, gitSSH)
 	return c
 }
 
@@ -158,12 +211,18 @@ func (tg *IacTerragrunt) ValidateE(
 	module string,
 	// args Optional[string],
 	args Optional[[]string], // Arguments for the "init" command.
-	// EnableCache is a flag to enable or disable the cache.
-	enableCache Optional[bool],
-	// env are the environment variables to set in the container.
-	env Optional[[]string],
+	// enableCacheVolume is a flag to enable or disable the cache.
+	enableCacheVolume Optional[bool],
+	// EnvVars are the environment variables to set in the container.
+	envVars Optional[[]string],
+	// secretVars are the secret variables to set in the container.
+	secretVars Optional[[]string],
+	// invalidateCache is a flag to enable or disable the cache.
+	invalidateCache Optional[bool],
+	// enableGitSSH
+	gitSSH Optional[string],
 ) (*Container, error) {
-	return tg.execTerragrunt("validate", src, module, args, enableCache, env)
+	return tg.execTerragrunt("hclfmt", src, module, args, enableCacheVolume, envVars, secretVars, invalidateCache, gitSSH)
 }
 
 // HCLFmt formats the terragrunt module. It returns only the Container
@@ -174,12 +233,18 @@ func (tg *IacTerragrunt) HCLFmt(
 	module string,
 	// args Optional[string],
 	args Optional[[]string], // Arguments for the "init" command.
-	// EnableCache is a flag to enable or disable the cache.
-	enableCache Optional[bool],
-	// env are the environment variables to set in the container.
-	env Optional[[]string],
+	// enableCacheVolume is a flag to enable or disable the cache.
+	enableCacheVolume Optional[bool],
+	// EnvVars are the environment variables to set in the container.
+	envVars Optional[[]string],
+	// secretVars are the secret variables to set in the container.
+	secretVars Optional[[]string],
+	// invalidateCache is a flag to enable or disable the cache.
+	invalidateCache Optional[bool],
+	// enableGitSSH
+	gitSSH Optional[string],
 ) *Container {
-	c, _ := tg.execTerragrunt("hclfmt", src, module, args, enableCache, env)
+	c, _ := tg.execTerragrunt("hclfmt", src, module, args, enableCacheVolume, envVars, secretVars, invalidateCache, gitSSH)
 	return c
 }
 
@@ -191,10 +256,16 @@ func (tg *IacTerragrunt) HCLFmtE(
 	module string,
 	// args Optional[string],
 	args Optional[[]string], // Arguments for the "init" command.
-	// EnableCache is a flag to enable or disable the cache.
-	enableCache Optional[bool],
-	// env are the environment variables to set in the container.
-	env Optional[[]string],
+	// enableCacheVolume is a flag to enable or disable the cache.
+	enableCacheVolume Optional[bool],
+	// EnvVars are the environment variables to set in the container.
+	envVars Optional[[]string],
+	// secretVars are the secret variables to set in the container.
+	secretVars Optional[[]string],
+	// invalidateCache is a flag to enable or disable the cache.
+	invalidateCache Optional[bool],
+	// enableGitSSH
+	gitSSH Optional[string],
 ) (*Container, error) {
-	return tg.execTerragrunt("hclfmt", src, module, args, enableCache, env)
+	return tg.execTerragrunt("hclfmt", src, module, args, enableCacheVolume, envVars, secretVars, invalidateCache, gitSSH)
 }

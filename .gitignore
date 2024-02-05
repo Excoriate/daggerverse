@@ -40,3 +40,4 @@
 .terraform/
 .DS_Store
 *.zip
+.idea

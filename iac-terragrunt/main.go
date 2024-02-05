@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 )
 
 type IacTerragrunt struct {
@@ -69,7 +70,7 @@ func (tg *IacTerragrunt) WithSource(source *Directory, enableCache Optional[bool
 	cachePathInContainer := fmt.Sprintf("%s/.terragrunt-cache", workDirDefault)
 	cacheVolume := dag.CacheVolume("terragrunt-cache")
 
-	if enableCache.GetOr(true) {
+	if enableCache.GetOr(false) {
 		tg.Ctr = tg.Ctr.
 			WithMountedCache(cachePathInContainer, cacheVolume)
 	}
@@ -86,6 +87,28 @@ func (tg *IacTerragrunt) WithSource(source *Directory, enableCache Optional[bool
 		WithWorkdir(workDirToSet).
 		WithMountedDirectory(workDirDefault, source)
 
+	return tg
+}
+
+// WithSecret returns the Terragrunt container with the given secrets.
+func (tg *IacTerragrunt) WithSecret(name, value string) *IacTerragrunt {
+	secret := dag.SetSecret(name, value)
+	tg.Ctr = tg.Ctr.WithSecretVariable(name, secret)
+
+	return tg
+}
+
+// WithGitSSHConfig returns the Terragrunt container with the given Git SSH configuration.
+func (tg *IacTerragrunt) WithGitSSHConfig(sshAuthSock string) *IacTerragrunt {
+	tg.Ctr = tg.WithEnvVar("GIT_SSH_COMMAND", "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=accept-new", false).
+		WithEnvVar("SSH_AUTH_SOCK", sshAuthSock, false).Ctr
+
+	return tg
+}
+
+// WithCacheInvalidation returns the Terragrunt container with cache invalidation.
+func (tg *IacTerragrunt) WithCacheInvalidation() *IacTerragrunt {
+	tg.Ctr = tg.WithEnvVar("CACHEBUSTER", time.Now().String(), false).Ctr
 	return tg
 }
 
@@ -128,8 +151,6 @@ func New(
 	// src *Directory is the directory that contains all the source code,
 	// including the module directory.
 	src Optional[*Directory],
-	// enablePrivateGit is a flag to enable or disable the private git.
-	enablePrivateGit Optional[bool],
 ) *IacTerragrunt {
 	var ctr *Container
 	var versionResolved string
@@ -147,7 +168,7 @@ func New(
 	}
 
 	tg := &IacTerragrunt{
-		SRC: src.GetOr(dag.Host().Directory(".")),
+		SRC: src.GetOr(dag.CurrentModule().Source().Directory(".")),
 		Ctr: ctr,
 	}
 

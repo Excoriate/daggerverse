@@ -11,7 +11,11 @@ func (tg *IacTerragrunt) Run(
 	// Module is the working directory to use in the container.
 	module Optional[string],
 	// EnvVars are the environment variables to set in the container.
-	env Optional[[]string],
+	envVars Optional[[]string],
+	// secretVars are the secret variables to set in the container.
+	secretVars Optional[[]string],
+	// invalidateCache is a flag to enable or disable the cache.
+	invalidateCache Optional[bool],
 ) (*Container, error) {
 	if tg.SRC == nil && !src.isSet {
 		return nil, &IacTerragruntCMDError{
@@ -33,8 +37,8 @@ func (tg *IacTerragrunt) Run(
 	tg.Ctr = tg.WithEntrypoint(nil).Ctr
 
 	// Convert slices to map, and inject it as environment variables.
-	if env.isSet {
-		envVarsMap, err := convertSliceToMap(env.value)
+	if envVars.isSet {
+		envVarsMap, err := convertSliceToMap(envVars.value)
 		if err != nil {
 			return nil, &IacTerragruntCMDError{
 				ErrWrapped: err,
@@ -46,6 +50,21 @@ func (tg *IacTerragrunt) Run(
 			tg.Ctr = tg.WithEnvVar(key, value, false).Ctr
 		}
 	}
+
+	if secretVars.isSet {
+		secretVarsMap, err := convertSliceToMap(secretVars.value)
+		if err != nil {
+			return nil, &IacTerragruntCMDError{
+				ErrWrapped: err,
+				Message:    "failed to convert slice to map",
+			}
+		}
+
+		for key, value := range secretVarsMap {
+			tg.Ctr = tg.WithSecret(key, value).Ctr
+		}
+	}
+
 	// Set the source directory
 	enableCacheOptional := toDaggerOptional(false)
 	tg.Ctr = tg.WithSource(tg.SRC, enableCacheOptional, module).Ctr
@@ -54,6 +73,11 @@ func (tg *IacTerragrunt) Run(
 
 	// Expose or not the standard output per command to execute.
 	tg.Ctr = tg.WithCommands(daggerCMDs, stdout).Ctr
+
+	// Invalidate the cache if the flag is set.
+	if invalidateCache.isSet && invalidateCache.value {
+		tg.Ctr = tg.WithCacheInvalidation().Ctr
+	}
 
 	return tg.Ctr, nil
 }
@@ -69,7 +93,11 @@ func (tg *IacTerragrunt) RunTG(
 	// Stdout is a flag to enable or disable the standard output per command to execute.
 	stdout Optional[bool],
 	// EnvVars are the environment variables to set in the container.
-	env Optional[[]string],
+	envVars Optional[[]string],
+	// secretVars are the secret variables to set in the container.
+	secretVars Optional[[]string],
+	// invalidateCache is a flag to enable or disable the cache.
+	invalidateCache Optional[bool],
 ) (*Container, error) {
 	if module == "" {
 		return nil, &IacTerragruntCMDError{
@@ -83,7 +111,7 @@ func (tg *IacTerragrunt) RunTG(
 	tg.Ctr = tg.WithEntrypoint(nil).Ctr
 	cmds = concatTerragruntInCommand(cmds)
 
-	ctr, runErr := tg.Run(cmds, src, stdout, workDirOptional, env)
+	ctr, runErr := tg.Run(cmds, src, stdout, workDirOptional, envVars, secretVars, invalidateCache)
 
 	if runErr != nil {
 		return nil, &IacTerragruntCMDError{
@@ -108,10 +136,16 @@ func (tg *IacTerragrunt) execTerragrunt(
 	module string,
 	// args Optional[string],
 	args Optional[[]string], // Arguments for the "init" command.
-	// EnableCache is a flag to enable or disable the cache.
-	enableCache Optional[bool],
+	// EnableCacheVolume is a flag to enable or disable the cache.
+	enableCacheVolume Optional[bool],
 	// EnvVars are the environment variables to set in the container.
-	env Optional[[]string],
+	envVars Optional[[]string],
+	// secretVars are the secret variables to set in the container.
+	secretVars Optional[[]string],
+	// invalidateCache is a flag to enable or disable the cache.
+	invalidateCache Optional[bool],
+	// enableGitSSH
+	gitSSH Optional[string],
 ) (*Container, error) {
 	var cmd []string
 	cmd = append(cmd, terragruntCMD)
@@ -122,8 +156,8 @@ func (tg *IacTerragrunt) execTerragrunt(
 
 	srcToUse := src.GetOr(tg.SRC)
 
-	if env.isSet {
-		envVarsMap, err := convertSliceToMap(env.value)
+	if envVars.isSet {
+		envVarsMap, err := convertSliceToMap(envVars.value)
 		if err != nil {
 			return nil, &IacTerragruntCMDError{
 				ErrWrapped: err,
@@ -136,9 +170,31 @@ func (tg *IacTerragrunt) execTerragrunt(
 		}
 	}
 
-	tg.Ctr = tg.WithSource(srcToUse, enableCache, toDaggerOptional(module)).Ctr
+	if secretVars.isSet {
+		secretVarsMap, err := convertSliceToMap(secretVars.value)
+		if err != nil {
+			return nil, &IacTerragruntCMDError{
+				ErrWrapped: err,
+				Message:    "failed to convert slice to map",
+			}
+		}
+
+		for key, value := range secretVarsMap {
+			tg.Ctr = tg.WithSecret(key, value).Ctr
+		}
+	}
+
+	tg.Ctr = tg.WithSource(srcToUse, enableCacheVolume, toDaggerOptional(module)).Ctr
 	tg.Ctr = tg.WithEntrypoint(entryPointTerragrunt).
 		WithCommands(addCMDToDaggerCMD(cmd), toDaggerOptional(false)).Ctr
+
+	if invalidateCache.isSet && invalidateCache.value {
+		tg.Ctr = tg.WithCacheInvalidation().Ctr
+	}
+
+	if gitSSH.isSet {
+		tg.Ctr = tg.WithGitSSHConfig(gitSSH.value).Ctr
+	}
 
 	return tg.Ctr, nil
 }
