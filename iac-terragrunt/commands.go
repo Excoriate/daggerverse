@@ -36,6 +36,11 @@ func (tg *IacTerragrunt) Run(
 	// Set the entry point to use shell instead of the default entry point.
 	tg.Ctr = tg.WithEntrypoint(nil).Ctr
 
+	// Invalidate the cache if the flag is set.
+	if invalidateCache.isSet && invalidateCache.value {
+		tg.Ctr = tg.WithCacheInvalidation().Ctr
+	}
+
 	// Convert slices to map, and inject it as environment variables.
 	if envVars.isSet {
 		envVarsMap, err := convertSliceToMap(envVars.value)
@@ -74,11 +79,6 @@ func (tg *IacTerragrunt) Run(
 	// Expose or not the standard output per command to execute.
 	stdoutValue := stdout.GetOr(false)
 	tg.Ctr = tg.WithCommands(daggerCMDs, stdoutValue).Ctr
-
-	// Invalidate the cache if the flag is set.
-	if invalidateCache.isSet && invalidateCache.value {
-		tg.Ctr = tg.WithCacheInvalidation().Ctr
-	}
 
 	return tg.Ctr, nil
 }
@@ -159,6 +159,10 @@ func (tg *IacTerragrunt) execTerragrunt(
 
 	srcToUse := src.GetOr(tg.SRC)
 
+	if invalidateCache.isSet && invalidateCache.value {
+		tg.Ctr = tg.WithCacheInvalidation().Ctr
+	}
+
 	if envVars.isSet {
 		envVarsMap, err := convertSliceToMap(envVars.value)
 		if err != nil {
@@ -187,19 +191,15 @@ func (tg *IacTerragrunt) execTerragrunt(
 		}
 	}
 
+	if gitSSH.isSet {
+		tg.Ctr = tg.WithGitSSHConfig(gitSSH.value).Ctr
+	}
+
 	stdoutValue := stdout.GetOr(false)
 
 	tg.Ctr = tg.WithSource(srcToUse, enableCacheVolume, toDaggerOptional(module)).Ctr
 	tg.Ctr = tg.WithEntrypoint(entryPointTerragrunt).
 		WithCommands(addCMDToDaggerCMD(cmd), stdoutValue).Ctr
-
-	if invalidateCache.isSet && invalidateCache.value {
-		tg.Ctr = tg.WithCacheInvalidation().Ctr
-	}
-
-	if gitSSH.isSet {
-		tg.Ctr = tg.WithGitSSHConfig(gitSSH.value).Ctr
-	}
 
 	return tg.Ctr, nil
 }

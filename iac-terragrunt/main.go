@@ -102,7 +102,6 @@ func (tg *IacTerragrunt) WithSecret(name, value string) *IacTerragrunt {
 func (tg *IacTerragrunt) WithGitSSHConfig(sshAuthSock string) *IacTerragrunt {
 	tg.Ctr = tg.WithEnvVar("GIT_SSH_COMMAND", "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=accept-new", false).
 		WithEnvVar("SSH_AUTH_SOCK", sshAuthSock, false).Ctr
-
 	return tg
 }
 
