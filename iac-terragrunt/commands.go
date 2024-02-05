@@ -72,7 +72,8 @@ func (tg *IacTerragrunt) Run(
 	daggerCMDs := buildShellCMDs(cmds)
 
 	// Expose or not the standard output per command to execute.
-	tg.Ctr = tg.WithCommands(daggerCMDs, stdout).Ctr
+	stdoutValue := stdout.GetOr(false)
+	tg.Ctr = tg.WithCommands(daggerCMDs, stdoutValue).Ctr
 
 	// Invalidate the cache if the flag is set.
 	if invalidateCache.isSet && invalidateCache.value {
@@ -146,6 +147,8 @@ func (tg *IacTerragrunt) execTerragrunt(
 	invalidateCache Optional[bool],
 	// enableGitSSH
 	gitSSH Optional[string],
+	//stdOut
+	stdout Optional[bool],
 ) (*Container, error) {
 	var cmd []string
 	cmd = append(cmd, terragruntCMD)
@@ -184,9 +187,11 @@ func (tg *IacTerragrunt) execTerragrunt(
 		}
 	}
 
+	stdoutValue := stdout.GetOr(false)
+
 	tg.Ctr = tg.WithSource(srcToUse, enableCacheVolume, toDaggerOptional(module)).Ctr
 	tg.Ctr = tg.WithEntrypoint(entryPointTerragrunt).
-		WithCommands(addCMDToDaggerCMD(cmd), toDaggerOptional(false)).Ctr
+		WithCommands(addCMDToDaggerCMD(cmd), stdoutValue).Ctr
 
 	if invalidateCache.isSet && invalidateCache.value {
 		tg.Ctr = tg.WithCacheInvalidation().Ctr

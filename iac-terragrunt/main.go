@@ -113,15 +113,13 @@ func (tg *IacTerragrunt) WithCacheInvalidation() *IacTerragrunt {
 }
 
 // WithCommands returns the Terragrunt container with the given commands.
-func (tg *IacTerragrunt) WithCommands(cmds DaggerCMD, withFocus Optional[bool]) *IacTerragrunt {
+func (tg *IacTerragrunt) WithCommands(cmds DaggerCMD, withFocus bool) *IacTerragrunt {
 	if len(cmds) == 0 {
 		return tg
 	}
 
-	withFocusIsSet := withFocus.GetOr(false)
-
 	for _, cmd := range cmds {
-		if withFocusIsSet {
+		if withFocus {
 			tg.Ctr = tg.Ctr.
 				WithFocus().
 				WithExec(cmd)

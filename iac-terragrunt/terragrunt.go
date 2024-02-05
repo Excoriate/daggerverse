@@ -18,8 +18,10 @@ func (tg *IacTerragrunt) Init(
 	invalidateCache Optional[bool],
 	// enableGitSSH
 	gitSSH Optional[string],
+	// stdOut
+	stdout Optional[bool],
 ) *Container {
-	c, _ := tg.execTerragrunt("hclfmt", src, module, args, enableCacheVolume, envVars, secretVars, invalidateCache, gitSSH)
+	c, _ := tg.execTerragrunt("init", src, module, args, enableCacheVolume, envVars, secretVars, invalidateCache, gitSSH, stdout)
 	return c
 }
 
@@ -41,8 +43,10 @@ func (tg *IacTerragrunt) InitE(
 	invalidateCache Optional[bool],
 	// enableGitSSH
 	gitSSH Optional[string],
+	// stdOut
+	stdout Optional[bool],
 ) (*Container, error) {
-	return tg.execTerragrunt("hclfmt", src, module, args, enableCacheVolume, envVars, secretVars, invalidateCache, gitSSH)
+	return tg.execTerragrunt("init", src, module, args, enableCacheVolume, envVars, secretVars, invalidateCache, gitSSH, stdout)
 }
 
 // Plan plans the terragrunt module. It returns only the Container
@@ -63,8 +67,10 @@ func (tg *IacTerragrunt) Plan(
 	invalidateCache Optional[bool],
 	// enableGitSSH
 	gitSSH Optional[string],
+	// stdOut
+	stdout Optional[bool],
 ) *Container {
-	c, _ := tg.execTerragrunt("hclfmt", src, module, args, enableCacheVolume, envVars, secretVars, invalidateCache, gitSSH)
+	c, _ := tg.execTerragrunt("plan", src, module, args, enableCacheVolume, envVars, secretVars, invalidateCache, gitSSH, stdout)
 	return c
 }
 
@@ -86,8 +92,10 @@ func (tg *IacTerragrunt) PlanE(
 	invalidateCache Optional[bool],
 	// enableGitSSH
 	gitSSH Optional[string],
+	// stdOut
+	stdout Optional[bool],
 ) (*Container, error) {
-	return tg.execTerragrunt("hclfmt", src, module, args, enableCacheVolume, envVars, secretVars, invalidateCache, gitSSH)
+	return tg.execTerragrunt("plan", src, module, args, enableCacheVolume, envVars, secretVars, invalidateCache, gitSSH, stdout)
 }
 
 // Apply applies the terragrunt module. It returns only the Container
@@ -108,8 +116,10 @@ func (tg *IacTerragrunt) Apply(
 	invalidateCache Optional[bool],
 	// enableGitSSH
 	gitSSH Optional[string],
+	// stdOut
+	stdout Optional[bool],
 ) *Container {
-	c, _ := tg.execTerragrunt("hclfmt", src, module, args, enableCacheVolume, envVars, secretVars, invalidateCache, gitSSH)
+	c, _ := tg.execTerragrunt("apply", src, module, args, enableCacheVolume, envVars, secretVars, invalidateCache, gitSSH, stdout)
 	return c
 }
 
@@ -131,8 +141,10 @@ func (tg *IacTerragrunt) ApplyE(
 	invalidateCache Optional[bool],
 	// enableGitSSH
 	gitSSH Optional[string],
+	// stdOut
+	stdout Optional[bool],
 ) (*Container, error) {
-	return tg.execTerragrunt("hclfmt", src, module, args, enableCacheVolume, envVars, secretVars, invalidateCache, gitSSH)
+	return tg.execTerragrunt("apply", src, module, args, enableCacheVolume, envVars, secretVars, invalidateCache, gitSSH, stdout)
 }
 
 // Destroy destroys the terragrunt module. It returns only the Container
@@ -153,8 +165,10 @@ func (tg *IacTerragrunt) Destroy(
 	invalidateCache Optional[bool],
 	// enableGitSSH
 	gitSSH Optional[string],
+	// stdOut
+	stdout Optional[bool],
 ) *Container {
-	c, _ := tg.execTerragrunt("hclfmt", src, module, args, enableCacheVolume, envVars, secretVars, invalidateCache, gitSSH)
+	c, _ := tg.execTerragrunt("destroy", src, module, args, enableCacheVolume, envVars, secretVars, invalidateCache, gitSSH, stdout)
 	return c
 }
 
@@ -176,8 +190,10 @@ func (tg *IacTerragrunt) DestroyE(
 	invalidateCache Optional[bool],
 	// enableGitSSH
 	gitSSH Optional[string],
+	// stdOut
+	stdout Optional[bool],
 ) (*Container, error) {
-	return tg.execTerragrunt("hclfmt", src, module, args, enableCacheVolume, envVars, secretVars, invalidateCache, gitSSH)
+	return tg.execTerragrunt("destroy", src, module, args, enableCacheVolume, envVars, secretVars, invalidateCache, gitSSH, stdout)
 }
 
 // Validate validates the terragrunt module. It returns only the Container
@@ -198,8 +214,10 @@ func (tg *IacTerragrunt) Validate(
 	invalidateCache Optional[bool],
 	// enableGitSSH
 	gitSSH Optional[string],
+	// stdOut
+	stdout Optional[bool],
 ) *Container {
-	c, _ := tg.execTerragrunt("hclfmt", src, module, args, enableCacheVolume, envVars, secretVars, invalidateCache, gitSSH)
+	c, _ := tg.execTerragrunt("validate", src, module, args, enableCacheVolume, envVars, secretVars, invalidateCache, gitSSH, stdout)
 	return c
 }
 
@@ -221,8 +239,10 @@ func (tg *IacTerragrunt) ValidateE(
 	invalidateCache Optional[bool],
 	// enableGitSSH
 	gitSSH Optional[string],
+	// stdOut
+	stdout Optional[bool],
 ) (*Container, error) {
-	return tg.execTerragrunt("hclfmt", src, module, args, enableCacheVolume, envVars, secretVars, invalidateCache, gitSSH)
+	return tg.execTerragrunt("validate", src, module, args, enableCacheVolume, envVars, secretVars, invalidateCache, gitSSH, stdout)
 }
 
 // HCLFmt formats the terragrunt module. It returns only the Container
@@ -243,8 +263,10 @@ func (tg *IacTerragrunt) HCLFmt(
 	invalidateCache Optional[bool],
 	// enableGitSSH
 	gitSSH Optional[string],
+	// stdOut
+	stdout Optional[bool],
 ) *Container {
-	c, _ := tg.execTerragrunt("hclfmt", src, module, args, enableCacheVolume, envVars, secretVars, invalidateCache, gitSSH)
+	c, _ := tg.execTerragrunt("hclfmt", src, module, args, enableCacheVolume, envVars, secretVars, invalidateCache, gitSSH, stdout)
 	return c
 }
 
@@ -266,6 +288,8 @@ func (tg *IacTerragrunt) HCLFmtE(
 	invalidateCache Optional[bool],
 	// enableGitSSH
 	gitSSH Optional[string],
+	// stdOut
+	stdout Optional[bool],
 ) (*Container, error) {
-	return tg.execTerragrunt("hclfmt", src, module, args, enableCacheVolume, envVars, secretVars, invalidateCache, gitSSH)
+	return tg.execTerragrunt("hclfmt", src, module, args, enableCacheVolume, envVars, secretVars, invalidateCache, gitSSH, stdout)
 }
