@@ -1,6 +1,6 @@
 {
+  "engineVersion": "v0.10.0",
   "name": "gitlab-cicd-vars",
   "sdk": "go",
-  "source": "dagger",
-  "engineVersion": "v0.10.0"
+  "source": "dagger"
 }
