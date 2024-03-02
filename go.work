@@ -1,9 +1,0 @@
-go 1.21.0
-
-use (
-	./daggerx
-	./iac-terragrunt
-	./test/iac-terragrunt/ci-client
-)
-
-//replace github.com/excoriate/daggerverse/daggerx => ./daggerx
