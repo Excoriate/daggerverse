@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.0](https://github.com/Excoriate/daggerverse/compare/v1.3.1...v1.4.0) (2024-03-02)
+
+
+### Features
+
+* add terraform dagger-module ([260c3d3](https://github.com/Excoriate/daggerverse/commit/260c3d3c112f443493e4f11069e609263538506c))
+* add terraform dagger-module ([9755d3f](https://github.com/Excoriate/daggerverse/commit/9755d3fdb883f5f7a6ea6e0841f8426473da41a8))
+
 ## [1.3.1](https://github.com/Excoriate/daggerverse/compare/v1.3.0...v1.3.1) (2024-02-05)
 
 
