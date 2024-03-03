@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.4.1](https://github.com/Excoriate/daggerverse/compare/v1.4.0...v1.4.1) (2024-03-03)
+
+
+### Bug Fixes
+
+* fix workflows ([a4d54a5](https://github.com/Excoriate/daggerverse/commit/a4d54a557716ca942f7e0391752f4aa3d531997d))
+* update sync task to use 'dagger develop' instead of 'dagger mod sync -m' command ([#17](https://github.com/Excoriate/daggerverse/issues/17)) ([c26c720](https://github.com/Excoriate/daggerverse/commit/c26c72065e9179aabeb4ab73646f66ea8a5b7a02))
+
+
+### Other
+
+* update go tasks to run in specific module directory ([#19](https://github.com/Excoriate/daggerverse/issues/19)) ([924dd4d](https://github.com/Excoriate/daggerverse/commit/924dd4dfe24f9b6638a399f17e313516065d1e36))
+
 ## [1.4.0](https://github.com/Excoriate/daggerverse/compare/v1.3.1...v1.4.0) (2024-03-02)
 
 
