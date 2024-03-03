@@ -502,16 +502,26 @@ func convertSlice[I any, O any](in []I, f func(I) O) []O {
 }
 
 func (r GitlabCicdVars) MarshalJSON() ([]byte, error) {
-	var concrete struct{}
+	var concrete struct {
+		Token string
+		Ctr   *Container
+	}
+	concrete.Token = r.Token
+	concrete.Ctr = r.Ctr
 	return json.Marshal(&concrete)
 }
 
 func (r *GitlabCicdVars) UnmarshalJSON(bs []byte) error {
-	var concrete struct{}
+	var concrete struct {
+		Token string
+		Ctr   *Container
+	}
 	err := json.Unmarshal(bs, &concrete)
 	if err != nil {
 		return err
 	}
+	r.Token = concrete.Token
+	r.Ctr = concrete.Ctr
 	return nil
 }
 
@@ -576,60 +586,70 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 	switch parentName {
 	case "GitlabCicdVars":
 		switch fnName {
-		case "ContainerEcho":
+		case "Base":
 			var parent GitlabCicdVars
 			err = json.Unmarshal(parentJSON, &parent)
 			if err != nil {
 				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
 			}
-			var stringArg string
-			if inputArgs["stringArg"] != nil {
-				err = json.Unmarshal([]byte(inputArgs["stringArg"]), &stringArg)
-				if err != nil {
-					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg stringArg", err))
-				}
-			}
-			return (*GitlabCicdVars).ContainerEcho(&parent, stringArg), nil
-		case "GrepDir":
+			return (*GitlabCicdVars).Base(&parent), nil
+		case "Get":
 			var parent GitlabCicdVars
 			err = json.Unmarshal(parentJSON, &parent)
 			if err != nil {
 				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
 			}
-			var directoryArg *Directory
-			if inputArgs["directoryArg"] != nil {
-				err = json.Unmarshal([]byte(inputArgs["directoryArg"]), &directoryArg)
+			var path string
+			if inputArgs["path"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["path"]), &path)
 				if err != nil {
-					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg directoryArg", err))
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg path", err))
 				}
 			}
-			var pattern string
-			if inputArgs["pattern"] != nil {
-				err = json.Unmarshal([]byte(inputArgs["pattern"]), &pattern)
+			return (*GitlabCicdVars).Get(&parent, path)
+		case "":
+			var parent GitlabCicdVars
+			err = json.Unmarshal(parentJSON, &parent)
+			if err != nil {
+				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
+			}
+			var token string
+			if inputArgs["token"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["token"]), &token)
 				if err != nil {
-					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg pattern", err))
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg token", err))
 				}
 			}
-			return (*GitlabCicdVars).GrepDir(&parent, ctx, directoryArg, pattern)
+			var ctr *Container
+			if inputArgs["ctr"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["ctr"]), &ctr)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg ctr", err))
+				}
+			}
+			return New(token, ctr), nil
 		default:
 			return nil, fmt.Errorf("unknown function %s", fnName)
 		}
 	case "":
 		return dag.Module().
-			WithDescription("A generated module for GitlabCicdVars functions\n\nThis module has been generated via dagger init and serves as a reference to\nbasic module structure as you get started with Dagger.\n\nTwo functions have been pre-created. You can modify, delete, or add to them,\nas needed. They demonstrate usage of arguments and return types using simple\necho and grep commands. The functions can be called from the dagger CLI or\nfrom one of the SDKs.\n\nThe first line in this comment block is a short description line and the\nrest is a long description with more detail on the module's purpose or usage,\nif appropriate. All modules should have a short description.\n").
 			WithObject(
 				dag.TypeDef().WithObject("GitlabCicdVars").
 					WithFunction(
-						dag.Function("ContainerEcho",
-							dag.TypeDef().WithObject("Container")).
-							WithDescription("Returns a container that echoes whatever string argument is provided").
-							WithArg("stringArg", dag.TypeDef().WithKind(StringKind))).
+						dag.Function("Base",
+							dag.TypeDef().WithObject("GitlabCicdVars")).
+							WithDescription("Base sets up the Container with a Terraform Image and cache volumes")).
 					WithFunction(
-						dag.Function("GrepDir",
-							dag.TypeDef().WithKind(StringKind)).
-							WithDescription("Returns lines that match a pattern in the files of the provided Directory").
-							WithArg("directoryArg", dag.TypeDef().WithObject("Directory")).
-							WithArg("pattern", dag.TypeDef().WithKind(StringKind)))), nil
+						dag.Function("Get",
+							dag.TypeDef().WithListOf(dag.TypeDef().WithKind(StringKind))).
+							WithArg("path", dag.TypeDef().WithKind(StringKind))).
+					WithField("Token", dag.TypeDef().WithKind(StringKind), TypeDefWithFieldOpts{Description: "token to use for gitlab api"}).
+					WithField("Ctr", dag.TypeDef().WithObject("Container"), TypeDefWithFieldOpts{Description: "Ctr is the container to use for the gitlab"}).
+					WithConstructor(
+						dag.Function("New",
+							dag.TypeDef().WithObject("GitlabCicdVars")).
+							WithArg("token", dag.TypeDef().WithKind(StringKind), FunctionWithArgOpts{Description: "token is the GitLab API token to use, for information about how to create a token,\nsee https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html"}).
+							WithArg("ctr", dag.TypeDef().WithObject("Container").WithOptional(true), FunctionWithArgOpts{Description: "ctr is the container to use for the gitlab"}))), nil
 	default:
 		return nil, fmt.Errorf("unknown object %s", parentName)
 	}
