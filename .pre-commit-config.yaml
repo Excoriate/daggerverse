@@ -24,8 +24,6 @@ repos:
           - id: check-json
           - id: detect-private-key
           - id: end-of-file-fixer
-          - id: pretty-format-json
-            args: [--autofix]
 
     - repo: https://github.com/jumanjihouse/pre-commit-hooks
       rev: 3.0.0
