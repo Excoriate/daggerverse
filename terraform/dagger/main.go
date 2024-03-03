@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"golang.org/x/exp/slog"
 	"path/filepath"
-	"strings"
 )
 
 const mntPrefix = "/mnt"
@@ -49,11 +48,13 @@ func New(
 	// It's an optional parameter. If it's not set, it's going to create a new container.
 	// +optional
 	ctr *Container,
+	// envVars is a string of environment variables in the form of "key1=value1,key2=value2"
+	// +optional
+	envVars string,
 ) *Terraform {
 	tf := &Terraform{
 		Version: version,
 		Image:   image,
-		Src:     src,
 	}
 
 	slog.Info(fmt.Sprintf("Terraform Version: %s", version))
@@ -68,7 +69,17 @@ func New(
 		src = dag.CurrentModule().Source().Directory(".")
 	}
 
+	tf.Src = src
+
 	tf.BaseCtr = ctr
+
+	// A bit of a dirty hack to get environment variables into the container
+	// from the string passed in the envVars parameter.
+	if envVars != "" {
+		envVarsParsed := tf.parseEnvVarsInStringMapAsMap(envVars)
+		tf.BaseCtr = tf.setEnvVarsInContainer(envVarsParsed)
+		slog.Info(fmt.Sprintf("Environment variables set: %v", envVarsParsed))
+	}
 
 	slog.Info("Terraform container created")
 
@@ -99,48 +110,6 @@ func (t *Terraform) WithContainer(ctr *Container) *Terraform {
 	return t
 }
 
-func parseArgsFromStrToSlice(argStr string) []string {
-	if argStr == "" {
-		return []string{}
-	}
-
-	var parsedArgs []string
-	// Split the string on the comma as a preliminary step.
-	args := strings.Split(argStr, ",")
-	for _, arg := range args {
-		// Trim leading and trailing whitespace from each argument.
-		arg = strings.TrimSpace(arg)
-		// Handle special case for '-var' arguments.
-		if strings.HasPrefix(arg, "-var ") {
-			// Keep '-var' and its value together as a single string.
-			parsedArgs = append(parsedArgs, arg)
-		} else {
-			// For other arguments, split on spaces assuming they are separate.
-			parts := strings.Fields(arg)
-			parsedArgs = append(parsedArgs, parts...)
-		}
-	}
-	return parsedArgs
-}
-
-func (t *Terraform) setCommands(command string, args ...string) *Container {
-	// Initialize the command slice with the main command (e.g., "plan")
-	cmdWithArgs := []string{command}
-
-	for _, arg := range args {
-		if strings.Contains(arg, " ") && !strings.HasPrefix(arg, "'") && !strings.HasPrefix(arg, "\"") {
-			parts := strings.SplitN(arg, " ", 2)
-			cmdWithArgs = append(cmdWithArgs, parts[0], parts[1])
-		} else {
-			cmdWithArgs = append(cmdWithArgs, arg)
-		}
-	}
-
-	t.BaseCtr = t.BaseCtr.WithExec(cmdWithArgs)
-
-	return t.BaseCtr
-}
-
 func (t *Terraform) setTFModuleSRC(tfModPath string) *Container {
 	tfWorkDir := filepath.Join(mntPrefix, tfModPath)
 	slog.Info(fmt.Sprintf("The Terraform module directory resolved is: %s", tfWorkDir))
@@ -161,7 +130,6 @@ func (t *Terraform) Init(
 	t.BaseCtr = t.setTFModuleSRC(tfmod)
 	parsedArgs := parseArgsFromStrToSlice(args)
 	t.BaseCtr = t.setCommands(tfCmdInit, parsedArgs...)
-	//return t.BaseCtr.Stdout(ctx)
 	return t.BaseCtr, nil
 }
 

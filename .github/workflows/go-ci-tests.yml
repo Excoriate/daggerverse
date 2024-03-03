@@ -13,7 +13,7 @@ jobs:
         strategy:
             matrix:
                 dagger-module:
-                    - iac-terragrunt
+                    - terraform/dagger
         steps:
             - uses: actions/checkout@v3
             - name: Set up Go
