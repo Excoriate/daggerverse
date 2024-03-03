@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/Excoriate/daggerverse/compare/v1.5.0...v1.6.0) (2024-03-03)
+
+
+### Features
+
+* add dagger-module for gitlab cicdvars ([0fc7d73](https://github.com/Excoriate/daggerverse/commit/0fc7d73b38920bf82781e72d276bfab097b3628a))
+
 ## [1.5.0](https://github.com/Excoriate/daggerverse/compare/v1.4.1...v1.5.0) (2024-03-03)
 
 
