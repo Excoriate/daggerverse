@@ -14,7 +14,10 @@
       "pattern": "^Taskfile.yml"
     },
     {
-      "pattern": "CHANGELOG.md"
+      "pattern": "^https://github.com/Excoriate/daggerverse/compare/"
+    },
+    {
+      "pattern": "^https://github.com/Excoriate/daggerverse/commit/"
     },
     {
       "pattern": "^.github/workflows/"
