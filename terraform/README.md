@@ -29,3 +29,16 @@ Through the [Dagger CLI](https://docs.dagger.io/cli/465058/install), or by using
 | Format Terraform files to a canonical format (support arguments) | **fmt**      | `dagger call --src="." fmt --tfmod="mydir/module" --args=""`                  | ✅      |
 
 >NOTE: The commands `plan`, `apply`, and `destroy` supports an extra argument called `--init-args` to pass additional arguments to the command **init** command.
+
+---
+
+## Usage 🚀
+
+Using the published module
+
+  ```bash
+  # Assuming you're in a directory with a terraform module in the path terraform/test/tf-module-1
+dagger -m github.com/Excoriate/daggerverse/terraform@v1.4.0 call --src="." plan \
+--tfmod="terraform/test/tf-module-1" \
+--args="-var is_enabled=false, -refresh=false" \
+--init-args="-backend=false" stdout  ```
