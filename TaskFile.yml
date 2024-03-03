@@ -13,6 +13,8 @@ includes:
         taskfile: ./taskfiles/taskfile.precommit.yml
     dagger:
         taskfile: ./taskfiles/Taskfile.dagger.yml
+    go:
+        taskfile: ./taskfiles/Taskfile.go.yml
 
 tasks:
     default:
@@ -97,9 +99,13 @@ tasks:
     go-ci:
         desc: Execute common CI operations in a certain Dagger module (go)
         cmds:
-            - |
-              cd {{.mod}} && go mod tidy \
-              && ls -ltrah \
-              && go fmt -x ./... \
-              && go vet ./... \
-              && golangci-lint run -v -E gofmt --config ../.golangci.yml
+            - task: go:go-tidy
+              vars: {mod: '{{.mod}}/dagger'}
+            - task: go:go-fmt
+              vars: {mod: '{{.mod}}/dagger'}
+            - task: go:go-vet
+              vars: {mod: '{{.mod}}/dagger'}
+            - task: go:go-lint
+              vars: {mod: '{{.mod}}/dagger'}
+            - task: go:go-test
+              vars: {mod: '{{.mod}}/dagger'}
