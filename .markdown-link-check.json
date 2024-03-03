@@ -14,7 +14,7 @@
       "pattern": "^Taskfile.yml"
     },
     {
-      "pattern": "^CHANGELOG"
+      "pattern": "^CHANGELOG.md"
     },
     {
       "pattern": "^.github/workflows/"
