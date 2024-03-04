@@ -37,6 +37,12 @@ dagger call --token=$GITLAB_PRIVATE_TOKEN get-all --path=group/subgroup/repo-or-
 Or, using the public Dagger module:
 
   ```bash
-dagger -m github.com/Excoriate/daggerverse/gitlab-cicd-vars@v1.5.0 call --token=$GITLAB_PRIVATE_TOKEN \
-get-all --path=group/subgroup/repo-or-project
+# get a single var
+dagger call -m github.com/Excoriate/daggerverse/gitlab-cicd-vars@v1.6.0 \
+--token=$GITLAB_PRIVATE_TOKEN get --path=group/subgroup/repo --var-name="HOMEBREW_PROJECT_ACCESS_TOKEN"
+
+# get all vars
+dagger call -m github.com/Excoriate/daggerverse/gitlab-cicd-vars@v1.6.0 \
+--token=$GITLAB_PRIVATE_TOKEN get-all --path=group/subgroup/repo
+
 ```
