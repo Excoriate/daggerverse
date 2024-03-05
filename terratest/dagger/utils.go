@@ -1,6 +1,9 @@
 package main
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 // ParseArgsFromStrToSlice parses a string of arguments in the form of "arg1, arg2, arg3"
 func parseArgsFromStrToSlice(argStr string) []string {
@@ -14,15 +17,8 @@ func parseArgsFromStrToSlice(argStr string) []string {
 	for _, arg := range args {
 		// Trim leading and trailing whitespace from each argument.
 		arg = strings.TrimSpace(arg)
-		// Handle special case for '-var' arguments.
-		if strings.HasPrefix(arg, "-var ") {
-			// Keep '-var' and its value together as a single string.
-			parsedArgs = append(parsedArgs, arg)
-		} else {
-			// For other arguments, split on spaces assuming they are separate.
-			parts := strings.Fields(arg)
-			parsedArgs = append(parsedArgs, parts...)
-		}
+		parts := strings.Fields(arg)
+		parsedArgs = append(parsedArgs, parts...)
 	}
 	return parsedArgs
 }
@@ -50,4 +46,16 @@ func (t *Terratest) setEnvVarsInContainer(envVars map[string]string) *Container 
 		t.Ctr = t.Ctr.WithEnvVariable(key, value)
 	}
 	return t.Ctr
+}
+
+func (t *Terratest) getTFInstallCMD(version string) []string {
+	installUrl := fmt.Sprintf("https://releases.hashicorp.com/terraform/%s/terraform_%s_linux_amd64.zip", version, version)
+	zipFileName := fmt.Sprintf("terraform_%s_linux_amd64.zip", version)
+
+	installCmd := []string{"sh", "-c", "apk add --update wget unzip && " +
+		fmt.Sprintf("wget %s && ", installUrl) +
+		fmt.Sprintf("unzip %s -d /usr/bin && ", zipFileName) +
+		fmt.Sprintf("rm %s", zipFileName)}
+
+	return installCmd
 }

@@ -6,11 +6,18 @@ import (
 	"path/filepath"
 )
 
-const mntPrefix = "/mnt"
+const (
+	defaultImageVersion = "1.22.0-alpine3.19"
+	defaultTfVersion    = "1.6.0"
+	mntPrefix           = "/mnt"
+)
 
 type Terratest struct {
 	// The Version of the Golang image that'll host the 'terartest' test
 	Version string
+	// TfVersion is the Version of the Terraform to use, e.g., "0.12.24".
+	// by default, it uses the latest Version.
+	TfVersion string
 	// Image of the container to use.
 	Image string
 	// Src is the directory that contains all the source code, including the module directory.
@@ -22,16 +29,19 @@ type Terratest struct {
 func New(
 	// the Version of the Terraform to use, e.g., "0.12.24".
 	// by default, it uses the latest Version.
-	// +default="latest"
+	// +default="1.22.0-alpine3.19"
 	// +optional
 	version string,
-
+	// the Version of the Terraform to use, e.g., "0.12.24".
+	// by default, it uses the latest Version.
+	// +default="1.6.0"
+	// +optional
+	tfVersion string,
 	// Image of the container to use.
 	// by default, it uses the official HashiCorp Terraform Image hashicorp/terraform.
 	// +default="gcr.io/distroless/static-debian11"
 	// +optional
 	image string,
-
 	// Src is the directory that contains all the source code,
 	// including the module directory.
 	src *Directory,
@@ -48,16 +58,23 @@ func New(
 		Image:   image,
 	}
 
+	if tfVersion == "" {
+		tfVersion = defaultTfVersion
+	}
+
+	if version == "" {
+		version = defaultImageVersion
+	}
+
 	if src == nil {
 		slog.Info("Src is not set, using the current module source directory")
 		src = dag.CurrentModule().Source().Directory(".")
-		tt.Src = src
-	} else {
-		tt.Src = src
 	}
 
+	tt.Src = src
+
 	if ctr == nil {
-		ctr = tt.Base(version).Ctr
+		ctr = tt.Base(version, tfVersion).Ctr
 	}
 
 	tt.Ctr = ctr
@@ -77,20 +94,18 @@ func New(
 
 // Base sets up the Container with a golang image and cache volumes
 // version string
-func (t *Terratest) Base(version string) *Terratest {
+func (t *Terratest) Base(goVersion, tfVersion string) *Terratest {
 	mod := dag.CacheVolume("gomodcache")
 	build := dag.CacheVolume("gobuildcache")
-	//image := fmt.Sprintf("alpine/golang:%s", version)
-	image := "golang:1.22.0-alpine3.19"
+	dotTerraform := dag.CacheVolume(".terraform")
+	image := fmt.Sprintf("golang:%s", goVersion)
+
 	c := dag.Container().
 		From(image).
 		WithMountedCache("/go/pkg/mod", mod).
 		WithMountedCache("/root/.cache/go-build", build).
-		// Install necessary utilities and download Terraform
-		WithExec([]string{"sh", "-c", "apk add --update wget unzip && " +
-			"wget https://releases.hashicorp.com/terraform/1.6.0/terraform_1.6.0_linux_amd64.zip && " +
-			"unzip terraform_1.6.0_linux_amd64.zip -d /usr/bin && " +
-			"rm terraform_1.6.0_linux_amd64.zip"}).
+		WithMountedCache("/root/.terraform", dotTerraform).
+		WithExec(t.getTFInstallCMD(tfVersion)).
 		WithMountedDirectory(mntPrefix, t.Src)
 
 	t.Ctr = c
@@ -139,10 +154,7 @@ func (t *Terratest) Run(
 	t.Ctr = ctr
 	parsedArgs := parseArgsFromStrToSlice(args)
 
-	// Initialize cmdToRun with the go test command
 	cmdToRun := []string{"go", "test"}
-
-	// Append parsedArgs regardless of args being empty or not
 	cmdToRun = append(cmdToRun, parsedArgs...)
 
 	t.Ctr = t.Ctr.WithExec(cmdToRun).WithFocus()
