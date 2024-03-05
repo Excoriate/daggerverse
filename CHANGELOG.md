@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.7.0](https://github.com/Excoriate/daggerverse/compare/v1.6.0...v1.7.0) (2024-03-05)
+
+
+### Features
+
+* add terratest mvp dagger module ([640334b](https://github.com/Excoriate/daggerverse/commit/640334b0958b77ce908db8415044ff0a9b4f4c18))
+* draft terratest module ([2f8f0f6](https://github.com/Excoriate/daggerverse/commit/2f8f0f6c4985256191a7972f61e15d249adcc415))
+
+
+### Docs
+
+* add better doc on gitlab-cicd-vars module ([ae32152](https://github.com/Excoriate/daggerverse/commit/ae32152112c411f90e78dab35b10ddef645d6a83))
+
 ## [1.6.0](https://github.com/Excoriate/daggerverse/compare/v1.5.0...v1.6.0) (2024-03-03)
 
 
