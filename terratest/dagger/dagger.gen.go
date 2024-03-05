@@ -501,35 +501,17 @@ func convertSlice[I any, O any](in []I, f func(I) O) []O {
 	return out
 }
 
-func (r Terraform) MarshalJSON() ([]byte, error) {
-	var concrete struct {
-		Version string
-		Image   string
-		Src     *Directory
-		BaseCtr *Container
-	}
-	concrete.Version = r.Version
-	concrete.Image = r.Image
-	concrete.Src = r.Src
-	concrete.BaseCtr = r.BaseCtr
+func (r Terratest) MarshalJSON() ([]byte, error) {
+	var concrete struct{}
 	return json.Marshal(&concrete)
 }
 
-func (r *Terraform) UnmarshalJSON(bs []byte) error {
-	var concrete struct {
-		Version string
-		Image   string
-		Src     *Directory
-		BaseCtr *Container
-	}
+func (r *Terratest) UnmarshalJSON(bs []byte) error {
+	var concrete struct{}
 	err := json.Unmarshal(bs, &concrete)
 	if err != nil {
 		return err
 	}
-	r.Version = concrete.Version
-	r.Image = concrete.Image
-	r.Src = concrete.Src
-	r.BaseCtr = concrete.BaseCtr
 	return nil
 }
 
@@ -592,312 +574,62 @@ func main() {
 
 func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName string, inputArgs map[string][]byte) (_ any, err error) {
 	switch parentName {
-	case "Terraform":
+	case "Terratest":
 		switch fnName {
-		case "Base":
-			var parent Terraform
+		case "ContainerEcho":
+			var parent Terratest
 			err = json.Unmarshal(parentJSON, &parent)
 			if err != nil {
 				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
 			}
-			return (*Terraform).Base(&parent), nil
-		case "WithModule":
-			var parent Terraform
+			var stringArg string
+			if inputArgs["stringArg"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["stringArg"]), &stringArg)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg stringArg", err))
+				}
+			}
+			return (*Terratest).ContainerEcho(&parent, stringArg), nil
+		case "GrepDir":
+			var parent Terratest
 			err = json.Unmarshal(parentJSON, &parent)
 			if err != nil {
 				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
 			}
-			var src *Directory
-			if inputArgs["src"] != nil {
-				err = json.Unmarshal([]byte(inputArgs["src"]), &src)
+			var directoryArg *Directory
+			if inputArgs["directoryArg"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["directoryArg"]), &directoryArg)
 				if err != nil {
-					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg src", err))
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg directoryArg", err))
 				}
 			}
-			return (*Terraform).WithModule(&parent, src), nil
-		case "WithContainer":
-			var parent Terraform
-			err = json.Unmarshal(parentJSON, &parent)
-			if err != nil {
-				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
-			}
-			var ctr *Container
-			if inputArgs["ctr"] != nil {
-				err = json.Unmarshal([]byte(inputArgs["ctr"]), &ctr)
+			var pattern string
+			if inputArgs["pattern"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["pattern"]), &pattern)
 				if err != nil {
-					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg ctr", err))
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg pattern", err))
 				}
 			}
-			return (*Terraform).WithContainer(&parent, ctr), nil
-		case "Init":
-			var parent Terraform
-			err = json.Unmarshal(parentJSON, &parent)
-			if err != nil {
-				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
-			}
-			var tfmod string
-			if inputArgs["tfmod"] != nil {
-				err = json.Unmarshal([]byte(inputArgs["tfmod"]), &tfmod)
-				if err != nil {
-					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg tfmod", err))
-				}
-			}
-			var args string
-			if inputArgs["args"] != nil {
-				err = json.Unmarshal([]byte(inputArgs["args"]), &args)
-				if err != nil {
-					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg args", err))
-				}
-			}
-			return (*Terraform).Init(&parent, tfmod, args)
-		case "Plan":
-			var parent Terraform
-			err = json.Unmarshal(parentJSON, &parent)
-			if err != nil {
-				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
-			}
-			var tfmod string
-			if inputArgs["tfmod"] != nil {
-				err = json.Unmarshal([]byte(inputArgs["tfmod"]), &tfmod)
-				if err != nil {
-					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg tfmod", err))
-				}
-			}
-			var args string
-			if inputArgs["args"] != nil {
-				err = json.Unmarshal([]byte(inputArgs["args"]), &args)
-				if err != nil {
-					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg args", err))
-				}
-			}
-			var initArgs string
-			if inputArgs["initArgs"] != nil {
-				err = json.Unmarshal([]byte(inputArgs["initArgs"]), &initArgs)
-				if err != nil {
-					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg initArgs", err))
-				}
-			}
-			return (*Terraform).Plan(&parent, tfmod, args, initArgs)
-		case "Apply":
-			var parent Terraform
-			err = json.Unmarshal(parentJSON, &parent)
-			if err != nil {
-				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
-			}
-			var tfmod string
-			if inputArgs["tfmod"] != nil {
-				err = json.Unmarshal([]byte(inputArgs["tfmod"]), &tfmod)
-				if err != nil {
-					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg tfmod", err))
-				}
-			}
-			var args string
-			if inputArgs["args"] != nil {
-				err = json.Unmarshal([]byte(inputArgs["args"]), &args)
-				if err != nil {
-					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg args", err))
-				}
-			}
-			var initArgs string
-			if inputArgs["initArgs"] != nil {
-				err = json.Unmarshal([]byte(inputArgs["initArgs"]), &initArgs)
-				if err != nil {
-					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg initArgs", err))
-				}
-			}
-			return (*Terraform).Apply(&parent, tfmod, args, initArgs)
-		case "Destroy":
-			var parent Terraform
-			err = json.Unmarshal(parentJSON, &parent)
-			if err != nil {
-				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
-			}
-			var tfmod string
-			if inputArgs["tfmod"] != nil {
-				err = json.Unmarshal([]byte(inputArgs["tfmod"]), &tfmod)
-				if err != nil {
-					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg tfmod", err))
-				}
-			}
-			var args string
-			if inputArgs["args"] != nil {
-				err = json.Unmarshal([]byte(inputArgs["args"]), &args)
-				if err != nil {
-					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg args", err))
-				}
-			}
-			var initArgs string
-			if inputArgs["initArgs"] != nil {
-				err = json.Unmarshal([]byte(inputArgs["initArgs"]), &initArgs)
-				if err != nil {
-					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg initArgs", err))
-				}
-			}
-			return (*Terraform).Destroy(&parent, tfmod, args, initArgs)
-		case "Validate":
-			var parent Terraform
-			err = json.Unmarshal(parentJSON, &parent)
-			if err != nil {
-				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
-			}
-			var tfmod string
-			if inputArgs["tfmod"] != nil {
-				err = json.Unmarshal([]byte(inputArgs["tfmod"]), &tfmod)
-				if err != nil {
-					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg tfmod", err))
-				}
-			}
-			var args string
-			if inputArgs["args"] != nil {
-				err = json.Unmarshal([]byte(inputArgs["args"]), &args)
-				if err != nil {
-					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg args", err))
-				}
-			}
-			var initArgs string
-			if inputArgs["initArgs"] != nil {
-				err = json.Unmarshal([]byte(inputArgs["initArgs"]), &initArgs)
-				if err != nil {
-					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg initArgs", err))
-				}
-			}
-			return (*Terraform).Validate(&parent, tfmod, args, initArgs)
-		case "Format":
-			var parent Terraform
-			err = json.Unmarshal(parentJSON, &parent)
-			if err != nil {
-				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
-			}
-			var tfmod string
-			if inputArgs["tfmod"] != nil {
-				err = json.Unmarshal([]byte(inputArgs["tfmod"]), &tfmod)
-				if err != nil {
-					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg tfmod", err))
-				}
-			}
-			var args string
-			if inputArgs["args"] != nil {
-				err = json.Unmarshal([]byte(inputArgs["args"]), &args)
-				if err != nil {
-					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg args", err))
-				}
-			}
-			return (*Terraform).Format(&parent, tfmod, args)
-		case "":
-			var parent Terraform
-			err = json.Unmarshal(parentJSON, &parent)
-			if err != nil {
-				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
-			}
-			var version string
-			if inputArgs["version"] != nil {
-				err = json.Unmarshal([]byte(inputArgs["version"]), &version)
-				if err != nil {
-					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg version", err))
-				}
-			}
-			var image string
-			if inputArgs["image"] != nil {
-				err = json.Unmarshal([]byte(inputArgs["image"]), &image)
-				if err != nil {
-					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg image", err))
-				}
-			}
-			var src *Directory
-			if inputArgs["src"] != nil {
-				err = json.Unmarshal([]byte(inputArgs["src"]), &src)
-				if err != nil {
-					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg src", err))
-				}
-			}
-			var ctr *Container
-			if inputArgs["ctr"] != nil {
-				err = json.Unmarshal([]byte(inputArgs["ctr"]), &ctr)
-				if err != nil {
-					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg ctr", err))
-				}
-			}
-			var envVars string
-			if inputArgs["envVars"] != nil {
-				err = json.Unmarshal([]byte(inputArgs["envVars"]), &envVars)
-				if err != nil {
-					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg envVars", err))
-				}
-			}
-			return New(version, image, src, ctr, envVars), nil
+			return (*Terratest).GrepDir(&parent, ctx, directoryArg, pattern)
 		default:
 			return nil, fmt.Errorf("unknown function %s", fnName)
 		}
 	case "":
 		return dag.Module().
+			WithDescription("A generated module for Terratest functions\n\nThis module has been generated via dagger init and serves as a reference to\nbasic module structure as you get started with Dagger.\n\nTwo functions have been pre-created. You can modify, delete, or add to them,\nas needed. They demonstrate usage of arguments and return types using simple\necho and grep commands. The functions can be called from the dagger CLI or\nfrom one of the SDKs.\n\nThe first line in this comment block is a short description line and the\nrest is a long description with more detail on the module's purpose or usage,\nif appropriate. All modules should have a short description.\n").
 			WithObject(
-				dag.TypeDef().WithObject("Terraform").
+				dag.TypeDef().WithObject("Terratest").
 					WithFunction(
-						dag.Function("Base",
-							dag.TypeDef().WithObject("Terraform")).
-							WithDescription("Base sets up the Container with a Terraform Image and cache volumes")).
-					WithFunction(
-						dag.Function("WithModule",
-							dag.TypeDef().WithObject("Terraform")).
-							WithDescription("WithModule specifies the module to use in the Terraform module by the 'Src' directory.").
-							WithArg("src", dag.TypeDef().WithObject("Directory"))).
-					WithFunction(
-						dag.Function("WithContainer",
-							dag.TypeDef().WithObject("Terraform")).
-							WithDescription("WithContainer specifies the container to use in the Terraform module.").
-							WithArg("ctr", dag.TypeDef().WithObject("Container"))).
-					WithFunction(
-						dag.Function("Init",
+						dag.Function("ContainerEcho",
 							dag.TypeDef().WithObject("Container")).
-							WithDescription("Init initializes the Terraform module.").
-							WithArg("tfmod", dag.TypeDef().WithKind(StringKind), FunctionWithArgOpts{Description: "The tfmod is the Terraform module to use."}).
-							WithArg("args", dag.TypeDef().WithKind(StringKind).WithOptional(true), FunctionWithArgOpts{Description: "args are the n number of arguments to pass to the Terraform init command."})).
+							WithDescription("Returns a container that echoes whatever string argument is provided").
+							WithArg("stringArg", dag.TypeDef().WithKind(StringKind))).
 					WithFunction(
-						dag.Function("Plan",
-							dag.TypeDef().WithObject("Container")).
-							WithDescription("Plan creates an execution plan for the Terraform module.").
-							WithArg("tfmod", dag.TypeDef().WithKind(StringKind), FunctionWithArgOpts{Description: "The tfmod is the Terraform module to use."}).
-							WithArg("args", dag.TypeDef().WithKind(StringKind).WithOptional(true), FunctionWithArgOpts{Description: "args are the n number of arguments to pass to the Terraform plan command."}).
-							WithArg("initArgs", dag.TypeDef().WithKind(StringKind).WithOptional(true), FunctionWithArgOpts{Description: "initArgs are the n number of arguments to pass to the Terraform init command."})).
-					WithFunction(
-						dag.Function("Apply",
-							dag.TypeDef().WithObject("Container")).
-							WithDescription("Apply creates an execution plan for the Terraform module.").
-							WithArg("tfmod", dag.TypeDef().WithKind(StringKind), FunctionWithArgOpts{Description: "The tfmod is the Terraform module to use."}).
-							WithArg("args", dag.TypeDef().WithKind(StringKind).WithOptional(true), FunctionWithArgOpts{Description: "args are the n number of arguments to pass to the Terraform apply command."}).
-							WithArg("initArgs", dag.TypeDef().WithKind(StringKind).WithOptional(true), FunctionWithArgOpts{Description: "initArgs are the n number of arguments to pass to the Terraform init command."})).
-					WithFunction(
-						dag.Function("Destroy",
-							dag.TypeDef().WithObject("Container")).
-							WithDescription("Destroy creates an execution plan for the Terraform module.").
-							WithArg("tfmod", dag.TypeDef().WithKind(StringKind), FunctionWithArgOpts{Description: "The tfmod is the Terraform module to use."}).
-							WithArg("args", dag.TypeDef().WithKind(StringKind).WithOptional(true), FunctionWithArgOpts{Description: "args are the n number of arguments to pass to the Terraform destroy command."}).
-							WithArg("initArgs", dag.TypeDef().WithKind(StringKind).WithOptional(true), FunctionWithArgOpts{Description: "initArgs are the n number of arguments to pass to the Terraform init command."})).
-					WithFunction(
-						dag.Function("Validate",
-							dag.TypeDef().WithObject("Container")).
-							WithDescription("Validate creates an execution plan for the Terraform module.").
-							WithArg("tfmod", dag.TypeDef().WithKind(StringKind), FunctionWithArgOpts{Description: "The tfmod is the Terraform module to use."}).
-							WithArg("args", dag.TypeDef().WithKind(StringKind).WithOptional(true), FunctionWithArgOpts{Description: "args are the n number of arguments to pass to the Terraform validate command."}).
-							WithArg("initArgs", dag.TypeDef().WithKind(StringKind).WithOptional(true), FunctionWithArgOpts{Description: "initArgs are the n number of arguments to pass to the Terraform init command."})).
-					WithFunction(
-						dag.Function("Format",
-							dag.TypeDef().WithObject("Container")).
-							WithDescription("Format creates an execution plan for the Terraform module.").
-							WithArg("tfmod", dag.TypeDef().WithKind(StringKind), FunctionWithArgOpts{Description: "The tfmod is the Terraform module to use."}).
-							WithArg("args", dag.TypeDef().WithKind(StringKind).WithOptional(true), FunctionWithArgOpts{Description: "args are the n number of arguments to pass to the Terraform fmt command."})).
-					WithField("Version", dag.TypeDef().WithKind(StringKind), TypeDefWithFieldOpts{Description: "The Version of the Terraform to use, e.g., \"0.12.24\"."}).
-					WithField("Image", dag.TypeDef().WithKind(StringKind), TypeDefWithFieldOpts{Description: "Image of the container to use."}).
-					WithField("Src", dag.TypeDef().WithObject("Directory"), TypeDefWithFieldOpts{Description: "Src is the directory that contains all the source code, including the module directory."}).
-					WithField("Ctr", dag.TypeDef().WithObject("Container"), TypeDefWithFieldOpts{Description: "Ctr is the container to use as a base container."}).
-					WithConstructor(
-						dag.Function("New",
-							dag.TypeDef().WithObject("Terraform")).
-							WithArg("version", dag.TypeDef().WithKind(StringKind).WithOptional(true), FunctionWithArgOpts{Description: "the Version of the Terraform to use, e.g., \"0.12.24\".\nby default, it uses the latest Version.", DefaultValue: JSON("\"latest\"")}).
-							WithArg("image", dag.TypeDef().WithKind(StringKind).WithOptional(true), FunctionWithArgOpts{Description: "Image of the container to use.\nby default, it uses the official HashiCorp Terraform Image hashicorp/terraform.", DefaultValue: JSON("\"hashicorp/terraform\"")}).
-							WithArg("src", dag.TypeDef().WithObject("Directory"), FunctionWithArgOpts{Description: "Src is the directory that contains all the source code,\nincluding the module directory."}).
-							WithArg("ctr", dag.TypeDef().WithObject("Container").WithOptional(true), FunctionWithArgOpts{Description: "ctr is the container to use as a base container.\nIt's an optional parameter. If it's not set, it's going to create a new container."}).
-							WithArg("envVars", dag.TypeDef().WithKind(StringKind).WithOptional(true), FunctionWithArgOpts{Description: "envVars is a string of environment variables in the form of \"key1=value1,key2=value2\""}))), nil
+						dag.Function("GrepDir",
+							dag.TypeDef().WithKind(StringKind)).
+							WithDescription("Returns lines that match a pattern in the files of the provided Directory").
+							WithArg("directoryArg", dag.TypeDef().WithObject("Directory")).
+							WithArg("pattern", dag.TypeDef().WithKind(StringKind)))), nil
 	default:
 		return nil, fmt.Errorf("unknown object %s", parentName)
 	}
