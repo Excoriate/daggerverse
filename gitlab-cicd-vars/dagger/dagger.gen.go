@@ -6,11 +6,33 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"main/internal/dagger"
+	"log/slog"
 	"os"
+
+	"main/internal/dagger"
+	"main/internal/telemetry"
+
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/sdk/resource"
+	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var dag = dagger.Connect()
+
+func Tracer() trace.Tracer {
+	return otel.Tracer("dagger.io/sdk.go")
+}
+
+// used for local MarshalJSON implementations
+var marshalCtx = context.Background()
+
+// called by main()
+func setMarshalContext(ctx context.Context) {
+	marshalCtx = ctx
+	dagger.SetMarshalContext(ctx)
+}
 
 type DaggerObject = dagger.DaggerObject
 
@@ -88,6 +110,9 @@ type ModuleID = dagger.ModuleID
 // The `ModuleSourceID` scalar type represents an identifier for an object of type ModuleSource.
 type ModuleSourceID = dagger.ModuleSourceID
 
+// The `ModuleSourceViewID` scalar type represents an identifier for an object of type ModuleSourceView.
+type ModuleSourceViewID = dagger.ModuleSourceViewID
+
 // The `ObjectTypeDefID` scalar type represents an identifier for an object of type ObjectTypeDef.
 type ObjectTypeDefID = dagger.ObjectTypeDefID
 
@@ -157,6 +182,9 @@ type ContainerPublishOpts = dagger.ContainerPublishOpts
 // ContainerTerminalOpts contains options for Container.Terminal
 type ContainerTerminalOpts = dagger.ContainerTerminalOpts
 
+// ContainerWithDefaultTerminalCmdOpts contains options for Container.WithDefaultTerminalCmd
+type ContainerWithDefaultTerminalCmdOpts = dagger.ContainerWithDefaultTerminalCmdOpts
+
 // ContainerWithDirectoryOpts contains options for Container.WithDirectory
 type ContainerWithDirectoryOpts = dagger.ContainerWithDirectoryOpts
 
@@ -221,6 +249,9 @@ type DirectoryDockerBuildOpts = dagger.DirectoryDockerBuildOpts
 
 // DirectoryEntriesOpts contains options for Directory.Entries
 type DirectoryEntriesOpts = dagger.DirectoryEntriesOpts
+
+// DirectoryExportOpts contains options for Directory.Export
+type DirectoryExportOpts = dagger.DirectoryExportOpts
 
 // DirectoryPipelineOpts contains options for Directory.Pipeline
 type DirectoryPipelineOpts = dagger.DirectoryPipelineOpts
@@ -294,6 +325,8 @@ type GitRefTreeOpts = dagger.GitRefTreeOpts
 // A git repository.
 type GitRepository = dagger.GitRepository
 
+type WithGitRepositoryFunc = dagger.WithGitRepositoryFunc
+
 // A graphql input type, which is essentially just a group of named args.
 // This is currently only used to represent pre-existing usage of graphql input types
 // in the core API. It is not used by user modules and shouldn't ever be as user
@@ -324,6 +357,12 @@ type ModuleDependency = dagger.ModuleDependency
 type ModuleSource = dagger.ModuleSource
 
 type WithModuleSourceFunc = dagger.WithModuleSourceFunc
+
+// ModuleSourceResolveDirectoryFromCallerOpts contains options for ModuleSource.ResolveDirectoryFromCaller
+type ModuleSourceResolveDirectoryFromCallerOpts = dagger.ModuleSourceResolveDirectoryFromCallerOpts
+
+// A named set of path filters that can be applied to directory arguments provided to functions.
+type ModuleSourceView = dagger.ModuleSourceView
 
 // A definition of a custom object defined in a Module.
 type ObjectTypeDef = dagger.ObjectTypeDef
@@ -504,95 +543,126 @@ func convertSlice[I any, O any](in []I, f func(I) O) []O {
 func (r GitlabCicdVars) MarshalJSON() ([]byte, error) {
 	var concrete struct {
 		Token string
-		Ctr   *Container
 	}
 	concrete.Token = r.Token
-	concrete.Ctr = r.Ctr
 	return json.Marshal(&concrete)
 }
 
 func (r *GitlabCicdVars) UnmarshalJSON(bs []byte) error {
 	var concrete struct {
 		Token string
-		Ctr   *Container
 	}
 	err := json.Unmarshal(bs, &concrete)
 	if err != nil {
 		return err
 	}
 	r.Token = concrete.Token
-	r.Ctr = concrete.Ctr
 	return nil
 }
 
 func main() {
 	ctx := context.Background()
 
+	// Direct slog to the new stderr. This is only for dev time debugging, and
+	// runtime errors/warnings.
+	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+		Level: slog.LevelWarn,
+	})))
+
+	if err := dispatch(ctx); err != nil {
+		fmt.Println(err.Error())
+		os.Exit(2)
+	}
+}
+
+func dispatch(ctx context.Context) error {
+	ctx = telemetry.InitEmbedded(ctx, resource.NewWithAttributes(
+		semconv.SchemaURL,
+		semconv.ServiceNameKey.String("dagger-go-sdk"),
+		// TODO version?
+	))
+	defer telemetry.Close()
+
+	ctx, span := Tracer().Start(ctx, "Go runtime",
+		trace.WithAttributes(
+			// In effect, the following two attributes hide the exec /runtime span.
+			//
+			// Replace the parent span,
+			attribute.Bool("dagger.io/ui.mask", true),
+			// and only show our children.
+			attribute.Bool("dagger.io/ui.passthrough", true),
+		))
+	defer span.End()
+
+	// A lot of the "work" actually happens when we're marshalling the return
+	// value, which entails getting object IDs, which happens in MarshalJSON,
+	// which has no ctx argument, so we use this lovely global variable.
+	setMarshalContext(ctx)
+
 	fnCall := dag.CurrentFunctionCall()
 	parentName, err := fnCall.ParentName(ctx)
 	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(2)
+		return fmt.Errorf("get parent name: %w", err)
 	}
 	fnName, err := fnCall.Name(ctx)
 	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(2)
+		return fmt.Errorf("get fn name: %w", err)
 	}
 	parentJson, err := fnCall.Parent(ctx)
 	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(2)
+		return fmt.Errorf("get fn parent: %w", err)
 	}
 	fnArgs, err := fnCall.InputArgs(ctx)
 	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(2)
+		return fmt.Errorf("get fn args: %w", err)
 	}
 
 	inputArgs := map[string][]byte{}
 	for _, fnArg := range fnArgs {
 		argName, err := fnArg.Name(ctx)
 		if err != nil {
-			fmt.Println(err.Error())
-			os.Exit(2)
+			return fmt.Errorf("get fn arg name: %w", err)
 		}
 		argValue, err := fnArg.Value(ctx)
 		if err != nil {
-			fmt.Println(err.Error())
-			os.Exit(2)
+			return fmt.Errorf("get fn arg value: %w", err)
 		}
 		inputArgs[argName] = []byte(argValue)
 	}
 
 	result, err := invoke(ctx, []byte(parentJson), parentName, fnName, inputArgs)
 	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(2)
+		return fmt.Errorf("invoke: %w", err)
 	}
 	resultBytes, err := json.Marshal(result)
 	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(2)
+		return fmt.Errorf("marshal: %w", err)
 	}
 	_, err = fnCall.ReturnValue(ctx, JSON(resultBytes))
 	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(2)
+		return fmt.Errorf("store return value: %w", err)
 	}
+	return nil
 }
 
 func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName string, inputArgs map[string][]byte) (_ any, err error) {
 	switch parentName {
 	case "GitlabCicdVars":
 		switch fnName {
-		case "Base":
+		case "GetAll":
 			var parent GitlabCicdVars
 			err = json.Unmarshal(parentJSON, &parent)
 			if err != nil {
 				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
 			}
-			return (*GitlabCicdVars).Base(&parent), nil
+			var path string
+			if inputArgs["path"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["path"]), &path)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg path", err))
+				}
+			}
+			return (*GitlabCicdVars).GetAll(&parent, path)
 		case "Get":
 			var parent GitlabCicdVars
 			err = json.Unmarshal(parentJSON, &parent)
@@ -606,7 +676,14 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg path", err))
 				}
 			}
-			return (*GitlabCicdVars).Get(&parent, path)
+			var varName string
+			if inputArgs["varName"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["varName"]), &varName)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg varName", err))
+				}
+			}
+			return (*GitlabCicdVars).Get(&parent, path, varName)
 		case "":
 			var parent GitlabCicdVars
 			err = json.Unmarshal(parentJSON, &parent)
@@ -620,14 +697,7 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg token", err))
 				}
 			}
-			var ctr *Container
-			if inputArgs["ctr"] != nil {
-				err = json.Unmarshal([]byte(inputArgs["ctr"]), &ctr)
-				if err != nil {
-					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg ctr", err))
-				}
-			}
-			return New(token, ctr), nil
+			return New(token), nil
 		default:
 			return nil, fmt.Errorf("unknown function %s", fnName)
 		}
@@ -636,20 +706,20 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 			WithObject(
 				dag.TypeDef().WithObject("GitlabCicdVars").
 					WithFunction(
-						dag.Function("Base",
-							dag.TypeDef().WithObject("GitlabCicdVars")).
-							WithDescription("Base sets up the Container with a Terraform Image and cache volumes")).
+						dag.Function("GetAll",
+							dag.TypeDef().WithKind(StringKind)).
+							WithDescription("GetAll returns all the variables in a project").
+							WithArg("path", dag.TypeDef().WithKind(StringKind), FunctionWithArgOpts{Description: "path is the path to the GitLab's project, also known as 'namespace'"})).
 					WithFunction(
 						dag.Function("Get",
-							dag.TypeDef().WithListOf(dag.TypeDef().WithKind(StringKind))).
-							WithArg("path", dag.TypeDef().WithKind(StringKind))).
+							dag.TypeDef().WithKind(StringKind)).
+							WithArg("path", dag.TypeDef().WithKind(StringKind), FunctionWithArgOpts{Description: "path is the path to the GitLab's project, also known as 'namespace'"}).
+							WithArg("varName", dag.TypeDef().WithKind(StringKind), FunctionWithArgOpts{Description: "varName is the name of the variable to get"})).
 					WithField("Token", dag.TypeDef().WithKind(StringKind), TypeDefWithFieldOpts{Description: "token to use for gitlab api"}).
-					WithField("Ctr", dag.TypeDef().WithObject("Container"), TypeDefWithFieldOpts{Description: "Ctr is the container to use for the gitlab"}).
 					WithConstructor(
 						dag.Function("New",
 							dag.TypeDef().WithObject("GitlabCicdVars")).
-							WithArg("token", dag.TypeDef().WithKind(StringKind), FunctionWithArgOpts{Description: "token is the GitLab API token to use, for information about how to create a token,\nsee https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html"}).
-							WithArg("ctr", dag.TypeDef().WithObject("Container").WithOptional(true), FunctionWithArgOpts{Description: "ctr is the container to use for the gitlab"}))), nil
+							WithArg("token", dag.TypeDef().WithKind(StringKind), FunctionWithArgOpts{Description: "token is the GitLab API token to use, for information about how to create a token,\nsee https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html"}))), nil
 	default:
 		return nil, fmt.Errorf("unknown object %s", parentName)
 	}
