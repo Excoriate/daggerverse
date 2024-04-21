@@ -17,10 +17,10 @@ Through the [Dagger CLI](https://docs.dagger.io/cli/465058/install), or by using
 
 ## Features 🎨
 
-| Command or functionality                                 | Command     | Example                                                                                                                  | Status |
-|----------------------------------------------------------|-------------|--------------------------------------------------------------------------------------------------------------------------|--------|
-| Fetch a single CI/CD variable from a GitLab project      | **get**     | `dagger call --token=$GITLAB_PRIVATE_TOKEN get --path="mygroup/subgroup/my-project" --var-name="LOOK_FOR_THIS_CICD_VAR"` | ✅      |
-| Fetch all CI/CD variables configured in a GitLab project | **get-all** | `dagger call --token=$GITLAB_PRIVATE_TOKEN get-all --path="group/subgroup/my-project"`                                   | ✅      |
+| Command or functionality                                 | Command     | Example                                                                                                                                                                                                                                                                                                                                           | Status |
+|----------------------------------------------------------|-------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------|
+| Fetch a single CI/CD variable from a GitLab project      | **get**     | `dagger call --token=$GITLAB_PRIVATE_TOKEN get --path="mygroup/subgroup/my-project" --var-name="LOOK_FOR_THIS_CICD_VAR"`<br/> The module use the special type **Secret** in Dagger, so its value is resolved securely internall. It means that you can call the module passing the token like: `dagger call --token:env:MY_EXPORTED_GITLAB_TOKEN` | ✅      |
+| Fetch all CI/CD variables configured in a GitLab project | **get-all** | `dagger call --token=$GITLAB_PRIVATE_TOKEN get-all --path="group/subgroup/my-project"`                                                                                                                                                                                                                                                            | ✅      |
 
 > **NOTE**: The `get` command is used to retrieve a specific CI/CD variable by specifying the `--var-name` argument. The `get-all` command fetches all CI/CD variables configured within the specified project. Both commands require a valid GitLab private token passed through the `--token` argument for authentication.
 
