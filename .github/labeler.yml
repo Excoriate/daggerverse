@@ -1,30 +1,29 @@
----
-ci/cd:
-    - .github/workflows/*
+root:
+  - changed-files:
+      - any-glob-to-any-file: '*'
+
+AnyChange:
+  - changed-files:
+      - any-glob-to-any-file: '**'
+
+Documentation:
+  - changed-files:
+      - any-glob-to-any-file: '**/*.md'
+
+feature:
+  - head-branch: ['^feature', 'feature']
+
 infrastructure:
-    - terraform/**
-    - infra/**
-    - modules/**
-    - terragrunt/**
-documentation:
-    - README.md
-    - .github/ISSUE_TEMPLATE/*
-    - ./*.md
-patch:
-    - TaskFile.yml
-    - LICENSE
-    - .github/labeler.yml
-    - .yamllint.yml
-    - .Makefile
-    - .pre-commit-config.yaml
-    - .goreleaser.yml
-    - .github/settings.yml
-    - .github/dependabot.yml
-    - .gitignore
-    - .gitattributes
-    - .shellcheckrc
-    - .editorconfig
-    - .dockerignore
-minor:
-    - pkg/*
-    - cli/*
+  - head-branch: ['^infrastructure', 'infrastructure']
+  - changed-files:
+      - any-glob-to-any-file: ['**/*.tf', '**/*.tfvars', '**/*.hcl']
+
+release:
+  - base-branch: 'main'
+
+source:
+    - changed-files:
+        - any-glob-to-any-file: '**/*.go'
+ci/cd:
+  - changed-files:
+      - any-glob-to-any-file: ['**/.github/workflows/*', '**/.gitlab-ci.yml']
