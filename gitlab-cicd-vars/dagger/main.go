@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/xanzy/go-gitlab"
@@ -9,13 +10,13 @@ import (
 
 type GitlabCicdVars struct {
 	// token to use for gitlab api
-	Token string
+	Token *Secret
 }
 
 func New(
 	// token is the GitLab API token to use, for information about how to create a token,
 	//see https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html
-	token string,
+	token *Secret,
 ) *GitlabCicdVars {
 	g := &GitlabCicdVars{}
 
@@ -58,12 +59,26 @@ func listVariables(c *gitlab.Client, namespace string) ([]string, error) {
 	return variablesToReturn, nil
 }
 
+func getSecretValue(ctx context.Context, token *Secret) (string, error) {
+	plainText, err := token.Plaintext(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to get secret value from the secret passed: %w", err)
+	}
+
+	return plainText, nil
+}
+
 // GetAll returns all the variables in a project
 func (g *GitlabCicdVars) GetAll(
 	// path is the path to the GitLab's project, also known as 'namespace'
 	path string,
 ) (string, error) {
-	client, err := getGitLabClient(g.Token)
+	secretValue, err := getSecretValue(context.Background(), g.Token)
+	if err != nil {
+		return "", err
+	}
+
+	client, err := getGitLabClient(secretValue)
 	if err != nil {
 		return "", err
 	}
@@ -81,7 +96,12 @@ func (g *GitlabCicdVars) Get(
 	path,
 	// varName is the name of the variable to get
 	varName string) (string, error) {
-	client, err := getGitLabClient(g.Token)
+	secretValue, err := getSecretValue(context.Background(), g.Token)
+	if err != nil {
+		return "", err
+	}
+
+	client, err := getGitLabClient(secretValue)
 	if err != nil {
 		return "", err
 	}
