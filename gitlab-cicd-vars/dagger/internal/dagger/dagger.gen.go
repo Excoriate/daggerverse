@@ -21,7 +21,7 @@ import (
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/trace"
 
-	"main/internal/querybuilder"
+	"gitlabCICDVars/internal/querybuilder"
 )
 
 func Tracer() trace.Tracer {

@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"golang.org/x/exp/slog"
+	"log/slog"
 	"path/filepath"
 )
 
@@ -13,7 +13,7 @@ const (
 )
 
 type Terratest struct {
-	// The Version of the Golang image that'll host the 'terartest' test
+	// The Version of the Golang image that'll host the 'terratest' test
 	Version string
 	// TfVersion is the Version of the Terraform to use, e.g., "0.12.24".
 	// by default, it uses the latest Version.
