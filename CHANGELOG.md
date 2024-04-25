@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.8.0](https://github.com/Excoriate/daggerverse/compare/v1.7.0...v1.8.0) (2024-04-25)
+
+
+### Features
+
+* Add dagger generated files and query builder to gitignore ([#23](https://github.com/Excoriate/daggerverse/issues/23)) ([8640987](https://github.com/Excoriate/daggerverse/commit/864098737169133cdb42fd9d5c89a67c703913ff))
+* Update labeler configuration with new rules ([#26](https://github.com/Excoriate/daggerverse/issues/26)) ([b5cb8ec](https://github.com/Excoriate/daggerverse/commit/b5cb8ec27531ab07a91a8af46b3d6fa96a5725ca))
+* Update module dependencies ([#30](https://github.com/Excoriate/daggerverse/issues/30)) ([f2ca164](https://github.com/Excoriate/daggerverse/commit/f2ca16456bc74dd3c15c59d0b2277f24ece49fc5))
+* Upgrade Go to version 1.21.7, update tflint engineVersion to v0.11.1, ([#31](https://github.com/Excoriate/daggerverse/issues/31)) ([01c88d7](https://github.com/Excoriate/daggerverse/commit/01c88d723425d18fface16016fae2ec33d96f2f0))
+
+
+### Other
+
+* Update gqlgen and go-logr versions for dagger internal telemetry folder. ([#25](https://github.com/Excoriate/daggerverse/issues/25)) ([59fb15b](https://github.com/Excoriate/daggerverse/commit/59fb15b6a961982e0bc6c339cc01cd72b0497635))
+
+
+### Refactoring
+
+* **cli:** improve handling of secret variables in get command ([#29](https://github.com/Excoriate/daggerverse/issues/29)) ([82e10c9](https://github.com/Excoriate/daggerverse/commit/82e10c90c0a4454bd9997e96cc16790fc0ec8fa4))
+* Fix indentation in workflows and labeler files ([#27](https://github.com/Excoriate/daggerverse/issues/27)) ([e2c4a88](https://github.com/Excoriate/daggerverse/commit/e2c4a88d5614fbb76ce2ea839800e728e3a9969a))
+* Refactor main.go to use secret token for GitLab client authentication. ([#28](https://github.com/Excoriate/daggerverse/issues/28)) ([25dbf73](https://github.com/Excoriate/daggerverse/commit/25dbf73e8cbe4ef443b3d90a1abdf77422367cbd))
+
 ## [1.7.0](https://github.com/Excoriate/daggerverse/compare/v1.6.0...v1.7.0) (2024-03-05)
 
 
