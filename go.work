@@ -1,6 +1,16 @@
 go 1.21.7
 
+toolchain go1.21.7
+
 use (
-	goreleaser/dagger
+	./gitlab-cicd-vars/dagger
+	./goreleaser/dagger
+	./terraform/dagger
+	./terratest/dagger
+	./tflint/dagger
 	daggerx
+	utils
+	.
 )
+
+replace github.com/excoriate/daggerverse/daggerx => ./daggerx

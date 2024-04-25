@@ -9,8 +9,8 @@ import (
 	"log/slog"
 	"os"
 
-	"main/internal/dagger"
-	"main/internal/telemetry"
+	"gitlabCICDVars/internal/dagger"
+	"gitlabCICDVars/internal/telemetry"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -542,7 +542,7 @@ func convertSlice[I any, O any](in []I, f func(I) O) []O {
 
 func (r GitlabCicdVars) MarshalJSON() ([]byte, error) {
 	var concrete struct {
-		Token string
+		Token *Secret
 	}
 	concrete.Token = r.Token
 	return json.Marshal(&concrete)
@@ -550,7 +550,7 @@ func (r GitlabCicdVars) MarshalJSON() ([]byte, error) {
 
 func (r *GitlabCicdVars) UnmarshalJSON(bs []byte) error {
 	var concrete struct {
-		Token string
+		Token *Secret
 	}
 	err := json.Unmarshal(bs, &concrete)
 	if err != nil {
@@ -690,7 +690,7 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 			if err != nil {
 				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
 			}
-			var token string
+			var token *Secret
 			if inputArgs["token"] != nil {
 				err = json.Unmarshal([]byte(inputArgs["token"]), &token)
 				if err != nil {
@@ -715,11 +715,11 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 							dag.TypeDef().WithKind(StringKind)).
 							WithArg("path", dag.TypeDef().WithKind(StringKind), FunctionWithArgOpts{Description: "path is the path to the GitLab's project, also known as 'namespace'"}).
 							WithArg("varName", dag.TypeDef().WithKind(StringKind), FunctionWithArgOpts{Description: "varName is the name of the variable to get"})).
-					WithField("Token", dag.TypeDef().WithKind(StringKind), TypeDefWithFieldOpts{Description: "token to use for gitlab api"}).
+					WithField("Token", dag.TypeDef().WithObject("Secret"), TypeDefWithFieldOpts{Description: "token to use for gitlab api"}).
 					WithConstructor(
 						dag.Function("New",
 							dag.TypeDef().WithObject("GitlabCicdVars")).
-							WithArg("token", dag.TypeDef().WithKind(StringKind), FunctionWithArgOpts{Description: "token is the GitLab API token to use, for information about how to create a token,\nsee https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html"}))), nil
+							WithArg("token", dag.TypeDef().WithObject("Secret"), FunctionWithArgOpts{Description: "token is the GitLab API token to use, for information about how to create a token,\nsee https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html"}))), nil
 	default:
 		return nil, fmt.Errorf("unknown object %s", parentName)
 	}
