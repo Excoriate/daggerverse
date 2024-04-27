@@ -43,4 +43,7 @@ This module allows you to integrate GoReleaser into your Dagger pipelines easily
 dagger call -m github.com/Excoriate/daggerverse/goreleaser@<version> \
 check --src="mydir/src"
 
+dagger -m github.com/Excoriate/daggerverse/goreleaser@v1.9.0 call --src="../" release \
+--cfg=test/goreleaser/simple-go-app/.goreleaser.yaml --clean --env-vars="GITHUB_TOKEN=$GITHUB_TOKEN" --auto-snapshot
+
 ```
