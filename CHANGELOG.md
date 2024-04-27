@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.9.0](https://github.com/Excoriate/daggerverse/compare/v1.8.0...v1.9.0) (2024-04-27)
+
+
+### Features
+
+* **dagger:** Add Release method to run 'goreleaser release' ([#36](https://github.com/Excoriate/daggerverse/issues/36)) ([5b4ff83](https://github.com/Excoriate/daggerverse/commit/5b4ff83d7dba76c3fb1666fa65e09dd53fbd057a))
+* Enhance buildArgs function and add new methods in Goreleaser struct ([#32](https://github.com/Excoriate/daggerverse/issues/32)) ([b724076](https://github.com/Excoriate/daggerverse/commit/b72407686ac75d81e0fc8f43de20f4804955a2ac))
+* Update .gitignore to exclude go.work ([#34](https://github.com/Excoriate/daggerverse/issues/34)) ([ecf519d](https://github.com/Excoriate/daggerverse/commit/ecf519ddaef295b62a71a60a882b8d97ea1d7ad9))
+
+
+### Other
+
+* add example project for goreleaesr module ([4be5287](https://github.com/Excoriate/daggerverse/commit/4be528785e2c7cca30c1dad6b37ebdb5eff24555))
+
 ## [1.8.0](https://github.com/Excoriate/daggerverse/compare/v1.7.0...v1.8.0) (2024-04-25)
 
 
