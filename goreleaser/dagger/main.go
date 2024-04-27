@@ -217,6 +217,8 @@ func (g *Goreleaser) Build(
 	return out, err
 }
 
+// Snapshot runs the 'goreleaser release' command.
+// It's equivalent to running 'goreleaser release --snapshot' in the terminal.
 func (g *Goreleaser) Snapshot(
 	// cfg is the configuration file to use.
 	// +optional
