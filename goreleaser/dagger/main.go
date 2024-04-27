@@ -266,3 +266,52 @@ func (g *Goreleaser) Snapshot(
 
 	return out, err
 }
+
+// Release runs the 'goreleaser release' command.
+// It's equivalent to running 'goreleaser release --snapshot' in the terminal.
+func (g *Goreleaser) Release(
+	// cfg is the configuration file to use.
+	// +optional
+	// default=".goreleaser.yaml"
+	cfg string,
+	// autoSnapshot ensures that the snapshot is automatically set if the repository is dirty
+	// +optional
+	autoSnapshot bool,
+	// clean ensures that if there's a previous build, it will be cleaned.
+	// +optional
+	// default=false
+	clean bool,
+	// envVars is a list of environment variables to pass from the host to the container.
+	// +optional
+	// +default=[]
+	envVars []string,
+	// args is the arguments to pass to the 'goreleaser' command.
+	// +optional
+	args string,
+) (string, error) {
+	cfgFileArg := g.resolveCfgArg(cfg)
+	autoSnapshotArg := ""
+	cleanArg := ""
+	envVarsMap, err := toEnvVars(envVars)
+	if err != nil {
+		return "", err
+	}
+
+	if autoSnapshot {
+		autoSnapshotArg = "--auto-snapshot"
+	}
+
+	if clean {
+		cleanArg = "--clean"
+	}
+
+	allArgs := buildArgs(args, cfgFileArg, autoSnapshotArg, cleanArg)
+
+	g.Ctr = addEnvVarsToContainer(envVarsMap, g.Ctr)
+	g.Ctr = addCMDsToContainer([]string{"release"}, allArgs, g.Ctr)
+
+	out, err := g.Ctr.
+		Stdout(context.Background())
+
+	return out, err
+}
