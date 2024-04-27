@@ -11,9 +11,13 @@ made with ❤️.
 
 
 
-| Module                                     | Status | What it does?                                               |
-|--------------------------------------------|--------|-------------------------------------------------------------|
-| [IAC Terragrunt](iac-terragrunt/README.md) | ✅      | Run [Terragrunt](https://terragrunt.gruntwork.io) commands. |
+| Module                                     | Status | What it does?                                                                |
+|--------------------------------------------|--------|------------------------------------------------------------------------------|
+| [IAC Terragrunt](iac-terragrunt/README.md) | ✅      | Run [Terragrunt](https://terragrunt.gruntwork.io) commands.                  |
+| [Terraform](terraform/README.md)           | ✅      | Run [Terraform](https://www.terraform.io) commands.                          |
+| [Terratest](terratest/README.md)           | ✅      | Run [Terratest](https://terratest.gruntwork.io) commands.                    |
+| [GitLab CICD Vars](gitlab-cicd-vars/README.md) | ✅  | Manage GitLab CI/CD variables.                                              |
+| [GoReleaser](goreleaser/README.md)         | ✅      | Wraps [GoReleaser](https://goreleaser.com) functionality as a dagger module. |
 
 
 >**NOTE**: ⚠️ These modules are experimental, feel free to open an issue for any requests or bug report.
