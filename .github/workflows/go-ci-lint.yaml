@@ -34,3 +34,4 @@ jobs:
                   version: v1.54
                   args: --config ../../.golangci.yml
                   github-token: ${{ secrets.GITHUB_TOKEN }}
+              working-directory: ${{ matrix.workdir }}
