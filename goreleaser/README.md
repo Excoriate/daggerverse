@@ -32,8 +32,8 @@ This module allows you to integrate GoReleaser into your Dagger pipelines easily
 
 ### Additional Information
 
-- **GoReleaser**: GoReleaser is a tool designed to speed up the delivery of Go applications by automating the building and releasing process. More details can be found in the [GoReleaser Documentation](https://goreleaser.com).
-- **Dagger**: Dagger is a portable devkit for CI/CD pipelines, allowing you to define your pipeline as code and execute it anywhere. For more on Dagger, visit [Dagger.io](https://dagger.io).
+* **GoReleaser**: GoReleaser is a tool designed to speed up the delivery of Go applications by automating the building and releasing process. More details can be found in the [GoReleaser Documentation](https://goreleaser.com).
+* **Dagger**: Dagger is a portable devkit for CI/CD pipelines, allowing you to define your pipeline as code and execute it anywhere. For more on Dagger, visit [Dagger.io](https://dagger.io).
 
 ---
 
