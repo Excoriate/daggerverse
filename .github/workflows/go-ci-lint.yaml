@@ -1,31 +1,36 @@
 ---
 name: Go Linter
 on:
-    workflow_dispatch:
-    push:
-    pull_request:
+  workflow_dispatch:
+  push:
+  pull_request:
 permissions:
-    contents: read
-    pull-requests: read
+  contents: read
+  pull-requests: read
 jobs:
-    golangci-lint:
-        runs-on: ubuntu-latest
+  golangci-lint:
+    runs-on: ubuntu-latest
 
-        strategy:
-            fail-fast: false
-            matrix:
-                workdir: [terraform/dagger]
-
-        steps:
-            - name: Check out code
-              uses: actions/checkout@v3
-
-            - name: Set up Go
-              uses: actions/setup-go@v4
-              with:
-                  go-version: 1.21
-
-            - name: golangci-lint
-              uses: reviewdog/action-golangci-lint@v2
-              with:
-                  workdir: ${{ matrix.workdir }}
+    strategy:
+      fail-fast: false
+      matrix:
+        workdir:
+          - terraform/dagger
+          - goreleaser/dagger
+          - gitlab/cicd-vars/dagger
+          - terratest/dagger
+    env:
+      GO_VERSION: ~1.22
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: false
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.54
+          args: --config ../../.golangci.yml
+          github-token: ${{ secrets.GITHUB_TOKEN }}
