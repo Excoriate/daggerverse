@@ -8,7 +8,7 @@ import (
 // addCMDsToContainer injects commands into a container.
 // This function is useful when you want to inject commands into a container
 // before running them.
-func addCMDsToContainer(cmd []string, args []string, ctr *Container) *Container {
+func addCMDsToContainer(cmd, args []string, ctr *Container) *Container {
 	return ctr.
 		WithFocus().
 		WithExec(mergeSlices(cmd, args))
