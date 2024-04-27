@@ -1,22 +1,19 @@
-<h1 align="center">Daggerverse</h1>
 
-<p align="center">
-  <img src="docs/img/daggerverse-logo.jpg" alt="daggerverse-logo.png">
-Set of Dagger modules
-that serve different purposes;
-with a slight deviation for infrastructure automation;
-made with ❤️.
+<h1 align="center">
+  <img alt="logo" src="docs/logo/daggerverse-logo-nobackground.png" width="450px"/><br/>
+</h1>
 
-</p>
+<h1 align="center">Daggerverse Modules 📦</h1>
+---
 
+| Module                                     | Status | What it does?                                                                |
+|--------------------------------------------|--------|------------------------------------------------------------------------------|
+| [IAC Terragrunt](iac-terragrunt/README.md) | ✅      | Run [Terragrunt](https://terragrunt.gruntwork.io) commands.                  |
+| [Terraform](terraform/README.md)           | ✅      | Run [Terraform](https://www.terraform.io) commands.                          |
+| [Terratest](terratest/README.md)           | ✅      | Run [Terratest](https://terratest.gruntwork.io) commands.                    |
+| [GitLab CICD Vars](gitlab-cicd-vars/README.md) | ✅  | Manage GitLab CI/CD variables.                                              |
+| [GoReleaser](goreleaser/README.md)         | ✅      | Wraps [GoReleaser](https://goreleaser.com) functionality as a dagger module. |
 
-
-| Module                                     | Status | What it does?                                               |
-|--------------------------------------------|--------|-------------------------------------------------------------|
-| [IAC Terragrunt](iac-terragrunt/README.md) | ✅      | Run [Terragrunt](https://terragrunt.gruntwork.io) commands. |
-
-
->**NOTE**: ⚠️ These modules are experimental, feel free to open an issue for any requests or bug report.
 
 ---
 
