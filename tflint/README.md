@@ -40,10 +40,10 @@ By using this module, you can enhance the quality and consistency of your Terraf
 
 ```bash
 # Check TFLint version
-dagger call -m github.com/Excoriate/daggerverse/tflint@master version --src="mydir/src"
+dagger -m github.com/Excoriate/daggerverse/tflint@v1.10.0 call --src="../test/tflint/tf-module-1" run-lint --init --cfg=".tflint.hcl"
+````
 
-# Initialize TFLint
-dagger call -m github.com/Excoriate/daggerverse/tflint@master init --src="mydir/src" --cfg="custom.tflint.hcl"
-
-# Run TFLint with custom configurations and initializations
-dagger call -m github.com/Excoriate/daggerverse/tflint@master lint --src="mydir/src" --init --cfg=".tflint.hcl" --args="--enable-rule=terraform_unused_declarations"
+More instructions can be done by just using the `--help` flag.
+```bash
+dagger -m github.com/Excoriate/daggerverse/tflint@v1.10.0 call --help
+```
