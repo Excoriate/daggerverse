@@ -1,5 +1,5 @@
 dependencies {
-  paths = ["../tg-module"]
+  paths = ["../terragrunt-simple-1"]
 }
 
 dependency "upstream_dep" {
@@ -12,7 +12,7 @@ dependency "upstream_dep" {
 }
 
 terraform {
-  source = "../tf-module-2"
+  source = "../../terraform/tf-module-2"
 }
 
 inputs =   {
