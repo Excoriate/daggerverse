@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.10.0](https://github.com/Excoriate/daggerverse/compare/v1.9.0...v1.10.0) (2024-04-28)
+
+
+### Features
+
+* Improve Tflint Docker container initialization and command execution ([#43](https://github.com/Excoriate/daggerverse/issues/43)) ([052c2de](https://github.com/Excoriate/daggerverse/commit/052c2de5b63debee148283eabf0548c0f0d65223))
+
+
+### Refactoring
+
+* Simplify parameter declaration in addCMDsToContainer function ([#39](https://github.com/Excoriate/daggerverse/issues/39)) ([c004989](https://github.com/Excoriate/daggerverse/commit/c004989cc2d5e099f7e899ff574940a246dbb6af))
+
+
+### Other
+
+* fix hooks issues ([fcd55b3](https://github.com/Excoriate/daggerverse/commit/fcd55b30113fc13cbc9255e83eceb7db7db7e6e5))
+
 ## [1.9.0](https://github.com/Excoriate/daggerverse/compare/v1.8.0...v1.9.0) (2024-04-27)
 
 
