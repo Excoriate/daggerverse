@@ -1,9 +1,9 @@
 dependencies {
-  paths = ["../tg-module"]
+  paths = ["../terragrunt-simple-1"]
 }
 
 dependency "upstream_dep" {
-  config_path = "../tg-module"
+  config_path = "../terragrunt-simple-1"
   skip_outputs = true
 
   mock_outputs = {
@@ -12,7 +12,7 @@ dependency "upstream_dep" {
 }
 
 terraform {
-  source = "../tf-module-2"
+  source = "../../terraform/tf-module-2"
 }
 
 inputs =   {
