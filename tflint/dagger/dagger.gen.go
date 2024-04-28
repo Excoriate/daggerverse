@@ -541,16 +541,30 @@ func convertSlice[I any, O any](in []I, f func(I) O) []O {
 }
 
 func (r Tflint) MarshalJSON() ([]byte, error) {
-	var concrete struct{}
+	var concrete struct {
+		Src     *Directory
+		Ctr     *Container
+		CfgFile string
+	}
+	concrete.Src = r.Src
+	concrete.Ctr = r.Ctr
+	concrete.CfgFile = r.CfgFile
 	return json.Marshal(&concrete)
 }
 
 func (r *Tflint) UnmarshalJSON(bs []byte) error {
-	var concrete struct{}
+	var concrete struct {
+		Src     *Directory
+		Ctr     *Container
+		CfgFile string
+	}
 	err := json.Unmarshal(bs, &concrete)
 	if err != nil {
 		return err
 	}
+	r.Src = concrete.Src
+	r.Ctr = concrete.Ctr
+	r.CfgFile = concrete.CfgFile
 	return nil
 }
 
@@ -643,60 +657,231 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 	switch parentName {
 	case "Tflint":
 		switch fnName {
-		case "ContainerEcho":
+		case "Base":
 			var parent Tflint
 			err = json.Unmarshal(parentJSON, &parent)
 			if err != nil {
 				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
 			}
-			var stringArg string
-			if inputArgs["stringArg"] != nil {
-				err = json.Unmarshal([]byte(inputArgs["stringArg"]), &stringArg)
+			var image string
+			if inputArgs["image"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["image"]), &image)
 				if err != nil {
-					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg stringArg", err))
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg image", err))
 				}
 			}
-			return (*Tflint).ContainerEcho(&parent, stringArg), nil
-		case "GrepDir":
+			var version string
+			if inputArgs["version"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["version"]), &version)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg version", err))
+				}
+			}
+			return (*Tflint).Base(&parent, image, version), nil
+		case "WithSource":
 			var parent Tflint
 			err = json.Unmarshal(parentJSON, &parent)
 			if err != nil {
 				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
 			}
-			var directoryArg *Directory
-			if inputArgs["directoryArg"] != nil {
-				err = json.Unmarshal([]byte(inputArgs["directoryArg"]), &directoryArg)
+			var src *Directory
+			if inputArgs["src"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["src"]), &src)
 				if err != nil {
-					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg directoryArg", err))
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg src", err))
 				}
 			}
-			var pattern string
-			if inputArgs["pattern"] != nil {
-				err = json.Unmarshal([]byte(inputArgs["pattern"]), &pattern)
+			return (*Tflint).WithSource(&parent, src), nil
+		case "Version":
+			var parent Tflint
+			err = json.Unmarshal(parentJSON, &parent)
+			if err != nil {
+				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
+			}
+			return (*Tflint).Version(&parent)
+		case "Run":
+			var parent Tflint
+			err = json.Unmarshal(parentJSON, &parent)
+			if err != nil {
+				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
+			}
+			var cfg string
+			if inputArgs["cfg"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["cfg"]), &cfg)
 				if err != nil {
-					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg pattern", err))
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg cfg", err))
 				}
 			}
-			return (*Tflint).GrepDir(&parent, ctx, directoryArg, pattern)
+			var args string
+			if inputArgs["args"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["args"]), &args)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg args", err))
+				}
+			}
+			return (*Tflint).Run(&parent, cfg, args)
+		case "WithInit":
+			var parent Tflint
+			err = json.Unmarshal(parentJSON, &parent)
+			if err != nil {
+				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
+			}
+			var cfg string
+			if inputArgs["cfg"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["cfg"]), &cfg)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg cfg", err))
+				}
+			}
+			var args string
+			if inputArgs["args"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["args"]), &args)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg args", err))
+				}
+			}
+			return (*Tflint).WithInit(&parent, cfg, args), nil
+		case "RunInit":
+			var parent Tflint
+			err = json.Unmarshal(parentJSON, &parent)
+			if err != nil {
+				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
+			}
+			var cfg string
+			if inputArgs["cfg"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["cfg"]), &cfg)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg cfg", err))
+				}
+			}
+			var args string
+			if inputArgs["args"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["args"]), &args)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg args", err))
+				}
+			}
+			return (*Tflint).RunInit(&parent, cfg, args)
+		case "Lint":
+			var parent Tflint
+			err = json.Unmarshal(parentJSON, &parent)
+			if err != nil {
+				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
+			}
+			var init bool
+			if inputArgs["init"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["init"]), &init)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg init", err))
+				}
+			}
+			var cfg string
+			if inputArgs["cfg"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["cfg"]), &cfg)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg cfg", err))
+				}
+			}
+			var args string
+			if inputArgs["args"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["args"]), &args)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg args", err))
+				}
+			}
+			return (*Tflint).Lint(&parent, init, cfg, args)
+		case "":
+			var parent Tflint
+			err = json.Unmarshal(parentJSON, &parent)
+			if err != nil {
+				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
+			}
+			var version string
+			if inputArgs["version"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["version"]), &version)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg version", err))
+				}
+			}
+			var image string
+			if inputArgs["image"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["image"]), &image)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg image", err))
+				}
+			}
+			var src *Directory
+			if inputArgs["src"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["src"]), &src)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg src", err))
+				}
+			}
+			var ctr *Container
+			if inputArgs["ctr"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["ctr"]), &ctr)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg ctr", err))
+				}
+			}
+			return New(version, image, src, ctr), nil
 		default:
 			return nil, fmt.Errorf("unknown function %s", fnName)
 		}
 	case "":
 		return dag.Module().
-			WithDescription("A generated module for Tflint functions\n\nThis module has been generated via dagger init and serves as a reference to\nbasic module structure as you get started with Dagger.\n\nTwo functions have been pre-created. You can modify, delete, or add to them,\nas needed. They demonstrate usage of arguments and return types using simple\necho and grep commands. The functions can be called from the dagger CLI or\nfrom one of the SDKs.\n\nThe first line in this comment block is a short description line and the\nrest is a long description with more detail on the module's purpose or usage,\nif appropriate. All modules should have a short description.\n").
 			WithObject(
 				dag.TypeDef().WithObject("Tflint").
 					WithFunction(
-						dag.Function("ContainerEcho",
-							dag.TypeDef().WithObject("Container")).
-							WithDescription("Returns a container that echoes whatever string argument is provided").
-							WithArg("stringArg", dag.TypeDef().WithKind(StringKind))).
+						dag.Function("Base",
+							dag.TypeDef().WithObject("Tflint")).
+							WithDescription("Base sets the base image and version, and creates the base container.").
+							WithArg("image", dag.TypeDef().WithKind(StringKind)).
+							WithArg("version", dag.TypeDef().WithKind(StringKind))).
 					WithFunction(
-						dag.Function("GrepDir",
+						dag.Function("WithSource",
+							dag.TypeDef().WithObject("Tflint")).
+							WithDescription("WithSource sets the source directory if it's passed, and\nmounts the source directory to the container.").
+							WithArg("src", dag.TypeDef().WithObject("Directory"))).
+					WithFunction(
+						dag.Function("Version",
 							dag.TypeDef().WithKind(StringKind)).
-							WithDescription("Returns lines that match a pattern in the files of the provided Directory").
-							WithArg("directoryArg", dag.TypeDef().WithObject("Directory")).
-							WithArg("pattern", dag.TypeDef().WithKind(StringKind)))), nil
+							WithDescription("Version runs the 'tflint --version' command.")).
+					WithFunction(
+						dag.Function("Run",
+							dag.TypeDef().WithKind(StringKind)).
+							WithDescription("Run executes any tflint command.").
+							WithArg("cfg", dag.TypeDef().WithKind(StringKind).WithOptional(true), FunctionWithArgOpts{Description: "cfg is the configuration file to use."}).
+							WithArg("args", dag.TypeDef().WithKind(StringKind).WithOptional(true), FunctionWithArgOpts{Description: "args is the arguments to pass to the tfLint command."})).
+					WithFunction(
+						dag.Function("WithInit",
+							dag.TypeDef().WithObject("Tflint")).
+							WithDescription("WithInit adds the 'init' command to the container.").
+							WithArg("cfg", dag.TypeDef().WithKind(StringKind).WithOptional(true), FunctionWithArgOpts{Description: "cfg is the configuration file to use."}).
+							WithArg("args", dag.TypeDef().WithKind(StringKind).WithOptional(true), FunctionWithArgOpts{Description: "args is the arguments to pass to the tfLint init command."})).
+					WithFunction(
+						dag.Function("RunInit",
+							dag.TypeDef().WithKind(StringKind)).
+							WithDescription("RunInit executes the 'init' command.").
+							WithArg("cfg", dag.TypeDef().WithKind(StringKind).WithOptional(true), FunctionWithArgOpts{Description: "cfg is the configuration file to use."}).
+							WithArg("args", dag.TypeDef().WithKind(StringKind).WithOptional(true), FunctionWithArgOpts{Description: "args is the arguments to pass to the tfLint init command."})).
+					WithFunction(
+						dag.Function("Lint",
+							dag.TypeDef().WithKind(StringKind)).
+							WithDescription("Lint executes the 'init' command.\nIt's equivalent to running 'tflint' in the terminal.").
+							WithArg("init", dag.TypeDef().WithKind(BooleanKind).WithOptional(true), FunctionWithArgOpts{Description: "init specifies whether to run the 'init' command before running the 'lint' command.", DefaultValue: JSON("false")}).
+							WithArg("cfg", dag.TypeDef().WithKind(StringKind).WithOptional(true), FunctionWithArgOpts{Description: "cfg is the configuration file to use."}).
+							WithArg("args", dag.TypeDef().WithKind(StringKind).WithOptional(true), FunctionWithArgOpts{Description: "args is the arguments to pass to the tfLint init command."})).
+					WithField("Src", dag.TypeDef().WithObject("Directory"), TypeDefWithFieldOpts{Description: "Src is the directory that contains all the source code, including the module directory."}).
+					WithField("Ctr", dag.TypeDef().WithObject("Container"), TypeDefWithFieldOpts{Description: "Ctr is the container to use as a base container."}).
+					WithField("CfgFile", dag.TypeDef().WithKind(StringKind), TypeDefWithFieldOpts{Description: "CfgFile is the configuration file to use."}).
+					WithConstructor(
+						dag.Function("New",
+							dag.TypeDef().WithObject("Tflint")).
+							WithArg("version", dag.TypeDef().WithKind(StringKind).WithOptional(true), FunctionWithArgOpts{Description: "version is the version of the TFLint to use, e.g., \"v0.50.3\". For more information, see https://github.com/terraform-linters/tflint", DefaultValue: JSON("\"v0.50.3\"")}).
+							WithArg("image", dag.TypeDef().WithKind(StringKind).WithOptional(true), FunctionWithArgOpts{Description: "image is the image to use as the base container.", DefaultValue: JSON("\"ghcr.io/terraform-linters/tflint\"")}).
+							WithArg("src", dag.TypeDef().WithObject("Directory"), FunctionWithArgOpts{Description: "src is the directory that contains all the source code, including the module directory."}).
+							WithArg("ctr", dag.TypeDef().WithObject("Container").WithOptional(true), FunctionWithArgOpts{Description: "Ctrl is the container to use as a base container."}))), nil
 	default:
 		return nil, fmt.Errorf("unknown object %s", parentName)
 	}
