@@ -1,36 +1,81 @@
-// A generated module for Terragrunt functions
-//
-// This module has been generated via dagger init and serves as a reference to
-// basic module structure as you get started with Dagger.
-//
-// Two functions have been pre-created. You can modify, delete, or add to them,
-// as needed. They demonstrate usage of arguments and return types using simple
-// echo and grep commands. The functions can be called from the dagger CLI or
-// from one of the SDKs.
-//
-// The first line in this comment block is a short description line and the
-// rest is a long description with more detail on the module's purpose or usage,
-// if appropriate. All modules should have a short description.
-
 package main
 
 import (
 	"context"
 )
 
-type Terragrunt struct{}
+const (
+	tgContainerImageDefault = "ghcr.io/terraform-linters/tflint"
+	tfVersionDefault        = "1.7.0"
+	workdirRootPath         = "/mnt"
+	entrypointCMD           = "terragrunt"
+)
 
-// Returns a container that echoes whatever string argument is provided
-func (m *Terragrunt) ContainerEcho(stringArg string) *Container {
-	return dag.Container().From("alpine:latest").WithExec([]string{"echo", stringArg})
+type Terragrunt struct {
+	// Src is the directory that contains all the source code, including the module directory.
+	Src *Directory
+
+	// Ctr is the container to use as a base container.
+	Ctr *Container
+
+	// tgVersion is the version of the Terragrunt to use, e.g., "v0.55.20". For more information, visit's Gruntwork's Terragrunt GitHub repository.
+	// +default="v0.55.20"
+	// +optional
+	tgVersion string
+
+	// tfVersion is the version of the Terraform to use, e.g., "1.0.0". For more information, visit HashiCorp's Terraform GitHub repository.
+	// +optional
+	// +default="1.7.0"
+	tfVersion string
 }
 
-// Returns lines that match a pattern in the files of the provided Directory
-func (m *Terragrunt) GrepDir(ctx context.Context, directoryArg *Directory, pattern string) (string, error) {
-	return dag.Container().
-		From("alpine:latest").
-		WithMountedDirectory("/mnt", directoryArg).
-		WithWorkdir("/mnt").
-		WithExec([]string{"grep", "-R", pattern, "."}).
-		Stdout(ctx)
+func New(
+	// tfVersion is the version of the Terraform to use, e.g., "1.0.0". For more information, visit HashiCorp's Terraform GitHub repository.
+	// +optional
+	// +default="1.7.0"
+	tfVersion string,
+	// image is the image to use as the base container.
+	// +optional
+	// +default="alpine/terragrunt"
+	image string,
+	// src is the directory that contains all the source code, including the module directory.
+	src *Directory,
+	// Ctrl is the container to use as a base container.
+	// +optional
+	ctr *Container,
+) *Terragrunt {
+	g := &Terragrunt{
+		Src: src,
+	}
+
+	if ctr != nil {
+		g.Ctr = ctr
+	} else {
+		g.Base(image, tfVersion)
+	}
+
+	g = g.WithSource(src)
+
+	return g
+}
+
+// Version returns the Terragrunt version.
+// Consider to configure Terragrunt based on the target Terraform version.
+func (m *Terragrunt) Version() (string, error) {
+	m.Ctr = addCMDsToContainer([]string{entrypointCMD}, []string{"--version"}, m.Ctr)
+
+	out, err := m.Ctr.
+		Stdout(context.Background())
+
+	return out, err
+}
+
+// Help returns the Terragrunt help.
+func (m *Terragrunt) Help() (string, error) {
+	m.Ctr = addCMDsToContainer([]string{entrypointCMD}, []string{"--help"}, m.Ctr)
+
+	out, err := m.Ctr.
+		Stdout(context.Background())
+
+	return out, err
 }
