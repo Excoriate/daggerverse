@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.0](https://github.com/Excoriate/daggerverse/compare/v1.10.0...v1.11.0) (2024-04-28)
+
+
+### Features
+
+* **tflint:** Update TFLint instructions in README.md ([#44](https://github.com/Excoriate/daggerverse/issues/44)) ([8d07963](https://github.com/Excoriate/daggerverse/commit/8d0796388a017b51171bc4c021452ab679daa73d))
+
 ## [1.10.0](https://github.com/Excoriate/daggerverse/compare/v1.9.0...v1.10.0) (2024-04-28)
 
 
