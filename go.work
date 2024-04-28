@@ -8,6 +8,7 @@ use (
 	./gitlab-cicd-vars/dagger
 	./goreleaser/dagger
 	./terraform/dagger
+	./terragrunt/dagger
 	./terratest/dagger
 	./tflint/dagger
 	./utils

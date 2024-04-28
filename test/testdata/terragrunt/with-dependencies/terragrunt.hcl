@@ -3,7 +3,7 @@ dependencies {
 }
 
 dependency "upstream_dep" {
-  config_path = "../tg-module"
+  config_path = "../terragrunt-simple-1"
   skip_outputs = true
 
   mock_outputs = {
