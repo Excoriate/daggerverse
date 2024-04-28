@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 )
 
 const (
@@ -111,7 +112,9 @@ func (g *Goreleaser) Base(image, version string) *Goreleaser {
 		version = goReleaserDefaultVersion
 	}
 
-	c := dag.Container().From(image).
+	ctrImage := fmt.Sprintf("%s:%s", image, version)
+
+	c := dag.Container().From(ctrImage).
 		WithEnvVariable("TINI_SUBREAPER", "true").
 		WithWorkdir(mntPrefix).
 		WithMountedDirectory(mntPrefix, g.Src)
@@ -142,7 +145,6 @@ func (g *Goreleaser) Check(
 	// args is the arguments to pass to the 'goreleaser' command.
 	// +optional
 	args string,
-	// ) (*Container, error) {
 ) (string, error) {
 	allArgs := buildArgs(args, g.resolveCfgArg(cfg))
 
