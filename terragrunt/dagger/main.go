@@ -19,11 +19,6 @@ type Terragrunt struct {
 	// Ctr is the container to use as a base container.
 	Ctr *Container
 
-	// tgVersion is the version of the Terragrunt to use, e.g., "v0.55.20". For more information, visit's Gruntwork's Terragrunt GitHub repository.
-	// +default="v0.55.20"
-	// +optional
-	tgVersion string
-
 	// tfVersion is the version of the Terraform to use, e.g., "1.0.0". For more information, visit HashiCorp's Terraform GitHub repository.
 	// +optional
 	// +default="1.7.0"
