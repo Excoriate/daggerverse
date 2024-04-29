@@ -60,3 +60,7 @@ func toEnvVarsDagger(envVarSlice []string) ([]EnvVarDagger, error) {
 
 	return envVars, nil
 }
+
+func convertCMDToString(cmd []string) string {
+	return strings.Join(cmd, " ")
+}
