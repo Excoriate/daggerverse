@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.12.0](https://github.com/Excoriate/daggerverse/compare/v1.11.0...v1.12.0) (2024-04-29)
+
+
+### Features
+
+* Add basic functions for terragrunt intereoperability through Dagger ([#50](https://github.com/Excoriate/daggerverse/issues/50)) ([524071d](https://github.com/Excoriate/daggerverse/commit/524071d300d0c41997d757d48611ebb3f34a5250))
+* Refactor RunAll method in Terragrunt struct ([#51](https://github.com/Excoriate/daggerverse/issues/51)) ([95b482e](https://github.com/Excoriate/daggerverse/commit/95b482e4e3467f6d86a0681cbb08f177045e8318))
+
+
+### Refactoring
+
+* Remove unused code and simplify container functions. ([#48](https://github.com/Excoriate/daggerverse/issues/48)) ([f5bbef0](https://github.com/Excoriate/daggerverse/commit/f5bbef09615bd9223483b6433a75721edbf07bf7))
+
 ## [1.11.0](https://github.com/Excoriate/daggerverse/compare/v1.10.0...v1.11.0) (2024-04-28)
 
 
