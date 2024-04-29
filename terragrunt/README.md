@@ -44,13 +44,13 @@ dagger call --src="../test/testdata" run \
 
 # Execute 'plan' using the Terragrunt module from GitHub
 ```bash
-dagger -m github.com/Excoriate/daggerverse/terragrunt@v1.10.0 call --src="../test/testdata" run \
+dagger -m github.com/Excoriate/daggerverse/terragrunt@v1.12.0 call --src="../test/testdata" run \
 --module=terragrunt/with-dependencies \
 --cmd="plan" \
 --args="-compact-warnings, -no-color, -lock=false"
 
 # Run 'apply' for all configurations in a non-interactive mode using the GitHub module
-dagger -m github.com/Excoriate/daggerverse/terragrunt@v1.10.0 call --src="../test/testdata" run-all \
+dagger -m github.com/Excoriate/daggerverse/terragrunt@v1.12.0 call --src="../test/testdata" run-all \
 --module=terragrunt/with-dependencies \
 --cmd="apply" \
 --args="-compact-warnings, -no-color, -lock=false, -auto-approve"
