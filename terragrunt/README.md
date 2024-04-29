@@ -42,7 +42,7 @@ dagger call --src="../test/testdata" run \
 --args="-compact-warnings, -no-color, -lock=false"
 ```
 
-# Execute 'plan' using the Terragrunt module from GitHub
+### Using the GitHub Module
 ```bash
 dagger -m github.com/Excoriate/daggerverse/terragrunt@v1.10.0 call --src="../test/testdata" run \
 --module=terragrunt/with-dependencies \
