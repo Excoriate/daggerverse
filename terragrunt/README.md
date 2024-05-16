@@ -11,6 +11,9 @@ Configure this module using the Dagger CLI, specifying paths and versions to tai
 * ⚙️ **`src`**: Path to the directory containing the Terraform code.
 * ⚙️ **`ctr`**: Specifies the container to use. If not provided, a default Terragrunt container based on Alpine is used.
 * ⚙️ **`tfVersion`**: The version of Terraform to use (default `1.7.0`).
+
+
+
 > **Note**: This module doesnt' set the Terragrunt version, as it is managed by the Terragrunt container. It's set to be compatible with the Terraform version specified.
 
 ---
@@ -42,7 +45,10 @@ dagger call --src="../test/testdata" run \
 --args="-compact-warnings, -no-color, -lock=false"
 ```
 
+
+
 ### Using the GitHub Module
+
 ```bash
 dagger -m github.com/Excoriate/daggerverse/terragrunt@v1.10.0 call --src="../test/testdata" run \
 --module=terragrunt/with-dependencies \
