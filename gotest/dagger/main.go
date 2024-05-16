@@ -29,7 +29,7 @@ func New(
 	// Later on, in order to pass it to the container, it's going to be converted into a map.
 	// +optional
 	EnvVarsFromHost string,
-) *Gotest {
+) (*Gotest, error) {
 	g := &Gotest{}
 
 	if version == "" {
@@ -52,17 +52,19 @@ func New(
 	if EnvVarsFromHost != "" {
 		mapEnvVars, err := toEnvVarsFromStr(EnvVarsFromHost)
 		if err != nil {
-			fmt.Println(err)
-			return nil
+			return nil, err
 		}
 
-		envVars := toEnvVarsDaggerFromMap(mapEnvVars)
+		envVars, err := toEnvVarsDaggerFromMap(mapEnvVars)
+		if err != nil {
+			return nil, err
+		}
 		for _, envVar := range envVars {
 			g.Ctr = g.WithEnvVariable(envVar.Name, envVar.Value, false).Ctr
 		}
 	}
 
-	return g
+	return g, nil
 }
 
 // Base sets the base image and version, and creates the base container.

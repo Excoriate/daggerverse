@@ -140,12 +140,36 @@ func (m *Gotest) SetupGoTest(
 	// enable the cache volumes for the Go module and build cache.
 	// +optional
 	enableCache bool,
+	// envVars is a list of environment variables to set in the container with the format "SOMETHING=SOMETHING,SOMETHING=SOMETHING".
+	// +optional
+	envVars []string,
+	// printEnvVars is a flag to print the environment variables
+	// +optional
+	printEnvVars bool,
 ) (*Container, error) {
 	goTest := []string{"go", "test"}
 	ctr := m.WithSource(src, "").Ctr
 
 	if enableCache {
 		ctr = m.Ctr.With(m.WithGoCache)
+	}
+
+	if len(envVars) > 0 {
+		envVarsDagger, err := toEnvVarsDaggerFromSlice(envVars)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, envVar := range envVarsDagger {
+			ctr = m.WithEnvVariable(envVar.Name, envVar.Value, false).Ctr
+		}
+	}
+
+	if printEnvVars {
+		ctr = ctr.WithExec([]string{"printenv"}, ContainerWithExecOpts{
+			InsecureRootCapabilities:      insecureRootCapabilities,
+			ExperimentalPrivilegedNesting: enableNest,
+		})
 	}
 
 	pkgs := packages
@@ -208,6 +232,12 @@ func (m *Gotest) SetupGoTestSum(
 	// enablePretty is a flag to enable pretty output.
 	// +optional
 	enablePretty bool,
+	// envVars is a list of environment variables to set in the container with the format "SOMETHING=SOMETHING,SOMETHING=SOMETHING".
+	// +optional
+	envVars []string,
+	// printEnvVars is a flag to print the environment variables
+	// +optional
+	printEnvVars bool,
 ) (*Container, error) {
 	goTestSumInstallCMD := []string{"go", "install", "gotest.tools/gotestsum@latest"}
 	goTestInstallTparseCMD := []string{"go", "install", "github.com/mfridman/tparse@latest"}
@@ -216,6 +246,25 @@ func (m *Gotest) SetupGoTestSum(
 
 	if enableCache {
 		ctr = m.Ctr.With(m.WithGoCache)
+	}
+
+	if len(envVars) > 0 {
+		envVarsDagger, err := toEnvVarsDaggerFromSlice(envVars)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, envVar := range envVarsDagger {
+			ctr = m.WithEnvVariable(envVar.Name, envVar.Value, false).Ctr
+		}
+	}
+
+	if printEnvVars {
+		ctr = ctr.WithFocus().
+			WithExec([]string{"printenv"}, ContainerWithExecOpts{
+				InsecureRootCapabilities:      insecureRootCapabilities,
+				ExperimentalPrivilegedNesting: enableNest,
+			})
 	}
 
 	ctr = ctr.WithExec(goTestSumInstallCMD)

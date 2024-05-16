@@ -28,8 +28,14 @@ func (m *Gotest) RunGoTest(
 	// enableCache is a flag to enable cache volumes.
 	// +optional
 	enableCache bool,
+	// envVars is a list of environment variables to set in the container with the format "SOMETHING=SOMETHING,SOMETHING=SOMETHING".
+	// +optional
+	envVars []string,
+	// printEnvVars is a flag to print the environment variables
+	// +optional
+	printEnvVars bool,
 ) (string, error) {
-	evaluatedCtr, err := m.SetupGoTest(src, packages, enableVerbose, race, testFlags, insecureRootCapabilities, nest, enableCache)
+	evaluatedCtr, err := m.SetupGoTest(src, packages, enableVerbose, race, testFlags, insecureRootCapabilities, nest, enableCache, envVars, printEnvVars)
 	if err != nil {
 		return "", err
 	}
@@ -70,8 +76,14 @@ func (m *Gotest) RunGoTestSum(
 	// enablePretty is a flag to enable pretty output.
 	// +optional
 	enablePretty bool,
+	// envVars is a list of environment variables to set in the container with the format "SOMETHING=SOMETHING,SOMETHING=SOMETHING".
+	// +optional
+	envVars []string,
+	// printEnvVars is a flag to print the environment variables
+	// +optional
+	printEnvVars bool,
 ) (string, error) {
-	evaluatedCtr, err := m.SetupGoTestSum(src, packages, race, testFlags, goTestSumFlags, format, insecureRootCapabilities, enableNest, enableCache, enablePretty)
+	evaluatedCtr, err := m.SetupGoTestSum(src, packages, race, testFlags, goTestSumFlags, format, insecureRootCapabilities, enableNest, enableCache, enablePretty, envVars, printEnvVars)
 	if err != nil {
 		return "", err
 	}
