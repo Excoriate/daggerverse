@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.12.1](https://github.com/Excoriate/daggerverse/compare/v1.12.0...v1.12.1) (2024-05-16)
+
+
+### Other
+
+* add goreleaser testdata ([67b8cc9](https://github.com/Excoriate/daggerverse/commit/67b8cc943079f070bf3ca9b1d4e4fa3dbc634db1))
+* fix hooks errores, tidy go module updates ([b8c4756](https://github.com/Excoriate/daggerverse/commit/b8c47564330d3975cdcc2994c0dbc78274b3c89a))
+
 ## [1.12.0](https://github.com/Excoriate/daggerverse/compare/v1.11.0...v1.12.0) (2024-04-29)
 
 
