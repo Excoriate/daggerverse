@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"github.com/Excoriate/daggerx/pkg/envvars"
+	"github.com/Excoriate/daggerx/pkg/fixtures"
 	"github.com/Excoriate/daggerx/pkg/golangx"
 	"github.com/containerd/containerd/platforms"
 	"path/filepath"
@@ -16,12 +18,12 @@ func (m *Gotest) WithSource(
 	workdir string,
 ) *Gotest {
 	m.Src = src
-	ctr := m.Ctr.WithMountedDirectory(mntPrefix, m.Src)
+	ctr := m.Ctr.WithMountedDirectory(fixtures.MntPrefix, m.Src)
 
 	if workdir != "" {
-		ctr = ctr.WithWorkdir(filepath.Join(mntPrefix, workdir))
+		ctr = ctr.WithWorkdir(filepath.Join(fixtures.MntPrefix, workdir))
 	} else {
-		ctr = ctr.WithWorkdir(mntPrefix)
+		ctr = ctr.WithWorkdir(fixtures.MntPrefix)
 	}
 
 	m.Ctr = ctr
@@ -160,7 +162,7 @@ func (m *Gotest) SetupGoTest(
 	}
 
 	if len(envVars) > 0 {
-		envVarsDagger, err := toEnvVarsDaggerFromSlice(envVars)
+		envVarsDagger, err := envvars.ToDaggerEnvVarsFromSlice(envVars)
 		if err != nil {
 			return nil, err
 		}
@@ -254,7 +256,7 @@ func (m *Gotest) SetupGoTestSum(
 	}
 
 	if len(envVars) > 0 {
-		envVarsDagger, err := toEnvVarsDaggerFromSlice(envVars)
+		envVarsDagger, err := envvars.ToDaggerEnvVarsFromSlice(envVars)
 		if err != nil {
 			return nil, err
 		}

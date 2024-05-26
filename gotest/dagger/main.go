@@ -1,7 +1,8 @@
 package main
 
 import (
-	"fmt"
+	"github.com/Excoriate/daggerx/pkg/containerx"
+
 	"github.com/Excoriate/daggerx/pkg/envvars"
 )
 
@@ -31,29 +32,32 @@ func New(
 	// EnvVarsFromHost is a list of environment variables to pass from the host to the container.
 	// Later on, in order to pass it to the container, it's going to be converted into a map.
 	// +optional
-	EnvVarsFromHost string,
+	envVarsFromHost string,
 ) (*Gotest, error) {
 	g := &Gotest{}
-
-	if version == "" {
-		version = goTestDefaultVersion
-	}
-
-	if image == "" {
-		image = goTestDefaultImage
-	}
 
 	if ctr != nil {
 		g.Ctr = ctr
 	} else {
-		g.Base(image, version)
+		imageURL, err := containerx.GetImageURL(&containerx.NewBaseContainerOpts{
+			Image:           image,
+			Version:         version,
+			FallbackImage:   goTestDefaultImage,
+			FallBackVersion: goTestDefaultVersion,
+		})
+
+		if err != nil {
+			return nil, err
+		}
+
+		g.Base(imageURL)
 	}
 
 	// If environment variables are passed in a string, with a format like "SOMETHING=SOMETHING,SOMETHING=SOMETHING",
 	// they are converted into a map and then into a list of DaggerEnvVars.
 	// Then, each environment variable is added to the container.
-	if EnvVarsFromHost != "" {
-		envVars, err := envvars.ToDaggerEnvVarsFromStr(EnvVarsFromHost)
+	if envVarsFromHost != "" {
+		envVars, err := envvars.ToDaggerEnvVarsFromStr(envVarsFromHost)
 		if err != nil {
 			return nil, err
 		}
@@ -67,10 +71,8 @@ func New(
 
 // Base sets the base image and version, and creates the base container.
 // The default image is "golang/alpine" and the default version is "latest".
-func (m *Gotest) Base(image, version string) *Gotest {
-	ctrImage := fmt.Sprintf("%s:%s", image, version)
-
-	c := dag.Container().From(ctrImage).
+func (m *Gotest) Base(imageURL string) *Gotest {
+	c := dag.Container().From(imageURL).
 		WithEnvVariable("CGO_ENABLED", "0")
 
 	m.Ctr = c
