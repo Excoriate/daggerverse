@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/Excoriate/daggerx/pkg/envvars"
+)
 
 type Gotest struct {
 	// Src is the directory that contains all the source code, including the module directory.
@@ -50,12 +53,7 @@ func New(
 	// they are converted into a map and then into a list of DaggerEnvVars.
 	// Then, each environment variable is added to the container.
 	if EnvVarsFromHost != "" {
-		mapEnvVars, err := toEnvVarsFromStr(EnvVarsFromHost)
-		if err != nil {
-			return nil, err
-		}
-
-		envVars, err := toEnvVarsDaggerFromMap(mapEnvVars)
+		envVars, err := envvars.ToDaggerEnvVarsFromStr(EnvVarsFromHost)
 		if err != nil {
 			return nil, err
 		}

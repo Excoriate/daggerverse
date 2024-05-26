@@ -1,6 +1,6 @@
-go 1.21.7
+go 1.22.2
 
-toolchain go1.21.7
+toolchain go1.22.3
 
 use (
 	.
@@ -13,3 +13,5 @@ use (
 	./tflint/dagger
 	./utils
 )
+
+//replace github.com/Excoriate/daggerx v0.0.5 => ./../daggerx

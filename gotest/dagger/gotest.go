@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/Excoriate/daggerx/pkg/golangx"
 	"github.com/containerd/containerd/platforms"
 	"path/filepath"
 )
@@ -39,7 +40,9 @@ func (m *Gotest) WithPlatform(
 
 	p := platforms.MustParse(string(platform))
 
-	ctr := m.Ctr.
+	ctr := m.Ctr
+
+	ctr = ctr.
 		WithEnvVariable("GOOS", p.OS).
 		WithEnvVariable("GOARCH", p.Architecture)
 
@@ -53,13 +56,15 @@ func (m *Gotest) WithPlatform(
 
 // WithCgoEnabled Set CGO_ENABLED environment variable to 1.
 func (m *Gotest) WithCgoEnabled() *Gotest {
-	m.Ctr = m.Ctr.WithEnvVariable("CGO_ENABLED", "1")
+	gox := golangx.WithGoCgoEnabled()
+	m.Ctr = m.Ctr.WithEnvVariable(gox.Name, gox.Value)
 	return m
 }
 
 // WithCgoDisabled Set CGO_ENABLED environment variable to 0.
 func (m *Gotest) WithCgoDisabled() *Gotest {
-	m.Ctr = m.Ctr.WithEnvVariable("CGO_ENABLED", "0")
+	gox := golangx.WithGoCgoDisabled()
+	m.Ctr = m.Ctr.WithEnvVariable(gox.Name, gox.Value)
 	return m
 }
 
