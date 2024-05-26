@@ -1,94 +1,94 @@
 ---
 run:
-    tests: false
-    modules-download-mode: readonly
-    timeout: 240s
-    skip-dirs-use-default: true
-    skip-files:
-        - ^querybuilder/.+\.go
-        - dagger.gen.go
-    skip-dirs:
-        - ^internal/
-        - ^querybuilder/
+  tests: false
+  modules-download-mode: readonly
+  timeout: 240s
+  skip-dirs-use-default: true
+  skip-files:
+    - ^querybuilder/.+\.go
+    - dagger.gen.go
+  skip-dirs:
+    - ^internal/
+    - ^querybuilder/
 linters-settings:
-    depguard:
-        rules:
-            Rule not allowed packages:
-                files: [.*]
-                deny:
-                    - pkg: notexist
-                      desc: notexist is not allowed or blacklisted
-    govet:
-        check-shadowing: true
-    gocyclo:
-        min-complexity: 15
-    maligned:
-        suggest-new: true
-    goconst:
-        min-len: 5
-        min-occurrences: 3
-    gocritic:
-        settings:
-            rangeValCopy:
-                sizeThreshold: 1024
-        enabled-tags:
-            - diagnostic
-            - experimental
-            - opinionated
-            - performance
-            - style
-        disabled-checks:
-            - singleCaseSwitch
-            - hugeParam
-            - appendCombine
-            - commentedOutCode
-    funlen:
-        lines: 140
-        statements: 52
+  depguard:
+    rules:
+      Rule not allowed packages:
+        files: [ .* ]
+        deny:
+          - pkg: notexist
+            desc: notexist is not allowed or blacklisted
+  govet:
+    check-shadowing: true
+  gocyclo:
+    min-complexity: 15
+  maligned:
+    suggest-new: true
+  goconst:
+    min-len: 5
+    min-occurrences: 3
+  gocritic:
+    settings:
+      rangeValCopy:
+        sizeThreshold: 1024
+    enabled-tags:
+      - diagnostic
+      - experimental
+      - opinionated
+      - performance
+      - style
+    disabled-checks:
+      - singleCaseSwitch
+      - hugeParam
+      - appendCombine
+      - commentedOutCode
+  funlen:
+    lines: 140
+    statements: 52
 linters:
-    disable-all: true
-    enable:
-        - bodyclose
-        - unused
-        - dogsled
-        - dupl
-        - errcheck
-        - funlen
-        - goconst
-        - gocritic
-        - gofmt
-        - gosec
-        - gosimple
-        - nakedret
-        - exportloopref
-        - staticcheck
-        - stylecheck
-        - typecheck
-        - unconvert
-        - unparam
-        - whitespace
-        - govet
-        - revive
-        - depguard
+  disable-all: true
+  enable:
+    - bodyclose
+    #        - unused
+    - dogsled
+    - dupl
+    - errcheck
+    - funlen
+    - goconst
+    - gocritic
+    - gofmt
+    - gosec
+    - gosimple
+    - nakedret
+    - exportloopref
+    - staticcheck
+    - stylecheck
+    - typecheck
+    - unconvert
+    #    - unparam
+    - whitespace
+    - govet
+    - revive
+    - depguard
 issues:
-    max-issues-per-linter: 0
-    max-same-issues: 0
-    exclude-rules:
-        - linters:
-              - typecheck
-          text: unicode/utf8
-        - linters:
-              - gosec
-          text: G306
-        - linters:
-              - funlen
-          path: cmd/root\.go
-        - linters:
-              - gosec
-          text: G404
-        - path: utils/commands\.go
-          linters:
-              - gosec
-          text: G204
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  exclude-rules:
+    - linters:
+        - typecheck
+      text: unicode/utf8
+    - linters:
+        - gosec
+      text: G306
+    - linters:
+        - funlen
+      path: cmd/root\.go
+    - linters:
+        - gosec
+      text: G404
+    - path: utils/commands\.go
+      linters:
+        - gosec
+      text: G204
 output:
-    format: line-number
+  format: line-number

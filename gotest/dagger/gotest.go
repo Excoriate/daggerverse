@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+	"github.com/Excoriate/daggerx/pkg/envvars"
+	"github.com/Excoriate/daggerx/pkg/fixtures"
+	"github.com/Excoriate/daggerx/pkg/golangx"
 	"github.com/containerd/containerd/platforms"
 	"path/filepath"
 )
@@ -15,12 +18,12 @@ func (m *Gotest) WithSource(
 	workdir string,
 ) *Gotest {
 	m.Src = src
-	ctr := m.Ctr.WithMountedDirectory(mntPrefix, m.Src)
+	ctr := m.Ctr.WithMountedDirectory(fixtures.MntPrefix, m.Src)
 
 	if workdir != "" {
-		ctr = ctr.WithWorkdir(filepath.Join(mntPrefix, workdir))
+		ctr = ctr.WithWorkdir(filepath.Join(fixtures.MntPrefix, workdir))
 	} else {
-		ctr = ctr.WithWorkdir(mntPrefix)
+		ctr = ctr.WithWorkdir(fixtures.MntPrefix)
 	}
 
 	m.Ctr = ctr
@@ -39,7 +42,9 @@ func (m *Gotest) WithPlatform(
 
 	p := platforms.MustParse(string(platform))
 
-	ctr := m.Ctr.
+	ctr := m.Ctr
+
+	ctr = ctr.
 		WithEnvVariable("GOOS", p.OS).
 		WithEnvVariable("GOARCH", p.Architecture)
 
@@ -53,13 +58,15 @@ func (m *Gotest) WithPlatform(
 
 // WithCgoEnabled Set CGO_ENABLED environment variable to 1.
 func (m *Gotest) WithCgoEnabled() *Gotest {
-	m.Ctr = m.Ctr.WithEnvVariable("CGO_ENABLED", "1")
+	gox := golangx.WithGoCgoEnabled()
+	m.Ctr = m.Ctr.WithEnvVariable(gox.Name, gox.Value)
 	return m
 }
 
 // WithCgoDisabled Set CGO_ENABLED environment variable to 0.
 func (m *Gotest) WithCgoDisabled() *Gotest {
-	m.Ctr = m.Ctr.WithEnvVariable("CGO_ENABLED", "0")
+	gox := golangx.WithGoCgoDisabled()
+	m.Ctr = m.Ctr.WithEnvVariable(gox.Name, gox.Value)
 	return m
 }
 
@@ -155,7 +162,7 @@ func (m *Gotest) SetupGoTest(
 	}
 
 	if len(envVars) > 0 {
-		envVarsDagger, err := toEnvVarsDaggerFromSlice(envVars)
+		envVarsDagger, err := envvars.ToDaggerEnvVarsFromSlice(envVars)
 		if err != nil {
 			return nil, err
 		}
@@ -249,7 +256,7 @@ func (m *Gotest) SetupGoTestSum(
 	}
 
 	if len(envVars) > 0 {
-		envVarsDagger, err := toEnvVarsDaggerFromSlice(envVars)
+		envVarsDagger, err := envvars.ToDaggerEnvVarsFromSlice(envVars)
 		if err != nil {
 			return nil, err
 		}
