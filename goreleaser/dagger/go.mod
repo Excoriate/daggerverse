@@ -6,7 +6,7 @@ toolchain go1.22.3
 
 require (
 	github.com/99designs/gqlgen v0.17.44
-	github.com/Excoriate/daggerx v0.0.10
+	github.com/Excoriate/daggerx v0.0.11
 	github.com/Khan/genqlient v0.7.0
 	github.com/vektah/gqlparser/v2 v2.5.11
 	go.opentelemetry.io/otel v1.24.0
