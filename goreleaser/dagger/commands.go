@@ -178,7 +178,7 @@ func (m *Goreleaser) Release(
 	}
 
 	if clean {
-		cleanArg = "--clean"
+		cleanArg = goReleaserCMDClean
 	}
 
 	allArgs := cmdbuilder.BuildArgs(args, cfgFileArg, autoSnapshotArg, cleanArg)
