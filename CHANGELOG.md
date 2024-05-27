@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.13.0](https://github.com/Excoriate/daggerverse/compare/v1.12.2...v1.13.0) (2024-05-27)
+
+
+### Features
+
+* add newer version of terragrunt module ([65db0ff](https://github.com/Excoriate/daggerverse/commit/65db0ffd91beceb3fd4ea9c726d0572901b3ba9e))
+
 ## [1.12.2](https://github.com/Excoriate/daggerverse/compare/v1.12.1...v1.12.2) (2024-05-27)
 
 
