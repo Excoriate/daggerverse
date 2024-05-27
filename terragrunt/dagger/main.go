@@ -1,15 +1,13 @@
 package main
 
 import (
-	"context"
 	"fmt"
-)
 
-const (
-	tgContainerImageDefault = "ghcr.io/terraform-linters/tflint"
-	tfVersionDefault        = "1.7.0"
-	workdirRootPath         = "/mnt"
-	entrypointCMD           = "terragrunt"
+	"github.com/Excoriate/daggerx/pkg/merger"
+
+	"github.com/Excoriate/daggerx/pkg/cmdbuilder"
+
+	"github.com/Excoriate/daggerx/pkg/containerx"
 )
 
 type Terragrunt struct {
@@ -21,64 +19,66 @@ type Terragrunt struct {
 
 	// tfVersion is the version of the Terraform to use, e.g., "1.0.0". For more information, visit HashiCorp's Terraform GitHub repository.
 	// +optional
-	// +default="1.7.0"
 	tfVersion string
 }
 
 func New(
 	// tfVersion is the version of the Terraform to use, e.g., "1.0.0". For more information, visit HashiCorp's Terraform GitHub repository.
 	// +optional
-	// +default="1.7.0"
 	tfVersion string,
 	// image is the image to use as the base container.
 	// +optional
-	// +default="alpine/terragrunt"
 	image string,
 	// src is the directory that contains all the source code, including the module directory.
 	src *Directory,
 	// Ctrl is the container to use as a base container.
 	// +optional
 	ctr *Container,
-) *Terragrunt {
-	g := &Terragrunt{
+	// envVarsFromHost is the list of environment variables to pass from the host to the container.
+	// the format of the environment variables passed from the host are slices of strings separted by "=", and commas.
+	// E.g., []string{"HOST=localhost", "PORT=8080"}
+	// +optional
+	envVarsFromHost []string,
+) (*Terragrunt, error) {
+	m := &Terragrunt{
 		Src: src,
 	}
 
 	if ctr != nil {
-		g.Ctr = ctr
+		m.Ctr = ctr
 	} else {
-		g.Base(image, tfVersion)
+		imageURL, err := containerx.GetImageURL(&containerx.NewBaseContainerOpts{
+			Image:           image,
+			FallBackVersion: tfVersionDefault,
+			FallbackImage:   tgContainerImageDefault,
+			Version:         tfVersion,
+		})
+
+		if err != nil {
+			return nil, fmt.Errorf("failed to create the image URL: %w", err)
+		}
+
+		m.Base(imageURL)
 	}
 
-	g = g.WithSource(src, "")
+	m.addEnvVarsToContainerFromSlice(envVarsFromHost)
 
-	return g
+	return m, nil
 }
 
-// Version returns the Terragrunt version.
-// Consider to configure Terragrunt based on the target Terraform version.
-func (m *Terragrunt) Version() (string, error) {
-	m.Ctr = addCMDsToContainer([]string{entrypointCMD}, []string{"--version"}, m.Ctr)
+// Base sets the base image and version, and creates the base container.
+// For Terragrunt, the default image is "alpine/terragrunt" and the default version is "1.7.0".
+// Consider that the container isn't created based on the Terragrunt version, but on the Terraform version.
+func (m *Terragrunt) Base(imageURL string) *Terragrunt {
+	c := dag.Container().From(imageURL)
+	m.Ctr = c
 
-	out, err := m.Ctr.
-		Stdout(context.Background())
-
-	return out, err
+	return m
 }
 
-// Help returns the Terragrunt help.
-func (m *Terragrunt) Help() (string, error) {
-	m.Ctr = addCMDsToContainer([]string{entrypointCMD}, []string{"--help"}, m.Ctr)
-
-	out, err := m.Ctr.
-		Stdout(context.Background())
-
-	return out, err
-}
-
-// AddCMD adds a command to the container.
+// addCMD adds a command to the container.
 // It supports environment variables and arguments.
-func (m *Terragrunt) AddCMD(
+func (m *Terragrunt) addCMD(
 	// module is the terragunt module to use that includes the terragrunt.hcl
 	// the module should be relative to the mounted directory (--src).
 	module string,
@@ -94,92 +94,15 @@ func (m *Terragrunt) AddCMD(
 	// +optional
 	args string,
 ) (*Terragrunt, error) {
-	envVarsDaggerFormat, err := toEnvVarsDagger(envVars)
-	if err != nil {
-		return nil, err
-	}
-
 	// Add the terragrunt module as the workdir.
 	m.Ctr = m.WithSource(m.Src, module).Ctr
 
 	// Add the environment variables to the container.
-	m.Ctr = m.WithEnvVars(envVarsDaggerFormat).Ctr
+	m.addEnvVarsToContainerFromSlice(envVars)
 
 	// Add the command to the container.
-	m.Ctr = addCMDsToContainer([]string{entrypointCMD, cmd}, buildArgs(args), m.Ctr)
+	cmdWithArgs := merger.MergeSlices([]string{tgCMD, cmd}, cmdbuilder.BuildArgs(args))
+	m.Ctr = m.WithCMD(cmdWithArgs).Ctr
 
 	return m, nil
-}
-
-// Run executes any Terragrunt command.
-func (m *Terragrunt) Run(
-	// module is the terragunt module to use that includes the terragrunt.hcl
-	// the module should be relative to the mounted directory (--src).
-	module string,
-	// cmd is the command to run.
-	cmd string,
-	// envVars is the list of environment variables to pass from the host to the container.
-	// the format of the environment variables passed from the host are slices of strings separted by "=", and commas.
-	// E.g., []string{"HOST=localhost", "PORT=8080"}
-	// +optional
-	// +default=[]
-	envVars []string,
-	// args is the list of arguments to pass to the Terragrunt command.
-	// +optional
-	args string,
-) (string, error) {
-	tgCMD, err := m.AddCMD(module, cmd, envVars, args)
-	if err != nil {
-		return "", err
-	}
-
-	out, err := tgCMD.Ctr.
-		Stdout(context.Background())
-
-	return out, err
-}
-
-// RunAll executes any Terragrunt run-all command.
-func (m *Terragrunt) RunAll(
-	// module is the terragunt module to use that includes the terragrunt.hcl
-	// the module should be relative to the mounted directory (--src).
-	module string,
-	// cmd is the command to run.
-	cmd string,
-	// envVars is the list of environment variables to pass from the host to the container.
-	// the format of the environment variables passed from the host are slices of strings separted by "=", and commas.
-	// E.g., []string{"HOST=localhost", "PORT=8080"}
-	// +optional
-	// +default=[]
-	envVars []string,
-	// args is the list of arguments to pass to the Terragrunt command.
-	// +optional
-	args string,
-) (string, error) {
-	runAllCMD := fmt.Sprintf("run-all %s", cmd)
-	nonInteractive := "--terragrunt-non-interactive"
-	allArgs := fmt.Sprintf("%s %s", nonInteractive, args)
-
-	fullCMD := append([]string{entrypointCMD, runAllCMD}, buildArgs(allArgs)...)
-	fullCMDAsStr := convertCMDToString(fullCMD)
-
-	// Add the terragrunt module as the workdir.
-	m.Ctr = m.WithSource(m.Src, module).Ctr
-
-	// Add the environment variables to the container.
-	envVarsDaggerFormat, err := toEnvVarsDagger(envVars)
-	if err != nil {
-		return "", err
-	}
-
-	m.Ctr = m.WithEnvVars(envVarsDaggerFormat).Ctr
-
-	out, err := m.Ctr.
-		WithEntrypoint(nil).
-		// Somehow the run-all command is not working with the entrypoint, so I'm using the full command as a string.
-		// and running it with the shell.
-		WithExec([]string{"sh", "-c", fullCMDAsStr}).
-		Stdout(context.Background())
-
-	return out, err
 }

@@ -3,7 +3,7 @@ dependencies {
 }
 
 dependency "upstream_dep" {
-  config_path = "../terragrunt-simple-1"
+  config_path  = "../terragrunt-simple-1"
   skip_outputs = true
 
   mock_outputs = {
@@ -13,9 +13,10 @@ dependency "upstream_dep" {
 
 terraform {
   source = "../../terraform/tf-module-2"
+
 }
 
-inputs =   {
-  is_enabled = true
+inputs = {
+  is_enabled                = true
   value_from_another_module = dependency.upstream_dep.outputs.random_string
 }

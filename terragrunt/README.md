@@ -42,7 +42,7 @@ The following examples illustrate how to use the Terragrunt module in Dagger for
 dagger call --src="../test/testdata" run \
 --module=terragrunt/with-dependencies \
 --cmd="plan" \
---args="-compact-warnings, -no-color, -lock=false"
+--args="-compact-warnings -no-color -lock=false"
 ```
 
 
@@ -53,13 +53,13 @@ dagger call --src="../test/testdata" run \
 dagger -m github.com/Excoriate/daggerverse/terragrunt@v1.10.0 call --src="../test/testdata" run \
 --module=terragrunt/with-dependencies \
 --cmd="plan" \
---args="-compact-warnings, -no-color, -lock=false"
+--args="-compact-warnings -no-color -lock=false"
 
 # Run 'apply' for all configurations in a non-interactive mode using the GitHub module
 dagger -m github.com/Excoriate/daggerverse/terragrunt@v1.10.0 call --src="../test/testdata" run-all \
 --module=terragrunt/with-dependencies \
 --cmd="apply" \
---args="-compact-warnings, -no-color, -lock=false, -auto-approve"
+--args="-compact-warnings -no-color -lock=false, -auto-approve"
 ```
 
 >**NOTE**: Each module is delivered with a sample project that can be used to test these modules. The ones used in this usage are located in the `test/testdata` directory.
