@@ -2,5 +2,5 @@
   "name": "goreleaser",
   "sdk": "go",
   "source": "dagger",
-  "engineVersion": "v0.11.1"
+  "engineVersion": "v0.11.4"
 }
