@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.12.2](https://github.com/Excoriate/daggerverse/compare/v1.12.1...v1.12.2) (2024-05-27)
+
+
+### Refactoring
+
+* use constant for arguments ([d895b81](https://github.com/Excoriate/daggerverse/commit/d895b81fbfb5cdcf91f7f0f15c987e4d85864f91))
+* use constant for arguments ([e000650](https://github.com/Excoriate/daggerverse/commit/e00065032b47e768699de058c95813ba3ac8bae4))
+
 ## [1.12.1](https://github.com/Excoriate/daggerverse/compare/v1.12.0...v1.12.1) (2024-05-16)
 
 
