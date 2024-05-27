@@ -1,9 +1,0 @@
-{
-  "name": "iac-terragrunt",
-  "root-for": [
-    {
-      "source": "."
-    }
-  ],
-  "sdk": "go"
-}
