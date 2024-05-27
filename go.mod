@@ -53,7 +53,7 @@ require (
 )
 
 require (
-	github.com/Excoriate/daggerx v0.0.10
+	github.com/Excoriate/daggerx v0.0.11
 	github.com/Microsoft/hcsshim v0.11.5 // indirect
 	github.com/adrg/xdg v0.4.0 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect

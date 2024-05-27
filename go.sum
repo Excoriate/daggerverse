@@ -10,6 +10,8 @@ github.com/Excoriate/daggerx v0.0.9 h1:jGGwpFf39UqVv6QNSrVBV7TGDHSmqtDY8AiQV8vOV
 github.com/Excoriate/daggerx v0.0.9/go.mod h1:KUO7klDncgiIbT85bt/0p610I7wK1VIPgJiWVSlsNJc=
 github.com/Excoriate/daggerx v0.0.10 h1:fYBFo0vK2RVlZRgJZSZkx5BoJHTs8rGyqWYglYlrvcU=
 github.com/Excoriate/daggerx v0.0.10/go.mod h1:KUO7klDncgiIbT85bt/0p610I7wK1VIPgJiWVSlsNJc=
+github.com/Excoriate/daggerx v0.0.11 h1:uRB+xU+SPnWIuFn+Eg0s6eJtpev2atbdn9ViSRvLASo=
+github.com/Excoriate/daggerx v0.0.11/go.mod h1:KUO7klDncgiIbT85bt/0p610I7wK1VIPgJiWVSlsNJc=
 github.com/Khan/genqlient v0.7.0 h1:GZ1meyRnzcDTK48EjqB8t3bcfYvHArCUUvgOwpz1D4w=
 github.com/Khan/genqlient v0.7.0/go.mod h1:HNyy3wZvuYwmW3Y7mkoQLZsa/R5n5yIRajS1kPBvSFM=
 github.com/Microsoft/go-winio v0.6.2 h1:F2VQgta7ecxGYO8k3ZZz3RS8fVIXVxONVUPlNERoyfY=
