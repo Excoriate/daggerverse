@@ -124,6 +124,9 @@ type Platform = dagger.Platform
 // The `PortID` scalar type represents an identifier for an object of type Port.
 type PortID = dagger.PortID
 
+// The `ScalarTypeDefID` scalar type represents an identifier for an object of type ScalarTypeDef.
+type ScalarTypeDefID = dagger.ScalarTypeDefID
+
 // The `SecretID` scalar type represents an identifier for an object of type Secret.
 type SecretID = dagger.SecretID
 
@@ -399,6 +402,9 @@ type PipelineOpts = dagger.PipelineOpts
 // SecretOpts contains options for Client.Secret
 type SecretOpts = dagger.SecretOpts
 
+// A definition of a custom scalar defined in a Module.
+type ScalarTypeDef = dagger.ScalarTypeDef
+
 // A reference to a secret value, which can be handled more safely than the value itself.
 type Secret = dagger.Secret
 
@@ -433,6 +439,9 @@ type TypeDefWithInterfaceOpts = dagger.TypeDefWithInterfaceOpts
 
 // TypeDefWithObjectOpts contains options for TypeDef.WithObject
 type TypeDefWithObjectOpts = dagger.TypeDefWithObjectOpts
+
+// TypeDefWithScalarOpts contains options for TypeDef.WithScalar
+type TypeDefWithScalarOpts = dagger.TypeDefWithScalarOpts
 
 // Sharing mode of the cache volume.
 type CacheSharingMode = dagger.CacheSharingMode
@@ -515,6 +524,9 @@ const (
 	//
 	// Always paired with an ObjectTypeDef.
 	ObjectKind TypeDefKind = dagger.ObjectKind
+
+	// A scalar value of any basic kind.
+	ScalarKind TypeDefKind = dagger.ScalarKind
 
 	// A string value.
 	StringKind TypeDefKind = dagger.StringKind
