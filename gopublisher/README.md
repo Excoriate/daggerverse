@@ -11,11 +11,13 @@ Through the [Dagger CLI](https://docs.dagger.io/cli/465058/install), or by using
 
 * ⚙️ `version`: This argument (to the module's constructor) dictates what's the base [Golang version](https://golang.org/dl/) to use. By default, it's set to `1.22.3`.
 * ⚙️ `ctr`: The container if it's passed. If not, the module will use the default container.
+
 > **NOTE**: This configuration is available through the [module's constructor](https://docs.dagger.io/manuals/developer/go/520657/constructor/).
 
 ---
 
 ## Features 🎨
+
 ### Commands and Functionalities  📜
 
 | Command or functionality         | Command                     | Example                                                                                   | Status |
@@ -27,6 +29,7 @@ Through the [Dagger CLI](https://docs.dagger.io/cli/465058/install), or by using
 
 
 ### API Reference 📚
+
 For a more detailed information, just run `dagger call --help` and you will get the following output:
 
 ```bash
