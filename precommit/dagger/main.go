@@ -1,36 +1,55 @@
-// A generated module for Precommit functions
-//
-// This module has been generated via dagger init and serves as a reference to
-// basic module structure as you get started with Dagger.
-//
-// Two functions have been pre-created. You can modify, delete, or add to them,
-// as needed. They demonstrate usage of arguments and return types using simple
-// echo and grep commands. The functions can be called from the dagger CLI or
-// from one of the SDKs.
-//
-// The first line in this comment block is a short description line and the
-// rest is a long description with more detail on the module's purpose or usage,
-// if appropriate. All modules should have a short description.
-
 package main
 
 import (
-	"context"
+	"fmt"
+
+	"github.com/Excoriate/daggerx/pkg/containerx"
 )
 
-type Precommit struct{}
+type Precommit struct {
+	// Src is the directory that contains all the source code, including the module directory.
+	Src *Directory
 
-// Returns a container that echoes whatever string argument is provided
-func (m *Precommit) ContainerEcho(stringArg string) *Container {
-	return dag.Container().From("alpine:latest").WithExec([]string{"echo", stringArg})
+	// Ctr is the container to use as a base container for pre-commit, if it's passed, it's used as the base container.
+	Ctr *Container
 }
 
-// Returns lines that match a pattern in the files of the provided Directory
-func (m *Precommit) GrepDir(ctx context.Context, directoryArg *Directory, pattern string) (string, error) {
-	return dag.Container().
-		From("alpine:latest").
-		WithMountedDirectory("/mnt", directoryArg).
-		WithWorkdir("/mnt").
-		WithExec([]string{"grep", "-R", pattern, "."}).
-		Stdout(ctx)
+func New(
+	// version is the version of the Precommit to use, e.g., "v1.22.0".
+	// +optional
+	version string,
+	// Src is the directory that contains all the source code, including the module directory.
+	src *Directory,
+	// Ctr is the container to use as a base container for pre-commit, if it's passed, it's used as the base container.
+	// +optional
+	ctr *Container,
+	// EnvVarsFromHost is a list of environment variables to pass from the host to the container.
+	// +optional
+	envVarsFromHost []string,
+) (*Precommit, error) {
+	m := &Precommit{
+		Src: src,
+	}
+
+	imageURL, err := containerx.GetImageURL(&containerx.NewBaseContainerOpts{
+		Image:           DefaultImage,
+		Version:         version,
+		FallBackVersion: DefaultVersion,
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to get image URL: %w", err)
+	}
+
+	m.Ctr = m.Base(imageURL).Ctr
+
+	return nil, nil
+}
+
+// Base sets the base container for pre-commit.
+func (m *Precommit) Base(imageURL string) *Precommit {
+	c := dag.Container().From(imageURL)
+
+	m.Ctr = c
+	return m
 }
