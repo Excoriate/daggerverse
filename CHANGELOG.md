@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.14.0](https://github.com/Excoriate/daggerverse/compare/v1.13.0...v1.14.0) (2024-06-02)
+
+
+### Features
+
+* add gopublisher module ([270fb0a](https://github.com/Excoriate/daggerverse/commit/270fb0a7698c6cc5fe61cf25e42df17a8adc8e31))
+
+
+### Refactoring
+
+* add initial boilerplate code for new modules, remove iac-terragrunt legacy module ([c1b6230](https://github.com/Excoriate/daggerverse/commit/c1b6230522dbf097a027c9237dd87de9b51e6c78))
+* fix golangci lint issues, remove unsused dependencies ([d21ad8d](https://github.com/Excoriate/daggerverse/commit/d21ad8dd59fea4304b7bc827c8d761d2a5d03439))
+
+
+### Other
+
+* update docs ([c1a5973](https://github.com/Excoriate/daggerverse/commit/c1a5973dc6399a84f7cf447a292aefbed8751c30))
+
 ## [1.13.0](https://github.com/Excoriate/daggerverse/compare/v1.12.2...v1.13.0) (2024-05-27)
 
 
