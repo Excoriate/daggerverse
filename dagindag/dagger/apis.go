@@ -89,12 +89,12 @@ func (m *Dagindag) WithDaggerSetup(
 	return m
 }
 
-// WithDaggerCLIEntryPoint sets the Dagger CLI entry point.
+// WithDaggerEntryPoint sets the Dagger CLI entry point.
 //
 // It sets the Dagger CLI entry point to /bin/dagger.
 // Arguments:
 // - daggerCLIEntryPoint is the Dagger CLI entry point.
-func (m *Dagindag) WithDaggerCLIEntryPoint() *Dagindag {
+func (m *Dagindag) WithDaggerEntryPoint() *Dagindag {
 	m.Ctr = m.Ctr.WithEntrypoint(daggerCLIEntryPoint)
 
 	return m

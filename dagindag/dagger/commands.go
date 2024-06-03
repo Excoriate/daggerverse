@@ -114,6 +114,7 @@ func (m *Dagindag) UseFn(
 	// +optional
 	modVersion string,
 	// fn is the function to call in the module. If it's not specified, the default --help function is called.
+	// +optional
 	fn string,
 	// fnArgs is the arguments to pass to the function. It receives a single string separated by commas. E.g., "arg1,arg2,arg3=value"
 	// +optional

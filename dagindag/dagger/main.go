@@ -75,7 +75,7 @@ func (m *Dagindag) Base(
 
 	// Setup Dagger.
 	m.Ctr = m.WithDaggerSetup(daggerVersion).
-		WithDaggerCLIEntryPoint().Ctr
+		WithDaggerEntryPoint().Ctr
 
 	// Creating the docker configuration for the dockerd and the service binding.
 	dockerd := m.WithDockerService(dockerVersion)
