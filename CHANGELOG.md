@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.15.0](https://github.com/Excoriate/daggerverse/compare/v1.14.0...v1.15.0) (2024-06-03)
+
+
+### Features
+
+* add dagger in dagger module ([044fa43](https://github.com/Excoriate/daggerverse/commit/044fa43526b242f782c70cdf859fd86a017900c2))
+* add daggerindag module ([3329998](https://github.com/Excoriate/daggerverse/commit/33299982103efe0dea26698510f3a4495e7d7be9))
+
+
+### Other
+
+* fix hooks errors ([96b29ef](https://github.com/Excoriate/daggerverse/commit/96b29ef0bfe1b4a3acf05244c59628bc1aee1138))
+
 ## [1.14.0](https://github.com/Excoriate/daggerverse/compare/v1.13.0...v1.14.0) (2024-06-02)
 
 
