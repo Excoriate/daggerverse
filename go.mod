@@ -19,10 +19,10 @@ require (
 	google.golang.org/grpc v1.63.2
 )
 
-require dagger.io/dagger v0.11.4 // indirect
+require dagger.io/dagger v0.11.6 // indirect
 
 require (
-	github.com/Excoriate/daggerx v0.0.13
+	github.com/Excoriate/daggerx v0.0.16
 	github.com/Microsoft/hcsshim v0.11.5 // indirect
 	github.com/adrg/xdg v0.4.0 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
