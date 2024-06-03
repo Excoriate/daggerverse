@@ -4,6 +4,7 @@
 
 
 A simple [Dagger](https://dagger.io) module that wraps Dagger in Dagger, which means you can call other modules, functions, or Dagger commands from within a Dagger module. It's specially useful for:
+
 - ✅ Test other Dagger modules.
 - ✅ Call Dagger commands from within a Dagger module.
 - ✅ Publish your Dagger modules through CI.
@@ -12,8 +13,8 @@ A simple [Dagger](https://dagger.io) module that wraps Dagger in Dagger, which m
 
 Through the [Dagger CLI](https://docs.dagger.io/cli/465058/install), or by using it directly reusing it within your module, you can configure the following options:
 
-* ⚙️ `daggerVersion`: Is the version of Dagger to use. It's a string that represents the version of Dagger to use. It's optional, and if not provided, the latest version of Dagger will be used (Currently, **0.11.6**).
-* ⚙️ `dockerVersion`: Is the version of Docker to use. It's a string that represents the version of Docker to use. It's optional, and if not provided, the latest version of Docker will be used (currently, **0.24.0**).
+- ⚙️ `daggerVersion`: Is the version of Dagger to use. It's a string that represents the version of Dagger to use. It's optional, and if not provided, the latest version of Dagger will be used (Currently, **0.11.6**).
+- ⚙️ `dockerVersion`: Is the version of Docker to use. It's a string that represents the version of Docker to use. It's optional, and if not provided, the latest version of Docker will be used (currently, **0.24.0**).
 
 > **NOTE**: This configuration is available through the [module's constructor](https://docs.dagger.io/manuals/developer/go/520657/constructor/).
 
@@ -28,25 +29,31 @@ Through the [Dagger CLI](https://docs.dagger.io/cli/465058/install), or by using
 | Terminal                 | `terminal` | `dagger call terminal --help` |
 | Dag (Dagger) CLI         | `dag-cli`  | `dagger call dag-cli` --      |
 
-### Examples.
+### Examples
+
 #### Calling a module using the dag-cli command
+
 ```bash
 dagger call dag-cli --dag-cmds="call -m github.com/shykes/daggerverse/hello hello"
 ```
 
 ### Open a terminal in the container
+
 In this example, a new terminal is open, and from within it's possible to inspect environment variables, and run commands.
+
 ```bash
 # Open a terminal in the container
 dagger call terminal \
   --env-vars="TEST=123,TEST2=456"
-  
+
 # And then, from within the terminal, you can run:
 printenv
 ```
 
 ### Call a module's function
+
 In this example, the `hello` module is called, and the `hello` function is executed.
+
 ```bash
 dagger call use-fn \
 --mod-name=github.com/shykes/daggerverse/hello \

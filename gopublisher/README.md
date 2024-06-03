@@ -75,6 +75,7 @@ INHERITED OPTIONS
 ---
 
 ## Usage in CI (Like GitHub Actions) 🚀
+
 ```yaml
   publish-go-module:
     name: Publish Go Module with GoPublisher Dagger
