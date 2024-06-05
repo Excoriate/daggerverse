@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.15.1](https://github.com/Excoriate/daggerverse/compare/v1.15.0...v1.15.1) (2024-06-05)
+
+
+### Refactoring
+
+* add extra apis on gotest ([dd4ace2](https://github.com/Excoriate/daggerverse/commit/dd4ace228ba4c087600553668b3fccb6a3819213))
+
 ## [1.15.0](https://github.com/Excoriate/daggerverse/compare/v1.14.0...v1.15.0) (2024-06-03)
 
 
