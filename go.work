@@ -2,7 +2,6 @@ go 1.22.3
 
 use (
 	.
-	./daggerx
 	./gitlab-cicd-vars/dagger
 	./goreleaser/dagger
 	//./gotest/dagger
@@ -14,5 +13,3 @@ use (
 	./utils
 	gotest/test
 )
-
-//replace github.com/Excoriate/daggerx v0.0.5 => ./../daggerx
