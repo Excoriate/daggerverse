@@ -44,7 +44,7 @@ func (m *Gotest) SetupGoTest(
 	ctr := m.WithSource(src, "").Ctr
 
 	if enableCache {
-		ctr = m.Ctr.With(m.WithGoCache)
+		ctr = m.WithGoCache().Ctr
 	}
 
 	if len(envVars) > 0 {
@@ -138,7 +138,7 @@ func (m *Gotest) SetupGoTestSum(
 	ctr := m.WithSource(src, "").Ctr
 
 	if enableCache {
-		ctr = m.Ctr.With(m.WithGoCache)
+		ctr = m.WithGoCache().Ctr
 	}
 
 	if len(envVars) > 0 {

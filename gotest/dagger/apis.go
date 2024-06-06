@@ -92,32 +92,30 @@ func (m *Gotest) WithEnvVar(
 
 // WithModuleCache sets the module cache for the Go module.
 // The default cache volume is "godmodcache", and the default mount path is "/go/pkg/mod".
-func (m *Gotest) WithModuleCache(ctr *Container) *Gotest {
+func (m *Gotest) WithModuleCache() *Gotest {
 	goModCache := dag.CacheVolume("godmodcache")
 
-	ctr = m.Ctr.WithMountedCache("/go/pkg/mod", goModCache).
+	m.Ctr = m.Ctr.WithMountedCache("/go/pkg/mod", goModCache).
 		WithEnvVariable("GOMODCACHE", "/go/pkg/mod")
 
-	m.Ctr = ctr
 	return m
 }
 
 // WithBuildCache sets the build cache for the Go module.
 // The default cache volume is "gobuildcache", and the default mount path is "/go/build-cache".
-func (m *Gotest) WithBuildCache(ctr *Container) *Gotest {
+func (m *Gotest) WithBuildCache() *Gotest {
 	goBuildCache := dag.CacheVolume("gobuildcache")
 
-	ctr = m.Ctr.WithMountedCache("/go/build-cache", goBuildCache).
+	m.Ctr = m.Ctr.WithMountedCache("/go/build-cache", goBuildCache).
 		WithEnvVariable("GOCACHE", "/go/build-cache")
 
-	m.Ctr = ctr
 	return m
 }
 
 // WithGoCache mounts the Go cache directories.
-func (m *Gotest) WithGoCache(ctr *Container) *Gotest {
-	return m.WithModuleCache(ctr).
-		WithBuildCache(ctr)
+func (m *Gotest) WithGoCache() *Gotest {
+	return m.WithModuleCache().
+		WithBuildCache()
 }
 
 // WithNewNetrcFileGitHub creates a new .netrc file with the GitHub credentials.
