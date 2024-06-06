@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.15.3](https://github.com/Excoriate/daggerverse/compare/v1.15.2...v1.15.3) (2024-06-06)
+
+
+### Bug Fixes
+
+* adjust gocache apis ([008e28f](https://github.com/Excoriate/daggerverse/commit/008e28f20eadcd13e6e9d38d8784356ad46e72a3))
+
 ## [1.15.2](https://github.com/Excoriate/daggerverse/compare/v1.15.1...v1.15.2) (2024-06-06)
 
 
