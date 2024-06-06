@@ -24,7 +24,7 @@ func parseArgsFromStrToSlice(argStr string) []string {
 }
 
 // parseEnvVarsInStringMapAsMap parses a string of environment variables in the form of "key1=value1,key2=value2"
-func (t *Terratest) parseEnvVarsInStringMapAsMap(envVarsStr string) map[string]string {
+func (m *Terratest) parseEnvVarsInStringMapAsMap(envVarsStr string) map[string]string {
 	envVars := make(map[string]string)
 	if envVarsStr == "" {
 		return envVars
@@ -41,14 +41,14 @@ func (t *Terratest) parseEnvVarsInStringMapAsMap(envVarsStr string) map[string]s
 }
 
 // setEnvVarsInContainer sets the environment variables for the Terraform container.
-func (t *Terratest) setEnvVarsInContainer(envVars map[string]string) *Container {
+func (m *Terratest) setEnvVarsInContainer(envVars map[string]string) *Container {
 	for key, value := range envVars {
-		t.Ctr = t.Ctr.WithEnvVariable(key, value)
+		m.Ctr = m.Ctr.WithEnvVariable(key, value)
 	}
-	return t.Ctr
+	return m.Ctr
 }
 
-func (t *Terratest) getTFInstallCMD(version string) []string {
+func (m *Terratest) getTFInstallCMD(version string) []string {
 	installUrl := fmt.Sprintf("https://releases.hashicorp.com/terraform/%s/terraform_%s_linux_amd64.zip", version, version)
 	zipFileName := fmt.Sprintf("terraform_%s_linux_amd64.zip", version)
 

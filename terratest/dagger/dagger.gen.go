@@ -540,7 +540,7 @@ func convertSlice[I any, O any](in []I, f func(I) O) []O {
 	return out
 }
 
-func (r Terratest) MarshalJSON() ([]byte, error) {
+func (m Terratest) MarshalJSON() ([]byte, error) {
 	var concrete struct {
 		Version   string
 		TfVersion string
@@ -548,15 +548,15 @@ func (r Terratest) MarshalJSON() ([]byte, error) {
 		Src       *Directory
 		Ctr       *Container
 	}
-	concrete.Version = r.Version
-	concrete.TfVersion = r.TfVersion
-	concrete.Image = r.Image
-	concrete.Src = r.Src
-	concrete.Ctr = r.Ctr
+	concrete.Version = m.Version
+	concrete.TfVersion = m.TfVersion
+	concrete.Image = m.Image
+	concrete.Src = m.Src
+	concrete.Ctr = m.Ctr
 	return json.Marshal(&concrete)
 }
 
-func (r *Terratest) UnmarshalJSON(bs []byte) error {
+func (m *Terratest) UnmarshalJSON(bs []byte) error {
 	var concrete struct {
 		Version   string
 		TfVersion string
@@ -568,11 +568,11 @@ func (r *Terratest) UnmarshalJSON(bs []byte) error {
 	if err != nil {
 		return err
 	}
-	r.Version = concrete.Version
-	r.TfVersion = concrete.TfVersion
-	r.Image = concrete.Image
-	r.Src = concrete.Src
-	r.Ctr = concrete.Ctr
+	m.Version = concrete.Version
+	m.TfVersion = concrete.TfVersion
+	m.Image = concrete.Image
+	m.Src = concrete.Src
+	m.Ctr = concrete.Ctr
 	return nil
 }
 
