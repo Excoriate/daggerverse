@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.15.2](https://github.com/Excoriate/daggerverse/compare/v1.15.1...v1.15.2) (2024-06-06)
+
+
+### Refactoring
+
+* add enhanced apis for mutating original object ([252f994](https://github.com/Excoriate/daggerverse/commit/252f99437f0eedbc3eda3dbabf5b36f1893b033d))
+
 ## [1.15.1](https://github.com/Excoriate/daggerverse/compare/v1.15.0...v1.15.1) (2024-06-05)
 
 
