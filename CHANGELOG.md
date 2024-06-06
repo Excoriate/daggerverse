@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.15.4](https://github.com/Excoriate/daggerverse/compare/v1.15.3...v1.15.4) (2024-06-06)
+
+
+### Refactoring
+
+* terratest module with extra apis ([d9c3b90](https://github.com/Excoriate/daggerverse/commit/d9c3b90948223dd7c0e59ae0a6da8f5a0a61dd3b))
+
 ## [1.15.3](https://github.com/Excoriate/daggerverse/compare/v1.15.2...v1.15.3) (2024-06-06)
 
 
