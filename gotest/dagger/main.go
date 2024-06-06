@@ -72,10 +72,8 @@ func New(
 // Base sets the base image and version, and creates the base container.
 // The default image is "golang/alpine" and the default version is "latest".
 func (m *Gotest) Base(imageURL string) *Gotest {
-	c := dag.Container().From(imageURL).
-		WithEnvVariable("CGO_ENABLED", "0")
-
+	c := dag.Container().From(imageURL)
 	m.Ctr = c
 
-	return m
+	return m.WithCgoDisabled()
 }

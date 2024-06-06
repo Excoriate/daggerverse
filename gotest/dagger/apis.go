@@ -92,67 +92,67 @@ func (m *Gotest) WithEnvVar(
 
 // WithModuleCache sets the module cache for the Go module.
 // The default cache volume is "godmodcache", and the default mount path is "/go/pkg/mod".
-func (m *Gotest) WithModuleCache(ctr *Container) *Container {
+func (m *Gotest) WithModuleCache(ctr *Container) *Gotest {
 	goModCache := dag.CacheVolume("godmodcache")
 
 	ctr = m.Ctr.WithMountedCache("/go/pkg/mod", goModCache).
 		WithEnvVariable("GOMODCACHE", "/go/pkg/mod")
 
-	return ctr
+	m.Ctr = ctr
+	return m
 }
 
 // WithBuildCache sets the build cache for the Go module.
 // The default cache volume is "gobuildcache", and the default mount path is "/go/build-cache".
-func (m *Gotest) WithBuildCache(ctr *Container) *Container {
+func (m *Gotest) WithBuildCache(ctr *Container) *Gotest {
 	goBuildCache := dag.CacheVolume("gobuildcache")
 
 	ctr = m.Ctr.WithMountedCache("/go/build-cache", goBuildCache).
 		WithEnvVariable("GOCACHE", "/go/build-cache")
 
-	return ctr
+	m.Ctr = ctr
+	return m
 }
 
 // WithGoCache mounts the Go cache directories.
-func (m *Gotest) WithGoCache(ctr *Container) *Container {
-	ctr = m.WithModuleCache(ctr)
-	ctr = m.WithBuildCache(ctr)
-
-	return ctr
+func (m *Gotest) WithGoCache(ctr *Container) *Gotest {
+	return m.WithModuleCache(ctr).
+		WithBuildCache(ctr)
 }
 
 // WithNewNetrcFileGitHub creates a new .netrc file with the GitHub credentials.
 //
 // The .netrc file is created in the root directory of the container.
-func (m *Gotest) WithNewNetrcFileGitHub(username, password string) *Container {
+func (m *Gotest) WithNewNetrcFileGitHub(username, password string) *Gotest {
 	machineCMD := fmt.Sprintf("machine github.com\nlogin %s\npassword %s\n", username, password)
 
-	ctr := m.Ctr.WithExec([]string{"echo", "-e", machineCMD, ">", "/root/.netrc"}, ContainerWithExecOpts{
+	m.Ctr = m.Ctr.WithExec([]string{"echo", "-e", machineCMD, ">", "/root/.netrc"}, ContainerWithExecOpts{
 		InsecureRootCapabilities: true,
 	})
 
-	return ctr
+	return m
 }
 
 // WithNewNetrcFileGitLab creates a new .netrc file with the GitLab credentials.
 //
 // The .netrc file is created in the root directory of the container.
-func (m *Gotest) WithNewNetrcFileGitLab(username, password string) *Container {
+func (m *Gotest) WithNewNetrcFileGitLab(username, password string) *Gotest {
 	machineCMD := fmt.Sprintf("machine gitlab.com\nlogin %s\npassword %s\n", username, password)
 
-	ctr := m.Ctr.WithExec([]string{"echo", "-e", machineCMD, ">", "/root/.netrc"}, ContainerWithExecOpts{
+	m.Ctr = m.Ctr.WithExec([]string{"echo", "-e", machineCMD, ">", "/root/.netrc"}, ContainerWithExecOpts{
 		InsecureRootCapabilities: true,
 	})
 
-	return ctr
+	return m
 }
 
 // WithPrivateGoPkg sets the GOPRIVATE environment variable.
 //
 // The GOPRIVATE environment variable is used to specify a comma-separated list of hosts for which Go modules should always be fetched directly from VCS repositories.
-func (m *Gotest) WithPrivateGoPkg(privateHost string) *Container {
-	ctr := m.Ctr.WithExec([]string{"go", "env", "GOPRIVATE", privateHost}, ContainerWithExecOpts{
+func (m *Gotest) WithPrivateGoPkg(privateHost string) *Gotest {
+	m.Ctr = m.Ctr.WithExec([]string{"go", "env", "GOPRIVATE", privateHost}, ContainerWithExecOpts{
 		InsecureRootCapabilities: true,
 	}).WithEnvVariable("GOPRIVATE", privateHost)
 
-	return ctr
+	return m
 }
