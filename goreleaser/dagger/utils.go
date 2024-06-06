@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"strings"
 
 	"github.com/Excoriate/daggerx/pkg/envvars"
 )
@@ -45,7 +47,20 @@ func (m *Goreleaser) resolveCfgArg(cfg string) string {
 		if m.CfgFile != "" {
 			cfgFileResolved = m.CfgFile
 		} else {
-			cfgFileResolved = goReleaserDefaultCfgFile
+			_, err := os.Stat(goReleaserDefaultCfgFile)
+			if os.IsNotExist(err) {
+				// check for .yml extension
+				goReleaserDefaultCfgFileWithYMLExt := strings.ReplaceAll(goReleaserDefaultCfgFile, ".yaml", ".yml")
+				// do the check again
+				_, err := os.Stat(goReleaserDefaultCfgFileWithYMLExt)
+				if err == nil {
+					cfgFileResolved = goReleaserDefaultCfgFileWithYMLExt
+				} else {
+					cfgFileResolved = ""
+				}
+			} else {
+				cfgFileResolved = goReleaserDefaultCfgFile
+			}
 		}
 	}
 
