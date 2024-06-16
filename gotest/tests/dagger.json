@@ -1,12 +1,17 @@
 {
-  "name": "terratest",
+  "name": "tests",
   "sdk": "go",
   "dependencies": [
+    {
+      "name": "gotest",
+      "source": ".."
+    },
     {
       "name": "dagindag",
       "source": "github.com/Excoriate/daggerverse/dagindag@9783ed1cc5a3c50165c861895d113f4c8612ef47"
     }
   ],
+  "root": "..",
   "source": "dagger",
-  "engineVersion": "v0.11.6"
+  "engineVersion": "v0.11.7"
 }

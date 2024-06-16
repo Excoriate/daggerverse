@@ -131,6 +131,9 @@ type ContainerID string
 // The `CurrentModuleID` scalar type represents an identifier for an object of type CurrentModule.
 type CurrentModuleID string
 
+// The `DagindagID` scalar type represents an identifier for an object of type Dagindag.
+type DagindagID string
+
 // The `DirectoryID` scalar type represents an identifier for an object of type Directory.
 type DirectoryID string
 
@@ -207,6 +210,9 @@ type Platform string
 
 // The `PortID` scalar type represents an identifier for an object of type Port.
 type PortID string
+
+// The `ScalarTypeDefID` scalar type represents an identifier for an object of type ScalarTypeDef.
+type ScalarTypeDefID string
 
 // The `SecretID` scalar type represents an identifier for an object of type Secret.
 type SecretID string
@@ -1425,7 +1431,7 @@ func (r *Container) WithMountedSecret(path string, source *Secret, opts ...Conta
 	}
 }
 
-// Retrieves this container plus a temporary directory mounted at the given path.
+// Retrieves this container plus a temporary directory mounted at the given path. Any writes will be ephemeral to a single withExec call; they will not be persisted to subsequent withExecs.
 func (r *Container) WithMountedTemp(path string) *Container {
 	q := r.query.Select("withMountedTemp")
 	q = q.Arg("path", path)
@@ -1584,6 +1590,16 @@ func (r *Container) WithoutDefaultArgs() *Container {
 	}
 }
 
+// Retrieves this container with the directory at the given path removed.
+func (r *Container) WithoutDirectory(path string) *Container {
+	q := r.query.Select("withoutDirectory")
+	q = q.Arg("path", path)
+
+	return &Container{
+		query: q,
+	}
+}
+
 // ContainerWithoutEntrypointOpts contains options for Container.WithoutEntrypoint
 type ContainerWithoutEntrypointOpts struct {
 	// Don't remove the default arguments when unsetting the entrypoint.
@@ -1637,6 +1653,16 @@ func (r *Container) WithoutExposedPort(port int, opts ...ContainerWithoutExposed
 	}
 }
 
+// Retrieves this container with the file at the given path removed.
+func (r *Container) WithoutFile(path string) *Container {
+	q := r.query.Select("withoutFile")
+	q = q.Arg("path", path)
+
+	return &Container{
+		query: q,
+	}
+}
+
 // Indicate that subsequent operations should not be featured more prominently in the UI.
 //
 // This is the initial state of all containers.
@@ -1672,6 +1698,16 @@ func (r *Container) WithoutMount(path string) *Container {
 func (r *Container) WithoutRegistryAuth(address string) *Container {
 	q := r.query.Select("withoutRegistryAuth")
 	q = q.Arg("address", address)
+
+	return &Container{
+		query: q,
+	}
+}
+
+// Retrieves this container minus the given environment variable containing the secret.
+func (r *Container) WithoutSecretVariable(name string) *Container {
+	q := r.query.Select("withoutSecretVariable")
+	q = q.Arg("name", name)
 
 	return &Container{
 		query: q,
@@ -1842,6 +1878,420 @@ func (r *CurrentModule) WorkdirFile(path string) *File {
 	q = q.Arg("path", path)
 
 	return &File{
+		query: q,
+	}
+}
+
+type Dagindag struct {
+	query *querybuilder.Selection
+
+	dagCli *string
+	id     *DagindagID
+	useFn  *string
+}
+type WithDagindagFunc func(r *Dagindag) *Dagindag
+
+// With calls the provided function with current Dagindag.
+//
+// This is useful for reusability and readability by not breaking the calling chain.
+func (r *Dagindag) With(f WithDagindagFunc) *Dagindag {
+	return f(r)
+}
+
+func (r *Dagindag) WithGraphQLQuery(q *querybuilder.Selection) *Dagindag {
+	return &Dagindag{
+		query: q,
+	}
+}
+
+// DagindagBaseOpts contains options for Dagindag.Base
+type DagindagBaseOpts struct {
+	//
+	// daggerVersion is the version of the Dagger engine to use, e.g., "v0.11.5
+	//
+	DaggerVersion string
+	//
+	// dockerVersion is the version of the Docker engine to use, e.g., "24.0
+	//
+	DockerVersion string
+}
+
+// Base sets the base container for the Dagindag module.
+//
+// The base container is set to the Ubuntu container with the "lunar" tag.
+// This container is used as the base container for all the other containers
+func (r *Dagindag) Base(opts ...DagindagBaseOpts) *Dagindag {
+	q := r.query.Select("base")
+	for i := len(opts) - 1; i >= 0; i-- {
+		// `daggerVersion` optional argument
+		if !querybuilder.IsZeroValue(opts[i].DaggerVersion) {
+			q = q.Arg("daggerVersion", opts[i].DaggerVersion)
+		}
+		// `dockerVersion` optional argument
+		if !querybuilder.IsZeroValue(opts[i].DockerVersion) {
+			q = q.Arg("dockerVersion", opts[i].DockerVersion)
+		}
+	}
+
+	return &Dagindag{
+		query: q,
+	}
+}
+
+// Ctr is the container to use as a base container.
+func (r *Dagindag) Ctr() *Container {
+	q := r.query.Select("ctr")
+
+	return &Container{
+		query: q,
+	}
+}
+
+// DagindagDagCliOpts contains options for Dagindag.DagCli
+type DagindagDagCliOpts struct {
+	//
+	// src is the directory that contains all the source code, including the module directory.
+	//
+	Src *Directory
+	//
+	// envVars is a set of strings (e.g., "KEY=value,KEY=value") to use as environment variables. They're
+	// used to set the environment variables for the container when it's required to pass multiple environment variables
+	// in a single argument. E.g.: "GITHUB_TOKEN=token,GO_VERSION=1.22.0,MYVAR=myvar"
+	//
+	EnvVars []string
+	//
+	// dagCMDs is a set of string representing the flags to pass to the Dagger CLI. It must be set in a single string, such as "--dag-cmds="call -m module""
+	//
+	DagCmds string
+}
+
+// DagCLI Allows to execute the Dagger CLI with the given flags.
+//
+// It allows to execute the Dagger CLI with the given flags.
+// Arguments:
+// - src is the directory that contains all the source code, including the module directory.
+// - envVars is a set of strings (e.g., "KEY=value,KEY=value") to use as environment variables. They're
+// used to set the environment variables for the container when it's required to pass multiple environment variables
+// - flags is a set of string representing the flags to pass to the Dagger CLI.
+// Returns:
+// - string: The output of the function.
+// - error: An error if the function fails.
+func (r *Dagindag) DagCli(ctx context.Context, opts ...DagindagDagCliOpts) (string, error) {
+	if r.dagCli != nil {
+		return *r.dagCli, nil
+	}
+	q := r.query.Select("dagCli")
+	for i := len(opts) - 1; i >= 0; i-- {
+		// `src` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Src) {
+			q = q.Arg("src", opts[i].Src)
+		}
+		// `envVars` optional argument
+		if !querybuilder.IsZeroValue(opts[i].EnvVars) {
+			q = q.Arg("envVars", opts[i].EnvVars)
+		}
+		// `dagCmds` optional argument
+		if !querybuilder.IsZeroValue(opts[i].DagCmds) {
+			q = q.Arg("dagCmds", opts[i].DagCmds)
+		}
+	}
+
+	var response string
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
+// A unique identifier for this Dagindag.
+func (r *Dagindag) ID(ctx context.Context) (DagindagID, error) {
+	if r.id != nil {
+		return *r.id, nil
+	}
+	q := r.query.Select("id")
+
+	var response DagindagID
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
+// XXX_GraphQLType is an internal function. It returns the native GraphQL type name
+func (r *Dagindag) XXX_GraphQLType() string {
+	return "Dagindag"
+}
+
+// XXX_GraphQLIDType is an internal function. It returns the native GraphQL type name for the ID of this object
+func (r *Dagindag) XXX_GraphQLIDType() string {
+	return "DagindagID"
+}
+
+// XXX_GraphQLID is an internal function. It returns the underlying type ID
+func (r *Dagindag) XXX_GraphQLID(ctx context.Context) (string, error) {
+	id, err := r.ID(ctx)
+	if err != nil {
+		return "", err
+	}
+	return string(id), nil
+}
+
+func (r *Dagindag) MarshalJSON() ([]byte, error) {
+	id, err := r.ID(marshalCtx)
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(id)
+}
+func (r *Dagindag) UnmarshalJSON(bs []byte) error {
+	var id string
+	err := json.Unmarshal(bs, &id)
+	if err != nil {
+		return err
+	}
+	*r = *dag.LoadDagindagFromID(DagindagID(id))
+	return nil
+}
+
+// Src is the directory that contains all the source code, including the module directory.
+func (r *Dagindag) Src() *Directory {
+	q := r.query.Select("src")
+
+	return &Directory{
+		query: q,
+	}
+}
+
+// DagindagTerminalOpts contains options for Dagindag.Terminal
+type DagindagTerminalOpts struct {
+	//
+	// src is the directory that contains all the source code, including the module directory.
+	//
+	Src *Directory
+	//
+	// envVars is a set of strings (e.g., "KEY=value,KEY=value") to use as environment variables. They're
+	// used to set the environment variables for the container when it's required to pass multiple environment variables
+	// in a single argument. E.g.: "GITHUB_TOKEN=token,GO_VERSION=1.22.0,MYVAR=myvar"
+	//
+	EnvVars []string
+}
+
+// Terminal returns a terminal for the container.
+//
+// It returns a terminal for the container. It's meant to be used as a terminal for the module.
+// Arguments:
+// - None.
+// Returns:
+// - *Terminal: The terminal for the container.
+func (r *Dagindag) Terminal(opts ...DagindagTerminalOpts) *Terminal {
+	q := r.query.Select("terminal")
+	for i := len(opts) - 1; i >= 0; i-- {
+		// `src` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Src) {
+			q = q.Arg("src", opts[i].Src)
+		}
+		// `envVars` optional argument
+		if !querybuilder.IsZeroValue(opts[i].EnvVars) {
+			q = q.Arg("envVars", opts[i].EnvVars)
+		}
+	}
+
+	return &Terminal{
+		query: q,
+	}
+}
+
+// DagindagUseFnOpts contains options for Dagindag.UseFn
+type DagindagUseFnOpts struct {
+	//
+	// modArgs are the arguments that the module's constructor requires. It receives a single slice of strings separated by commas. E.g., "arg1,arg2,arg3=value"
+	//
+	ModArgs []string
+	//
+	// modVersion is the version of the module to use, e.g., "v0.11.5" If it's not specified, the latest version is used.
+	//
+	ModVersion string
+	//
+	// fn is the function to call in the module. If it's not specified, the default --help function is called.
+	//
+	Fn string
+	//
+	// fnArgs is the arguments to pass to the function. It receives a single string separated by commas. E.g., "arg1,arg2,arg3=value"
+	//
+	FnArgs []string
+	//
+	// src is the directory that contains all the source code, including the module directory.
+	//
+	Src *Directory
+	//
+	// envVars is a set of strings (e.g., "KEY=value,KEY=value") to use as environment variables. They're
+	// used to set the environment variables for the container when it's required to pass multiple environment variables
+	// in a single argument. E.g.: "GITHUB_TOKEN=token,GO_VERSION=1.22.0,MYVAR=myvar"
+	//
+	EnvVars []string
+}
+
+// UseFn calls a module with the given function and arguments.
+//
+// It calls a module with the given function and arguments.
+// Arguments:
+// - module: The name of the module, normally it's represented by the github repository name. E.g., "github.com/<owner>/<repo>/module@<version>"
+// - version: The version of the module to use, e.g., "v0.11.5" If it's not specified, the latest version is used.
+// - fn: The function to call in the module. If it's not specified, the default --help function is called.
+// - args: The arguments to pass to the function. It receives a slice of strings. E.g., []string{"arg1", "arg2"}
+// Returns:
+// - string: The output of the function.
+// - error: An error if the function fails.
+func (r *Dagindag) UseFn(ctx context.Context, modName string, opts ...DagindagUseFnOpts) (string, error) {
+	if r.useFn != nil {
+		return *r.useFn, nil
+	}
+	q := r.query.Select("useFn")
+	for i := len(opts) - 1; i >= 0; i-- {
+		// `modArgs` optional argument
+		if !querybuilder.IsZeroValue(opts[i].ModArgs) {
+			q = q.Arg("modArgs", opts[i].ModArgs)
+		}
+		// `modVersion` optional argument
+		if !querybuilder.IsZeroValue(opts[i].ModVersion) {
+			q = q.Arg("modVersion", opts[i].ModVersion)
+		}
+		// `fn` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Fn) {
+			q = q.Arg("fn", opts[i].Fn)
+		}
+		// `fnArgs` optional argument
+		if !querybuilder.IsZeroValue(opts[i].FnArgs) {
+			q = q.Arg("fnArgs", opts[i].FnArgs)
+		}
+		// `src` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Src) {
+			q = q.Arg("src", opts[i].Src)
+		}
+		// `envVars` optional argument
+		if !querybuilder.IsZeroValue(opts[i].EnvVars) {
+			q = q.Arg("envVars", opts[i].EnvVars)
+		}
+	}
+	q = q.Arg("modName", modName)
+
+	var response string
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
+// WithDaggerEntryPoint sets the Dagger CLI entry point.
+//
+// It sets the Dagger CLI entry point to /bin/dagger.
+// Arguments:
+// - daggerCLIEntryPoint is the Dagger CLI entry point.
+func (r *Dagindag) WithDaggerEntryPoint() *Dagindag {
+	q := r.query.Select("withDaggerEntryPoint")
+
+	return &Dagindag{
+		query: q,
+	}
+}
+
+// WithDaggerSetup sets up the container with the Dagger engine.
+//
+// It sets up the container with the Dagger engine.
+// Arguments:
+// - daggerVersion: The version of the Dagger engine to use, e.g., "v0.11.6
+func (r *Dagindag) WithDaggerSetup(daggerVersion string) *Dagindag {
+	q := r.query.Select("withDaggerSetup")
+	q = q.Arg("daggerVersion", daggerVersion)
+
+	return &Dagindag{
+		query: q,
+	}
+}
+
+// DagindagWithDockerServiceOpts contains options for Dagindag.WithDockerService
+type DagindagWithDockerServiceOpts struct {
+	//
+	// dockerVersion is the version of the Docker engine to use, e.g., "v20.10.17"
+	//
+	DockerVersion string
+}
+
+// WithDockerService sets up the container with the Docker service.
+//
+// It sets up the container with the Docker service.
+// Arguments:
+// - dockerVersion: The version of the Docker engine to use, e.g., "v20.10.17
+func (r *Dagindag) WithDockerService(opts ...DagindagWithDockerServiceOpts) *Service {
+	q := r.query.Select("withDockerService")
+	for i := len(opts) - 1; i >= 0; i-- {
+		// `dockerVersion` optional argument
+		if !querybuilder.IsZeroValue(opts[i].DockerVersion) {
+			q = q.Arg("dockerVersion", opts[i].DockerVersion)
+		}
+	}
+
+	return &Service{
+		query: q,
+	}
+}
+
+// DagindagWithEnvVariableOpts contains options for Dagindag.WithEnvVariable
+type DagindagWithEnvVariableOpts struct {
+	//
+	// Replace `${VAR}` or $VAR in the value according to the current environment
+	// variables defined in the container (e.g., "/opt/bin:$PATH").
+	//
+	Expand bool
+}
+
+// WithEnvVariable sets an environment variable.
+//
+// The name of the environment variable (e.g., "HOST").
+//
+// The value of the environment variable (e.g., "localhost").
+//
+// Replace `${VAR}` or $VAR in the value according to the current environment
+// variables defined in the container (e.g., "/opt/bin:$PATH").
+// +optional
+func (r *Dagindag) WithEnvVariable(name string, value string, opts ...DagindagWithEnvVariableOpts) *Dagindag {
+	q := r.query.Select("withEnvVariable")
+	for i := len(opts) - 1; i >= 0; i-- {
+		// `expand` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Expand) {
+			q = q.Arg("expand", opts[i].Expand)
+		}
+	}
+	q = q.Arg("name", name)
+	q = q.Arg("value", value)
+
+	return &Dagindag{
+		query: q,
+	}
+}
+
+// WithEnvVarsFromStrs sets the environment variables for the container.
+//
+// It sets the environment variables for the container. It's meant to be used as a terminal for the module.
+// Arguments:
+// - envVars: A set of strings (e.g., "KEY=value,KEY=value") to use as environment variables. They're
+// used to set the environment variables for the container when it's required to pass multiple environment variables
+// in a single argument. E.g.: "GITHUB=token,GO_VERSION=1.22.0,MYVAR=myvar"
+func (r *Dagindag) WithEnvVarsFromStrs(envVars []string) *Dagindag {
+	q := r.query.Select("withEnvVarsFromStrs")
+	q = q.Arg("envVars", envVars)
+
+	return &Dagindag{
+		query: q,
+	}
+}
+
+// WithSource sets the source directory.
+//
+// The source directory is the directory that contains all the source code, including the module directory.
+func (r *Dagindag) WithSource(src *Directory) *Dagindag {
+	assertNotNil("src", src)
+	q := r.query.Select("withSource")
+	q = q.Arg("src", src)
+
+	return &Dagindag{
 		query: q,
 	}
 }
@@ -2603,6 +3053,16 @@ func (r *File) Sync(ctx context.Context) (*File, error) {
 	q := r.query.Select("sync")
 
 	return r, q.Execute(ctx)
+}
+
+// Retrieves this file with its name set to the given name.
+func (r *File) WithName(name string) *File {
+	q := r.query.Select("withName")
+	q = q.Arg("name", name)
+
+	return &File{
+		query: q,
+	}
 }
 
 // Retrieves this file with its created/modified timestamps set to the given time.
@@ -5519,6 +5979,56 @@ func (r *Client) CurrentTypeDefs(ctx context.Context) ([]TypeDef, error) {
 	return convert(response), nil
 }
 
+// DagindagOpts contains options for Client.Dagindag
+type DagindagOpts struct {
+	//
+	// daggerVersion is the version of the Dagger engine to use, e.g., "v0.11.5
+	//
+	DaggerVersion string
+	//
+	// dockerVersion is the version of the Docker engine to use, e.g., "24.0
+	//
+	DockerVersion string
+	//
+	// ctr is the container to use as a base container.
+	//
+	Ctr *Container
+	//
+	// src is the directory that contains all the source code, including the module directory.
+	//
+	Src *Directory
+}
+
+// New creates a new instance of the Dagindag module with the given version.
+//
+// If the version is not specified, the default version is used.
+// The default version is "latest".
+func (r *Client) Dagindag(opts ...DagindagOpts) *Dagindag {
+	q := r.query.Select("dagindag")
+	for i := len(opts) - 1; i >= 0; i-- {
+		// `daggerVersion` optional argument
+		if !querybuilder.IsZeroValue(opts[i].DaggerVersion) {
+			q = q.Arg("daggerVersion", opts[i].DaggerVersion)
+		}
+		// `dockerVersion` optional argument
+		if !querybuilder.IsZeroValue(opts[i].DockerVersion) {
+			q = q.Arg("dockerVersion", opts[i].DockerVersion)
+		}
+		// `ctr` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Ctr) {
+			q = q.Arg("ctr", opts[i].Ctr)
+		}
+		// `src` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Src) {
+			q = q.Arg("src", opts[i].Src)
+		}
+	}
+
+	return &Dagindag{
+		query: q,
+	}
+}
+
 // The default platform of the engine.
 func (r *Client) DefaultPlatform(ctx context.Context) (Platform, error) {
 	q := r.query.Select("defaultPlatform")
@@ -5671,6 +6181,16 @@ func (r *Client) LoadCurrentModuleFromID(id CurrentModuleID) *CurrentModule {
 	q = q.Arg("id", id)
 
 	return &CurrentModule{
+		query: q,
+	}
+}
+
+// Load a Dagindag from its ID.
+func (r *Client) LoadDagindagFromID(id DagindagID) *Dagindag {
+	q := r.query.Select("loadDagindagFromID")
+	q = q.Arg("id", id)
+
+	return &Dagindag{
 		query: q,
 	}
 }
@@ -5905,6 +6425,16 @@ func (r *Client) LoadPortFromID(id PortID) *Port {
 	}
 }
 
+// Load a ScalarTypeDef from its ID.
+func (r *Client) LoadScalarTypeDefFromID(id ScalarTypeDefID) *ScalarTypeDef {
+	q := r.query.Select("loadScalarTypeDefFromID")
+	q = q.Arg("id", id)
+
+	return &ScalarTypeDef{
+		query: q,
+	}
+}
+
 // Load a Secret from its ID.
 func (r *Client) LoadSecretFromID(id SecretID) *Secret {
 	q := r.query.Select("loadSecretFromID")
@@ -6091,6 +6621,120 @@ func (r *Client) TypeDef() *TypeDef {
 	return &TypeDef{
 		query: q,
 	}
+}
+
+// Get the current Dagger Engine version.
+func (r *Client) Version(ctx context.Context) (string, error) {
+	q := r.query.Select("version")
+
+	var response string
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
+// A definition of a custom scalar defined in a Module.
+type ScalarTypeDef struct {
+	query *querybuilder.Selection
+
+	description      *string
+	id               *ScalarTypeDefID
+	name             *string
+	sourceModuleName *string
+}
+
+func (r *ScalarTypeDef) WithGraphQLQuery(q *querybuilder.Selection) *ScalarTypeDef {
+	return &ScalarTypeDef{
+		query: q,
+	}
+}
+
+// A doc string for the scalar, if any.
+func (r *ScalarTypeDef) Description(ctx context.Context) (string, error) {
+	if r.description != nil {
+		return *r.description, nil
+	}
+	q := r.query.Select("description")
+
+	var response string
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
+// A unique identifier for this ScalarTypeDef.
+func (r *ScalarTypeDef) ID(ctx context.Context) (ScalarTypeDefID, error) {
+	if r.id != nil {
+		return *r.id, nil
+	}
+	q := r.query.Select("id")
+
+	var response ScalarTypeDefID
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
+// XXX_GraphQLType is an internal function. It returns the native GraphQL type name
+func (r *ScalarTypeDef) XXX_GraphQLType() string {
+	return "ScalarTypeDef"
+}
+
+// XXX_GraphQLIDType is an internal function. It returns the native GraphQL type name for the ID of this object
+func (r *ScalarTypeDef) XXX_GraphQLIDType() string {
+	return "ScalarTypeDefID"
+}
+
+// XXX_GraphQLID is an internal function. It returns the underlying type ID
+func (r *ScalarTypeDef) XXX_GraphQLID(ctx context.Context) (string, error) {
+	id, err := r.ID(ctx)
+	if err != nil {
+		return "", err
+	}
+	return string(id), nil
+}
+
+func (r *ScalarTypeDef) MarshalJSON() ([]byte, error) {
+	id, err := r.ID(marshalCtx)
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(id)
+}
+func (r *ScalarTypeDef) UnmarshalJSON(bs []byte) error {
+	var id string
+	err := json.Unmarshal(bs, &id)
+	if err != nil {
+		return err
+	}
+	*r = *dag.LoadScalarTypeDefFromID(ScalarTypeDefID(id))
+	return nil
+}
+
+// The name of the scalar.
+func (r *ScalarTypeDef) Name(ctx context.Context) (string, error) {
+	if r.name != nil {
+		return *r.name, nil
+	}
+	q := r.query.Select("name")
+
+	var response string
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
+// If this ScalarTypeDef is associated with a Module, the name of the module. Unset otherwise.
+func (r *ScalarTypeDef) SourceModuleName(ctx context.Context) (string, error) {
+	if r.sourceModuleName != nil {
+		return *r.sourceModuleName, nil
+	}
+	q := r.query.Select("sourceModuleName")
+
+	var response string
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
 }
 
 // A reference to a secret value, which can be handled more safely than the value itself.
@@ -6589,6 +7233,15 @@ func (r *TypeDef) AsObject() *ObjectTypeDef {
 	}
 }
 
+// If kind is SCALAR, the scalar-specific type definition. If kind is not SCALAR, this will be null.
+func (r *TypeDef) AsScalar() *ScalarTypeDef {
+	q := r.query.Select("asScalar")
+
+	return &ScalarTypeDef{
+		query: q,
+	}
+}
+
 // A unique identifier for this TypeDef.
 func (r *TypeDef) ID(ctx context.Context) (TypeDefID, error) {
 	if r.id != nil {
@@ -6785,6 +7438,27 @@ func (r *TypeDef) WithOptional(optional bool) *TypeDef {
 	}
 }
 
+// TypeDefWithScalarOpts contains options for TypeDef.WithScalar
+type TypeDefWithScalarOpts struct {
+	Description string
+}
+
+// Returns a TypeDef of kind Scalar with the provided name.
+func (r *TypeDef) WithScalar(name string, opts ...TypeDefWithScalarOpts) *TypeDef {
+	q := r.query.Select("withScalar")
+	for i := len(opts) - 1; i >= 0; i-- {
+		// `description` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Description) {
+			q = q.Arg("description", opts[i].Description)
+		}
+	}
+	q = q.Arg("name", name)
+
+	return &TypeDef{
+		query: q,
+	}
+}
+
 type CacheSharingMode string
 
 func (CacheSharingMode) IsEnum() {}
@@ -6872,6 +7546,9 @@ const (
 	//
 	// Always paired with an ObjectTypeDef.
 	ObjectKind TypeDefKind = "OBJECT_KIND"
+
+	// A scalar value of any basic kind.
+	ScalarKind TypeDefKind = "SCALAR_KIND"
 
 	// A string value.
 	StringKind TypeDefKind = "STRING_KIND"
