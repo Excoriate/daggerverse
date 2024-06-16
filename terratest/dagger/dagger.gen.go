@@ -47,6 +47,9 @@ type ContainerID = dagger.ContainerID
 // The `CurrentModuleID` scalar type represents an identifier for an object of type CurrentModule.
 type CurrentModuleID = dagger.CurrentModuleID
 
+// The `DagindagID` scalar type represents an identifier for an object of type Dagindag.
+type DagindagID = dagger.DagindagID
+
 // The `DirectoryID` scalar type represents an identifier for an object of type Directory.
 type DirectoryID = dagger.DirectoryID
 
@@ -123,6 +126,9 @@ type Platform = dagger.Platform
 
 // The `PortID` scalar type represents an identifier for an object of type Port.
 type PortID = dagger.PortID
+
+// The `ScalarTypeDefID` scalar type represents an identifier for an object of type ScalarTypeDef.
+type ScalarTypeDefID = dagger.ScalarTypeDefID
 
 // The `SecretID` scalar type represents an identifier for an object of type Secret.
 type SecretID = dagger.SecretID
@@ -235,6 +241,28 @@ type CurrentModule = dagger.CurrentModule
 
 // CurrentModuleWorkdirOpts contains options for CurrentModule.Workdir
 type CurrentModuleWorkdirOpts = dagger.CurrentModuleWorkdirOpts
+
+type Dagindag = dagger.Dagindag
+
+type WithDagindagFunc = dagger.WithDagindagFunc
+
+// DagindagBaseOpts contains options for Dagindag.Base
+type DagindagBaseOpts = dagger.DagindagBaseOpts
+
+// DagindagDagCliOpts contains options for Dagindag.DagCli
+type DagindagDagCliOpts = dagger.DagindagDagCliOpts
+
+// DagindagTerminalOpts contains options for Dagindag.Terminal
+type DagindagTerminalOpts = dagger.DagindagTerminalOpts
+
+// DagindagUseFnOpts contains options for Dagindag.UseFn
+type DagindagUseFnOpts = dagger.DagindagUseFnOpts
+
+// DagindagWithDockerServiceOpts contains options for Dagindag.WithDockerService
+type DagindagWithDockerServiceOpts = dagger.DagindagWithDockerServiceOpts
+
+// DagindagWithEnvVariableOpts contains options for Dagindag.WithEnvVariable
+type DagindagWithEnvVariableOpts = dagger.DagindagWithEnvVariableOpts
 
 // A directory.
 type Directory = dagger.Directory
@@ -378,6 +406,9 @@ type WithClientFunc = dagger.WithClientFunc
 // ContainerOpts contains options for Client.Container
 type ContainerOpts = dagger.ContainerOpts
 
+// DagindagOpts contains options for Client.Dagindag
+type DagindagOpts = dagger.DagindagOpts
+
 // DirectoryOpts contains options for Client.Directory
 type DirectoryOpts = dagger.DirectoryOpts
 
@@ -398,6 +429,9 @@ type PipelineOpts = dagger.PipelineOpts
 
 // SecretOpts contains options for Client.Secret
 type SecretOpts = dagger.SecretOpts
+
+// A definition of a custom scalar defined in a Module.
+type ScalarTypeDef = dagger.ScalarTypeDef
 
 // A reference to a secret value, which can be handled more safely than the value itself.
 type Secret = dagger.Secret
@@ -433,6 +467,9 @@ type TypeDefWithInterfaceOpts = dagger.TypeDefWithInterfaceOpts
 
 // TypeDefWithObjectOpts contains options for TypeDef.WithObject
 type TypeDefWithObjectOpts = dagger.TypeDefWithObjectOpts
+
+// TypeDefWithScalarOpts contains options for TypeDef.WithScalar
+type TypeDefWithScalarOpts = dagger.TypeDefWithScalarOpts
 
 // Sharing mode of the cache volume.
 type CacheSharingMode = dagger.CacheSharingMode
@@ -516,6 +553,9 @@ const (
 	// Always paired with an ObjectTypeDef.
 	ObjectKind TypeDefKind = dagger.ObjectKind
 
+	// A scalar value of any basic kind.
+	ScalarKind TypeDefKind = dagger.ScalarKind
+
 	// A string value.
 	StringKind TypeDefKind = dagger.StringKind
 
@@ -540,39 +580,35 @@ func convertSlice[I any, O any](in []I, f func(I) O) []O {
 	return out
 }
 
-func (m Terratest) MarshalJSON() ([]byte, error) {
+func (r Terratest) MarshalJSON() ([]byte, error) {
 	var concrete struct {
 		Version   string
 		TfVersion string
 		Image     string
-		Src       *Directory
 		Ctr       *Container
 	}
-	concrete.Version = m.Version
-	concrete.TfVersion = m.TfVersion
-	concrete.Image = m.Image
-	concrete.Src = m.Src
-	concrete.Ctr = m.Ctr
+	concrete.Version = r.Version
+	concrete.TfVersion = r.TfVersion
+	concrete.Image = r.Image
+	concrete.Ctr = r.Ctr
 	return json.Marshal(&concrete)
 }
 
-func (m *Terratest) UnmarshalJSON(bs []byte) error {
+func (r *Terratest) UnmarshalJSON(bs []byte) error {
 	var concrete struct {
 		Version   string
 		TfVersion string
 		Image     string
-		Src       *Directory
 		Ctr       *Container
 	}
 	err := json.Unmarshal(bs, &concrete)
 	if err != nil {
 		return err
 	}
-	m.Version = concrete.Version
-	m.TfVersion = concrete.TfVersion
-	m.Image = concrete.Image
-	m.Src = concrete.Src
-	m.Ctr = concrete.Ctr
+	r.Version = concrete.Version
+	r.TfVersion = concrete.TfVersion
+	r.Image = concrete.Image
+	r.Ctr = concrete.Ctr
 	return nil
 }
 
@@ -665,6 +701,62 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 	switch parentName {
 	case "Terratest":
 		switch fnName {
+		case "WithSource":
+			var parent Terratest
+			err = json.Unmarshal(parentJSON, &parent)
+			if err != nil {
+				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
+			}
+			var src *Directory
+			if inputArgs["src"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["src"]), &src)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg src", err))
+				}
+			}
+			var workdir string
+			if inputArgs["workdir"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["workdir"]), &workdir)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg workdir", err))
+				}
+			}
+			return (*Terratest).WithSource(&parent, src, workdir), nil
+		case "WithCgoDisabled":
+			var parent Terratest
+			err = json.Unmarshal(parentJSON, &parent)
+			if err != nil {
+				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
+			}
+			return (*Terratest).WithCgoDisabled(&parent), nil
+		case "WithEnvVar":
+			var parent Terratest
+			err = json.Unmarshal(parentJSON, &parent)
+			if err != nil {
+				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
+			}
+			var name string
+			if inputArgs["name"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["name"]), &name)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg name", err))
+				}
+			}
+			var value string
+			if inputArgs["value"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["value"]), &value)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg value", err))
+				}
+			}
+			var expand bool
+			if inputArgs["expand"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["expand"]), &expand)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg expand", err))
+				}
+			}
+			return (*Terratest).WithEnvVar(&parent, name, value, expand), nil
 		case "Base":
 			var parent Terratest
 			err = json.Unmarshal(parentJSON, &parent)
@@ -686,20 +778,6 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 				}
 			}
 			return (*Terratest).Base(&parent, goVersion, tfVersion), nil
-		case "WithModule":
-			var parent Terratest
-			err = json.Unmarshal(parentJSON, &parent)
-			if err != nil {
-				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
-			}
-			var src *Directory
-			if inputArgs["src"] != nil {
-				err = json.Unmarshal([]byte(inputArgs["src"]), &src)
-				if err != nil {
-					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg src", err))
-				}
-			}
-			return (*Terratest).WithModule(&parent, src), nil
 		case "WithContainer":
 			var parent Terratest
 			err = json.Unmarshal(parentJSON, &parent)
@@ -720,7 +798,7 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 			if err != nil {
 				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
 			}
-			var testDir string
+			var testDir *Directory
 			if inputArgs["testDir"] != nil {
 				err = json.Unmarshal([]byte(inputArgs["testDir"]), &testDir)
 				if err != nil {
@@ -762,13 +840,6 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg image", err))
 				}
 			}
-			var src *Directory
-			if inputArgs["src"] != nil {
-				err = json.Unmarshal([]byte(inputArgs["src"]), &src)
-				if err != nil {
-					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg src", err))
-				}
-			}
 			var ctr *Container
 			if inputArgs["ctr"] != nil {
 				err = json.Unmarshal([]byte(inputArgs["ctr"]), &ctr)
@@ -783,7 +854,7 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg envVars", err))
 				}
 			}
-			return New(version, tfVersion, image, src, ctr, envVars), nil
+			return New(version, tfVersion, image, ctr, envVars), nil
 		default:
 			return nil, fmt.Errorf("unknown function %s", fnName)
 		}
@@ -792,16 +863,28 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 			WithObject(
 				dag.TypeDef().WithObject("Terratest").
 					WithFunction(
+						dag.Function("WithSource",
+							dag.TypeDef().WithObject("Terratest")).
+							WithDescription("WithSource Set the source directory.").
+							WithArg("src", dag.TypeDef().WithObject("Directory"), FunctionWithArgOpts{Description: "Src is the directory that contains all the source code, including the module directory."}).
+							WithArg("workdir", dag.TypeDef().WithKind(StringKind).WithOptional(true), FunctionWithArgOpts{Description: "workdir is the working directory."})).
+					WithFunction(
+						dag.Function("WithCgoDisabled",
+							dag.TypeDef().WithObject("Terratest")).
+							WithDescription("WithCgoDisabled Set CGO_ENABLED environment variable to 0.")).
+					WithFunction(
+						dag.Function("WithEnvVar",
+							dag.TypeDef().WithObject("Terratest")).
+							WithDescription("WithEnvVar Set an environment variable.").
+							WithArg("name", dag.TypeDef().WithKind(StringKind), FunctionWithArgOpts{Description: "The name of the environment variable (e.g., \"HOST\")."}).
+							WithArg("value", dag.TypeDef().WithKind(StringKind), FunctionWithArgOpts{Description: "The value of the environment variable (e.g., \"localhost\")."}).
+							WithArg("expand", dag.TypeDef().WithKind(BooleanKind).WithOptional(true), FunctionWithArgOpts{Description: "Replace `${VAR}` or $VAR in the value according to the current environment\nvariables defined in the container (e.g., \"/opt/bin:$PATH\")."})).
+					WithFunction(
 						dag.Function("Base",
 							dag.TypeDef().WithObject("Terratest")).
 							WithDescription("Base sets up the Container with a golang image and cache volumes\nversion string").
 							WithArg("goVersion", dag.TypeDef().WithKind(StringKind)).
 							WithArg("tfVersion", dag.TypeDef().WithKind(StringKind))).
-					WithFunction(
-						dag.Function("WithModule",
-							dag.TypeDef().WithObject("Terratest")).
-							WithDescription("WithModule specifies the module to use in the Terraform module by the 'Src' directory.").
-							WithArg("src", dag.TypeDef().WithObject("Directory"))).
 					WithFunction(
 						dag.Function("WithContainer",
 							dag.TypeDef().WithObject("Terratest")).
@@ -810,12 +893,11 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 					WithFunction(
 						dag.Function("Run",
 							dag.TypeDef().WithObject("Container")).
-							WithArg("testDir", dag.TypeDef().WithKind(StringKind), FunctionWithArgOpts{Description: "testDir is the directory that contains all the test code."}).
+							WithArg("testDir", dag.TypeDef().WithObject("Directory"), FunctionWithArgOpts{Description: "testDir is the directory that contains all the test code."}).
 							WithArg("args", dag.TypeDef().WithKind(StringKind).WithOptional(true), FunctionWithArgOpts{Description: "args is the arguments to pass to the 'go test' command."})).
 					WithField("Version", dag.TypeDef().WithKind(StringKind), TypeDefWithFieldOpts{Description: "The Version of the Golang image that'll host the 'terratest' test"}).
 					WithField("TfVersion", dag.TypeDef().WithKind(StringKind), TypeDefWithFieldOpts{Description: "TfVersion is the Version of the Terraform to use, e.g., \"0.12.24\".\nby default, it uses the latest Version."}).
 					WithField("Image", dag.TypeDef().WithKind(StringKind), TypeDefWithFieldOpts{Description: "Image of the container to use."}).
-					WithField("Src", dag.TypeDef().WithObject("Directory"), TypeDefWithFieldOpts{Description: "Src is the directory that contains all the source code, including the module directory."}).
 					WithField("Ctr", dag.TypeDef().WithObject("Container"), TypeDefWithFieldOpts{Description: "Ctr is the container to use as a base container."}).
 					WithConstructor(
 						dag.Function("New",
@@ -823,8 +905,7 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 							WithArg("version", dag.TypeDef().WithKind(StringKind).WithOptional(true), FunctionWithArgOpts{Description: "the Version of the Terraform to use, e.g., \"0.12.24\".\nby default, it uses the latest Version.", DefaultValue: JSON("\"1.22.0-alpine3.19\"")}).
 							WithArg("tfVersion", dag.TypeDef().WithKind(StringKind).WithOptional(true), FunctionWithArgOpts{Description: "the Version of the Terraform to use, e.g., \"0.12.24\".\nby default, it uses the latest Version.", DefaultValue: JSON("\"1.6.0\"")}).
 							WithArg("image", dag.TypeDef().WithKind(StringKind).WithOptional(true), FunctionWithArgOpts{Description: "Image of the container to use.\nby default, it uses the official HashiCorp Terraform Image hashicorp/terraform.", DefaultValue: JSON("\"gcr.io/distroless/static-debian11\"")}).
-							WithArg("src", dag.TypeDef().WithObject("Directory"), FunctionWithArgOpts{Description: "Src is the directory that contains all the source code,\nincluding the module directory."}).
-							WithArg("ctr", dag.TypeDef().WithObject("Container").WithOptional(true), FunctionWithArgOpts{Description: "ctr is the container to use as a base container.\nIt's an optional parameter. If it's not set, it's going to create a new container."}).
+							WithArg("ctr", dag.TypeDef().WithObject("Container"), FunctionWithArgOpts{Description: "ctr is the container to use as a base container.\nIt's an optional parameter. If it's not set, it's going to create a new container."}).
 							WithArg("envVars", dag.TypeDef().WithKind(StringKind).WithOptional(true), FunctionWithArgOpts{Description: "envVars is a string of environment variables in the form of \"key1=value1,key2=value2\""}))), nil
 	default:
 		return nil, fmt.Errorf("unknown object %s", parentName)

@@ -11,5 +11,4 @@ use (
 	./terratest/dagger
 	./tflint/dagger
 	./utils
-	gotest/test
 )

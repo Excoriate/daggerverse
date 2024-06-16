@@ -1,5 +1,5 @@
 {
-  "name": "terratest",
+  "name": "tests",
   "sdk": "go",
   "dependencies": [
     {
