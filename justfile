@@ -20,15 +20,21 @@ nix-search pkg:
   @nix search nixpkgs --json {{pkg}} --extra-experimental-features nix-command --extra-experimental-features flakes | jq -r 'to_entries[] | "\(.value.name) - \(.value.description)"'
 
 # Recipe to run Dagger module. It requires the module name and extra arguments.
-dc mod args:
+dc mod *args:
   @echo "Running Dagger module..."
-  @echo "Currently in {{mod}} module 📦"
+  @echo "Currently in {{mod}} module 📦, path=`pwd`"
   @test -d {{mod}}/dagger || (echo "Module not found" && exit 1)
   @cd {{mod}}/dagger && dagger call {{args}}
 
 # Recipe to run Dagger module tests. It requires the module name and extra arguments.
-dct mod:
+dct mod *args:
   @echo "Running Dagger module tests..."
-  @echo "Currently in {{mod}} module 🧪
-  @test -d {{mod}}/dagger || (echo "Module not found" && exit 1)
+  @echo "Currently in {{mod}} module 🧪, path=`pwd`"
+  @test -d {{mod}}/tests/dagger || (echo "Module not found" && exit 1)
   @cd {{mod}}/tests/dagger && dagger call {{args}}
+
+ddev mod:
+  @echo "Running Dagger development in a given module..."
+  @echo "Currently in {{mod}} module 📦, path=`pwd`"
+  @test -d {{mod}}/dagger || (echo "Module not found" && exit 1)
+  @cd {{mod}}/dagger && dagger develop
