@@ -1,4 +1,4 @@
-//nolint:revive // This is a test file.
+// A generated module for Tests functions
 package main
 
 import (
@@ -97,11 +97,11 @@ func (m *Tests) TestVersionOverride(ctx context.Context) error {
 
 // TestPassedEnvVars tests if the environment variables are passed correctly.
 func (m *Tests) TestPassedEnvVars(ctx context.Context) error {
-	gt := dag.Gotest(GotestOpts{
+	targetModule := dag.Gotest(GotestOpts{
 		EnvVarsFromHost: "SOMETHING=SOMETHING,SOMETHING=SOMETHING",
 	})
 
-	out, err := gt.Ctr().
+	out, err := targetModule.Ctr().
 		WithExec([]string{"printenv"}).
 		Stdout(ctx)
 
@@ -156,10 +156,10 @@ func (m *Tests) TestWithEnvVarAPI(ctx context.Context) error {
 
 // TestGoPrivate tests if the GOPRIVATE environment variable is set correctly.
 func (m *Tests) TestGoPrivate(ctx context.Context) error {
-	mt := dag.Gotest().
+	targetModule := dag.Gotest().
 		WithPrivateGoPkg("github.com/privatehost/private-repo")
 
-	out, err := mt.Ctr().WithExec([]string{"printenv"}).Stdout(ctx)
+	out, err := targetModule.Ctr().WithExec([]string{"printenv"}).Stdout(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get env vars: %w", err)
 	}
@@ -173,9 +173,9 @@ func (m *Tests) TestGoPrivate(ctx context.Context) error {
 
 // TestWithPlatformAPI tests if the platform is set correctly.
 func (m *Tests) TestWithPlatformAPI(ctx context.Context) error {
-	mt := dag.Gotest().WithPlatform("darwin/arm64/v7")
+	targetModule := dag.Gotest().WithPlatform("darwin/arm64/v7")
 
-	out, err := mt.Ctr().WithExec([]string{"printenv"}).Stdout(ctx)
+	out, err := targetModule.Ctr().WithExec([]string{"printenv"}).Stdout(ctx)
 
 	if err != nil {
 		return fmt.Errorf("%w, failed to get env vars: %w", errUnderlyingDagger, err)
@@ -201,8 +201,8 @@ func (m *Tests) TestTerminal() *Terminal {
 
 // TestCommandRunGoTestSimple tests running go test.
 func (m *Tests) TestCommandRunGoTestSimple(ctx context.Context) error {
-	mt := dag.Gotest().WithSource(m.TestDir)
-	out, err := mt.RunGoTest(ctx, m.TestDir, GotestRunGoTestOpts{})
+	targetModule := dag.Gotest().WithSource(m.TestDir)
+	out, err := targetModule.RunGoTest(ctx, m.TestDir, GotestRunGoTestOpts{})
 
 	if err != nil {
 		return fmt.Errorf("%w, failed to run go test: %w", errUnderlyingDagger, err)
@@ -217,8 +217,8 @@ func (m *Tests) TestCommandRunGoTestSimple(ctx context.Context) error {
 
 // TestCommandRunGoTestWithAdvancedOptions tests running go test with advanced options.
 func (m *Tests) TestCommandRunGoTestWithAdvancedOptions(ctx context.Context) error {
-	mt := dag.Gotest().WithSource(m.TestDir).WithCgoEnabled().WithGcccompiler()
-	out, err := mt.RunGoTest(ctx, m.TestDir, GotestRunGoTestOpts{
+	targetModule := dag.Gotest().WithSource(m.TestDir).WithCgoEnabled().WithGcccompiler()
+	out, err := targetModule.RunGoTest(ctx, m.TestDir, GotestRunGoTestOpts{
 		EnableVerbose: true,
 		EnableCache:   true,
 		Race:          true,
@@ -238,8 +238,8 @@ func (m *Tests) TestCommandRunGoTestWithAdvancedOptions(ctx context.Context) err
 
 // TestCommandRunGoTestSum tests running go test with gotestsum.
 func (m *Tests) TestCommandRunGoTestSum(ctx context.Context) error {
-	mt := dag.Gotest().WithSource(m.TestDir)
-	out, err := mt.RunGoTestSum(ctx, m.TestDir, GotestRunGoTestSumOpts{})
+	targetModule := dag.Gotest().WithSource(m.TestDir)
+	out, err := targetModule.RunGoTestSum(ctx, m.TestDir, GotestRunGoTestSumOpts{})
 
 	if err != nil {
 		return fmt.Errorf("%w, failed to run go test TestCommandRunGoTestSum: %w", errUnderlyingDagger, err)
@@ -254,20 +254,20 @@ func (m *Tests) TestCommandRunGoTestSum(ctx context.Context) error {
 
 // TestCommandRunGoTestSumWithAdvancedOptions tests running go test with gotestsum with advanced options.
 func (m *Tests) TestCommandRunGoTestSumWithAdvancedOptions(ctx context.Context) error {
-	mt := dag.Gotest().
+	targetModule := dag.Gotest().
 		WithSource(m.TestDir).
 		WithGcccompiler().
 		WithGoCache().
 		WithCgoEnabled()
 
-	out, err := mt.RunGoTestSum(ctx, m.TestDir, GotestRunGoTestSumOpts{
+	out, err := targetModule.RunGoTestSum(ctx, m.TestDir, GotestRunGoTestSumOpts{
 		InsecureRootCapabilities: true,
 		EnablePretty:             true,
 		PrintEnvVars:             true,
 	})
 
 	if err != nil {
-		return fmt.Errorf("%w, failed to run go test TestCommandRunGoTestSumWithAdvancedOptions: %w", errUnderlyingDagger, err)
+		return fmt.Errorf("%w, failed to run  TestCommandRunGoTestSumWithAdvancedOptions: %w", errUnderlyingDagger, err)
 	}
 
 	if out == "" {

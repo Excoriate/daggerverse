@@ -33,20 +33,26 @@ dct mod *args:
   @test -d {{mod}}/tests/dagger || (echo "Module not found" && exit 1)
   @cd {{mod}}/tests/dagger && dagger call {{args}}
 
-ddev mod:
+# Recipe to reload Dagger module (Dagger Develop)
+reloadmod mod:
   @echo "Running Dagger development in a given module..."
   @echo "Currently in {{mod}} module 📦, path=`pwd`"
   @test -d {{mod}}/dagger || (echo "Module not found" && exit 1)
   @cd {{mod}}/dagger && dagger develop
+  @echo "Module reloaded successfully ✅"
 
-reload mod:
+# Recipe to reload Dagger module and its underlying tests (Dagger Develop & Dagger Call/Functions)
+reloadall mod:
   @echo "Reloading Dagger module and also the tests..."
   @echo "Currently in {{mod}} module 🔄, path=`pwd`"
   @test -d {{mod}}/dagger || (echo "Module not found" && exit 1)
   @cd {{mod}}/dagger && dagger develop
   @cd {{mod}}/tests/dagger && dagger develop
   @echo "Module reloaded successfully 🚀"
+  @echo "Inspecting the module... 🕵️"
+  @cd {{mod}}/dagger && dagger call && dagger functions
 
+# Recipe to run all the tests in the target module
 test mod: (reload mod)
   @echo "Running Dagger module tests..."
   @echo "Currently in {{mod}} module 🧪, path=`pwd`"
@@ -54,7 +60,7 @@ test mod: (reload mod)
   @cd {{mod}}/tests/dagger && dagger call test-all
 
 # Recipe to run GolangCI Lint
-goci mod:
+golint mod:
   @echo "Running Go (GolangCI)... 🧹 "
   @test -d {{mod}}/dagger || (echo "Module not found" && exit 1)
   @echo "Currently in {{mod}} module 📦, path=`pwd`/{{mod}}/dagger"
