@@ -3,15 +3,14 @@
   "sdk": "go",
   "dependencies": [
     {
-      "name": "gotest",
-      "source": ".."
+      "name": "dagindag",
+      "source": "../../dagindag"
     },
     {
-      "name": "dagindag",
-      "source": "github.com/Excoriate/daggerverse/dagindag@9783ed1cc5a3c50165c861895d113f4c8612ef47"
+      "name": "gotest",
+      "source": ".."
     }
   ],
-  "root": "..",
   "source": "dagger",
   "engineVersion": "v0.11.7"
 }
