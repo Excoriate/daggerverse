@@ -8,7 +8,6 @@ A simple [Dagger](https://dagger.io) module that wraps Go testing functionality 
 
 Through the [Dagger CLI](https://docs.dagger.io/cli/465058/install), or by using it directly within your module, you can configure the following options:
 
-* ⚙️ `src`: The path to the Go source code directory.
 * ⚙️ `ctr`: The container to use as a base container. If not specified, a new container is created.
 * ⚙️ `version`: The version of the Go image to use. Defaults to `latest`.
 * ⚙️ `image`: The Go image to use. Defaults to `golang:alpine`.
@@ -44,3 +43,12 @@ This module allows you to integrate Go testing into your Dagger pipelines easily
  dagger call --verbose run-go-test-sum --src="../../test/testdata/gotest" \
 --enable-pretty --enable-cache;
 ```
+
+## Testing 🧪
+This module includes a [testing](./tests) module that aims to test the functionality of the GoTest module. The tests are written in Go and can be run using the following command:
+
+```bash
+## Run the tests using the just command
+just test gotest
+```
+>NOTE: The `just` command entails the use of the [**Justfile**](https://just.systems) for task automation.
