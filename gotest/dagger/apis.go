@@ -70,8 +70,8 @@ func (m *Gotest) WithCgoDisabled() *Gotest {
 	return m
 }
 
-// WithEnvVar Set an environment variable.
-func (m *Gotest) WithEnvVar(
+// WithEnvironmentVariable Set an environment variable.
+func (m *Gotest) WithEnvironmentVariable(
 	// The name of the environment variable (e.g., "HOST").
 	name string,
 
@@ -124,8 +124,8 @@ func (m *Gotest) WithGoCache() *Gotest {
 func (m *Gotest) WithNewNetrcFileGitHub(username, password string) *Gotest {
 	machineCMD := fmt.Sprintf("machine github.com\nlogin %s\npassword %s\n", username, password)
 
-	m.Ctr = m.Ctr.WithExec([]string{"echo", "-e", machineCMD, ">", "/root/.netrc"}, ContainerWithExecOpts{
-		InsecureRootCapabilities: true,
+	m.Ctr = m.Ctr.WithNewFile("/root/.netrc", ContainerWithNewFileOpts{
+		Contents: machineCMD,
 	})
 
 	return m
@@ -137,8 +137,8 @@ func (m *Gotest) WithNewNetrcFileGitHub(username, password string) *Gotest {
 func (m *Gotest) WithNewNetrcFileGitLab(username, password string) *Gotest {
 	machineCMD := fmt.Sprintf("machine gitlab.com\nlogin %s\npassword %s\n", username, password)
 
-	m.Ctr = m.Ctr.WithExec([]string{"echo", "-e", machineCMD, ">", "/root/.netrc"}, ContainerWithExecOpts{
-		InsecureRootCapabilities: true,
+	m.Ctr = m.Ctr.WithNewFile("/root/.netrc", ContainerWithNewFileOpts{
+		Contents: machineCMD,
 	})
 
 	return m
@@ -151,6 +151,22 @@ func (m *Gotest) WithPrivateGoPkg(privateHost string) *Gotest {
 	m.Ctr = m.Ctr.WithExec([]string{"go", "env", "GOPRIVATE", privateHost}, ContainerWithExecOpts{
 		InsecureRootCapabilities: true,
 	}).WithEnvVariable("GOPRIVATE", privateHost)
+
+	return m
+}
+
+// WithGCCCompiler installs the GCC compiler and musl-dev package.
+func (m *Gotest) WithGCCCompiler() *Gotest {
+	m.Ctr = m.Ctr.WithExec([]string{"apk", "add", "--no-cache", "gcc", "musl-dev"})
+	return m
+}
+
+// WithGoTestSum installs the gotestsum CLI.
+func (m *Gotest) WithGoTestSum() *Gotest {
+	goTestSumInstallCMD := []string{"go", "install", "gotest.tools/gotestsum@latest"}
+	goTestInstallTparseCMD := []string{"go", "install", "github.com/mfridman/tparse@latest"}
+
+	m.Ctr = m.Ctr.WithExec(goTestSumInstallCMD).WithExec(goTestInstallTparseCMD)
 
 	return m
 }

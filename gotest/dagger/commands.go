@@ -51,9 +51,6 @@ func (m *Gotest) RunGoTestSum(
 	// Packages to test.
 	// +optional
 	packages []string,
-	// race is a flag to run tests with
-	// +optional
-	race bool,
 	// Arbitrary flags to pass along to go test.
 	// +optional
 	testFlags []string,
@@ -83,7 +80,7 @@ func (m *Gotest) RunGoTestSum(
 	// +optional
 	printEnvVars bool,
 ) (string, error) {
-	evaluatedCtr, err := m.SetupGoTestSum(src, packages, race, testFlags, goTestSumFlags, format, insecureRootCapabilities, enableNest, enableCache, enablePretty, envVars, printEnvVars)
+	evaluatedCtr, err := m.SetupGoTestSum(src, packages, testFlags, goTestSumFlags, format, insecureRootCapabilities, enableNest, enableCache, enablePretty, envVars, printEnvVars)
 	if err != nil {
 		return "", err
 	}

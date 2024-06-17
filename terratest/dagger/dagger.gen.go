@@ -729,7 +729,7 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
 			}
 			return (*Terratest).WithCgoDisabled(&parent), nil
-		case "WithEnvVar":
+		case "WithEnvironmentVariable":
 			var parent Terratest
 			err = json.Unmarshal(parentJSON, &parent)
 			if err != nil {
@@ -873,9 +873,9 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 							dag.TypeDef().WithObject("Terratest")).
 							WithDescription("WithCgoDisabled Set CGO_ENABLED environment variable to 0.")).
 					WithFunction(
-						dag.Function("WithEnvVar",
+						dag.Function("WithEnvironmentVariable",
 							dag.TypeDef().WithObject("Terratest")).
-							WithDescription("WithEnvVar Set an environment variable.").
+							WithDescription("WithEnvironmentVariable Set an environment variable.").
 							WithArg("name", dag.TypeDef().WithKind(StringKind), FunctionWithArgOpts{Description: "The name of the environment variable (e.g., \"HOST\")."}).
 							WithArg("value", dag.TypeDef().WithKind(StringKind), FunctionWithArgOpts{Description: "The value of the environment variable (e.g., \"localhost\")."}).
 							WithArg("expand", dag.TypeDef().WithKind(BooleanKind).WithOptional(true), FunctionWithArgOpts{Description: "Replace `${VAR}` or $VAR in the value according to the current environment\nvariables defined in the container (e.g., \"/opt/bin:$PATH\")."})).

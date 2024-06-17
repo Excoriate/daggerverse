@@ -8,6 +8,7 @@ require (
 	github.com/99designs/gqlgen v0.17.44
 	github.com/Khan/genqlient v0.7.0
 	github.com/containerd/containerd v1.7.17
+	github.com/sourcegraph/conc v0.3.0
 	github.com/vektah/gqlparser/v2 v2.5.11
 	go.opentelemetry.io/otel v1.26.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.26.0
@@ -19,7 +20,11 @@ require (
 	google.golang.org/grpc v1.64.0
 )
 
-require dagger.io/dagger v0.11.6 // indirect
+require (
+	dagger.io/dagger v0.11.6 // indirect
+	go.uber.org/atomic v1.7.0 // indirect
+	go.uber.org/multierr v1.9.0 // indirect
+)
 
 require (
 	github.com/Excoriate/daggerx v0.0.16
