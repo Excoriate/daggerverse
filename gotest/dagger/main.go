@@ -62,7 +62,7 @@ func New(
 			return nil, err
 		}
 		for _, envVar := range envVars {
-			g.Ctr = g.WithEnvVar(envVar.Name, envVar.Value, false).Ctr
+			g.Ctr = g.WithEnvironmentVariable(envVar.Name, envVar.Value, false).Ctr
 		}
 	}
 

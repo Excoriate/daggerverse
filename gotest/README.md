@@ -17,10 +17,10 @@ Through the [Dagger CLI](https://docs.dagger.io/cli/465058/install), or by using
 
 ## Features 🎨
 
-| Command or functionality           | Command      | Example                                                                                                                                                        | Status |
-|------------------------------------|--------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|--------|
-| Run Go Tests                       | **run**      | `dagger call run-go-test --packages="./..." --enableVerbose=true --race=true --src="my-code/src"`                                                              | ✅      |
-| Run GoTestSum                      | **runsum**   | `dagger call run-go-test-sum --src="mydir/src" --race=true --testFlags="-json" --goTestSumFlags="--format=short-verbose" --format="short" --enablePretty=true` | ✅      |
+| Command or functionality           | Command       | Example                                                                                                                                                        | Status |
+|------------------------------------|---------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|--------|
+| Run Go Tests                       | **run**       | `dagger call run-go-test --packages="./..." --enableVerbose=true --race=true --src="my-code/src"`                                                              | ✅      |
+| Run GoTestSum                      | **gotestsum** | `dagger call run-go-test-sum --src="mydir/src" --race=true --testFlags="-json" --goTestSumFlags="--format=short-verbose" --format="short" --enablePretty=true` | ✅      |
 
 
 ## Using the GoTest Module

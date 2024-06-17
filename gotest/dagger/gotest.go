@@ -54,7 +54,7 @@ func (m *Gotest) SetupGoTest(
 		}
 
 		for _, envVar := range envVarsDagger {
-			ctr = m.WithEnvVar(envVar.Name, envVar.Value, false).Ctr
+			ctr = m.WithEnvironmentVariable(envVar.Name, envVar.Value, false).Ctr
 		}
 	}
 
@@ -100,9 +100,6 @@ func (m *Gotest) SetupGoTestSum(
 	// Packages to test.
 	// +optional
 	packages []string,
-	// race is a flag to run tests with
-	// +optional
-	race bool,
 	// Arbitrary flags to pass along to go test.
 	// +optional
 	testFlags []string,
@@ -148,7 +145,7 @@ func (m *Gotest) SetupGoTestSum(
 		}
 
 		for _, envVar := range envVarsDagger {
-			ctr = m.WithEnvVar(envVar.Name, envVar.Value, false).Ctr
+			ctr = m.WithEnvironmentVariable(envVar.Name, envVar.Value, false).Ctr
 		}
 	}
 
@@ -168,10 +165,6 @@ func (m *Gotest) SetupGoTestSum(
 
 	goTestCMD = append(goTestCMD, fmt.Sprintf("--format=%s", format))
 	goTestCMD = append(goTestCMD, goTestSumFlags...)
-
-	if race {
-		goTestCMD = append(goTestCMD, "-race")
-	}
 
 	if len(packages) > 0 {
 		goTestCMD = append(goTestCMD, packages...)
