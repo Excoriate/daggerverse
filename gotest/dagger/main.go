@@ -1,11 +1,16 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/Excoriate/daggerx/pkg/containerx"
 
 	"github.com/Excoriate/daggerx/pkg/envvars"
 )
 
+// Gotest is a module that provides functionality to run Go tests.
+//
+// The module can be used to run tests in a Go project.
 type Gotest struct {
 	// Src is the directory that contains all the source code, including the module directory.
 	Src *Directory
@@ -14,11 +19,7 @@ type Gotest struct {
 	Ctr *Container
 }
 
-// New creates a new instance of the GoTest module with the given version, image, source directory, and environment variables.
-// If the version is not specified, the default version is used.
-// If the image is not specified, the default image is used.
-// If the container is not specified, a new container is created, and this container is considered
-// as the base container.
+// New creates a new Gotest module.
 func New(
 	// version is the version of the GoReleaser to use, e.g., "v1.22.0".
 	// +optional
@@ -34,10 +35,11 @@ func New(
 	// +optional
 	envVarsFromHost string,
 ) (*Gotest, error) {
-	g := &Gotest{}
+	//nolint:exhaustruct // It's 'okaysh' for now, I'll decide later what's going to be the pattern here.
+	dagModule := &Gotest{}
 
 	if ctr != nil {
-		g.Ctr = ctr
+		dagModule.Ctr = ctr
 	} else {
 		imageURL, err := containerx.GetImageURL(&containerx.NewBaseContainerOpts{
 			Image:           image,
@@ -47,10 +49,10 @@ func New(
 		})
 
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to get image URL: %w", err)
 		}
 
-		g.Base(imageURL)
+		dagModule.Base(imageURL)
 	}
 
 	// If environment variables are passed in a string, with a format like "SOMETHING=SOMETHING,SOMETHING=SOMETHING",
@@ -59,18 +61,21 @@ func New(
 	if envVarsFromHost != "" {
 		envVars, err := envvars.ToDaggerEnvVarsFromStr(envVarsFromHost)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to parse environment variables: %w", err)
 		}
+
 		for _, envVar := range envVars {
-			g.Ctr = g.WithEnvironmentVariable(envVar.Name, envVar.Value, false).Ctr
+			dagModule.Ctr = dagModule.WithEnvironmentVariable(envVar.Name, envVar.Value, false).Ctr
 		}
 	}
 
-	return g, nil
+	return dagModule, nil
 }
 
 // Base sets the base image and version, and creates the base container.
 // The default image is "golang/alpine" and the default version is "latest".
+//
+//nolint:nolintlint,revive // This is a method that is used to set the base image and version.
 func (m *Gotest) Base(imageURL string) *Gotest {
 	c := dag.Container().From(imageURL)
 	m.Ctr = c

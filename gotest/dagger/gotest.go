@@ -33,7 +33,7 @@ func (m *Gotest) SetupGoTest(
 	// enable the cache volumes for the Go module and build cache.
 	// +optional
 	enableCache bool,
-	// envVars is a list of environment variables to set in the container with the format "SOMETHING=SOMETHING,SOMETHING=SOMETHING".
+	// envVars is a list of environment variables with the format "SOMETHING=SOMETHING,SOMETHING=SOMETHING".
 	// +optional
 	envVars []string,
 	// printEnvVars is a flag to print the environment variables
@@ -50,7 +50,7 @@ func (m *Gotest) SetupGoTest(
 	if len(envVars) > 0 {
 		envVarsDagger, err := envvars.ToDaggerEnvVarsFromSlice(envVars)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to parse environment variables: %w", err)
 		}
 
 		for _, envVar := range envVarsDagger {
@@ -59,6 +59,7 @@ func (m *Gotest) SetupGoTest(
 	}
 
 	if printEnvVars {
+		//nolint:exhaustruct // It's 'okaysh' for now, I'll decide later what's going to be the pattern here.
 		ctr = ctr.WithExec([]string{"printenv"}, ContainerWithExecOpts{
 			InsecureRootCapabilities:      insecureRootCapabilities,
 			ExperimentalPrivilegedNesting: enableNest,
@@ -82,6 +83,7 @@ func (m *Gotest) SetupGoTest(
 
 	goTest = append(goTest, pkgs...)
 
+	//nolint:exhaustruct // It's 'okaysh' for now, I'll decide later what's going to be the pattern here.
 	ctr = ctr.WithExec(goTest, ContainerWithExecOpts{
 		InsecureRootCapabilities:      insecureRootCapabilities,
 		ExperimentalPrivilegedNesting: enableNest,
@@ -94,6 +96,8 @@ func (m *Gotest) SetupGoTest(
 
 // SetupGoTestSum sets up the go test options, to either evaluate the container and run the test,
 // or return the container to be evaluated later.
+//
+//nolint:cyclop // It's 'okaysh' for now, I'll decide later what's going to be the pattern here.
 func (m *Gotest) SetupGoTestSum(
 	// The directory containing code to test.
 	src *Directory,
@@ -122,7 +126,7 @@ func (m *Gotest) SetupGoTestSum(
 	// enablePretty is a flag to enable pretty output.
 	// +optional
 	enablePretty bool,
-	// envVars is a list of environment variables to set in the container with the format "SOMETHING=SOMETHING,SOMETHING=SOMETHING".
+	// envVars is a list of environment variables to set with the format "SOMETHING=SOMETHING,SOMETHING=SOMETHING".
 	// +optional
 	envVars []string,
 	// printEnvVars is a flag to print the environment variables
@@ -141,7 +145,7 @@ func (m *Gotest) SetupGoTestSum(
 	if len(envVars) > 0 {
 		envVarsDagger, err := envvars.ToDaggerEnvVarsFromSlice(envVars)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to parse environment variables: %w", err)
 		}
 
 		for _, envVar := range envVarsDagger {
@@ -151,6 +155,7 @@ func (m *Gotest) SetupGoTestSum(
 
 	if printEnvVars {
 		ctr = ctr.WithFocus().
+			//nolint:exhaustruct // It's 'okaysh' for now, I'll decide later what's going to be the pattern here.
 			WithExec([]string{"printenv"}, ContainerWithExecOpts{
 				InsecureRootCapabilities:      insecureRootCapabilities,
 				ExperimentalPrivilegedNesting: enableNest,
@@ -163,7 +168,7 @@ func (m *Gotest) SetupGoTestSum(
 		format = "testname" // opinionated default
 	}
 
-	goTestCMD = append(goTestCMD, fmt.Sprintf("--format=%s", format))
+	goTestCMD = append(goTestCMD, "--format="+format)
 	goTestCMD = append(goTestCMD, goTestSumFlags...)
 
 	if len(packages) > 0 {
@@ -177,9 +182,11 @@ func (m *Gotest) SetupGoTestSum(
 
 	if enablePretty {
 		ctr = ctr.WithExec(goTestInstallTparseCMD)
+
 		goTestCMD = append(goTestCMD, "--jsonfile", "test-output.json")
 	}
 
+	//nolint:exhaustruct // It's 'okaysh' for now, I'll decide later what's going to be the pattern here.
 	ctr = ctr.WithExec(goTestCMD, ContainerWithExecOpts{
 		InsecureRootCapabilities:      insecureRootCapabilities,
 		ExperimentalPrivilegedNesting: enableNest,
@@ -187,6 +194,7 @@ func (m *Gotest) SetupGoTestSum(
 
 	if enablePretty {
 		tParseCMD := []string{"tparse", "-all", "-smallscreen", "-file=test-output.json"}
+		//nolint:exhaustruct // It's 'okaysh' for now, I'll decide later what's going to be the pattern here.
 		ctr = ctr.WithExec(tParseCMD, ContainerWithExecOpts{
 			InsecureRootCapabilities:      insecureRootCapabilities,
 			ExperimentalPrivilegedNesting: enableNest,

@@ -1,6 +1,8 @@
 package main
 
-import "context"
+import (
+	"context"
+)
 
 // RunGoTest runs tests using the go test CLI.
 // The default packages to test are "./...".
@@ -28,20 +30,21 @@ func (m *Gotest) RunGoTest(
 	// enableCache is a flag to enable cache volumes.
 	// +optional
 	enableCache bool,
-	// envVars is a list of environment variables to set in the container with the format "SOMETHING=SOMETHING,SOMETHING=SOMETHING".
+	//nolint:lll    // envVars is a list of environment variables to set in the container with the format "SOMETHING=SOMETHING,SOMETHING=SOMETHING".
 	// +optional
 	envVars []string,
 	// printEnvVars is a flag to print the environment variables
 	// +optional
 	printEnvVars bool,
 ) (string, error) {
+	//nolint:lll // It's expected to have a long line here.
 	evaluatedCtr, err := m.SetupGoTest(src, packages, enableVerbose, race, testFlags, insecureRootCapabilities, nest, enableCache, envVars, printEnvVars)
 	if err != nil {
 		return "", err
 	}
 
-	out, ctrErr := evaluatedCtr.Stdout(context.Background())
-	return out, ctrErr
+	//nolint:wrapcheck // It's expected to have an unwrapped error here.
+	return evaluatedCtr.Stdout(context.Background())
 }
 
 // RunGoTestSum runs tests using the gotestsum CLI.
@@ -73,18 +76,19 @@ func (m *Gotest) RunGoTestSum(
 	// enablePretty is a flag to enable pretty output.
 	// +optional
 	enablePretty bool,
-	// envVars is a list of environment variables to set in the container with the format "SOMETHING=SOMETHING,SOMETHING=SOMETHING".
+	// envVars list of environment variables to set in the container with format "SOMETHING=SOMETHING,SOMETHING=SOMETHING".
 	// +optional
 	envVars []string,
 	// printEnvVars is a flag to print the environment variables
 	// +optional
 	printEnvVars bool,
 ) (string, error) {
+	//nolint:lll // It's expected to have a long line here.
 	evaluatedCtr, err := m.SetupGoTestSum(src, packages, testFlags, goTestSumFlags, format, insecureRootCapabilities, enableNest, enableCache, enablePretty, envVars, printEnvVars)
 	if err != nil {
 		return "", err
 	}
 
-	out, ctrErr := evaluatedCtr.Stdout(context.Background())
-	return out, ctrErr
+	//nolint:wrapcheck // It's expected to have an unwrapped error here.
+	return evaluatedCtr.Stdout(context.Background())
 }

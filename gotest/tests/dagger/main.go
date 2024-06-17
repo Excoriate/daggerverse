@@ -34,7 +34,7 @@ func (m *Tests) TestAll(ctx context.Context) error {
 	p.Go(m.TestCommandRunGoTestSum)
 	p.Go(m.TestCommandRunGoTestSumWithAdvancedOptions)
 
-	return p.Wait()
+	return p.Wait() //nolint:wrapcheck // no need to wrap the error
 }
 
 // getTestDir returns the test directory.
@@ -192,6 +192,12 @@ func (m *Tests) TestCommandRunGoTestSimple(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+// TestCommandRunGoTestSimple tests running go test.
+func (m *Tests) TestCommandRunGoTestBug(ctx context.Context) (string, error) {
+	mt := dag.Gotest().WithSource(m.TestDir)
+	return mt.RunGoTest(ctx, m.TestDir, GotestRunGoTestOpts{})
 }
 
 // TestCommandRunGoTestWithAdvancedOptions tests running go test with advanced options.
