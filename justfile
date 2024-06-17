@@ -52,3 +52,12 @@ test mod: (reload mod)
   @echo "Currently in {{mod}} module 🧪, path=`pwd`"
   @test -d {{mod}}/tests/dagger || (echo "Module not found" && exit 1)
   @cd {{mod}}/tests/dagger && dagger call test-all
+
+# Recipe to run GolangCI Lint
+goci mod:
+  @echo "Running Go (GolangCI)... 🧹 "
+  @test -d {{mod}}/dagger || (echo "Module not found" && exit 1)
+  @echo "Currently in {{mod}} module 📦, path=`pwd`/{{mod}}/dagger"
+  @nix-shell -p golangci-lint --run "golangci-lint run --config .golangci.yml ./{{mod}}/dagger"
+  @echo "Checking now the tests 🧪 project ..."
+  @nix-shell -p golangci-lint --run "golangci-lint run --config .golangci.yml ./{{mod}}/tests/dagger"

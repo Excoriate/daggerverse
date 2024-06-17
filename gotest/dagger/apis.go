@@ -1,3 +1,4 @@
+//nolint:nolintlint,revive // This is a method that is used to set the base image and version.
 package main
 
 import (
@@ -40,19 +41,20 @@ func (m *Gotest) WithPlatform(
 		return m
 	}
 
-	p := platforms.MustParse(string(platform))
+	platformSet := platforms.MustParse(string(platform))
 
 	ctr := m.Ctr
 
 	ctr = ctr.
-		WithEnvVariable("GOOS", p.OS).
-		WithEnvVariable("GOARCH", p.Architecture)
+		WithEnvVariable("GOOS", platformSet.OS).
+		WithEnvVariable("GOARCH", platformSet.Architecture)
 
-	if p.Variant != "" {
-		ctr = ctr.WithEnvVariable("GOARM", p.Variant)
+	if platformSet.Variant != "" {
+		ctr = ctr.WithEnvVariable("GOARM", platformSet.Variant)
 	}
 
 	m.Ctr = ctr
+
 	return m
 }
 
@@ -60,6 +62,7 @@ func (m *Gotest) WithPlatform(
 func (m *Gotest) WithCgoEnabled() *Gotest {
 	gox := golangx.WithGoCgoEnabled()
 	m.Ctr = m.Ctr.WithEnvVariable(gox.Name, gox.Value)
+
 	return m
 }
 
@@ -67,6 +70,7 @@ func (m *Gotest) WithCgoEnabled() *Gotest {
 func (m *Gotest) WithCgoDisabled() *Gotest {
 	gox := golangx.WithGoCgoDisabled()
 	m.Ctr = m.Ctr.WithEnvVariable(gox.Name, gox.Value)
+
 	return m
 }
 
@@ -124,6 +128,7 @@ func (m *Gotest) WithGoCache() *Gotest {
 func (m *Gotest) WithNewNetrcFileGitHub(username, password string) *Gotest {
 	machineCMD := fmt.Sprintf("machine github.com\nlogin %s\npassword %s\n", username, password)
 
+	//nolint:exhaustruct // This is a method that is used to set the base image and version.
 	m.Ctr = m.Ctr.WithNewFile("/root/.netrc", ContainerWithNewFileOpts{
 		Contents: machineCMD,
 	})
@@ -137,6 +142,7 @@ func (m *Gotest) WithNewNetrcFileGitHub(username, password string) *Gotest {
 func (m *Gotest) WithNewNetrcFileGitLab(username, password string) *Gotest {
 	machineCMD := fmt.Sprintf("machine gitlab.com\nlogin %s\npassword %s\n", username, password)
 
+	//nolint:exhaustruct // This is a method that is used to set the base image and version.
 	m.Ctr = m.Ctr.WithNewFile("/root/.netrc", ContainerWithNewFileOpts{
 		Contents: machineCMD,
 	})
@@ -146,8 +152,10 @@ func (m *Gotest) WithNewNetrcFileGitLab(username, password string) *Gotest {
 
 // WithPrivateGoPkg sets the GOPRIVATE environment variable.
 //
-// The GOPRIVATE environment variable is used to specify a comma-separated list of hosts for which Go modules should always be fetched directly from VCS repositories.
+//nolint:lll    // The GOPRIVATE environment variable is used to specify a comma-separated list of hosts for which Go modules should always be fetched directly from VCS repositories.
+//nolint:exhaustruct // This is a method that is used to set the base image and version.
 func (m *Gotest) WithPrivateGoPkg(privateHost string) *Gotest {
+	//nolint:exhaustruct // This is a method that is used to set the base image and version.
 	m.Ctr = m.Ctr.WithExec([]string{"go", "env", "GOPRIVATE", privateHost}, ContainerWithExecOpts{
 		InsecureRootCapabilities: true,
 	}).WithEnvVariable("GOPRIVATE", privateHost)
@@ -158,6 +166,7 @@ func (m *Gotest) WithPrivateGoPkg(privateHost string) *Gotest {
 // WithGCCCompiler installs the GCC compiler and musl-dev package.
 func (m *Gotest) WithGCCCompiler() *Gotest {
 	m.Ctr = m.Ctr.WithExec([]string{"apk", "add", "--no-cache", "gcc", "musl-dev"})
+
 	return m
 }
 
