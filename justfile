@@ -38,3 +38,17 @@ ddev mod:
   @echo "Currently in {{mod}} module 📦, path=`pwd`"
   @test -d {{mod}}/dagger || (echo "Module not found" && exit 1)
   @cd {{mod}}/dagger && dagger develop
+
+reload mod:
+  @echo "Reloading Dagger module and also the tests..."
+  @echo "Currently in {{mod}} module 🔄, path=`pwd`"
+  @test -d {{mod}}/dagger || (echo "Module not found" && exit 1)
+  @cd {{mod}}/dagger && dagger develop
+  @cd {{mod}}/tests/dagger && dagger develop
+  @echo "Module reloaded successfully 🚀"
+
+test mod: (reload mod)
+  @echo "Running Dagger module tests..."
+  @echo "Currently in {{mod}} module 🧪, path=`pwd`"
+  @test -d {{mod}}/tests/dagger || (echo "Module not found" && exit 1)
+  @cd {{mod}}/tests/dagger && dagger call test-all
