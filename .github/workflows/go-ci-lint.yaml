@@ -1,11 +1,12 @@
 ---
-name: Go lint
+name: Dagger Modules Lint
 on:
   push:
     branches:
       - main
       - master
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -19,7 +20,7 @@ jobs:
         go: ['1.22']
         dagversion: [0.11.6, 0.11.7]
         module: [gotest]
-    name: Lint ${{ matrix.module }} on ${{ matrix.os }} with Go ${{ matrix.go }}
+    name: Lint ${{ matrix.module }} on ${{ matrix.os }} with Dagger ${{ matrix.dagversion }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -42,15 +43,16 @@ jobs:
           version: ${{ matrix.dagversion }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Set up module
+      - name: Setup GolangCI-Lint
         run: cd ${{ matrix.module }}
-      - name: golangci-lint on Dagger module
+      - name: Run golangci-lint on module ${{ matrix.module }}
         uses: golangci/golangci-lint-action@v6
         with:
           version: v1.58
           working-directory: ${{ matrix.module }}/dagger
-      - name: golangci-lint on Dagger test module
+      - name: Run golangci-lint on module ${{ matrix.module }}/tests
         uses: golangci/golangci-lint-action@v6
         with:
           version: v1.58
           working-directory: ${{ matrix.module }}/tests/dagger
+          args: --config=${{ github.workspace }}/.golangci.yml
