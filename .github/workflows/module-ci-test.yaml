@@ -49,11 +49,9 @@ jobs:
         uses: golangci/golangci-lint-action@v6
         with:
           version: v1.58
-          working-directory: ${{ matrix.module }}/dagger
-          args: --config=${{ github.workspace }}/.golangci.yml
+          args: --config .golangci.yml ./${{ matrix.module }}/dagger
       - name: Run golangci-lint on module ${{ matrix.module }}/tests
         uses: golangci/golangci-lint-action@v6
         with:
           version: v1.58
-          working-directory: ${{ matrix.module }}/tests/dagger
-          args: --config=${{ github.workspace }}/.golangci.yml
+          args: --config .golangci.yml ./${{ matrix.module }}/tests/dagger
