@@ -60,6 +60,7 @@ linters:
   disable:
     - gci
     - gofumpt
+    - exhaustruct
   presets:
     - bugs
     - comment

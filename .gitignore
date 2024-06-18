@@ -48,3 +48,4 @@ go.work
 /.nix-defexpr
 /.nix-gcroots
 /nix/
+.devenv
