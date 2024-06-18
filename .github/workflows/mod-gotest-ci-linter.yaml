@@ -1,5 +1,5 @@
 ---
-name: Dagger Modules Lint
+name: Module Gotest CI Linter
 on:
   push:
     branches:
@@ -14,7 +14,7 @@ permissions:
   checks: write
 
 jobs:
-  golangci:
+  linter:
     strategy:
       matrix:
         go: ['1.22']
