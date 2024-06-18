@@ -27,7 +27,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go }}
-      - name: Dagger Develop
+      - name: Dagger Develop on Module 📦 ${{ matrix.module }} with Dagger ${{ matrix.dagversion }}
         uses: dagger/dagger-for-github@v5
         with:
           verb: develop
@@ -35,7 +35,15 @@ jobs:
           version: ${{ matrix.dagversion }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Dagger Call
+      - name: Dagger Develop on Test Module 🧪 ${{ matrix.module }} with Dagger ${{ matrix.dagversion }}
+        uses: dagger/dagger-for-github@v5
+        with:
+          verb: develop
+          module: ${{ matrix.module }}/tests
+          version: ${{ matrix.dagversion }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Dagger Call on Module ${{ matrix.module }} with Dagger ${{ matrix.dagversion }}
         uses: dagger/dagger-for-github@v5
         with:
           verb: call
@@ -43,12 +51,20 @@ jobs:
           version: ${{ matrix.dagversion }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Run golangci-lint on module ${{ matrix.module }}
+      - name: Dagger Call on Test Module 🧪 ${{ matrix.module }} with Dagger ${{ matrix.dagversion }}
+        uses: dagger/dagger-for-github@v5
+        with:
+          verb: call
+          module: ${{ matrix.module }}/tests
+          version: ${{ matrix.dagversion }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Run golangci-lint on module ${{ matrix.module }} 📦
         uses: golangci/golangci-lint-action@v6
         with:
           version: v1.58
           args: --config .golangci.yml ./${{ matrix.module }}/dagger
-      - name: Run golangci-lint on module ${{ matrix.module }}/tests
+      - name: Run golangci-lint on module ${{ matrix.module }}/tests 🧪
         uses: golangci/golangci-lint-action@v6
         with:
           version: v1.58
