@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.16.0](https://github.com/Excoriate/daggerverse/compare/v1.15.4...v1.16.0) (2024-06-18)
+
+
+### Features
+
+* Add testing section to README with instructions for running tests. ([#77](https://github.com/Excoriate/daggerverse/issues/77)) ([abed91f](https://github.com/Excoriate/daggerverse/commit/abed91f3ed03e0b9dd61c9afc3b5a7edac80722d))
+* **dagger:** Replace `WithExec` with `WithNewFile` for netrc file creation ([964cd31](https://github.com/Excoriate/daggerverse/commit/964cd310f43faf33c555a4d621b113757897bb1b))
+* **dagger:** Update method names to use `WithEnvironmentVariable` ([#78](https://github.com/Excoriate/daggerverse/issues/78)) ([964cd31](https://github.com/Excoriate/daggerverse/commit/964cd310f43faf33c555a4d621b113757897bb1b))
+* **deps:** update golang.org/x/sys to v0.20.0, golang.org/x/text to v0.15.0, google.golang.org/grpc to v1.64.0, google.golang.org/protobuf to v1.34.1 ([#74](https://github.com/Excoriate/daggerverse/issues/74)) ([3974e1e](https://github.com/Excoriate/daggerverse/commit/3974e1ea64dec28534ebcbd6783a5eb69da43f74))
+* **tests:** Add unit test for PrintSum in main_test file ([964cd31](https://github.com/Excoriate/daggerverse/commit/964cd310f43faf33c555a4d621b113757897bb1b))
+* Update golangci-lint workflow to include tests and use module name in job description ([#85](https://github.com/Excoriate/daggerverse/issues/85)) ([c3823a7](https://github.com/Excoriate/daggerverse/commit/c3823a72e21b9d3a6116930498684f0a7bc2f3a9))
+* Update release workflow to include new module publishing in Daggerverse 🚀 ([#91](https://github.com/Excoriate/daggerverse/issues/91)) ([6bb066e](https://github.com/Excoriate/daggerverse/commit/6bb066e785e7267799c6fef324b6df0eaa889b42))
+
 ## [1.15.4](https://github.com/Excoriate/daggerverse/compare/v1.15.3...v1.15.4) (2024-06-06)
 
 
