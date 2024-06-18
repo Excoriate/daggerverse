@@ -43,8 +43,6 @@ jobs:
           version: ${{ matrix.dagversion }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Setup GolangCI-Lint
-        run: cd ${{ matrix.module }}
       - name: Run golangci-lint on module ${{ matrix.module }}
         uses: golangci/golangci-lint-action@v6
         with:
