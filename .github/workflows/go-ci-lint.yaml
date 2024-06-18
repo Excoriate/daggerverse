@@ -34,6 +34,14 @@ jobs:
           version: ${{ matrix.dagversion }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Dagger Call
+        uses: dagger/dagger-for-github@v5
+        with:
+          verb: call
+          module: ${{ matrix.module }}
+          version: ${{ matrix.dagversion }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Set up module
         run: cd ${{ matrix.module }}
       - name: golangci-lint on Dagger module
