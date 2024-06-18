@@ -17,7 +17,7 @@ jobs:
     strategy:
       matrix:
         go: ['1.22']
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        dagversion: [0.11.6, 0.11.7]
         module: [gotest]
     name: Lint ${{ matrix.module }} on ${{ matrix.os }} with Go ${{ matrix.go }}
     runs-on: ${{ matrix.os }}
@@ -26,6 +26,14 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go }}
+      - name: Dagger Develop
+        uses: dagger/dagger-for-github@v5
+        with:
+          verb: develop
+          module: ${{ matrix.module }}
+          version: ${{ matrix.dagversion }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Set up module
         run: cd ${{ matrix.module }}
       - name: golangci-lint on Dagger module
