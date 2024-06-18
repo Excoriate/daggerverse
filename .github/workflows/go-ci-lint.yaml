@@ -20,7 +20,7 @@ jobs:
         dagversion: [0.11.6, 0.11.7]
         module: [gotest]
     name: Lint ${{ matrix.module }} on ${{ matrix.os }} with Go ${{ matrix.go }}
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -30,6 +30,14 @@ jobs:
         uses: dagger/dagger-for-github@v5
         with:
           verb: develop
+          module: ${{ matrix.module }}
+          version: ${{ matrix.dagversion }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Dagger Call
+        uses: dagger/dagger-for-github@v5
+        with:
+          verb: call
           module: ${{ matrix.module }}
           version: ${{ matrix.dagversion }}
         env:
