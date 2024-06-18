@@ -53,7 +53,7 @@ reloadall mod:
   @cd {{mod}}/dagger && dagger call && dagger functions
 
 # Recipe to run all the tests in the target module
-test mod: (reload mod)
+test mod: (reloadmod mod)
   @echo "Running Dagger module tests..."
   @echo "Currently in {{mod}} module 🧪, path=`pwd`"
   @test -d {{mod}}/tests/dagger || (echo "Module not found" && exit 1)
@@ -67,3 +67,6 @@ golint mod:
   @nix-shell -p golangci-lint --run "golangci-lint run --config .golangci.yml ./{{mod}}/dagger"
   @echo "Checking now the tests 🧪 project ..."
   @nix-shell -p golangci-lint --run "golangci-lint run --config .golangci.yml ./{{mod}}/tests/dagger"
+
+cilocal mod: (reloadall mod) (golint mod) (test mod)
+  @echo "Running the whole CI locally... 🚀"
