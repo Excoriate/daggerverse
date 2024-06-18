@@ -64,9 +64,9 @@ golint mod:
   @echo "Running Go (GolangCI)... 🧹 "
   @test -d {{mod}}/dagger || (echo "Module not found" && exit 1)
   @echo "Currently in {{mod}} module 📦, path=`pwd`/{{mod}}/dagger"
-  @nix-shell -p golangci-lint --run "golangci-lint run --config .golangci.yml ./{{mod}}/dagger"
+  @nix-shell -p golangci-lint --run "golangci-lint run --config .golangci.yml ./{{mod}}/dagger" --verbose
   @echo "Checking now the tests 🧪 project ..."
-  @nix-shell -p golangci-lint --run "golangci-lint run --config .golangci.yml ./{{mod}}/tests/dagger"
+  @nix-shell -p golangci-lint --run "golangci-lint run --config .golangci.yml ./{{mod}}/tests/dagger" --verbose
 
 cilocal mod: (reloadall mod) (golint mod) (test mod)
   @echo "Running the whole CI locally... 🚀"
