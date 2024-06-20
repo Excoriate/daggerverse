@@ -49,3 +49,8 @@ go.work
 /.nix-gcroots
 /nix/
 .devenv
+
+# rust
+/target/
+Cargo.lock
+/.daggerx/daggy/target/

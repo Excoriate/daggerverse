@@ -70,3 +70,8 @@ golint mod:
 
 cilocal mod: (reloadall mod) (golint mod) (test mod)
   @echo "Running the whole CI locally... 🚀"
+
+create mod:
+  @echo "Creating a new module..."
+  @cd .daggerx/daggy && cargo build --release
+  @.daggerx/daggy/target/release/daggy --task=create --module={{mod}}
