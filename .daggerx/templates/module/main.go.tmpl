@@ -36,9 +36,17 @@ type {{.module_name}} struct {
 //
 // Returns a pointer to a {{.module_name}} instance and an error, if any.
 func New(
+	// version is the version of the container image to use.
+	// +optional
 	version string,
+	// image is the container image to use.
+	// +optional
 	image string,
+	// ctr is the container to use as a base container.
+	// +optional
 	ctr *Container,
+	// envVarsFromHost is a list of environment variables to pass from the host to the container in a slice of strings.
+	// +optional
 	envVarsFromHost []string,
 ) (*{{.module_name}}, error) {
 	//nolint:exhaustruct // It's 'okaysh' for now, I'll decide later what's going to be the pattern here.
