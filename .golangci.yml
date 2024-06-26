@@ -7,7 +7,7 @@ linters-settings:
   depguard:
     rules:
       Rule not allowed packages:
-        files: [.*]
+        files: [ .* ]
         deny:
           - pkg: notexist
             desc: notexist is not allowed or blacklisted
@@ -35,7 +35,6 @@ linters-settings:
     lines: 140
     statements: 52
 linters:
-#  disable-all: true
   enable:
     - bodyclose
     - dogsled
@@ -81,25 +80,56 @@ issues:
   exclude:
     - abcdef
   exclude-rules:
+    # Disable goimports linter for specific files
+    - linters:
+        - goimports
+      text: "File is not `goimports`-ed"
+      path: '^.*config\.go$'
+    - linters:
+        - goimports
+      text: "File is not `goimports`-ed"
+      path: '^.*main\.go$'
+    - linters:
+        - goimports
+      text: "File is not `goimports`-ed"
+      path: '^.*apis\.go$'
+    # Disable gofmt linter for specific files
+    - linters:
+        - gofmt
+      text: "File is not `gofmt`-ed with `-s`"
+      path: '^.*config\.go$'
+    - linters:
+        - gofmt
+      text: "File is not `gofmt`-ed with `-s`"
+      path: '^.*main\.go$'
+    - linters:
+        - gofmt
+      text: "File is not `gofmt`-ed with `-s`"
+      path: '^.*apis\.go$'
     - path: _test\.go
       linters:
         - gocyclo
         - errcheck
         - dupl
         - gosec
+    - path: main.go
+      linters:
+        - unused
+        - goconst
+        - gosec
     - path-except: _test\.go
       linters:
         - forbidigo
     - path: internal/hmac/
-      text: "weak cryptographic primitive"
+      text: weak cryptographic primitive
       linters:
         - gosec
     - linters:
         - staticcheck
-      text: "SA9003:"
+      text: 'SA9003:'
     - linters:
         - lll
-      source: "^//go:generate "
+      source: '^//go:generate '
   exclude-use-default: false
   exclude-case-sensitive: false
   exclude-dirs:

@@ -1,4 +1,4 @@
-# Module [@MODULE_NAME] for Dagger
+# Module {{.module_name}} for Dagger
 
 ![Dagger Version](https://img.shields.io/badge/dagger%20version-%3E=0.10.0-0f0f19.svg?style=flat-square)
 
@@ -21,7 +21,8 @@ Through the [Dagger CLI](https://docs.dagger.io/cli/465058/install), or by using
 | Run Go Tests             | **run** | `dagger call ` | ✅      |
 
 
-## Using the [@MODULE_NAME] Module 🚀
+## Using the {{.module_name}} Module 🚀
+
 _Place the description of the module here_
 
 ---
@@ -29,25 +30,46 @@ _Place the description of the module here_
 ### Usage through the Dagger CLI 🚀
 
 List all the functions available in the module:
+
   ```bash
   # enter into the module's directory
   cd <module-path>
-  
+
   # list all the functions available in the module
   dagger develop && dagger functions
 ```
+
 Call a function:
+
   ```bash
   # call a function
-  dagger call <function-name> [arguments]
+  # dagger call <function-name> [arguments]
+  dagger call github.com/excoriate/daggerverse/{{.module_name}}@version <function-name> [arguments]
 ```
+
 ---
 
 ## Testing 🧪
-This module includes a [testing](tests) module that aims to test the functionality of the [@MODULE] module. The tests are written in Go and can be run using the following command:
+
+This module includes a [testing](module/tests) module that aims to test the functionality of the {{.module_name}} module. The tests are written in Go and can be run using the following command:
 
 ```bash
 ## Run the tests using the just command
 just test gotest
 ```
+
+## Developer Experience 🛠️
+If you'd like to contribute, mostly we use [Just](https://just.systems) to automate tasks and [Nix](https://nixos.org) to manage the development environment. You can use the following commands to get started:
+
+```bash
+# initialize the pre-commit hooks
+just init
+# run CI or common things locally
+just golint <module-name>
+# run the tests
+just test gotest
+# Run the entire CI tasks locally
+just cilocal <module-name>
+```
+
 >NOTE: The `just` command entails the use of the [**Justfile**](https://just.systems) for task automation.

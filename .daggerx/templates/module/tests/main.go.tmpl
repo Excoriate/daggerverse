@@ -81,7 +81,7 @@ func (m *Tests) TestAPIWithContainer(ctx context.Context) error {
 	installCmd := []string{"apt-get", "install", "-y", "lsb-release"}
 	newContainer = newContainer.WithExec(installCmd)
 
-	targetModule := dag.Modexample()
+	targetModule := dag.{{.module_name}}()
 	targetModule = targetModule.WithContainer(newContainer)
 
 	// Specific Ubuntu command that only works in Ubuntu.
@@ -107,7 +107,7 @@ func (m *Tests) TestAPIWithContainer(ctx context.Context) error {
 //
 // This is a helper method for tests, in order to get a terminal for testing purposes.
 func (m *Tests) TestTerminal() *Terminal {
-	targetModule := dag.Modexample()
+	targetModule := dag.{{.module_name}}()
 
 	_, _ = targetModule.Ctr().Stdout(context.Background())
 
@@ -118,7 +118,7 @@ func (m *Tests) TestTerminal() *Terminal {
 //
 // This is a helper method for tests, in order to test if the env vars are passed correctly in the constructor.
 func (m *Tests) TestAPIPassingEnvVarsInConstructor(ctx context.Context) error {
-	targetModule := dag.Modexample(ModexampleOpts{
+	targetModule := dag.{{.module_name}}({{.module_name}}Opts{
 		EnvVarsFromHost: []string{"HOST=localhost", "PORT=8080", "USER=me", "PASS=1234"},
 	})
 
@@ -146,15 +146,15 @@ func (m *Tests) TestAPIPassingEnvVarsInConstructor(ctx context.Context) error {
 //
 // This is a helper method for tests, in order to test if the env vars are passed correctly in the API.
 func (m *Tests) TestAPIPassingEnvVars(ctx context.Context) error {
-	targetModule := dag.Modexample().WithEnvironmentVariable("HOST", "localhost", ModexampleWithEnvironmentVariableOpts{
+	targetModule := dag.{{.module_name}}().WithEnvironmentVariable("HOST", "localhost", {{.module_name}}WithEnvironmentVariableOpts{
 		Expand: false,
 	})
 
-	targetModule = targetModule.WithEnvironmentVariable("PORT", "8080", ModexampleWithEnvironmentVariableOpts{
+	targetModule = targetModule.WithEnvironmentVariable("PORT", "8080", {{.module_name}}WithEnvironmentVariableOpts{
 		Expand: false,
 	})
 
-	targetModule = targetModule.WithEnvironmentVariable("USER", "me", ModexampleWithEnvironmentVariableOpts{
+	targetModule = targetModule.WithEnvironmentVariable("USER", "me", {{.module_name}}WithEnvironmentVariableOpts{
 		Expand: false,
 	})
 
@@ -184,7 +184,7 @@ func (m *Tests) TestAPIPassingEnvVars(ctx context.Context) error {
 
 // TestAPIWithSource tests if the source directory is set correctly.
 func (m *Tests) TestAPIWithSource(ctx context.Context) error {
-	targetModule := dag.Modexample()
+	targetModule := dag.{{.module_name}}()
 	targetModule.WithSource(m.TestDir)
 
 	out, err := targetModule.Ctr().WithExec([]string{"ls", "-l"}).Stdout(ctx)
@@ -207,7 +207,7 @@ func (m *Tests) TestAPIWithSource(ctx context.Context) error {
 //
 // Tests if the shell command is executed correctly in the container.
 func (m *Tests) TestRunShellCMD(ctx context.Context) error {
-	targetModule := dag.Modexample()
+	targetModule := dag.{{.module_name}}()
 	out, err := targetModule.RunShell(ctx, "ls -l")
 
 	if err != nil {

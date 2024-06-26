@@ -8,16 +8,23 @@ dev:
   @echo "Entering Nix development environment 🧰 ..."
   @nix develop --impure --extra-experimental-features nix-command --extra-experimental-features flakes
 
+# Recipe to initialize the project
+init:
+  @echo "Initializing the project 🚀 ..."
+  @nix-shell -p pre-commit --run "pre-commit install --hook-type pre-commit"
+  @echo "Pre-commit hook installed ✅"
+  @nix-shell -p pre-commit --run "pre-commit install --hook-type pre-push"
+  @echo "Pre-push hook installed ✅"
+  @nix-shell -p pre-commit --run "pre-commit install --hook-type commit-msg"
+  @echo "Commit-msg hook installed ✅"
+  @nix-shell -p pre-commit --run "pre-commit autoupdate"
+  @echo "Pre-commit hooks updated to the latest version 🔄"
+
 # Recipe to run pre-commit hooks
 precommit:
-  @echo "Running pre-commit hooks..."
-  pre-commit run --all-files
-
-# Recipe to find an specific nix package.
-# Recipe to search for a specific nix package in fuzzy mode
-nix-search pkg:
-  @echo "Searching for packages in nixpkgs..."
-  @nix search nixpkgs --json {{pkg}} --extra-experimental-features nix-command --extra-experimental-features flakes | jq -r 'to_entries[] | "\(.value.name) - \(.value.description)"'
+  @echo "Running pre-commit hooks 🔍 ..."
+  @nix-shell -p pre-commit --run "pre-commit run --all-files"
+  @echo "Pre-commit hooks passed ✅"
 
 # Recipe to run Dagger module. It requires the module name and extra arguments.
 dc mod *args:
@@ -64,14 +71,30 @@ golint mod:
   @echo "Running Go (GolangCI)... 🧹 "
   @test -d {{mod}}/dagger || (echo "Module not found" && exit 1)
   @echo "Currently in {{mod}} module 📦, path=`pwd`/{{mod}}/dagger"
-  @nix-shell -p golangci-lint --run "golangci-lint run --config .golangci.yml ./{{mod}}/dagger" --verbose
+  @nix-shell -p golangci-lint --run "golangci-lint run --config .golangci.yml ./{{mod}}/dagger"
   @echo "Checking now the tests 🧪 project ..."
-  @nix-shell -p golangci-lint --run "golangci-lint run --config .golangci.yml ./{{mod}}/tests/dagger" --verbose
+  @nix-shell -p golangci-lint --run "golangci-lint run --config .golangci.yml ./{{mod}}/tests/dagger"
 
+# Recipe to run the whole CI locally
 cilocal mod: (reloadall mod) (golint mod) (test mod)
   @echo "Running the whole CI locally... 🚀"
 
+# Recipe to create a new module using Daggy (a rust CLI tool)
 create mod:
   @echo "Creating a new module..."
   @cd .daggerx/daggy && cargo build --release
   @.daggerx/daggy/target/release/daggy --task=create --module={{mod}}
+
+# recipe for dagger call
+call mod *args:
+  @echo "Running Dagger call..."
+  @echo "Currently in {{mod}} module 📦, path=`pwd`"
+  @test -d {{mod}}/dagger || (echo "Module not found" && exit 1)
+  @cd {{mod}}/dagger && dagger call {{args}}
+
+# Recipe for dagger call tests in a certain module, E.g.: just calltests modexample my-function
+calltests mod *args:
+  @echo "Running Dagger call tests..."
+  @echo "Currently in {{mod}} module 🧪, path=`pwd`"
+  @test -d {{mod}}/tests/dagger || (echo "Module not found" && exit 1)
+  @cd {{mod}}/tests/dagger && dagger call {{args}}
