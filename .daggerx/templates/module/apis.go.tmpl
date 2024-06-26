@@ -2,7 +2,7 @@
 // This includes setting environment variables, mounting directories and files,
 // and configuring services such as Docker within the container.
 //
-// Copyright: Excoriate alex_torres@outlook.com github.com/Excoriate
+// Copyright: Excoriate alex_torres@outlook.com
 // License: MIT
 package main
 
@@ -15,14 +15,18 @@ import (
 // WithEnvironmentVariable sets an environment variable in the container.
 //
 // Parameters:
-// - name: The name of the environment variable (e.g., "HOST").
-// - value: The value of the environment variable (e.g., "localhost").
-// - expand: Whether to replace `${VAR}` or $VAR in the value according to the current
-//   environment variables defined in the container (e.g., "/opt/bin:$PATH").
-//   Optional parameter.
+//   - name: The name of the environment variable (e.g., "HOST").
+//   - value: The value of the environment variable (e.g., "localhost").
+//   - expand: Whether to replace `${VAR}` or $VAR in the value according to the current
+//     environment variables defined in the container (e.g., "/opt/bin:$PATH").
+//     Optional parameter.
 func (m *{{.module_name}}) WithEnvironmentVariable(
+	// name is the name of the environment variable.
 	name string,
+	// value is the value of the environment variable.
 	value string,
+	// expand is whether to replace `${VAR}` or $VAR in the value according to the current
+	// +optional
 	expand bool,
 ) *{{.module_name}} {
 	m.Ctr = m.Ctr.WithEnvVariable(name, value, ContainerWithEnvVariableOpts{
@@ -38,7 +42,10 @@ func (m *{{.module_name}}) WithEnvironmentVariable(
 // - src: The directory that contains all the source code, including the module directory.
 // - workdir: The working directory within the container. Optional parameter.
 func (m *{{.module_name}}) WithSource(
+	// src is the directory that contains all the source code, including the module directory.
 	src *Directory,
+	// workdir is the working directory within the container. If not set it'll default to /mnt
+	// +optional
 	workdir string,
 ) *{{.module_name}} {
 	ctr := m.Ctr.WithMountedDirectory(fixtures.MntPrefix, src)
@@ -70,8 +77,8 @@ func (m *{{.module_name}}) WithContainer(
 //
 // It sets up the container with the Docker service.
 // Parameters:
-// - dockerVersion: The version of the Docker engine to use, e.g., "v20.10.17".
-//   Optional parameter. If not provided, a default version is used.
+//   - dockerVersion: The version of the Docker engine to use, e.g., "v20.10.17".
+//     Optional parameter. If not provided, a default version is used.
 func (m *{{.module_name}}) WithDockerService(
 	dockerVersion string,
 ) *Service {
