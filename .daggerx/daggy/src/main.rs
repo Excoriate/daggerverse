@@ -80,9 +80,38 @@ fn initialize_module(module_cfg: &NewDaggerModule) -> Result<(), Error> {
 
     run_command_with_output(&format!("dagger develop -m {}", module_cfg.name), &module_cfg.path)?;
 
+    let template_dir = ".daggerx/templates/module";
+    let destination_dir = &module_cfg.path;
+
+    copy_and_replace_templates(template_dir, destination_dir, &module_cfg.name)?;
+
     Ok(())
 }
 
+fn copy_and_replace_templates(template_dir: &str, destination_dir: &str, module_name: &str) -> Result<(), Error> {
+    for entry in fs::read_dir(template_dir)? {
+        let entry = entry?;
+        let path = entry.path();
+
+        if path.is_dir() {
+            let new_dir = format!("{}/{}", destination_dir, entry.file_name().to_string_lossy());
+            fs::create_dir_all(&new_dir)?;
+            copy_and_replace_templates(&path.to_string_lossy(), &new_dir, module_name)?;
+        } else {
+            let content = fs::read_to_string(&path)?;
+            let new_content = if path.extension().map_or(false, |ext| ext == "go") {
+                replace_module_name(&content, &capitalize_module_name(module_name))
+            } else {
+                replace_module_name(&content, module_name)
+            };
+
+            let dest_path = format!("{}/{}", destination_dir, entry.file_name().to_string_lossy());
+            fs::write(dest_path, new_content)?;
+        }
+    }
+
+    Ok(())
+}
 fn initialize_tests(module_cfg: &NewDaggerModule) -> Result<(), Error> {
     let tests_path = format!("{}/tests", module_cfg.path);
     fs::create_dir_all(&tests_path)?;
@@ -98,13 +127,16 @@ fn initialize_tests(module_cfg: &NewDaggerModule) -> Result<(), Error> {
     );
     fs::write(tests_dagger_json_path, new_tests_dagger_json_content)?;
 
-    fs::copy(".daggerx/templates/tests/main.go.tmpl", format!("{}/tests/dagger/main.go", module_cfg.path))?;
+    let test_template_dir = ".daggerx/templates/module/tests";
+    let test_destination_dir = format!("{}/tests", module_cfg.path);
+
+    copy_and_replace_templates(&test_template_dir, &test_destination_dir, &module_cfg.name)?;
+
     run_command_with_output("dagger install ../", &tests_path)?;
     run_command_with_output("dagger develop -m tests", &tests_path)?;
 
     Ok(())
 }
-
 fn copy_readme_and_license(module_cfg: &NewDaggerModule) -> Result<(), Error> {
     fs::copy(".daggerx/templates/README.md", format!("{}/README.md", module_cfg.path))?;
     fs::copy(".daggerx/templates/LICENSE", format!("{}/LICENSE", module_cfg.path))?;
@@ -170,4 +202,16 @@ fn run_command_with_output(command: &str, current_dir: &str) -> Result<Output, E
     }
 
     Ok(output)
+}
+
+fn replace_module_name(content: &str, module_name: &str) -> String {
+    content.replace("{{.module_name}}", module_name)
+}
+
+fn capitalize_module_name(module_name: &str) -> String {
+    let mut chars = module_name.chars();
+    match chars.next() {
+        None => String::new(),
+        Some(first) => first.to_uppercase().collect::<String>() + chars.as_str(),
+    }
 }
