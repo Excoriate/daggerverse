@@ -45,10 +45,16 @@ This module allows you to integrate Go testing into your Dagger pipelines easily
 ```
 
 ## Testing 🧪
+
+
+
 This module includes a [testing](./tests) module that aims to test the functionality of the GoTest module. The tests are written in Go and can be run using the following command:
 
 ```bash
 ## Run the tests using the just command
+
 just test gotest
+
 ```
+
 >NOTE: The `just` command entails the use of the [**Justfile**](https://just.systems) for task automation.

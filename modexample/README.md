@@ -22,32 +22,53 @@ Through the [Dagger CLI](https://docs.dagger.io/cli/465058/install), or by using
 
 
 ## Using the modexample Module 🚀
+
+
+
 _Place the description of the module here_
 
 ---
 
 ### Usage through the Dagger CLI 🚀
 
+
+
 List all the functions available in the module:
+
   ```bash
   # enter into the module's directory
   cd <module-path>
-  
+
+
+
   # list all the functions available in the module
+
   dagger develop && dagger functions
+
+
 ```
+
 Call a function:
+
+
+
   ```bash
   # call a function
   dagger call <function-name> [arguments]
+
+
 ```
+
 ---
 
 ## Testing 🧪
+
+
 This module includes a [testing](tests) module that aims to test the functionality of the [@MODULE] module. The tests are written in Go and can be run using the following command:
 
 ```bash
 ## Run the tests using the just command
 just test gotest
 ```
+
 >NOTE: The `just` command entails the use of the [**Justfile**](https://just.systems) for task automation.
