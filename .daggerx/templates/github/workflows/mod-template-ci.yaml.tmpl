@@ -1,5 +1,5 @@
 ---
-name: Module {{ mod }} CI Linter
+name: Module {{.module_name}} CI Linter
 on:
   push:
     branches:
@@ -19,7 +19,7 @@ jobs:
       matrix:
         go: ['1.22']
         dagversion: [0.11.6, 0.11.7]
-        module: [{{ mod }}]
+        module: [{{.module_name}}]
     name: Lint ${{ matrix.module }} on ${{ matrix.os }} with Dagger ${{ matrix.dagversion }}
     runs-on: ubuntu-latest
     steps:
@@ -75,7 +75,7 @@ jobs:
       matrix:
         go: ['1.22']
         dagversion: [0.11.6, 0.11.7]
-        module: [{{ mod }}]
+        module: [{{.module_name}}]
     needs: linter
     name: Run Tests 🧪 in ${{ matrix.module }} on ${{ matrix.os }} with Dagger ${{ matrix.dagversion }}
     runs-on: ubuntu-latest
