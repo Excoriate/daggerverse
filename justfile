@@ -76,7 +76,7 @@ golint mod:
   @nix-shell -p golangci-lint --run "golangci-lint run --config .golangci.yml ./{{mod}}/tests/dagger"
 
 # Recipe to run the whole CI locally
-cilocal mod: (reloadall mod) (golint mod) (test mod)
+cilocal mod: (reloadall mod) (golint mod) (test mod) (ci-module-docs mod)
   @echo "Running the whole CI locally... 🚀"
 
 # Recipe to create a new module using Daggy (a rust CLI tool)
@@ -84,6 +84,13 @@ create mod:
   @echo "Creating a new module..."
   @cd .daggerx/daggy && cargo build --release
   @.daggerx/daggy/target/release/daggy --task=create --module={{mod}}
+
+# This recipe validate if the dagger module has the README.md file and the LICENSE file
+ci-module-docs mod:
+  @echo "Validating the module documentation..."
+  @test -f {{mod}}/README.md || (echo "README.md file not found" && exit 1)
+  @test -f {{mod}}/LICENSE || (echo "LICENSE file not found" && exit 1)
+  @echo "Module documentation is valid ✅"
 
 # recipe for dagger call
 call mod *args:
