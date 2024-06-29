@@ -59,11 +59,15 @@ fn create_module(module: &str) -> Result<(), Error> {
     // Copy README and LICENSE files
     copy_readme_and_license(&new_module)?;
 
+    // Update README content
+    update_readme_content(&new_module)?;
+
     // Generate GitHub Actions workflow
     generate_github_actions_workflow(&new_module)?;
 
     println!("Module \"{}\" initialized successfully 🎉", new_module.name);
-    println!("Don't forget to add it to GitHub Actions when you are ready! 🚀");
+    println!("Don't forget to add it to GitHub Actions workflow 'release.yml' when your module is ready for release.");
+    println!("It's recommended to run just cilocal <newmodule> to test the module locally before releasing it.");
 
     Ok(())
 }
@@ -116,11 +120,7 @@ fn copy_and_replace_templates(template_dir: &str, destination_dir: &str, module_
             copy_and_replace_templates(&path.to_string_lossy(), &new_dir, module_name)?;
         } else {
             let content = fs::read_to_string(&path)?;
-            let new_content = if path.extension().map_or(false, |ext| ext == "go") {
-                replace_module_name(&content, &capitalize_module_name(module_name))
-            } else {
-                replace_module_name(&content, module_name)
-            };
+            let new_content = replace_module_name(&content, module_name);
 
             let dest_file_name = entry.file_name().to_string_lossy().replace(".tmpl", "");
             let dest_path = format!("{}/{}", destination_dir, dest_file_name);
@@ -184,7 +184,7 @@ fn generate_github_actions_workflow(module_cfg: &NewDaggerModule) -> Result<(), 
     let output_path = &module_cfg.github_actions_workflow;
 
     let template_content = fs::read_to_string(template_path)?;
-    let new_content = template_content.replace("{{ mod }}", &module_cfg.name);
+    let new_content = replace_module_name_lowercase(&template_content, &module_cfg.name);
     let mut output_file = File::create(output_path)?;
     output_file.write_all(new_content.as_bytes())?;
 
@@ -241,9 +241,11 @@ fn run_command_with_output(command: &str, target_dir: &str) -> Result<Output, Er
 
 fn replace_module_name(content: &str, module_name: &str) -> String {
     let capitalized_module_name = capitalize_module_name(module_name);
-    let re = Regex::new(r"\{\{\s*\.\s*module_name\s*\}\}").unwrap();
+    let re_capitalized = Regex::new(r"\{\{\s*\.\s*module_name\s*\}\}").unwrap();
+    let re_lowercase = Regex::new(r"\{\{\s*\.\s*module_name_lowercase\s*\}\}").unwrap();
 
-    re.replace_all(content, &capitalized_module_name as &str).to_string()
+    let content = re_capitalized.replace_all(content, &capitalized_module_name as &str);
+    re_lowercase.replace_all(&content, module_name).to_string()
 }
 
 fn capitalize_module_name(module_name: &str) -> String {
@@ -254,19 +256,6 @@ fn capitalize_module_name(module_name: &str) -> String {
     }
 }
 
-fn replace_readme_content(module_cfg: &NewDaggerModule) -> Result<(), Error> {
-    let readme_path = format!("{}/README.md", module_cfg.path);
-
-    // return an error if the README file does not exist
-    if !Path::new(&readme_path).exists() {
-        return Err(Error::new(ErrorKind::NotFound, format!("README.md file not found in {}", module_cfg.path)));
-    }
-
-    // search for the string {{ module_name }} in the README file
-    replace_content_in_file(&readme_path, &module_cfg.name)?;
-
-    Ok(())
-}
 
 fn replace_content_in_file(file_path: &str, content: &str) -> Result<(), Error> {
     let mut file = File::open(file_path)?;
@@ -280,4 +269,52 @@ fn replace_content_in_file(file_path: &str, content: &str) -> Result<(), Error> 
     fs::write(file_path, new_contents)?;
 
     Ok(())
+}
+
+fn lowercase_module_name(module_name: &str) -> String {
+    module_name.to_lowercase()
+}
+
+fn replace_module_name_lowercase(content: &str, module_name: &str) -> String {
+    let lowercase_module_name = module_name.to_lowercase();
+    let re = Regex::new(r"\{\{\s*\.\s*module_name\s*\}\}").unwrap();
+    re.replace_all(content, &lowercase_module_name as &str).to_string()
+}
+
+fn replace_module_name_capitalized(content: &str, module_name: &str) -> String {
+    let capitalized_module_name = capitalize_module_name(module_name);
+    let re = Regex::new(r"\{\{\s*\.\s*module_name\s*\}\}").unwrap();
+    re.replace_all(content, &capitalized_module_name as &str).to_string()
+}
+
+fn update_readme_content(module_cfg: &NewDaggerModule) -> Result<(), Error> {
+    let readme_path = format!("{}/README.md", module_cfg.path);
+
+    if !Path::new(&readme_path).exists() {
+        return Err(Error::new(ErrorKind::NotFound, format!("README.md file not found in {}", module_cfg.path)));
+    }
+
+    let readme_content = fs::read_to_string(&readme_path)?;
+    let new_content = replace_module_name_smart(&readme_content, &module_cfg.name);
+    fs::write(&readme_path, new_content)?;
+
+    Ok(())
+}
+
+fn replace_module_name_smart(content: &str, module_name: &str) -> String {
+    let capitalized_module_name = capitalize_module_name(module_name);
+    let lowercase_module_name = module_name.to_lowercase();
+
+    let re = Regex::new(r"```[\s\S]*?```|`[^`\n]+`|\{\{\s*\.\s*module_name\s*\}\}").unwrap();
+
+    re.replace_all(content, |caps: &regex::Captures| {
+        let matched = caps.get(0).unwrap().as_str();
+        if matched.starts_with("```") || matched.starts_with("`") {
+            // Inside code blocks, use lowercase
+            matched.replace("{{.module_name}}", &lowercase_module_name)
+        } else {
+            // Outside code blocks, use capitalized
+            matched.replace("{{.module_name}}", &capitalized_module_name)
+        }
+    }).to_string()
 }

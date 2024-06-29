@@ -33,7 +33,7 @@ List all the functions available in the module:
 
   ```bash
   # enter into the module's directory
-  cd <module-path>
+  cd {{.module_name}}
 
   # list all the functions available in the module
   dagger develop && dagger functions
@@ -55,7 +55,7 @@ This module includes a [testing](module/tests) module that aims to test the func
 
 ```bash
 ## Run the tests using the just command
-just test gotest
+just test {{.module_name}}
 ```
 
 ## Developer Experience 🛠️
@@ -65,11 +65,11 @@ If you'd like to contribute, mostly we use [Just](https://just.systems) to autom
 # initialize the pre-commit hooks
 just init
 # run CI or common things locally
-just golint <module-name>
+just golint {{.module_name}}
 # run the tests
-just test gotest
+just test {{.module_name}}
 # Run the entire CI tasks locally
-just cilocal <module-name>
+just cilocal {{.module_name}}
 ```
 
 >NOTE: The `just` command entails the use of the [**Justfile**](https://just.systems) for task automation.
