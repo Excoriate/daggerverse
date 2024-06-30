@@ -29,9 +29,10 @@ func (m *ModuleExample) WithEnvironmentVariable(
 	// +optional
 	expand bool,
 ) *ModuleExample {
-	m.Ctr = m.Ctr.WithEnvVariable(name, value, ContainerWithEnvVariableOpts{
-		Expand: expand,
-	})
+	m.Ctr = m.Ctr.
+		WithEnvVariable(name, value, ContainerWithEnvVariableOpts{
+			Expand: expand,
+		})
 
 	return m
 }
