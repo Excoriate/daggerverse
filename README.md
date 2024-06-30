@@ -18,14 +18,19 @@
 ---
 
 ## Contributions 🤝
+
 This is a mono-repo, and each module is a separate Go module. To contribute to a module, first of all read the [contribution guidelines](./CONTRIBUTING.md).
 
 ## Pre-requisites 📋
+
 - [Go](https://golang.org)
 - [Nix](https://nixos.org) (optional, mostly for maintainers)
 - [Just](https://github.com/casey/just) (optional, mostly for maintainers)
+
 ### What about new modules? 🤔
+
 New modules can be generated using **Daggy**, a [Rust](https://www.rust-lang.org) CLI tool that generates the boilerplate code for a new module. To use Daggy and create a new module, just execute:
+
 ```bash
 # It generates a new module with the name <module-name>
 just create <module-name>
@@ -33,4 +38,5 @@ just create <module-name>
 # Run the CI on the new module
 just cilocal <module-name>
 ```
+
 >**NOTE**: See the [Module Template](./module-template) for more information for the new module structure, and the boilerplate code that's generated.
