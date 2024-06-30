@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.17.0](https://github.com/Excoriate/daggerverse/compare/v1.16.0...v1.17.0) (2024-06-30)
+
+
+### Features
+
+* Add test data for users, products, orders, logs, and settings. Update README for test data. ([#93](https://github.com/Excoriate/daggerverse/issues/93)) ([716c62d](https://github.com/Excoriate/daggerverse/commit/716c62d1113322d16acbf0bc442a88f9f37b201b))
+* **tests:** add dagger test module, .gitignore, README and attributes ([#101](https://github.com/Excoriate/daggerverse/issues/101)) ([3c2dfde](https://github.com/Excoriate/daggerverse/commit/3c2dfdee03bad4c4b6861ef87966eee4065c0c87))
+* Update module name placeholder and dependency versions ([#95](https://github.com/Excoriate/daggerverse/issues/95)) ([6f3f313](https://github.com/Excoriate/daggerverse/commit/6f3f3138fb909ffecadf2974ee26366081e1e533))
+
 ## [1.16.0](https://github.com/Excoriate/daggerverse/compare/v1.15.4...v1.16.0) (2024-06-18)
 
 
