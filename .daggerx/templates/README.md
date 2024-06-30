@@ -59,6 +59,7 @@ just test {{.module_name}}
 ```
 
 ## Developer Experience 🛠️
+
 If you'd like to contribute, mostly we use [Just](https://just.systems) to automate tasks and [Nix](https://nixos.org) to manage the development environment. You can use the following commands to get started:
 
 ```bash
