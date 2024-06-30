@@ -246,9 +246,8 @@ fn capitalize_module_name(module_name: &str) -> String {
 }
 
 fn replace_module_name_lowercase(content: &str, module_name: &str) -> String {
-    let lowercase_module_name = module_name.to_lowercase();
     let re = Regex::new(r"\{\{\s*\.\s*module_name\s*\}\}").unwrap();
-    re.replace_all(content, &lowercase_module_name as &str).to_string()
+    re.replace_all(content, module_name).to_string()
 }
 
 fn update_readme_content(module_cfg: &NewDaggerModule) -> Result<(), Error> {
