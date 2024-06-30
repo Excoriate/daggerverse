@@ -12,9 +12,9 @@ const (
 	// defaultContainerVersion specifies the default version for the container.
 	defaultContainerVersion = "latest"
 	// defaultContainerImage specifies the default image for the container.
-	defaultContainerImage = "alpine"
+	defaultContainerImage   = "alpine"
 	// dockerVersionDefault specifies the default Docker version.
-	dockerVersionDefault = "24.0"
+	dockerVersionDefault    = "24.0"
 )
 
 // getDockerInDockerImage returns the Docker-in-Docker image with the given version.
