@@ -46,7 +46,8 @@ jobs:
             matrix:
                 module: [gotest]
         name: Publishing ${{ matrix.module }} in the Daggerverse 🚀
-        if: ${{ needs.release-please.outputs.releases_created }}
+        if: ${{ needs.release-please.outputs.releases_created }} && (contains(github.event.commits[*].modified, '*.go') || contains(github.event.commits[*].modified,
+            'README.md'))
         steps:
             - uses: actions/checkout@v4
               with:
