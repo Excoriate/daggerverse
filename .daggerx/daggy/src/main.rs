@@ -1,6 +1,6 @@
 use std::env;
 use std::fs::{self, File};
-use std::io::{Write, Error, ErrorKind, Read};
+use std::io::{Write, Error, ErrorKind};
 use std::path::Path;
 use std::process::{Command, Output, Stdio};
 use clap::Parser;
@@ -25,8 +25,6 @@ struct NewDaggerModule {
     name: String,
     github_actions_workflow_path: String,
     github_actions_workflow: String,
-    current_dir: String,
-    template_dir: String,
 }
 
 fn main() -> Result<(), Error> {
@@ -205,20 +203,11 @@ fn dagger_module_exists(module: &str) -> Result<NewDaggerModule, Error> {
     let current_root_dir = env::current_dir()?;
 
     // Get the current dir, if the env var CURRENT_DIR_OVERRIDE is set, use that instead
-    let current_dir_override = env::var("CURRENT_DIR_OVERRIDE").unwrap_or("".to_string());
-    let current_dir = if current_dir_override.is_empty() {
-        current_root_dir.to_string_lossy().to_string()
-    } else {
-        current_dir_override
-    };
-
     Ok(NewDaggerModule {
         path: module_path_full.to_string_lossy().to_string(),
         name: module.to_string(),
         github_actions_workflow_path: current_root_dir.join(".github/workflows").to_string_lossy().to_string(),
         github_actions_workflow: current_root_dir.join(".github/workflows").join(format!("mod-{}-ci.yaml", module)).to_string_lossy().to_string(),
-        current_dir,
-        template_dir: ".daggerx/templates/module".to_string(),
     })
 }
 
@@ -256,35 +245,10 @@ fn capitalize_module_name(module_name: &str) -> String {
     }
 }
 
-
-fn replace_content_in_file(file_path: &str, content: &str) -> Result<(), Error> {
-    let mut file = File::open(file_path)?;
-    let mut contents = String::new();
-    file.read_to_string(&mut contents)?;
-
-    let re = Regex::new(r"\{\{\s*\.\s*module_name\s*\}\}").unwrap();
-
-    let new_contents = re.replace_all(&contents, content).to_string();
-
-    fs::write(file_path, new_contents)?;
-
-    Ok(())
-}
-
-fn lowercase_module_name(module_name: &str) -> String {
-    module_name.to_lowercase()
-}
-
 fn replace_module_name_lowercase(content: &str, module_name: &str) -> String {
     let lowercase_module_name = module_name.to_lowercase();
     let re = Regex::new(r"\{\{\s*\.\s*module_name\s*\}\}").unwrap();
     re.replace_all(content, &lowercase_module_name as &str).to_string()
-}
-
-fn replace_module_name_capitalized(content: &str, module_name: &str) -> String {
-    let capitalized_module_name = capitalize_module_name(module_name);
-    let re = Regex::new(r"\{\{\s*\.\s*module_name\s*\}\}").unwrap();
-    re.replace_all(content, &capitalized_module_name as &str).to_string()
 }
 
 fn update_readme_content(module_cfg: &NewDaggerModule) -> Result<(), Error> {
