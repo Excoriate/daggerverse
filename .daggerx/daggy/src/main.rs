@@ -74,6 +74,10 @@ fn create_module(module: &str) -> Result<(), Error> {
         fs::remove_dir_all(&tests_path)?;
     }
 
+    // Run go fmt to format the code
+    run_go_fmt(&new_module.path)?;
+    run_go_fmt(&new_module.module_test_src_path)?;
+
     println!("Module \"{}\" initialized successfully 🎉", new_module.name);
     println!("Don't forget to add it to GitHub Actions workflow 'release.yml' when your module is ready for release.");
     println!("It's recommended to run just cilocal <newmodule> to test the module locally before releasing it.");
@@ -326,4 +330,9 @@ fn to_pascal_case(s: &str) -> String {
     s.split('-')
         .map(capitalize_module_name)
         .collect()
+}
+
+fn run_go_fmt(module_path: &str) -> Result<(), Error> {
+    run_command_with_output("go fmt ./...", module_path)?;
+    Ok(())
 }
