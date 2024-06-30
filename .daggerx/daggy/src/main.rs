@@ -23,6 +23,8 @@ struct Args {
 struct NewDaggerModule {
     path: String,
     name: String,
+    module_src_path: String,
+    module_test_src_path: String,
     github_actions_workflow_path: String,
     github_actions_workflow: String,
 }
@@ -46,7 +48,9 @@ fn main() -> Result<(), Error> {
 // Create a new module in the root of the current directory.
 fn create_module(module: &str) -> Result<(), Error> {
     println!("Creating module 🚀: {}", module);
-    let new_module = dagger_module_exists(module)?;
+    dagger_module_exists(module)?;
+
+    let new_module = get_module_configurations(module)?;
 
     // Initialize the new module
     initialize_module(&new_module)?;
@@ -62,6 +66,13 @@ fn create_module(module: &str) -> Result<(), Error> {
 
     // Generate GitHub Actions workflow
     generate_github_actions_workflow(&new_module)?;
+
+    // Add a cleanup function that checks whether in the module's source directory (module/dagger) there's a tests folder, if so, remove it.
+    // FIXME: Fix this ugly hack
+    let tests_path = format!("{}/dagger/tests", new_module.path);
+    if Path::new(&tests_path).exists() {
+        fs::remove_dir_all(&tests_path)?;
+    }
 
     println!("Module \"{}\" initialized successfully 🎉", new_module.name);
     println!("Don't forget to add it to GitHub Actions workflow 'release.yml' when your module is ready for release.");
@@ -97,12 +108,10 @@ fn initialize_module(module_cfg: &NewDaggerModule) -> Result<(), Error> {
     run_command_with_output(&format!("dagger develop -m {}", module_cfg.name), &module_cfg.path)?;
 
     let template_dir = ".daggerx/templates/module";
-    let destination_dir = format!("{}/dagger", module_cfg.path);
+    let destination_dir = &module_cfg.module_src_path;
 
     fs::create_dir_all(&destination_dir)?;
     copy_and_replace_templates(template_dir, &destination_dir, &module_cfg.name)?;
-
-    // replace_readme_content(module_cfg)?;
 
     Ok(())
 }
@@ -138,26 +147,28 @@ fn initialize_tests(module_cfg: &NewDaggerModule) -> Result<(), Error> {
     fs::create_dir_all(&tests_path)?;
     run_command_with_output("dagger init --sdk go --name tests", &tests_path)?;
 
-    // remove the main.go that's automatically generated if exists.
-    if Path::new(&format!("{}/main.go", tests_path)).exists() {
-        println!("Removing main.go from tests module");
-        fs::remove_file(format!("{}/main.go", tests_path))?;
-    }
-
     let tests_dagger_json_path = format!("{}/tests/dagger.json", module_cfg.path);
     let tests_dagger_json_content = fs::read_to_string(&tests_dagger_json_path)?;
     let new_tests_dagger_json_content = tests_dagger_json_content.replace(
         "}",
         r#",
-        "exclude": ["../../.direnv", "../../.devenv", "../../.go.work", "../../.go.work.sum"]
+        "exclude": ["../../.direnv", "../../.devenv", "../../go.work", "../../go.work.sum"]
     }"#,
     );
+
     fs::write(tests_dagger_json_path, new_tests_dagger_json_content)?;
 
     let test_template_dir = ".daggerx/templates/module/tests";
-    let test_destination_dir = format!("{}/tests/dagger", module_cfg.path);  // Corrected destination path
-
+    let test_destination_dir = &module_cfg.module_test_src_path;
     copy_and_replace_templates(&test_template_dir, &test_destination_dir, &module_cfg.name)?;
+
+    let testdata_template_dir = ".daggerx/templates/module/tests/testdata";
+    let testdata_destination_dir = format!("{}/testdata", module_cfg.module_test_src_path);
+
+    if Path::new(testdata_template_dir).exists() {
+        fs::create_dir_all(&testdata_destination_dir)?;
+        copy_and_replace_templates(testdata_template_dir, &testdata_destination_dir, &module_cfg.name)?;
+    }
 
     run_command_with_output("dagger install ../", &tests_path)?;
     run_command_with_output("dagger develop -m tests", &tests_path)?;
@@ -166,16 +177,20 @@ fn initialize_tests(module_cfg: &NewDaggerModule) -> Result<(), Error> {
 }
 
 fn copy_readme_and_license(module_cfg: &NewDaggerModule) -> Result<(), Error> {
-    fs::copy(".daggerx/templates/README.md", format!("{}/README.md", module_cfg.path))?;
-    fs::copy(".daggerx/templates/LICENSE", format!("{}/LICENSE", module_cfg.path))?;
+    let readme_dest_path = format!("{}/README.md", module_cfg.path);
+    let license_dest_path = format!("{}/LICENSE", module_cfg.path);
 
-    let readme_path = format!("{}/README.md", module_cfg.path);
-    let readme_content = fs::read_to_string(&readme_path)?;
+    // Ensure the destination directory exists
+    fs::create_dir_all(&module_cfg.path)?;
+
+    // Copy the README.md and LICENSE files from the template directory to the module path
+    fs::copy(".daggerx/templates/README.md", &readme_dest_path)?;
+    fs::copy(".daggerx/templates/LICENSE", &license_dest_path)?;
+
+    // Replace placeholders in README.md if any
+    let readme_content = fs::read_to_string(&readme_dest_path)?;
     let new_readme_content = readme_content.replace("[@MODULE_NAME]", &module_cfg.name);
-    fs::write(readme_path, new_readme_content)?;
-
-    let testdata_path = format!("{}/tests/testdata", module_cfg.path);
-    fs::create_dir_all(testdata_path)?;
+    fs::write(readme_dest_path, new_readme_content)?;
 
     Ok(())
 }
@@ -193,7 +208,21 @@ fn generate_github_actions_workflow(module_cfg: &NewDaggerModule) -> Result<(), 
     Ok(())
 }
 
-fn dagger_module_exists(module: &str) -> Result<NewDaggerModule, Error> {
+fn get_module_configurations(module: &str) -> Result<NewDaggerModule, Error> {
+    let module_path_full = env::current_dir()?.join(module);
+    let current_root_dir = env::current_dir()?;
+
+    Ok(NewDaggerModule {
+        path: module_path_full.to_string_lossy().to_string(),
+        module_src_path: module_path_full.join("dagger").to_string_lossy().to_string(),
+        module_test_src_path: module_path_full.join("tests").join("dagger").to_string_lossy().to_string(),
+        name: module.to_string(),
+        github_actions_workflow_path: current_root_dir.join(".github/workflows").to_string_lossy().to_string(),
+        github_actions_workflow: current_root_dir.join(".github/workflows").join(format!("mod-{}-ci.yaml", module)).to_string_lossy().to_string(),
+    })
+}
+
+fn dagger_module_exists(module: &str) -> Result<(), Error> {
     if module.is_empty() {
         return Err(Error::new(ErrorKind::InvalidInput, "Module name cannot be empty"));
     }
@@ -203,18 +232,8 @@ fn dagger_module_exists(module: &str) -> Result<NewDaggerModule, Error> {
         return Err(Error::new(ErrorKind::AlreadyExists, "Module already exists"));
     }
 
-    let module_path_full = env::current_dir()?.join(module);
-    let current_root_dir = env::current_dir()?;
-
-    // Get the current dir, if the env var CURRENT_DIR_OVERRIDE is set, use that instead
-    Ok(NewDaggerModule {
-        path: module_path_full.to_string_lossy().to_string(),
-        name: module.to_string(),
-        github_actions_workflow_path: current_root_dir.join(".github/workflows").to_string_lossy().to_string(),
-        github_actions_workflow: current_root_dir.join(".github/workflows").join(format!("mod-{}-ci.yaml", module)).to_string_lossy().to_string(),
-    })
+    Ok(())
 }
-
 fn run_command_with_output(command: &str, target_dir: &str) -> Result<Output, Error> {
     println!("Running command: {}", command);
     let output = Command::new("sh")
@@ -307,12 +326,4 @@ fn to_pascal_case(s: &str) -> String {
     s.split('-')
         .map(capitalize_module_name)
         .collect()
-}
-
-fn capitalize_first_letter(s: &str) -> String {
-    let mut c = s.chars();
-    match c.next() {
-        None => String::new(),
-        Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
-    }
 }
