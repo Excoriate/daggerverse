@@ -173,9 +173,11 @@ func (m *Tests) TestGoPrivate(ctx context.Context) error {
 
 // TestWithPlatformAPI tests if the platform is set correctly.
 func (m *Tests) TestWithPlatformAPI(ctx context.Context) error {
-	targetModule := dag.Gotest().WithPlatform("darwin/arm64/v7")
+	targetModule := dag.Gotest().
+		WithPlatform("darwin/arm64/v7")
 
-	out, err := targetModule.Ctr().WithExec([]string{"printenv"}).Stdout(ctx)
+	out, err := targetModule.Ctr().
+		WithExec([]string{"printenv"}).Stdout(ctx)
 
 	if err != nil {
 		return fmt.Errorf("%w, failed to get env vars: %w", errUnderlyingDagger, err)
