@@ -1,6 +1,6 @@
 use std::env;
 use std::fs::{self, File};
-use std::io::{Write, Error, ErrorKind, Read};
+use std::io::{Write, Error, ErrorKind};
 use std::path::Path;
 use std::process::{Command, Output, Stdio};
 use clap::Parser;
@@ -25,8 +25,6 @@ struct NewDaggerModule {
     name: String,
     github_actions_workflow_path: String,
     github_actions_workflow: String,
-    current_dir: String,
-    template_dir: String,
 }
 
 fn main() -> Result<(), Error> {
@@ -120,7 +118,11 @@ fn copy_and_replace_templates(template_dir: &str, destination_dir: &str, module_
             copy_and_replace_templates(&path.to_string_lossy(), &new_dir, module_name)?;
         } else {
             let content = fs::read_to_string(&path)?;
-            let new_content = replace_module_name(&content, module_name);
+            let new_content = if path.extension().map_or(false, |ext| ext == "go") {
+                replace_module_name(&content, &to_pascal_case(&module_name))
+            } else {
+                replace_module_name(&content, module_name)
+            };
 
             let dest_file_name = entry.file_name().to_string_lossy().replace(".tmpl", "");
             let dest_path = format!("{}/{}", destination_dir, dest_file_name);
@@ -205,20 +207,11 @@ fn dagger_module_exists(module: &str) -> Result<NewDaggerModule, Error> {
     let current_root_dir = env::current_dir()?;
 
     // Get the current dir, if the env var CURRENT_DIR_OVERRIDE is set, use that instead
-    let current_dir_override = env::var("CURRENT_DIR_OVERRIDE").unwrap_or("".to_string());
-    let current_dir = if current_dir_override.is_empty() {
-        current_root_dir.to_string_lossy().to_string()
-    } else {
-        current_dir_override
-    };
-
     Ok(NewDaggerModule {
         path: module_path_full.to_string_lossy().to_string(),
         name: module.to_string(),
         github_actions_workflow_path: current_root_dir.join(".github/workflows").to_string_lossy().to_string(),
         github_actions_workflow: current_root_dir.join(".github/workflows").join(format!("mod-{}-ci.yaml", module)).to_string_lossy().to_string(),
-        current_dir,
-        template_dir: ".daggerx/templates/module".to_string(),
     })
 }
 
@@ -240,11 +233,15 @@ fn run_command_with_output(command: &str, target_dir: &str) -> Result<Output, Er
 }
 
 fn replace_module_name(content: &str, module_name: &str) -> String {
-    let capitalized_module_name = capitalize_module_name(module_name);
-    let re_capitalized = Regex::new(r"\{\{\s*\.\s*module_name\s*\}\}").unwrap();
+    let pascal_case_name = to_pascal_case(module_name);
+    let camel_case_name = to_camel_case(module_name);
+
+    let re_pascal = Regex::new(r"\{\{\s*\.\s*module_name\s*\}\}").unwrap();
+    let re_camel = Regex::new(r"\{\{\s*\.\s*module_name_camel\s*\}\}").unwrap();
     let re_lowercase = Regex::new(r"\{\{\s*\.\s*module_name_lowercase\s*\}\}").unwrap();
 
-    let content = re_capitalized.replace_all(content, &capitalized_module_name as &str);
+    let content = re_pascal.replace_all(content, &pascal_case_name);
+    let content = re_camel.replace_all(&content, &camel_case_name);
     re_lowercase.replace_all(&content, module_name).to_string()
 }
 
@@ -256,35 +253,9 @@ fn capitalize_module_name(module_name: &str) -> String {
     }
 }
 
-
-fn replace_content_in_file(file_path: &str, content: &str) -> Result<(), Error> {
-    let mut file = File::open(file_path)?;
-    let mut contents = String::new();
-    file.read_to_string(&mut contents)?;
-
-    let re = Regex::new(r"\{\{\s*\.\s*module_name\s*\}\}").unwrap();
-
-    let new_contents = re.replace_all(&contents, content).to_string();
-
-    fs::write(file_path, new_contents)?;
-
-    Ok(())
-}
-
-fn lowercase_module_name(module_name: &str) -> String {
-    module_name.to_lowercase()
-}
-
 fn replace_module_name_lowercase(content: &str, module_name: &str) -> String {
-    let lowercase_module_name = module_name.to_lowercase();
     let re = Regex::new(r"\{\{\s*\.\s*module_name\s*\}\}").unwrap();
-    re.replace_all(content, &lowercase_module_name as &str).to_string()
-}
-
-fn replace_module_name_capitalized(content: &str, module_name: &str) -> String {
-    let capitalized_module_name = capitalize_module_name(module_name);
-    let re = Regex::new(r"\{\{\s*\.\s*module_name\s*\}\}").unwrap();
-    re.replace_all(content, &capitalized_module_name as &str).to_string()
+    re.replace_all(content, module_name).to_string()
 }
 
 fn update_readme_content(module_cfg: &NewDaggerModule) -> Result<(), Error> {
@@ -302,19 +273,46 @@ fn update_readme_content(module_cfg: &NewDaggerModule) -> Result<(), Error> {
 }
 
 fn replace_module_name_smart(content: &str, module_name: &str) -> String {
-    let capitalized_module_name = capitalize_module_name(module_name);
-    let lowercase_module_name = module_name.to_lowercase();
+    let pascal_case_name = to_pascal_case(module_name);
+    let lowercase_name = module_name.to_lowercase();
 
     let re = Regex::new(r"```[\s\S]*?```|`[^`\n]+`|\{\{\s*\.\s*module_name\s*\}\}").unwrap();
 
     re.replace_all(content, |caps: &regex::Captures| {
         let matched = caps.get(0).unwrap().as_str();
         if matched.starts_with("```") || matched.starts_with("`") {
-            // Inside code blocks, use lowercase
-            matched.replace("{{.module_name}}", &lowercase_module_name)
+            // Inside code blocks, use lowercase with hyphens
+            matched.replace("{{.module_name}}", &lowercase_name)
         } else {
-            // Outside code blocks, use capitalized
-            matched.replace("{{.module_name}}", &capitalized_module_name)
+            // Outside code blocks, use PascalCase without hyphens
+            matched.replace("{{.module_name}}", &pascal_case_name)
         }
     }).to_string()
+}
+
+fn to_camel_case(s: &str) -> String {
+    s.split('-')
+        .enumerate()
+        .map(|(i, part)| {
+            if i == 0 {
+                part.to_lowercase()
+            } else {
+                capitalize_module_name(part)
+            }
+        })
+        .collect()
+}
+
+fn to_pascal_case(s: &str) -> String {
+    s.split('-')
+        .map(capitalize_module_name)
+        .collect()
+}
+
+fn capitalize_first_letter(s: &str) -> String {
+    let mut c = s.chars();
+    match c.next() {
+        None => String::new(),
+        Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
+    }
 }
