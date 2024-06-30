@@ -12,7 +12,7 @@ import (
 // - None.
 // Returns:
 // - *Terminal: The terminal for the container.
-func (m *ModuleExample) Terminal() *Terminal {
+func (m *ModuleTemplate) Terminal() *Terminal {
 	return m.Ctr.Terminal()
 }
 
@@ -24,7 +24,7 @@ func (m *ModuleExample) Terminal() *Terminal {
 // Returns:
 // - string: The output of the command.
 // - error: An error if the command fails.
-func (m *ModuleExample) RunShell(cmd string) (string, error) {
+func (m *ModuleTemplate) RunShell(cmd string) (string, error) {
 	out, err := m.Ctr.WithoutEntrypoint().WithExec([]string{"sh", "-c", cmd}).Stdout(context.Background())
 	if err != nil {
 		return "", fmt.Errorf("failed to run shell command: %w", err)

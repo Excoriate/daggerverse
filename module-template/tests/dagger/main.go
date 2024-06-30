@@ -1,4 +1,4 @@
-// A generated module for test the ModuleExample functions
+// A generated module for test the ModuleTemplate functions
 //
 // This module has been generated via dagger init and serves as a reference to
 // basic module structure as you get started with Dagger.
@@ -96,7 +96,7 @@ func (m *Tests) TestAPIWithContainer(ctx context.Context) error {
 	newContainer = newContainer.
 		WithExec(installCmd)
 
-	targetModule := dag.ModuleExample()
+	targetModule := dag.ModuleTemplate()
 	targetModule = targetModule.
 		WithContainer(newContainer)
 
@@ -125,7 +125,7 @@ func (m *Tests) TestAPIWithContainer(ctx context.Context) error {
 //
 // This is a helper method for tests, in order to get a terminal for testing purposes.
 func (m *Tests) TestTerminal() *Terminal {
-	targetModule := dag.ModuleExample()
+	targetModule := dag.ModuleTemplate()
 
 	_, _ = targetModule.
 		Ctr().
@@ -141,7 +141,7 @@ func (m *Tests) TestTerminal() *Terminal {
 // This is a helper method for tests, in order to test if the env vars are passed correctly in the constructor.
 func (m *Tests) TestAPIPassingEnvVarsInConstructor(ctx context.Context) error {
 	targetModule := dag.
-		ModuleExample(ModuleExampleOpts{
+		ModuleTemplate(ModuleTemplateOpts{
 			EnvVarsFromHost: []string{"HOST=localhost", "PORT=8080", "USER=me", "PASS=1234"},
 		})
 
@@ -174,18 +174,18 @@ func (m *Tests) TestAPIPassingEnvVarsInConstructor(ctx context.Context) error {
 // This is a helper method for tests, in order to test if the env vars are passed correctly in the API.
 func (m *Tests) TestAPIPassingEnvVars(ctx context.Context) error {
 	targetModule := dag.
-		ModuleExample().
-		WithEnvironmentVariable("HOST", "localhost", ModuleExampleWithEnvironmentVariableOpts{
+		ModuleTemplate().
+		WithEnvironmentVariable("HOST", "localhost", ModuleTemplateWithEnvironmentVariableOpts{
 			Expand: false,
 		})
 
 	targetModule = targetModule.
-		WithEnvironmentVariable("PORT", "8080", ModuleExampleWithEnvironmentVariableOpts{
+		WithEnvironmentVariable("PORT", "8080", ModuleTemplateWithEnvironmentVariableOpts{
 			Expand: false,
 		})
 
 	targetModule = targetModule.
-		WithEnvironmentVariable("USER", "me", ModuleExampleWithEnvironmentVariableOpts{
+		WithEnvironmentVariable("USER", "me", ModuleTemplateWithEnvironmentVariableOpts{
 			Expand: false,
 		})
 
@@ -220,7 +220,7 @@ func (m *Tests) TestAPIPassingEnvVars(ctx context.Context) error {
 // TestAPIWithSource tests if the source directory is set correctly.
 func (m *Tests) TestAPIWithSource(ctx context.Context) error {
 	targetModule := dag.
-		ModuleExample()
+		ModuleTemplate()
 
 	targetModule.
 		WithSource(m.TestDir)
@@ -250,7 +250,7 @@ func (m *Tests) TestAPIWithSource(ctx context.Context) error {
 // Tests if the shell command is executed correctly in the container.
 func (m *Tests) TestRunShellCMD(ctx context.Context) error {
 	targetModule := dag.
-		ModuleExample()
+		ModuleTemplate()
 
 	out, err := targetModule.
 		RunShell(ctx, "ls -l")

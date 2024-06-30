@@ -20,7 +20,7 @@ import (
 //   - expand: Whether to replace `${VAR}` or $VAR in the value according to the current
 //     environment variables defined in the container (e.g., "/opt/bin:$PATH").
 //     Optional parameter.
-func (m *ModuleExample) WithEnvironmentVariable(
+func (m *ModuleTemplate) WithEnvironmentVariable(
 	// name is the name of the environment variable.
 	name string,
 	// value is the value of the environment variable.
@@ -28,11 +28,10 @@ func (m *ModuleExample) WithEnvironmentVariable(
 	// expand is whether to replace `${VAR}` or $VAR in the value according to the current
 	// +optional
 	expand bool,
-) *ModuleExample {
-	m.Ctr = m.Ctr.
-		WithEnvVariable(name, value, ContainerWithEnvVariableOpts{
-			Expand: expand,
-		})
+) *ModuleTemplate {
+	m.Ctr = m.Ctr.WithEnvVariable(name, value, ContainerWithEnvVariableOpts{
+		Expand: expand,
+	})
 
 	return m
 }
@@ -42,13 +41,13 @@ func (m *ModuleExample) WithEnvironmentVariable(
 // Parameters:
 // - src: The directory that contains all the source code, including the module directory.
 // - workdir: The working directory within the container. Optional parameter.
-func (m *ModuleExample) WithSource(
+func (m *ModuleTemplate) WithSource(
 	// src is the directory that contains all the source code, including the module directory.
 	src *Directory,
 	// workdir is the working directory within the container. If not set it'll default to /mnt
 	// +optional
 	workdir string,
-) *ModuleExample {
+) *ModuleTemplate {
 	ctr := m.Ctr.WithMountedDirectory(fixtures.MntPrefix, src)
 
 	if workdir != "" {
@@ -66,9 +65,9 @@ func (m *ModuleExample) WithSource(
 //
 // Parameters:
 // - ctr: The container to run the command in. If passed, it will override the container set in the Dagger instance.
-func (m *ModuleExample) WithContainer(
+func (m *ModuleTemplate) WithContainer(
 	ctr *Container,
-) *ModuleExample {
+) *ModuleTemplate {
 	m.Ctr = ctr
 
 	return m
@@ -80,7 +79,7 @@ func (m *ModuleExample) WithContainer(
 // Parameters:
 //   - dockerVersion: The version of the Docker engine to use, e.g., "v20.10.17".
 //     Optional parameter. If not provided, a default version is used.
-func (m *ModuleExample) WithDockerService(
+func (m *ModuleTemplate) WithDockerService(
 	dockerVersion string,
 ) *Service {
 	if dockerVersion == "" {
@@ -116,11 +115,11 @@ func (m *ModuleExample) WithDockerService(
 // - file: The file to add to the container.
 // - dest: The destination path in the container. Optional parameter.
 // - owner: The owner of the file. Optional parameter.
-func (m *ModuleExample) WithFileMountedInContainer(
+func (m *ModuleTemplate) WithFileMountedInContainer(
 	file *File,
 	dest string,
 	owner string,
-) *ModuleExample {
+) *ModuleTemplate {
 	path := filepath.Join(fixtures.MntPrefix, dest)
 	if owner != "" {
 		m.Ctr = m.Ctr.WithMountedFile(path, file, ContainerWithMountedFileOpts{

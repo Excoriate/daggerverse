@@ -7,49 +7,30 @@
 
 | Module                                         | Status | What it does?                                                                |
 |------------------------------------------------|--------|------------------------------------------------------------------------------|
-| [IAC Terragrunt](iac-terragrunt/README.md)     | ✅      | Run [Terragrunt](https://terragrunt.gruntwork.io) commands.                  |
 | [Terraform](terraform/README.md)               | ✅      | Run [Terraform](https://www.terraform.io) commands.                          |
 | [Terratest](terratest/README.md)               | ✅      | Run [Terratest](https://terratest.gruntwork.io) commands.                    |
 | [GitLab CICD Vars](gitlab-cicd-vars/README.md) | ✅      | Manage GitLab CI/CD variables.                                               |
 | [GoReleaser](goreleaser/README.md)             | ✅      | Wraps [GoReleaser](https://goreleaser.com) functionality as a dagger module. |
 | [TFLint](tflint/README.md)                     | ✅      | Run [TFLint](https://github.com/terraform-linters/tflint) commands.          |
 | [GoTest](gotest/README.md)                     | ✅      | A simplify way to run Go Tests (using Go Test, and/or GoTestsum).            |
+| [Terragrunt](terragrunt/README.md)             | ✅      | A simple [Terragrunt](https://terragrunt.gruntwork.io) module.               |
 
 ---
 
-## How to contribute 🤔 ?
+## Contributions 🤝
+This is a mono-repo, and each module is a separate Go module. To contribute to a module, first of all read the [contribution guidelines](./CONTRIBUTING.md).
 
-First,
-read
-the [contribution guidelines](./CONTRIBUTING.md).
-Then,
-if
-you're
-already
-a
-ninja,
-it
-means
-you
-enjoy
-using [Taskfile](https://taskfile.dev)
-so
-just
-run:
+## Pre-requisites 📋
+- [Go](https://golang.org)
+- [Nix](https://nixos.org) (optional, mostly for maintainers)
+- [Just](https://github.com/casey/just) (optional, mostly for maintainers)
+### What about new modules? 🤔
+New modules can be generated using **Daggy**, a [Rust](https://www.rust-lang.org) CLI tool that generates the boilerplate code for a new module. To use Daggy and create a new module, just execute:
+```bash
+# It generates a new module with the name <module-name>
+just create <module-name>
 
-```sh
-# This initialises the hooks, and ensure you're always using their latest version.
-task pc-init
-
-# This is just a check. It will run all the checks on the codebase.
-task pc-run
+# Run the CI on the new module
+just cilocal <module-name>
 ```
-
-The
-current
-workflows
-in [GitHub Actions](./.github/workflows)
-will
-do
-the
-rest ;).
+>**NOTE**: See the [Module Template](./module-template) for more information for the new module structure, and the boilerplate code that's generated.

@@ -1,4 +1,4 @@
-# Module ModuleExample for Dagger
+# Module ModuleTemplate for Dagger
 
 ![Dagger Version](https://img.shields.io/badge/dagger%20version-%3E=0.10.0-0f0f19.svg?style=flat-square)
 
@@ -21,7 +21,7 @@ Through the [Dagger CLI](https://docs.dagger.io/cli/465058/install), or by using
 | Run Go Tests             | **run** | `dagger call ` | ✅      |
 
 
-## Using the ModuleExample Module 🚀
+## Using the ModuleTemplate Module 🚀
 
 _Place the description of the module here_
 
@@ -33,7 +33,7 @@ List all the functions available in the module:
 
   ```bash
   # enter into the module's directory
-  cd module-example
+  cd module-template
 
   # list all the functions available in the module
   dagger develop && dagger functions
@@ -44,18 +44,18 @@ Call a function:
   ```bash
   # call a function
   # dagger call <function-name> [arguments]
-  dagger call github.com/excoriate/daggerverse/module-example@version <function-name> [arguments]
+  dagger call github.com/excoriate/daggerverse/module-template@version <function-name> [arguments]
 ```
 
 ---
 
 ## Testing 🧪
 
-This module includes a [testing](module/tests) module that aims to test the functionality of the ModuleExample module. The tests are written in Go and can be run using the following command:
+This module includes a [testing](module/tests) module that aims to test the functionality of the ModuleTemplate module. The tests are written in Go and can be run using the following command:
 
 ```bash
 ## Run the tests using the just command
-just test module-example
+just test module-template
 ```
 
 ## Developer Experience 🛠️
@@ -66,11 +66,11 @@ If you'd like to contribute, mostly we use [Just](https://just.systems) to autom
 # initialize the pre-commit hooks
 just init
 # run CI or common things locally
-just golint module-example
+just golint module-template
 # run the tests
-just test module-example
+just test module-template
 # Run the entire CI tasks locally
-just cilocal module-example
+just cilocal module-template
 ```
 
 >NOTE: The `just` command entails the use of the [**Justfile**](https://just.systems) for task automation.

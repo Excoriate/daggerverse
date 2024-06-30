@@ -1,4 +1,4 @@
-// Package main provides the ModuleExample Dagger module and related functions.
+// Package main provides the ModuleTemplate Dagger module and related functions.
 //
 // This module has been generated via dagger init and serves as a reference to
 // basic module structure as you get started with Dagger. The module demonstrates
@@ -17,15 +17,15 @@ import (
 	"github.com/Excoriate/daggerx/pkg/envvars"
 )
 
-// ModuleExample is a Dagger module.
+// ModuleTemplate is a Dagger module.
 //
 // This module is used to create and manage containers.
-type ModuleExample struct {
+type ModuleTemplate struct {
 	// Ctr is the container to use as a base container.
 	Ctr *Container
 }
 
-// New creates a new ModuleExample module.
+// New creates a new ModuleTemplate module.
 //
 // Parameters:
 // - version: The version of the GoReleaser to use, e.g., "v1.22.0". Optional parameter.
@@ -34,7 +34,7 @@ type ModuleExample struct {
 // - envVarsFromHost: A list of environment variables to pass from the host to the container in a
 // slice of strings. Optional parameter.
 //
-// Returns a pointer to a ModuleExample instance and an error, if any.
+// Returns a pointer to a ModuleTemplate instance and an error, if any.
 func New(
 	// version is the version of the container image to use.
 	// +optional
@@ -48,9 +48,9 @@ func New(
 	// envVarsFromHost is a list of environment variables to pass from the host to the container in a slice of strings.
 	// +optional
 	envVarsFromHost []string,
-) (*ModuleExample, error) {
+) (*ModuleTemplate, error) {
 	//nolint:exhaustruct // It's 'okaysh' for now, I'll decide later what's going to be the pattern here.
-	dagModule := &ModuleExample{}
+	dagModule := &ModuleTemplate{}
 
 	if ctr != nil {
 		dagModule.Ctr = ctr
@@ -91,7 +91,7 @@ func New(
 // The default image is "alpine/latest" and the default version is "latest".
 //
 //nolint:nolintlint,revive // This is a method that is used to set the base image and version.
-func (m *ModuleExample) Base(imageURL string) *ModuleExample {
+func (m *ModuleTemplate) Base(imageURL string) *ModuleTemplate {
 	c := dag.Container().From(imageURL)
 	m.Ctr = c
 
