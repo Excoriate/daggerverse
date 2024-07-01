@@ -1,5 +1,5 @@
 {
-  "name": "golinter",
+  "name": "brew",
   "sdk": "go",
   "exclude": [
     "../.direnv",

@@ -1,4 +1,4 @@
-// Package main provides the Golinter Dagger module and related functions.
+// Package main provides the Ctrutils Dagger module and related functions.
 //
 // This module has been generated via dagger init and serves as a reference to
 // basic module structure as you get started with Dagger. The module demonstrates
@@ -17,15 +17,15 @@ import (
 	"github.com/Excoriate/daggerx/pkg/envvars"
 )
 
-// Golinter is a Dagger module.
+// Ctrutils is a Dagger module.
 //
 // This module is used to create and manage containers.
-type Golinter struct {
+type Ctrutils struct {
 	// Ctr is the container to use as a base container.
 	Ctr *Container
 }
 
-// New creates a new Golinter module.
+// New creates a new Ctrutils module.
 //
 // Parameters:
 // - version: The version of the GoReleaser to use, e.g., "v1.22.0". Optional parameter.
@@ -34,7 +34,7 @@ type Golinter struct {
 // - envVarsFromHost: A list of environment variables to pass from the host to the container in a
 // slice of strings. Optional parameter.
 //
-// Returns a pointer to a Golinter instance and an error, if any.
+// Returns a pointer to a Ctrutils instance and an error, if any.
 func New(
 	// version is the version of the container image to use.
 	// +optional
@@ -48,9 +48,9 @@ func New(
 	// envVarsFromHost is a list of environment variables to pass from the host to the container in a slice of strings.
 	// +optional
 	envVarsFromHost []string,
-) (*Golinter, error) {
+) (*Ctrutils, error) {
 	//nolint:exhaustruct // It's 'okaysh' for now, I'll decide later what's going to be the pattern here.
-	dagModule := &Golinter{}
+	dagModule := &Ctrutils{}
 
 	if ctr != nil {
 		dagModule.Ctr = ctr
@@ -91,7 +91,7 @@ func New(
 // The default image is "alpine/latest" and the default version is "latest".
 //
 //nolint:nolintlint,revive // This is a method that is used to set the base image and version.
-func (m *Golinter) Base(imageURL string) *Golinter {
+func (m *Ctrutils) Base(imageURL string) *Ctrutils {
 	c := dag.Container().From(imageURL)
 	m.Ctr = c
 

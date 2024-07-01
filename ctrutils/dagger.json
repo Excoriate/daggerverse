@@ -1,5 +1,5 @@
 {
-  "name": "golinter",
+  "name": "ctrutils",
   "sdk": "go",
   "exclude": [
     "../.direnv",
