@@ -1,6 +1,6 @@
 {
   "packages": {
-    "gotest": {
+    ".": {
       "changelog-path": "CHANGELOG.md",
       "release-type": "go",
       "prerelease": false,

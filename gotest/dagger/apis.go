@@ -60,8 +60,11 @@ func (m *Gotest) WithPlatform(
 
 // WithCgoEnabled Set CGO_ENABLED environment variable to 1.
 func (m *Gotest) WithCgoEnabled() *Gotest {
-	gox := golangx.WithGoCgoEnabled()
-	m.Ctr = m.Ctr.WithEnvVariable(gox.Name, gox.Value)
+	gox := golangx.
+		WithGoCgoEnabled()
+
+	m.Ctr = m.Ctr.
+		WithEnvVariable(gox.Name, gox.Value)
 
 	return m
 }
