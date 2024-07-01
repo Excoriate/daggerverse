@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.19.0](https://github.com/Excoriate/daggerverse/compare/v1.18.0...v1.19.0) (2024-07-01)
+
+
+### Features
+
+* add extra api for git installatin on go test ([53b1958](https://github.com/Excoriate/daggerverse/commit/53b1958717469329a92df55931df19b12115e4d6))
+
 ## [1.18.0](https://github.com/Excoriate/daggerverse/compare/v1.17.0...v1.18.0) (2024-07-01)
 
 
