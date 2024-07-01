@@ -1,12 +1,13 @@
 {
   "packages": {
-    ".": {
+    "gotest": {
       "changelog-path": "CHANGELOG.md",
       "release-type": "go",
       "prerelease": false,
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": true,
       "draft": false,
+      "include-component-in-tag": true,
       "extra-files": [
         "README.md"
       ],
