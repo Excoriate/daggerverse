@@ -182,3 +182,22 @@ func (m *Gotest) WithGoTestSum() *Gotest {
 
 	return m
 }
+
+// WithGitInstalled installs the Git version control system in the target container.
+//
+// This method is equivalent to running `apk add --no-cache git` on an Alpine-based container.
+// It modifies the container instance by adding Git, thus making
+// Git available for any subsequent operations within the container.
+//
+// Usage example:
+//
+//	gotestInstance := &Gotest{}
+//	gotestInstance = gotestInstance.WithGitInstalled()
+//
+// Returns the modified `Gotest` instance.
+func (m *Gotest) WithGitInstalled() *Gotest {
+	m.Ctr = m.Ctr.
+		WithExec([]string{"apk", "add", "--no-cache", "git"})
+
+	return m
+}
