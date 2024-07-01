@@ -1,137 +1,71 @@
 {
-  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
   "packages": {
-    "module-example": {
+    ".": {
+      "changelog-path": "CHANGELOG.md",
+      "release-type": "go",
+      "prerelease": false,
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": true,
-      "changelog-path": "module-example/CHANGELOG.md",
-      "changelog-sections": [
-        {
-          "section": "Features",
-          "type": "feat"
-        },
-        {
-          "section": "Bug Fixes",
-          "type": "fix"
-        },
-        {
-          "section": "Other",
-          "type": "chore"
-        },
-        {
-          "section": "Docs",
-          "type": "docs"
-        },
-        {
-          "section": "Performance",
-          "type": "perf"
-        },
-        {
-          "hidden": true,
-          "section": "Build",
-          "type": "build"
-        },
-        {
-          "section": "Dependency Updates",
-          "type": "deps"
-        },
-        {
-          "hidden": true,
-          "section": "CI",
-          "type": "ci"
-        },
-        {
-          "section": "Refactoring",
-          "type": "refactor"
-        },
-        {
-          "hidden": true,
-          "section": "Reverts",
-          "type": "revert"
-        },
-        {
-          "hidden": true,
-          "section": "Styling",
-          "type": "style"
-        },
-        {
-          "hidden": true,
-          "section": "Tests",
-          "type": "test"
-        }
-      ],
       "draft": false,
       "extra-files": [
-        "module-example/README.md"
+        "README.md",
       ],
-      "prerelease": false,
-      "release-type": "go"
-    },
-    "gotest": {
-      "bump-minor-pre-major": true,
-      "bump-patch-for-minor-pre-major": true,
-      "changelog-path": "gotest/CHANGELOG.md",
       "changelog-sections": [
         {
-          "section": "Features",
-          "type": "feat"
+          "type": "feat",
+          "section": "Features"
         },
         {
-          "section": "Bug Fixes",
-          "type": "fix"
+          "type": "fix",
+          "section": "Bug Fixes"
         },
         {
-          "section": "Other",
-          "type": "chore"
+          "type": "chore",
+          "section": "Other"
         },
         {
-          "section": "Docs",
-          "type": "docs"
+          "type": "docs",
+          "section": "Docs"
         },
         {
-          "section": "Performance",
-          "type": "perf"
+          "type": "perf",
+          "section": "Performance"
         },
         {
+          "type": "build",
           "hidden": true,
-          "section": "Build",
-          "type": "build"
+          "section": "Build"
         },
         {
-          "section": "Dependency Updates",
-          "type": "deps"
+          "type": "deps",
+          "section": "Dependency Updates"
         },
         {
+          "type": "ci",
           "hidden": true,
-          "section": "CI",
-          "type": "ci"
+          "section": "CI"
         },
         {
-          "section": "Refactoring",
-          "type": "refactor"
+          "type": "refactor",
+          "section": "Refactoring"
         },
         {
+          "type": "revert",
           "hidden": true,
-          "section": "Reverts",
-          "type": "revert"
+          "section": "Reverts"
         },
         {
+          "type": "style",
           "hidden": true,
-          "section": "Styling",
-          "type": "style"
+          "section": "Styling"
         },
         {
+          "type": "test",
           "hidden": true,
-          "section": "Tests",
-          "type": "test"
+          "section": "Tests"
         }
-      ],
-      "draft": false,
-      "extra-files": [
-        "gotest/README.md"
-      ],
-      "prerelease": false,
-      "release-type": "go"
+      ]
     }
-  }
+  },
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json"
 }
