@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.18.0](https://github.com/Excoriate/daggerverse/compare/v1.17.0...v1.18.0) (2024-07-01)
+
+
+### Features
+
+* add initial version of release-drafter ([#106](https://github.com/Excoriate/daggerverse/issues/106)) ([9299b8d](https://github.com/Excoriate/daggerverse/commit/9299b8d7f16a1187a9ef48e2e3eda6806a7cd8f8))
+
 ## [1.17.0](https://github.com/Excoriate/daggerverse/compare/v1.16.0...v1.17.0) (2024-06-30)
 
 
