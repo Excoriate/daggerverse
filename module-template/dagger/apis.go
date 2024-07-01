@@ -133,3 +133,45 @@ func (m *ModuleTemplate) WithFileMountedInContainer(
 
 	return m
 }
+
+// WithGitInAlpineContainer installs Git in the golang/alpine container.
+//
+// It installs Git in the golang/alpine container.
+func (m *ModuleTemplate) WithGitInAlpineContainer() *ModuleTemplate {
+	m.Ctr = m.Ctr.
+		WithExec([]string{"apk", "add", "git"})
+
+	return m
+}
+
+// WithNewNetrcFileGitHub creates a new .netrc file with the GitHub credentials.
+//
+// The .netrc file is created in the root directory of the container.
+func (m *ModuleTemplate) WithNewNetrcFileGitHub(
+	username string,
+	password string,
+) *ModuleTemplate {
+	machineCMD := "machine github.com\nlogin " + username + "\npassword " + password + "\n"
+
+	m.Ctr = m.Ctr.WithNewFile("/root/.netrc", ContainerWithNewFileOpts{
+		Contents: machineCMD,
+	})
+
+	return m
+}
+
+// WithNewNetrcFileGitLab creates a new .netrc file with the GitLab credentials.
+//
+// The .netrc file is created in the root directory of the container.
+func (m *ModuleTemplate) WithNewNetrcFileGitLab(
+	username string,
+	password string,
+) *ModuleTemplate {
+	machineCMD := "machine gitlab.com\nlogin " + username + "\npassword " + password + "\n"
+
+	m.Ctr = m.Ctr.WithNewFile("/root/.netrc", ContainerWithNewFileOpts{
+		Contents: machineCMD,
+	})
+
+	return m
+}
