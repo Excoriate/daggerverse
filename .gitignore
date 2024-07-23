@@ -54,3 +54,4 @@ go.work
 /target/
 Cargo.lock
 /.daggerx/daggy/target/
+.aider*

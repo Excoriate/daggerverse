@@ -105,3 +105,15 @@ calltests mod *args:
   @echo "Currently in {{mod}} module 🧪, path=`pwd`"
   @test -d {{mod}}/tests/dagger || (echo "Module not found" && exit 1)
   @cd {{mod}}/tests/dagger && dagger call {{args}}
+
+# Recipe to run dagger develop in all modules
+develop-all:
+  @echo "Running dagger develop in all modules..."
+  @for dir in */dagger; do \
+    if [ -d "$dir" ]; then \
+      module=$$(dirname $$dir); \
+      echo "Developing module: $$module"; \
+      (cd $$dir && dagger develop); \
+    fi \
+  done
+  @echo "Dagger develop completed for all modules ✅"
