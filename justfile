@@ -108,12 +108,6 @@ calltests mod *args:
 
 # Recipe to run dagger develop in all modules
 develop-all:
-  @echo "Running dagger develop in all modules..."
-  @for dir in */dagger; do \
-    if [ -d "$dir" ]; then \
-      module=$$(dirname $$dir); \
-      echo "Developing module: $$module"; \
-      (cd $$dir && dagger develop); \
-    fi \
-  done
-  @echo "Dagger develop completed for all modules ✅"
+  @echo "Developing all Dagger modules..."
+  @cd .daggerx/daggy && cargo build --release
+  @.daggerx/daggy/target/release/daggy --task=develop

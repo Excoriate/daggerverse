@@ -33,7 +33,7 @@
             };
 
             packages = with pkgs; [
-              dagger
+#              dagger
               golangci-lint
               just
               pre-commit

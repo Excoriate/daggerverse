@@ -1,8 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# Strict mode
 set -euo pipefail
-IFS=$'\n\t'
 
 # Function to log messages
 log() {
@@ -10,40 +8,53 @@ log() {
   printf "[%s] %s\n" "$type" "$*"
 }
 
-# Function to process directories containing dagger.json
-process_dagger_modules() {
-  local dir=$1
-  log "INFO" "Processing module in ${dir}..."
-  if dagger mod sync -m "${dir}"; then
-    log "SUCCESS" "Module sync successful in ${dir}"
-  else
-    log "ERROR" "Module sync failed in ${dir}"
-  fi
+# Find all directories containing a 'dagger' subdirectory
+modules=$(find . -type d -name 'dagger' -print)
+
+if [ -z "$modules" ]; then
+  log "WARNING" "No Dagger modules found."
+  exit 1
+fi
+
+# Initialize counters
+total_modules=0
+successful_modules=0
+
+# Count total modules
+for dir in $modules; do
+  ((total_modules++))
+done
+
+# Function to update progress bar
+update_progress() {
+  local progress=$((successful_modules * 100 / total_modules))
+  printf "\rProgress: [%-50s] %d%%" $(printf "#%.0s" $(seq 1 $((progress / 2)))) $progress
 }
 
-# Main function
-main() {
-  log "INFO" "Scanning for Dagger modules..."
-  local modules_found=0
+log "INFO" "Syncing Dagger modules..."
+echo
 
-  # Search one level below the root directory
-  local search_path='*/dagger.json'
-
-  # Find directories containing dagger.json and process them
-  for dir in ${search_path}; do
-    if [ -f "${dir}" ]; then
-      process_dagger_modules "$(dirname "${dir}")"
-      ((modules_found++))
-      log "INFO" "Module found: $(dirname "${dir}")"
-    fi
-  done
-
-  if ((modules_found == 0)); then
-    log "WARNING" "No Dagger modules found."
+for dir in $modules; do
+  module=$(dirname "$dir")
+  echo -n "Syncing module: $module... "
+  
+  if (cd "$dir" && dagger mod sync) > /dev/null 2>&1; then
+    echo "✅"
+    ((successful_modules++))
   else
-    log "INFO" "Processed ${modules_found} Dagger modules."
+    echo "❌"
+    log "ERROR" "Failed to sync module: $module"
   fi
-}
+  
+  update_progress
+done
 
-# Run the main function
-main "$@"
+echo
+echo
+
+if [ $successful_modules -eq $total_modules ]; then
+  log "SUCCESS" "Dagger sync completed for all modules successfully! 🎉"
+else
+  log "WARNING" "Dagger sync completed with some failures. Please check the output above."
+  exit 1
+fi

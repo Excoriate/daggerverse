@@ -16,7 +16,7 @@ struct Args {
 
     /// Module is the name of the dagger module to generate.
     #[arg(short = 'm', long = "module")]
-    module: String,
+    module: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -28,13 +28,20 @@ struct NewDaggerModule {
     github_actions_workflow_path: String,
     github_actions_workflow: String,
 }
-
 fn main() -> Result<(), Error> {
     let args: Args = Args::parse();
 
     match args.task.as_str() {
         "create" => {
-            create_module(&args.module)?;
+            if let Some(module) = args.module {
+                create_module(&module)?;
+            } else {
+                eprintln!("Module name is required for 'create' task");
+                std::process::exit(1);
+            }
+        },
+        "develop" => {
+            develop_modules()?;
         },
         _ => {
             eprintln!("Unknown task: {}", args.task);
@@ -81,6 +88,69 @@ fn create_module(module: &str) -> Result<(), Error> {
     println!("Module \"{}\" initialized successfully 🎉", new_module.name);
     println!("Don't forget to add it to GitHub Actions workflow 'release.yml' when your module is ready for release.");
     println!("It's recommended to run just cilocal <newmodule> to test the module locally before releasing it.");
+
+    Ok(())
+}
+
+fn develop_modules() -> Result<(), Error> {
+    // Ensure we're in a Git repository
+    if !Path::new(".git").exists() {
+        return Err(Error::new(ErrorKind::NotFound, "Error: This script must be run from the root of a Git repository."));
+    }
+
+    println!("Git repository detected. Proceeding...");
+
+    // Find all directories containing a 'dagger.json' file
+    let modules = find_dagger_modules()?;
+
+    if modules.is_empty() {
+        println!("No modules found.");
+        return Ok(());
+    }
+
+    // Initialize counters
+    let total_modules = modules.len();
+    let mut successful_modules = 0;
+    let mut failed_modules = 0;
+
+    println!("Identifying modules with dagger.json files...");
+    for dir in &modules {
+        println!("Module identified: {}", dir);
+    }
+
+    println!("\nRunning dagger develop in identified modules...\n");
+
+    for dir in &modules {
+        print!("Developing module: {}... ", dir);
+
+        if Path::new(&format!("{}/dagger.json", dir)).exists() {
+            println!("Entering directory: {}", dir);
+            match run_dagger_develop(dir) {
+                Ok(_) => {
+                    println!("✅ Successfully developed module: {}", dir);
+                    successful_modules += 1;
+                }
+                Err(e) => {
+                    println!("❌ Failed to develop module: {}", dir);
+                    eprintln!("Error: {}", e);
+                    failed_modules += 1;
+                }
+            }
+        } else {
+            println!("Skipped 🚫 No dagger.json found in: {}", dir);
+        }
+    }
+
+    println!("\n");
+
+    if successful_modules == total_modules {
+        println!("Dagger develop completed for all {} modules successfully! 🎉", total_modules);
+    } else if failed_modules > 0 {
+        println!("Dagger develop completed with {} successes ✅ and {} failures ❌.", successful_modules, failed_modules);
+        return Err(Error::new(ErrorKind::Other, "Some modules failed to develop"));
+    } else {
+        println!("Dagger develop completed with {} successes ✅. Please check the output above.", successful_modules);
+    }
 
     Ok(())
 }
@@ -334,5 +404,37 @@ fn to_pascal_case(s: &str) -> String {
 
 fn run_go_fmt(module_path: &str) -> Result<(), Error> {
     run_command_with_output("go fmt ./...", module_path)?;
+    Ok(())
+}
+
+fn find_dagger_modules() -> Result<Vec<String>, Error> {
+    let output = Command::new("find")
+        .args(&[".", "-type", "f", "-name", "dagger.json"])
+        .output()?;
+
+    if !output.status.success() {
+        return Err(Error::new(ErrorKind::Other, "Failed to execute find command"));
+    }
+
+    let modules = String::from_utf8_lossy(&output.stdout)
+        .lines()
+        .map(|line| Path::new(line).parent().unwrap().to_string_lossy().into_owned())
+        .collect::<Vec<String>>();
+
+    Ok(modules)
+}
+
+fn run_dagger_develop(dir: &str) -> Result<(), Error> {
+    let output = Command::new("dagger")
+        .arg("develop")
+        .current_dir(dir)
+        .stdout(Stdio::inherit())
+        .stderr(Stdio::inherit())
+        .output()?;
+
+    if !output.status.success() {
+        return Err(Error::new(ErrorKind::Other, format!("dagger develop failed in directory: {}", dir)));
+    }
+
     Ok(())
 }
