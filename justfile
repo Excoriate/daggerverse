@@ -132,3 +132,10 @@ develop-all:
   @echo "Developing all Dagger modules..."
   @cd .daggerx/daggy && cargo build --release
   @.daggerx/daggy/target/release/daggy --task=develop
+
+# Recipe that wraps the dagger CLI in a certain module
+dag mod *args:
+  @echo "Running Dagger CLI in a certain module..."
+  @echo "Currently in {{mod}} module 📦, path=`pwd`"
+  @test -d {{mod}} || (echo "Module not found" && exit 1)
+  @cd {{mod}} && dagger {{args}}

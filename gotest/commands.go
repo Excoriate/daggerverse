@@ -94,3 +94,12 @@ func (m *Gotest) RunGoTestSum(
 	//nolint:wrapcheck // It's expected to have an unwrapped error here.
 	return evaluatedCtr.Stdout(context.Background())
 }
+
+// OpenTerminal creates and returns a Terminal instance associated with the current Gotest instance.
+// The Terminal instance can be used to interact with the container's terminal.
+//
+// Returns:
+// - *Terminal: A Terminal instance that interacts with the container's terminal.
+func (m *Gotest) OpenTerminal() *dagger.Container {
+	return m.Ctr.Terminal()
+}
