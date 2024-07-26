@@ -1,10 +1,10 @@
 {
-  "name": "tests",
+  "name": "go",
   "sdk": "go",
   "dependencies": [
     {
       "name": "module-template",
-      "source": ".."
+      "source": "../.."
     }
   ],
   "source": ".",

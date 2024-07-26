@@ -7,7 +7,11 @@
 package main
 
 import (
+	"context"
+	"fmt"
 	"path/filepath"
+
+	"github.com/excoriate/daggerverse/module-template/internal/dagger"
 
 	"github.com/Excoriate/daggerx/pkg/fixtures"
 )
@@ -29,7 +33,7 @@ func (m *ModuleTemplate) WithEnvironmentVariable(
 	// +optional
 	expand bool,
 ) *ModuleTemplate {
-	m.Ctr = m.Ctr.WithEnvVariable(name, value, ContainerWithEnvVariableOpts{
+	m.Ctr = m.Ctr.WithEnvVariable(name, value, dagger.ContainerWithEnvVariableOpts{
 		Expand: expand,
 	})
 
@@ -43,7 +47,7 @@ func (m *ModuleTemplate) WithEnvironmentVariable(
 // - workdir: The working directory within the container. Optional parameter.
 func (m *ModuleTemplate) WithSource(
 	// src is the directory that contains all the source code, including the module directory.
-	src *Directory,
+	src *dagger.Directory,
 	// workdir is the working directory within the container. If not set it'll default to /mnt
 	// +optional
 	workdir string,
@@ -66,7 +70,7 @@ func (m *ModuleTemplate) WithSource(
 // Parameters:
 // - ctr: The container to run the command in. If passed, it will override the container set in the Dagger instance.
 func (m *ModuleTemplate) WithContainer(
-	ctr *Container,
+	ctr *dagger.Container,
 ) *ModuleTemplate {
 	m.Ctr = ctr
 
@@ -81,7 +85,7 @@ func (m *ModuleTemplate) WithContainer(
 //     Optional parameter. If not provided, a default version is used.
 func (m *ModuleTemplate) WithDockerService(
 	dockerVersion string,
-) *Service {
+) *dagger.Service {
 	if dockerVersion == "" {
 		dockerVersion = dockerVersionDefault
 	}
@@ -94,8 +98,8 @@ func (m *ModuleTemplate) WithDockerService(
 		WithMountedCache(
 			"/var/lib/docker",
 			dag.CacheVolume(dockerVersion+"-docker-lib"),
-			ContainerWithMountedCacheOpts{
-				Sharing: Private,
+			dagger.ContainerWithMountedCacheOpts{
+				Sharing: dagger.Private,
 			}).
 		WithExposedPort(dockerPort).
 		WithExec([]string{
@@ -103,7 +107,7 @@ func (m *ModuleTemplate) WithDockerService(
 			"--host=tcp://0.0.0.0:2375",
 			"--host=unix:///var/run/docker.sock",
 			"--tls=false",
-		}, ContainerWithExecOpts{
+		}, dagger.ContainerWithExecOpts{
 			InsecureRootCapabilities: true,
 		}).
 		AsService()
@@ -116,13 +120,13 @@ func (m *ModuleTemplate) WithDockerService(
 // - dest: The destination path in the container. Optional parameter.
 // - owner: The owner of the file. Optional parameter.
 func (m *ModuleTemplate) WithFileMountedInContainer(
-	file *File,
+	file *dagger.File,
 	dest string,
 	owner string,
 ) *ModuleTemplate {
 	path := filepath.Join(fixtures.MntPrefix, dest)
 	if owner != "" {
-		m.Ctr = m.Ctr.WithMountedFile(path, file, ContainerWithMountedFileOpts{
+		m.Ctr = m.Ctr.WithMountedFile(path, file, dagger.ContainerWithMountedFileOpts{
 			Owner: owner,
 		})
 
@@ -153,9 +157,20 @@ func (m *ModuleTemplate) WithNewNetrcFileGitHub(
 ) *ModuleTemplate {
 	machineCMD := "machine github.com\nlogin " + username + "\npassword " + password + "\n"
 
-	m.Ctr = m.Ctr.WithNewFile("/root/.netrc", ContainerWithNewFileOpts{
-		Contents: machineCMD,
-	})
+	m.Ctr = m.Ctr.WithNewFile("/root/.netrc", machineCMD)
+
+	return m
+}
+
+// WithNewNetrcFileAsSecretGitHub creates a new .netrc file with the GitHub credentials.
+//
+// The .netrc file is created in the root directory of the container.
+// The argument 'password' is a secret that is not exposed in the logs.
+func (m *ModuleTemplate) WithNewNetrcFileAsSecretGitHub(username string, password *dagger.Secret) *ModuleTemplate {
+	passwordTxtValue, _ := password.Plaintext(context.Background())
+	machineCMD := fmt.Sprintf("machine github.com\nlogin %s\npassword %s\n", username, passwordTxtValue)
+	//nolint:exhaustruct // This is a method that is used to set the base image and version.
+	m.Ctr = m.Ctr.WithNewFile("/root/.netrc", machineCMD)
 
 	return m
 }
@@ -169,8 +184,55 @@ func (m *ModuleTemplate) WithNewNetrcFileGitLab(
 ) *ModuleTemplate {
 	machineCMD := "machine gitlab.com\nlogin " + username + "\npassword " + password + "\n"
 
-	m.Ctr = m.Ctr.WithNewFile("/root/.netrc", ContainerWithNewFileOpts{
-		Contents: machineCMD,
+	m.Ctr = m.Ctr.WithNewFile("/root/.netrc", machineCMD)
+
+	return m
+}
+
+// WithNewNetrcFileAsSecretGitLab creates a new .netrc file with the GitLab credentials.
+//
+// The .netrc file is created in the root directory of the container.
+// The argument 'password' is a secret that is not exposed in the logs.
+func (m *ModuleTemplate) WithNewNetrcFileAsSecretGitLab(username string, password *dagger.Secret) *ModuleTemplate {
+	passwordTxtValue, _ := password.Plaintext(context.Background())
+	machineCMD := fmt.Sprintf("machine gitlab.com\nlogin %s\npassword %s\n", username, passwordTxtValue)
+
+	//nolint:exhaustruct // This is a method that is used to set the base image and version.
+	m.Ctr = m.Ctr.WithNewFile("/root/.netrc", machineCMD)
+
+	return m
+}
+
+// WithUtilitiesInAlpineContainer installs common utilities in the golang/alpine container.
+//
+// It installs utilities such as curl, wget, and others that are commonly used.
+func (m *ModuleTemplate) WithUtilitiesInAlpineContainer() *ModuleTemplate {
+	m.Ctr = m.Ctr.
+		WithExec([]string{"apk", "update"}).
+		WithExec([]string{"apk", "add", "curl", "wget", "bash", "jq", "vim"})
+
+	return m
+}
+
+// WithSecretAsEnvVar sets an environment variable in the container using a secret.
+//
+// Parameters:
+//   - name: The name of the environment variable (e.g., "API_KEY").
+//   - secret: The secret containing the value of the environment variable.
+//
+// Returns:
+//   - *ModuleTemplate: The updated ModuleTemplate with the environment variable set.
+//
+// Behavior:
+//   - The secret value is expanded according to the current environment variables defined in the container.
+func (m *ModuleTemplate) WithSecretAsEnvVar(name string, secret *dagger.Secret) *ModuleTemplate {
+	secretValue, err := secret.Plaintext(context.Background())
+	if err != nil {
+		return nil
+	}
+
+	m.Ctr = m.Ctr.WithEnvVariable(name, secretValue, dagger.ContainerWithEnvVariableOpts{
+		Expand: true,
 	})
 
 	return m

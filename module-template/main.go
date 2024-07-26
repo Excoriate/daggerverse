@@ -13,6 +13,8 @@ package main
 import (
 	"fmt"
 
+	"github.com/excoriate/daggerverse/module-template/internal/dagger"
+
 	"github.com/Excoriate/daggerx/pkg/containerx"
 	"github.com/Excoriate/daggerx/pkg/envvars"
 )
@@ -22,7 +24,7 @@ import (
 // This module is used to create and manage containers.
 type ModuleTemplate struct {
 	// Ctr is the container to use as a base container.
-	Ctr *Container
+	Ctr *dagger.Container
 }
 
 // New creates a new ModuleTemplate module.
@@ -44,7 +46,7 @@ func New(
 	image string,
 	// ctr is the container to use as a base container.
 	// +optional
-	ctr *Container,
+	ctr *dagger.Container,
 	// envVarsFromHost is a list of environment variables to pass from the host to the container in a slice of strings.
 	// +optional
 	envVarsFromHost []string,
@@ -96,4 +98,70 @@ func (m *ModuleTemplate) Base(imageURL string) *ModuleTemplate {
 	m.Ctr = c
 
 	return m
+}
+
+const (
+	defaultAlpineImage  = "alpine"
+	defaultUbuntuImage  = "ubuntu"
+	defaultBusyBoxImage = "busybox"
+)
+
+// BaseAlpine sets the base image to an Alpine Linux image and creates the base container.
+//
+// Parameters:
+// - version: The version of the Alpine image to use. Optional parameter. Defaults to "latest".
+//
+// Returns a pointer to the ModuleTemplate instance.
+func (m *ModuleTemplate) BaseAlpine(
+	// version is the version of the Alpine image to use, e.g., "3.17.3".
+	// +optional
+	version string,
+) *ModuleTemplate {
+	if version == "" {
+		version = "latest"
+	}
+
+	imageURL := fmt.Sprintf("%s:%s", defaultAlpineImage, version)
+
+	return m.Base(imageURL)
+}
+
+// BaseUbuntu sets the base image to an Ubuntu Linux image and creates the base container.
+//
+// Parameters:
+// - version: The version of the Ubuntu image to use. Optional parameter. Defaults to "latest".
+//
+// Returns a pointer to the ModuleTemplate instance.
+func (m *ModuleTemplate) BaseUbuntu(
+	// version is the version of the Ubuntu image to use, e.g., "22.04".
+	// +optional
+	version string,
+) *ModuleTemplate {
+	if version == "" {
+		version = "latest"
+	}
+
+	imageURL := fmt.Sprintf("%s:%s", defaultUbuntuImage, version)
+
+	return m.Base(imageURL)
+}
+
+// BaseBusyBox sets the base image to a BusyBox Linux image and creates the base container.
+//
+// Parameters:
+// - version: The version of the BusyBox image to use. Optional parameter. Defaults to "latest".
+//
+// Returns a pointer to the ModuleTemplate instance.
+func (m *ModuleTemplate) BaseBusyBox(
+	// version is the version of the BusyBox image to use, e.g., "1.35.0".
+	// +optional
+	version string,
+) *ModuleTemplate {
+	if version == "" {
+		version = "latest"
+	}
+
+	imageURL := fmt.Sprintf("%s:%s", defaultBusyBoxImage, version)
+
+	return m.Base(imageURL)
 }

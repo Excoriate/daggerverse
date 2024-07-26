@@ -3,16 +3,18 @@ package main
 import (
 	"context"
 	"fmt"
+
+	"github.com/excoriate/daggerverse/module-template/internal/dagger"
 )
 
-// Terminal returns a terminal
+// OpenTerminal returns a terminal
 //
 // It returns a terminal for the container.
 // Arguments:
 // - None.
 // Returns:
 // - *Terminal: The terminal for the container.
-func (m *ModuleTemplate) Terminal() *Terminal {
+func (m *ModuleTemplate) OpenTerminal() *dagger.Container {
 	return m.Ctr.Terminal()
 }
 

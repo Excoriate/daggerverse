@@ -8,6 +8,6 @@
     "../go.work.sum",
     "tests"
   ],
-  "source": "dagger",
+  "source": ".",
   "engineVersion": "v0.12.3"
 }
