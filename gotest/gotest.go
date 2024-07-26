@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 
+	"github.com/excoriate/daggerverse/gotest/internal/dagger"
+
 	"github.com/Excoriate/daggerx/pkg/envvars"
 )
 
@@ -10,7 +12,7 @@ import (
 // or return the container to be evaluated later.
 func (m *Gotest) SetupGoTest(
 	// The directory containing code to test.
-	src *Directory,
+	src *dagger.Directory,
 	// Packages to test.
 	// +optional
 	packages []string,
@@ -39,7 +41,7 @@ func (m *Gotest) SetupGoTest(
 	// printEnvVars is a flag to print the environment variables
 	// +optional
 	printEnvVars bool,
-) (*Container, error) {
+) (*dagger.Container, error) {
 	goTest := []string{"go", "test"}
 	ctr := m.WithSource(src, "").Ctr
 
@@ -60,7 +62,7 @@ func (m *Gotest) SetupGoTest(
 
 	if printEnvVars {
 		//nolint:exhaustruct // It's 'okaysh' for now, I'll decide later what's going to be the pattern here.
-		ctr = ctr.WithExec([]string{"printenv"}, ContainerWithExecOpts{
+		ctr = ctr.WithExec([]string{"printenv"}, dagger.ContainerWithExecOpts{
 			InsecureRootCapabilities:      insecureRootCapabilities,
 			ExperimentalPrivilegedNesting: enableNest,
 		})
@@ -84,7 +86,7 @@ func (m *Gotest) SetupGoTest(
 	goTest = append(goTest, pkgs...)
 
 	//nolint:exhaustruct // It's 'okaysh' for now, I'll decide later what's going to be the pattern here.
-	ctr = ctr.WithExec(goTest, ContainerWithExecOpts{
+	ctr = ctr.WithExec(goTest, dagger.ContainerWithExecOpts{
 		InsecureRootCapabilities:      insecureRootCapabilities,
 		ExperimentalPrivilegedNesting: enableNest,
 	})
@@ -100,7 +102,7 @@ func (m *Gotest) SetupGoTest(
 //nolint:cyclop // It's 'okaysh' for now, I'll decide later what's going to be the pattern here.
 func (m *Gotest) SetupGoTestSum(
 	// The directory containing code to test.
-	src *Directory,
+	src *dagger.Directory,
 	// Packages to test.
 	// +optional
 	packages []string,
@@ -132,7 +134,7 @@ func (m *Gotest) SetupGoTestSum(
 	// printEnvVars is a flag to print the environment variables
 	// +optional
 	printEnvVars bool,
-) (*Container, error) {
+) (*dagger.Container, error) {
 	goTestSumInstallCMD := []string{"go", "install", "gotest.tools/gotestsum@latest"}
 	goTestInstallTparseCMD := []string{"go", "install", "github.com/mfridman/tparse@latest"}
 	goTestCMD := []string{"gotestsum", "--no-color=false"}
@@ -156,7 +158,7 @@ func (m *Gotest) SetupGoTestSum(
 	if printEnvVars {
 		ctr = ctr.WithFocus().
 			//nolint:exhaustruct // It's 'okaysh' for now, I'll decide later what's going to be the pattern here.
-			WithExec([]string{"printenv"}, ContainerWithExecOpts{
+			WithExec([]string{"printenv"}, dagger.ContainerWithExecOpts{
 				InsecureRootCapabilities:      insecureRootCapabilities,
 				ExperimentalPrivilegedNesting: enableNest,
 			})
@@ -187,7 +189,7 @@ func (m *Gotest) SetupGoTestSum(
 	}
 
 	//nolint:exhaustruct // It's 'okaysh' for now, I'll decide later what's going to be the pattern here.
-	ctr = ctr.WithExec(goTestCMD, ContainerWithExecOpts{
+	ctr = ctr.WithExec(goTestCMD, dagger.ContainerWithExecOpts{
 		InsecureRootCapabilities:      insecureRootCapabilities,
 		ExperimentalPrivilegedNesting: enableNest,
 	})
@@ -195,7 +197,7 @@ func (m *Gotest) SetupGoTestSum(
 	if enablePretty {
 		tParseCMD := []string{"tparse", "-all", "-smallscreen", "-file=test-output.json"}
 		//nolint:exhaustruct // It's 'okaysh' for now, I'll decide later what's going to be the pattern here.
-		ctr = ctr.WithExec(tParseCMD, ContainerWithExecOpts{
+		ctr = ctr.WithExec(tParseCMD, dagger.ContainerWithExecOpts{
 			InsecureRootCapabilities:      insecureRootCapabilities,
 			ExperimentalPrivilegedNesting: enableNest,
 		})

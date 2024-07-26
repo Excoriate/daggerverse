@@ -2,18 +2,20 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 
 	"github.com/Excoriate/daggerx/pkg/fixtures"
 	"github.com/Excoriate/daggerx/pkg/golangx"
 	"github.com/containerd/containerd/platforms"
+	"github.com/excoriate/daggerverse/gotest/internal/dagger"
 )
 
 // WithSource Set the source directory.
 func (m *Gotest) WithSource(
 	// Src is the directory that contains all the source code, including the module directory.
-	src *Directory,
+	src *dagger.Directory,
 	// workdir is the working directory.
 	// +optional
 	workdir string,
@@ -35,7 +37,7 @@ func (m *Gotest) WithSource(
 // WithPlatform Set GOOS, GOARCH and GOARM environment variables.
 func (m *Gotest) WithPlatform(
 	// Target platform in "[os]/[platform]/[version]" format (e.g., "darwin/arm64/v7", "windows/amd64", "linux/arm64").
-	platform Platform,
+	platform dagger.Platform,
 ) *Gotest {
 	if platform == "" {
 		return m
@@ -90,7 +92,7 @@ func (m *Gotest) WithEnvironmentVariable(
 	// +optional
 	expand bool,
 ) *Gotest {
-	m.Ctr = m.Ctr.WithEnvVariable(name, value, ContainerWithEnvVariableOpts{
+	m.Ctr = m.Ctr.WithEnvVariable(name, value, dagger.ContainerWithEnvVariableOpts{
 		Expand: expand,
 	})
 
@@ -132,9 +134,20 @@ func (m *Gotest) WithNewNetrcFileGitHub(username, password string) *Gotest {
 	machineCMD := fmt.Sprintf("machine github.com\nlogin %s\npassword %s\n", username, password)
 
 	//nolint:exhaustruct // This is a method that is used to set the base image and version.
-	m.Ctr = m.Ctr.WithNewFile("/root/.netrc", ContainerWithNewFileOpts{
-		Contents: machineCMD,
-	})
+	m.Ctr = m.Ctr.WithNewFile("/root/.netrc", machineCMD)
+
+	return m
+}
+
+// WithNewNetrcFileAsSecretGitHub creates a new .netrc file with the GitHub credentials.
+//
+// The .netrc file is created in the root directory of the container.
+// The argument 'password' is a secret that is not exposed in the logs.
+func (m *Gotest) WithNewNetrcFileAsSecretGitHub(username string, password *dagger.Secret) *Gotest {
+	passwordTxtValue, _ := password.Plaintext(context.Background())
+	machineCMD := fmt.Sprintf("machine github.com\nlogin %s\npassword %s\n", username, passwordTxtValue)
+	//nolint:exhaustruct // This is a method that is used to set the base image and version.
+	m.Ctr = m.Ctr.WithNewFile("/root/.netrc", machineCMD)
 
 	return m
 }
@@ -146,9 +159,21 @@ func (m *Gotest) WithNewNetrcFileGitLab(username, password string) *Gotest {
 	machineCMD := fmt.Sprintf("machine gitlab.com\nlogin %s\npassword %s\n", username, password)
 
 	//nolint:exhaustruct // This is a method that is used to set the base image and version.
-	m.Ctr = m.Ctr.WithNewFile("/root/.netrc", ContainerWithNewFileOpts{
-		Contents: machineCMD,
-	})
+	m.Ctr = m.Ctr.WithNewFile("/root/.netrc", machineCMD)
+
+	return m
+}
+
+// WithNewNetrcFileAsSecretGitLab creates a new .netrc file with the GitLab credentials.
+//
+// The .netrc file is created in the root directory of the container.
+// The argument 'password' is a secret that is not exposed in the logs.
+func (m *Gotest) WithNewNetrcFileAsSecretGitLab(username string, password *dagger.Secret) *Gotest {
+	passwordTxtValue, _ := password.Plaintext(context.Background())
+	machineCMD := fmt.Sprintf("machine gitlab.com\nlogin %s\npassword %s\n", username, passwordTxtValue)
+
+	//nolint:exhaustruct // This is a method that is used to set the base image and version.
+	m.Ctr = m.Ctr.WithNewFile("/root/.netrc", machineCMD)
 
 	return m
 }
@@ -159,7 +184,7 @@ func (m *Gotest) WithNewNetrcFileGitLab(username, password string) *Gotest {
 //nolint:exhaustruct // This is a method that is used to set the base image and version.
 func (m *Gotest) WithPrivateGoPkg(privateHost string) *Gotest {
 	//nolint:exhaustruct // This is a method that is used to set the base image and version.
-	m.Ctr = m.Ctr.WithExec([]string{"go", "env", "GOPRIVATE", privateHost}, ContainerWithExecOpts{
+	m.Ctr = m.Ctr.WithExec([]string{"go", "env", "GOPRIVATE", privateHost}, dagger.ContainerWithExecOpts{
 		InsecureRootCapabilities: true,
 	}).WithEnvVariable("GOPRIVATE", privateHost)
 

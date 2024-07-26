@@ -161,62 +161,6 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 	switch parentName {
 	case "Terratest":
 		switch fnName {
-		case "Base":
-			var parent Terratest
-			err = json.Unmarshal(parentJSON, &parent)
-			if err != nil {
-				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
-			}
-			var goVersion string
-			if inputArgs["goVersion"] != nil {
-				err = json.Unmarshal([]byte(inputArgs["goVersion"]), &goVersion)
-				if err != nil {
-					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg goVersion", err))
-				}
-			}
-			var tfVersion string
-			if inputArgs["tfVersion"] != nil {
-				err = json.Unmarshal([]byte(inputArgs["tfVersion"]), &tfVersion)
-				if err != nil {
-					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg tfVersion", err))
-				}
-			}
-			return (*Terratest).Base(&parent, goVersion, tfVersion), nil
-		case "WithContainer":
-			var parent Terratest
-			err = json.Unmarshal(parentJSON, &parent)
-			if err != nil {
-				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
-			}
-			var ctr *any
-			if inputArgs["ctr"] != nil {
-				err = json.Unmarshal([]byte(inputArgs["ctr"]), &ctr)
-				if err != nil {
-					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg ctr", err))
-				}
-			}
-			return (*Terratest).WithContainer(&parent, ctr), nil
-		case "Run":
-			var parent Terratest
-			err = json.Unmarshal(parentJSON, &parent)
-			if err != nil {
-				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
-			}
-			var testDir *any
-			if inputArgs["testDir"] != nil {
-				err = json.Unmarshal([]byte(inputArgs["testDir"]), &testDir)
-				if err != nil {
-					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg testDir", err))
-				}
-			}
-			var args string
-			if inputArgs["args"] != nil {
-				err = json.Unmarshal([]byte(inputArgs["args"]), &args)
-				if err != nil {
-					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg args", err))
-				}
-			}
-			return (*Terratest).Run(&parent, testDir, args)
 		case "WithSource":
 			var parent Terratest
 			err = json.Unmarshal(parentJSON, &parent)
@@ -273,6 +217,62 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 				}
 			}
 			return (*Terratest).WithEnvVar(&parent, name, value, expand), nil
+		case "Base":
+			var parent Terratest
+			err = json.Unmarshal(parentJSON, &parent)
+			if err != nil {
+				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
+			}
+			var goVersion string
+			if inputArgs["goVersion"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["goVersion"]), &goVersion)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg goVersion", err))
+				}
+			}
+			var tfVersion string
+			if inputArgs["tfVersion"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["tfVersion"]), &tfVersion)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg tfVersion", err))
+				}
+			}
+			return (*Terratest).Base(&parent, goVersion, tfVersion), nil
+		case "WithContainer":
+			var parent Terratest
+			err = json.Unmarshal(parentJSON, &parent)
+			if err != nil {
+				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
+			}
+			var ctr *any
+			if inputArgs["ctr"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["ctr"]), &ctr)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg ctr", err))
+				}
+			}
+			return (*Terratest).WithContainer(&parent, ctr), nil
+		case "Run":
+			var parent Terratest
+			err = json.Unmarshal(parentJSON, &parent)
+			if err != nil {
+				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
+			}
+			var testDir *any
+			if inputArgs["testDir"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["testDir"]), &testDir)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg testDir", err))
+				}
+			}
+			var args string
+			if inputArgs["args"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["args"]), &args)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg args", err))
+				}
+			}
+			return (*Terratest).Run(&parent, testDir, args)
 		case "":
 			var parent Terratest
 			err = json.Unmarshal(parentJSON, &parent)
@@ -323,22 +323,6 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 			WithObject(
 				dag.TypeDef().WithObject("Terratest").
 					WithFunction(
-						dag.Function("Base",
-							dag.TypeDef().WithObject("Terratest")).
-							WithDescription("Base sets up the Container with a golang image and cache volumes\nversion string").
-							WithArg("goVersion", dag.TypeDef().WithKind(dagger.StringKind)).
-							WithArg("tfVersion", dag.TypeDef().WithKind(dagger.StringKind))).
-					WithFunction(
-						dag.Function("WithContainer",
-							dag.TypeDef().WithObject("Terratest")).
-							WithDescription("WithContainer specifies the container to use in the Terraform module.").
-							WithArg("ctr", dag.TypeDef().WithKind(dagger.VoidKind).WithOptional(true))).
-					WithFunction(
-						dag.Function("Run",
-							dag.TypeDef().WithKind(dagger.VoidKind).WithOptional(true)).
-							WithArg("testDir", dag.TypeDef().WithKind(dagger.VoidKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "testDir is the directory that contains all the test code."}).
-							WithArg("args", dag.TypeDef().WithKind(dagger.StringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "args is the arguments to pass to the 'go test' command."})).
-					WithFunction(
 						dag.Function("WithSource",
 							dag.TypeDef().WithObject("Terratest")).
 							WithDescription("WithSource Set the source directory.").
@@ -355,6 +339,22 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 							WithArg("name", dag.TypeDef().WithKind(dagger.StringKind), dagger.FunctionWithArgOpts{Description: "The name of the environment variable (e.g., \"HOST\")."}).
 							WithArg("value", dag.TypeDef().WithKind(dagger.StringKind), dagger.FunctionWithArgOpts{Description: "The value of the environment variable (e.g., \"localhost\")."}).
 							WithArg("expand", dag.TypeDef().WithKind(dagger.BooleanKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "Replace `${VAR}` or $VAR in the value according to the current environment\nvariables defined in the container (e.g., \"/opt/bin:$PATH\")."})).
+					WithFunction(
+						dag.Function("Base",
+							dag.TypeDef().WithObject("Terratest")).
+							WithDescription("Base sets up the Container with a golang image and cache volumes\nversion string").
+							WithArg("goVersion", dag.TypeDef().WithKind(dagger.StringKind)).
+							WithArg("tfVersion", dag.TypeDef().WithKind(dagger.StringKind))).
+					WithFunction(
+						dag.Function("WithContainer",
+							dag.TypeDef().WithObject("Terratest")).
+							WithDescription("WithContainer specifies the container to use in the Terraform module.").
+							WithArg("ctr", dag.TypeDef().WithKind(dagger.VoidKind).WithOptional(true))).
+					WithFunction(
+						dag.Function("Run",
+							dag.TypeDef().WithKind(dagger.VoidKind).WithOptional(true)).
+							WithArg("testDir", dag.TypeDef().WithKind(dagger.VoidKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "testDir is the directory that contains all the test code."}).
+							WithArg("args", dag.TypeDef().WithKind(dagger.StringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "args is the arguments to pass to the 'go test' command."})).
 					WithField("Version", dag.TypeDef().WithKind(dagger.StringKind), dagger.TypeDefWithFieldOpts{Description: "The Version of the Golang image that'll host the 'terratest' test"}).
 					WithField("TfVersion", dag.TypeDef().WithKind(dagger.StringKind), dagger.TypeDefWithFieldOpts{Description: "TfVersion is the Version of the Terraform to use, e.g., \"0.12.24\".\nby default, it uses the latest Version."}).
 					WithField("Image", dag.TypeDef().WithKind(dagger.StringKind), dagger.TypeDefWithFieldOpts{Description: "Image of the container to use."}).

@@ -2,5 +2,5 @@
   "name": "precommit",
   "sdk": "go",
   "source": "dagger",
-  "engineVersion": "v0.12.2"
+  "engineVersion": "v0.12.3"
 }

@@ -1,10 +1,10 @@
 {
-  "name": "tests",
+  "name": "go",
   "sdk": "go",
   "dependencies": [
     {
       "name": "gotest",
-      "source": ".."
+      "source": "../.."
     }
   ],
   "source": ".",

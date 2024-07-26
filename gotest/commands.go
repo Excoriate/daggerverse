@@ -2,13 +2,15 @@ package main
 
 import (
 	"context"
+
+	"github.com/excoriate/daggerverse/gotest/internal/dagger"
 )
 
 // RunGoTest runs tests using the go test CLI.
 // The default packages to test are "./...".
 func (m *Gotest) RunGoTest(
 	// The directory containing code to test.
-	src *Directory,
+	src *dagger.Directory,
 	// Packages to test.
 	// +optional
 	packages []string,
@@ -50,7 +52,7 @@ func (m *Gotest) RunGoTest(
 // RunGoTestSum runs tests using the gotestsum CLI.
 func (m *Gotest) RunGoTestSum(
 	// The directory containing code to test.
-	src *Directory,
+	src *dagger.Directory,
 	// Packages to test.
 	// +optional
 	packages []string,

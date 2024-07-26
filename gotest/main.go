@@ -6,6 +6,7 @@ import (
 	"github.com/Excoriate/daggerx/pkg/containerx"
 
 	"github.com/Excoriate/daggerx/pkg/envvars"
+	"github.com/excoriate/daggerverse/gotest/internal/dagger"
 )
 
 // Gotest is a module that provides functionality to run Go tests.
@@ -13,10 +14,10 @@ import (
 // The module can be used to run tests in a Go project.
 type Gotest struct {
 	// Src is the directory that contains all the source code, including the module directory.
-	Src *Directory
+	Src *dagger.Directory
 
 	// Ctr is the container to use as a base container.
-	Ctr *Container
+	Ctr *dagger.Container
 }
 
 // New creates a new Gotest module.
@@ -29,7 +30,7 @@ func New(
 	image string,
 	// Ctrl is the container to use as a base container.
 	// +optional
-	ctr *Container,
+	ctr *dagger.Container,
 	// EnvVarsFromHost is a list of environment variables to pass from the host to the container.
 	// Later on, in order to pass it to the container, it's going to be converted into a map.
 	// +optional

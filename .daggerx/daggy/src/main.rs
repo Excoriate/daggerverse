@@ -288,8 +288,10 @@ fn get_module_configurations(module: &str) -> Result<NewDaggerModule, Error> {
 
     Ok(NewDaggerModule {
         path: module_path_full.to_string_lossy().to_string(),
-        module_src_path: module_path_full.join("dagger").to_string_lossy().to_string(),
-        module_test_src_path: module_path_full.join("tests").join("dagger").to_string_lossy().to_string(),
+        // module_src_path: module_path_full.join("dagger").to_string_lossy().to_string(),
+        module_src_path: module_path_full.to_string_lossy().to_string(),
+        // module_test_src_path: module_path_full.join("tests").join("dagger").to_string_lossy().to_string(),
+        module_test_src_path: module_path_full.join("tests").to_string_lossy().to_string(),
         name: module.to_string(),
         github_actions_workflow_path: current_root_dir.join(".github/workflows").to_string_lossy().to_string(),
         github_actions_workflow: current_root_dir.join(".github/workflows").join(format!("mod-{}-ci.yaml", module)).to_string_lossy().to_string(),
