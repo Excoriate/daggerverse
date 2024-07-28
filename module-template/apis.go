@@ -16,6 +16,8 @@ import (
 	"github.com/Excoriate/daggerx/pkg/fixtures"
 )
 
+const netRcRootPath = "/root/.netrc"
+
 // WithEnvironmentVariable sets an environment variable in the container.
 //
 // Parameters:
@@ -157,7 +159,7 @@ func (m *ModuleTemplate) WithNewNetrcFileGitHub(
 ) *ModuleTemplate {
 	machineCMD := "machine github.com\nlogin " + username + "\npassword " + password + "\n"
 
-	m.Ctr = m.Ctr.WithNewFile("/root/.netrc", machineCMD)
+	m.Ctr = m.Ctr.WithNewFile(netRcRootPath, machineCMD)
 
 	return m
 }
@@ -170,7 +172,7 @@ func (m *ModuleTemplate) WithNewNetrcFileAsSecretGitHub(username string, passwor
 	passwordTxtValue, _ := password.Plaintext(context.Background())
 	machineCMD := fmt.Sprintf("machine github.com\nlogin %s\npassword %s\n", username, passwordTxtValue)
 	//nolint:exhaustruct // This is a method that is used to set the base image and version.
-	m.Ctr = m.Ctr.WithNewFile("/root/.netrc", machineCMD)
+	m.Ctr = m.Ctr.WithNewFile(netRcRootPath, machineCMD)
 
 	return m
 }
@@ -184,7 +186,7 @@ func (m *ModuleTemplate) WithNewNetrcFileGitLab(
 ) *ModuleTemplate {
 	machineCMD := "machine gitlab.com\nlogin " + username + "\npassword " + password + "\n"
 
-	m.Ctr = m.Ctr.WithNewFile("/root/.netrc", machineCMD)
+	m.Ctr = m.Ctr.WithNewFile(netRcRootPath, machineCMD)
 
 	return m
 }
@@ -198,7 +200,7 @@ func (m *ModuleTemplate) WithNewNetrcFileAsSecretGitLab(username string, passwor
 	machineCMD := fmt.Sprintf("machine gitlab.com\nlogin %s\npassword %s\n", username, passwordTxtValue)
 
 	//nolint:exhaustruct // This is a method that is used to set the base image and version.
-	m.Ctr = m.Ctr.WithNewFile("/root/.netrc", machineCMD)
+	m.Ctr = m.Ctr.WithNewFile(netRcRootPath, machineCMD)
 
 	return m
 }
@@ -236,4 +238,72 @@ func (m *ModuleTemplate) WithSecretAsEnvVar(name string, secret *dagger.Secret) 
 	})
 
 	return m
+}
+
+// WithDownloadedFile downloads a file from the specified URL and mounts it in the container.
+//
+// Parameters:
+//   - url: The URL of the file to download.
+//   - destDir: The directory within the container where the file will be downloaded. Optional parameter.
+//     If not provided, it defaults to the predefined mount prefix.
+//
+// Returns:
+//   - *ModuleTemplate: The updated ModuleTemplate with the downloaded file mounted in the container.
+func (m *ModuleTemplate) WithDownloadedFile(
+	// url is the URL of the file to download.
+	url string,
+	// destFileName is the name of the file to download. If not set, it'll default to the basename of the URL.
+	// +optional
+	destFileName string,
+) *ModuleTemplate {
+	// Extract the filename from the last part of the URL.
+	fileName := filepath.Base(url)
+	if destFileName != "" {
+		fileName = destFileName
+	}
+
+	// Download the file
+	fileDownloaded := dag.HTTP(url).WithName(fileName)
+
+	// Define the path in the container
+	destFilePath := filepath.Join(fixtures.MntPrefix, fileName)
+
+	// Mount the file in the container
+	m.Ctr = m.
+		Ctr.
+		WithMountedFile(destFilePath, fileDownloaded)
+
+	return m
+}
+
+// DownloadFile downloads a file from the specified URL.
+//
+// Parameters:
+//   - url: The URL of the file to download.
+//   - destFileName: The name of the file to download. Optional parameter.
+//     If not set, it'll default to the basename of the URL.
+//
+// Returns:
+//   - *dagger.File: The downloaded file.
+//
+// Functionality:
+//
+// This method downloads a file from the provided URL. If the destination file
+// name is not specified, it defaults to the basename of the URL. The downloaded
+// file is then returned as a *dagger.File.
+func (m *ModuleTemplate) DownloadFile(
+	// url is the URL of the file to download.
+	url string,
+	// destFileName is the name of the file to download. If not set, it'll default to the basename of the URL.
+	// +optional
+	destFileName string,
+) *dagger.File {
+	fileName := filepath.Base(url)
+	if destFileName != "" {
+		fileName = destFileName
+	}
+
+	fileDownloaded := dag.HTTP(url).WithName(fileName)
+
+	return fileDownloaded
 }

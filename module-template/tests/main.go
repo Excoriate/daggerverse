@@ -78,6 +78,8 @@ func (m *Tests) TestAll(ctx context.Context) error {
 	polTests.Go(m.TestNewNetrcFileGitLab)
 	polTests.Go(m.TestWithNewNetrcFileAsSecretGitLab)
 	polTests.Go(m.TestWithSecretAsEnvVar)
+	polTests.Go(m.TestWithDownloadedFile)
+	polTests.Go(m.TestDownloadFile)
 
 	// From this point onwards, we're testing the specific functionality of the ModuleTemplate module.
 
@@ -616,5 +618,107 @@ func (m *Tests) TestWithSecretAsEnvVar(ctx context.Context) error {
 	}
 
 	// Return nil if all expected environment variables are set.
+	return nil
+}
+
+// TestWithDownloadedFile tests the downloading of a file from a URL.
+//
+// This method verifies that a file can be downloaded from a URL and mounted in the container.
+// It downloads a file from a URL, mounts it in the container, and checks if the file exists.
+//
+// Arguments:
+// - ctx (context.Context): The context for the test execution.
+//
+// Returns:
+//   - error: Returns an error if there is an issue downloading the file, mounting it in the container,
+//     or if the file is not found.
+func (m *Tests) TestWithDownloadedFile(ctx context.Context) error {
+	targetModule := dag.ModuleTemplate()
+
+	// Download a file from a URL and mount it in the container, without filename passed.
+	fileURL := "https://framerusercontent.com/assets/cNNFYmZqESeYTV5PHp72ay0O2o.zip"
+	targetModule = targetModule.
+		WithDownloadedFile(fileURL)
+
+	// Check if the file exists in the container.
+	out, err := targetModule.
+		Ctr().
+		WithExec([]string{"ls", "/mnt/cNNFYmZqESeYTV5PHp72ay0O2o.zip"}).
+		Stdout(ctx)
+
+	if err != nil {
+		return fmt.Errorf("failed to get download file from url %s: %w", fileURL, err)
+	}
+
+	if out == "" {
+		return fmt.Errorf("%w, expected to have at least one folder, got empty output", errEmptyOutput)
+	}
+
+	// Downloading the file but with a name this time instead.
+	fileName := "mydownloadedfile.zip"
+	targetModule = targetModule.
+		WithDownloadedFile(fileURL, dagger.ModuleTemplateWithDownloadedFileOpts{
+			DestFileName: fileName,
+		})
+
+	// Check if the file exists in the container.
+	out, err = targetModule.
+		Ctr().
+		WithExec([]string{"ls", "/mnt/mydownloadedfile.zip"}).
+		Stdout(ctx)
+
+	if err != nil {
+		return fmt.Errorf("failed to get download file from url %s: %w", fileURL, err)
+	}
+
+	if out == "" {
+		return fmt.Errorf("%w, expected to have at least one folder, got empty output", errEmptyOutput)
+	}
+
+	return nil
+}
+
+// TestDownloadFile tests the downloading of a file from a URL and mounts it in the container.
+//
+// This method verifies that a file can be downloaded from a URL, mounted
+// in the container, and checks if the file exists.
+//
+// Arguments:
+// - ctx (context.Context): The context for the test execution.
+//
+// Returns:
+//   - error: Returns an error if there is an issue downloading the file, mounting it in the container,
+//     or if the file is not found in the mounted path.
+func (m *Tests) TestDownloadFile(ctx context.Context) error {
+	// Initialize the target module.
+	targetModule := dag.ModuleTemplate()
+
+	// Define the URL of the file to be downloaded.
+	fileURL := "https://framerusercontent.com/assets/cNNFYmZqESeYTV5PHp72ay0O2o.zip"
+
+	// Download the file from the URL.
+	fileDownloaded := targetModule.DownloadFile(fileURL)
+
+	// Mount the downloaded file in the container at /mnt/myfile.zip.
+	ctr := targetModule.
+		Ctr().
+		WithMountedFile("/mnt/myfile.zip", fileDownloaded)
+
+	// Execute a command to check if the file exists in the container.
+	out, err := ctr.
+		WithExec([]string{"ls", "/mnt/myfile.zip"}).
+		Stdout(ctx)
+
+	// Check for errors executing the command.
+	if err != nil {
+		return fmt.Errorf("failed to get download file from url %s: %w", fileURL, err)
+	}
+
+	// Check if the output is empty, which indicates the file was not found.
+	if out == "" {
+		return fmt.Errorf("%w, expected to find the file at /mnt/myfile.zip, but got empty output", errEmptyOutput)
+	}
+
+	// Return nil if the file was successfully found.
 	return nil
 }
