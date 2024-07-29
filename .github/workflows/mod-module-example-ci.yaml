@@ -35,7 +35,7 @@ jobs:
               with:
                   go-version: ${{ matrix.go }}
             - name: Dagger Develop on Module 📦 with Dagger ${{ matrix.dagversion }}
-              uses: dagger/dagger-for-github@v6
+              uses: dagger/dagger-for-github@v5
               with:
                   verb: develop
                   module: module-example
