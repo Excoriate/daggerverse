@@ -51,7 +51,7 @@ Call a function:
 
 ## Testing 🧪
 
-This module includes a [testing]({{.module_name}}/tests) module that aims to test the functionality of the {{.module_name}} module. The tests are written in Go and can be run using the following command:
+This module includes a [testing]({{.module_name_pkg}}/tests) module that aims to test the functionality of the {{.module_name}} module. The tests are written in Go and can be run using the following command:
 
 ```bash
 ## Run the tests using the just command
@@ -73,6 +73,6 @@ just test {{.module_name}}
 just cilocal {{.module_name}}
 ```
 
-Additionally, this module brings a new [Daggerverse](https://daggerverse.dev/) functionality that allows to automatically generate the module's documentation using an special (sub) module called [**examples**/]({{.module_name}}/examples). This module contains a set of examples hat demonstrate how to use the module's functions. To generate the documentation
+Additionally, this module brings a new [Daggerverse](https://daggerverse.dev/) functionality that allows to automatically generate the module's documentation using an special (sub) module called [**examples**/]({{.module_name_pkg}}/examples). This module contains a set of examples hat demonstrate how to use the module's functions. To generate the documentation
 
 >NOTE: The `just` command entails the use of the [**Justfile**](https://just.systems) for task automation. If you don't have it, don't worry, you just need [Nix](https://nixos.org) to run the tasks using the `dev-shell` built-in command: `nix develop --impure --extra-experimental-features nix-command --extra-experimental-features flakes`

@@ -1,15 +1,15 @@
 ---
-name: {{.module_name}} CI 🧹
+name: {{.module_name_pkg}} CI 🧹
 on:
     push:
         branches:
             - main
             - master
         paths:
-            - {{.module_name}}/**/*.go
+            - {{.module_name_pkg}}/**/*.go
     pull_request:
         paths:
-            - {{.module_name}}/**/*.go
+            - {{.module_name_pkg}}/**/*.go
     workflow_dispatch:
 
 permissions:
@@ -19,15 +19,15 @@ permissions:
 
 defaults:
     run:
-        working-directory: {{.module_name}}
+        working-directory: {{.module_name_pkg}}
 
 jobs:
-    linter:
+    dagger-linter:
         strategy:
             matrix:
                 go: ['1.22']
-                dagversion: [0.11.6, 0.11.7, 0.11.8, 0.11.9]
-        name: Lint {{.module_name}} on ${{ matrix.os }} with Dagger ${{ matrix.dagversion }}
+                dagversion: [0.12.0, 0.12.1, 0.12.2, 0.12.3]
+        name: Lint {{.module_name_pkg}} on ${{ matrix.os }} with Dagger ${{ matrix.dagversion }}
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
@@ -35,34 +35,53 @@ jobs:
               with:
                   go-version: ${{ matrix.go }}
             - name: Dagger Develop on Module 📦 with Dagger ${{ matrix.dagversion }}
-              uses: dagger/dagger-for-github@v5
+              uses: dagger/dagger-for-github@v6
               with:
                   verb: develop
-                  module: {{.module_name}}
+                  module: {{.module_name_pkg}}
                   version: ${{ matrix.dagversion }}
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             - name: Dagger Develop on Test Module 🧪 with Dagger ${{ matrix.dagversion }}
-              uses: dagger/dagger-for-github@v5
+              uses: dagger/dagger-for-github@v6
               with:
                   verb: develop
-                  module: {{.module_name}}/tests
+                  module: {{.module_name_pkg}}/tests
                   version: ${{ matrix.dagversion }}
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-            - name: Dagger Call on Module with Dagger ${{ matrix.dagversion }}
-              uses: dagger/dagger-for-github@v5
+
+            - name: Dagger Develop on Examples Module for Go 📄 with Dagger ${{ matrix.dagversion }}
+              uses: dagger/dagger-for-github@v6
+              with:
+                  verb: develop
+                  module: {{.module_name_pkg}}/examples/go
+                  version: ${{ matrix.dagversion }}
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Dagger Call on Module 📦 with Dagger ${{ matrix.dagversion }}
+              uses: dagger/dagger-for-github@v6
               with:
                   verb: call
-                  module: {{.module_name}}
+                  module: {{.module_name_pkg}}
                   version: ${{ matrix.dagversion }}
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             - name: Dagger Call on Test Module 🧪 with Dagger ${{ matrix.dagversion }}
-              uses: dagger/dagger-for-github@v5
+              uses: dagger/dagger-for-github@v6
               with:
                   verb: call
-                  module: {{.module_name}}/tests
+                  module: {{.module_name_pkg}}/tests
+                  version: ${{ matrix.dagversion }}
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Dagger Call on Test Examples/Go Module 📄 with Dagger ${{ matrix.dagversion }}
+              uses: dagger/dagger-for-github@v6
+              with:
+                  verb: call
+                  module: {{.module_name_pkg}}/examples/go
                   version: ${{ matrix.dagversion }}
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -71,47 +90,63 @@ jobs:
         strategy:
             matrix:
                 go: ['1.22']
-        name: GolangCI-Lint for {{.module_name}}
+        name: GolangCI-Lint for {{.module_name_pkg}}
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
             - uses: actions/setup-go@v5
               with:
                   go-version: ${{ matrix.go }}
-            - name: Dagger Develop on Module 📦 {{.module_name}} with Dagger ${{ matrix.dagversion }}
-              uses: dagger/dagger-for-github@v5
+            - name: Dagger Develop on Module 📦 {{.module_name_pkg}} with Dagger ${{ matrix.dagversion }}
+              uses: dagger/dagger-for-github@v6
               with:
                   verb: develop
-                  module: {{.module_name}}
+                  module: {{.module_name_pkg}}
                   version: ${{ matrix.dagversion }}
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-            - name: Run golangci-lint on {{.module_name}} 📦
+            - name: Run golangci-lint on {{.module_name_pkg}} 📦
               uses: golangci/golangci-lint-action@v6
               with:
                   version: v1.58
-                  args: --config .golangci.yml ./{{.module_name}}/dagger
-            - name: Dagger Develop on Module tests 🧪 {{.module_name}} with Dagger ${{ matrix.dagversion }}
-              uses: dagger/dagger-for-github@v5
+                  args: --config .golangci.yml ./{{.module_name_pkg}}
+
+            - name: Dagger Develop on Module tests 🧪 {{.module_name_pkg}} with Dagger ${{ matrix.dagversion }}
+              uses: dagger/dagger-for-github@v6
               with:
                   verb: develop
-                  module: {{.module_name}}/tests
+                  module: {{.module_name_pkg}}/tests
                   version: ${{ matrix.dagversion }}
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-            - name: Run golangci-lint on {{.module_name}}/tests 🧪
+            - name: Run golangci-lint on {{.module_name_pkg}}/tests 🧪
               uses: golangci/golangci-lint-action@v6
               with:
                   version: v1.58
-                  args: --config .golangci.yml ./{{.module_name}}/tests/dagger
+                  args: --config .golangci.yml ./{{.module_name_pkg}}/tests
+
+            - name: Dagger Develop on Module Examples/Go 📄 {{.module_name_pkg}} with Dagger ${{ matrix.dagversion }}
+              uses: dagger/dagger-for-github@v6
+              with:
+                  verb: develop
+                  module: {{.module_name_pkg}}/examples/go
+                  version: ${{ matrix.dagversion }}
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Run golangci-lint on {{.module_name_pkg}}/examples/go 📄
+              uses: golangci/golangci-lint-action@v6
+              with:
+                  version: v1.58
+                  args: --config .golangci.yml ./{{.module_name_pkg}}/examples/go
 
     module-test:
         strategy:
             matrix:
                 go: ['1.22']
-                dagversion: [0.11.6, 0.11.7, 0.11.8, 0.11.9]
+                dagversion: [0.12.0, 0.12.1, 0.12.2, 0.12.3]
         needs: [linter, golangci-lint]
-        name: Run Tests 🧪 in {{.module_name}} on ${{ matrix.os }} with Dagger ${{ matrix.dagversion }}
+        name: Run Tests 🧪 in {{.module_name_pkg}} on ${{ matrix.os }} with Dagger ${{ matrix.dagversion }}
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
@@ -119,27 +154,77 @@ jobs:
               with:
                   go-version: ${{ matrix.go }}
             - name: Dagger Develop on Module 📦 with Dagger ${{ matrix.dagversion }}
-              uses: dagger/dagger-for-github@v5
+              uses: dagger/dagger-for-github@v6
               with:
                   verb: develop
-                  module: {{.module_name}}
+                  module: {{.module_name_pkg}}
                   version: ${{ matrix.dagversion }}
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             - name: Dagger Develop on Test Module 🧪 with Dagger ${{ matrix.dagversion }}
-              uses: dagger/dagger-for-github@v5
+              uses: dagger/dagger-for-github@v6
               with:
                   verb: develop
-                  module: {{.module_name}}/tests
+                  module: {{.module_name_pkg}}/tests
                   version: ${{ matrix.dagversion }}
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-            - name: Running Tests 💣 in {{.module_name}} on ${{ matrix.os }} with Dagger ${{ matrix.dagversion }}
-              uses: dagger/dagger-for-github@v5
+            - name: Running Tests 💣 in {{.module_name_pkg}} on ${{ matrix.os }} with Dagger ${{ matrix.dagversion }}
+              uses: dagger/dagger-for-github@v6
               with:
                   verb: call
                   args: test-all
-                  module: {{.module_name}}/tests
+                  module: {{.module_name_pkg}}/tests
+                  version: ${{ matrix.dagversion }}
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    module-examples-go:
+        strategy:
+            matrix:
+                go: ['1.22']
+                dagversion: [0.12.0, 0.12.1, 0.12.2, 0.12.3]
+        needs: [linter, golangci-lint]
+        name: Run recipes 🥗 in {{.module_name_pkg}}/examples/go on ${{ matrix.os }} with Dagger ${{ matrix.dagversion }}
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-go@v5
+              with:
+                  go-version: ${{ matrix.go }}
+            - name: Dagger Develop on Module Examples 📄 with Dagger ${{ matrix.dagversion }}
+              uses: dagger/dagger-for-github@v6
+              with:
+                  verb: develop
+                  module: {{.module_name_pkg}}/examples/go
+                  version: ${{ matrix.dagversion }}
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            - name: Running Recipes create container 💣 in {{.module_name_pkg}}/examples/go on ${{ matrix.os }} with Dagger ${{ matrix.dagversion }}
+              uses: dagger/dagger-for-github@v6
+              with:
+                  verb: call
+                  args: create-container
+                  module: {{.module_name_pkg}}/examples/go
+                  version: ${{ matrix.dagversion }}
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Running Recipes passed env vars 💣 in {{.module_name_pkg}}/examples/go on ${{ matrix.os }} with Dagger ${{ matrix.dagversion }}
+              uses: dagger/dagger-for-github@v6
+              with:
+                  verb: call
+                  args: passed-env-vars
+                  module: {{.module_name_pkg}}/examples/go
+                  version: ${{ matrix.dagversion }}
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            - name: Running Recipes run-arbitrary-command 💣 in {{.module_name_pkg}}/examples/go on ${{ matrix.os }} with Dagger ${{ matrix.dagversion }}
+              uses: dagger/dagger-for-github@v6
+              with:
+                  verb: call
+                  args: run-arbitrary-command
+                  module: {{.module_name_pkg}}/examples/go
                   version: ${{ matrix.dagversion }}
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
