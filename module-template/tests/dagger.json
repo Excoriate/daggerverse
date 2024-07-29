@@ -3,7 +3,7 @@
   "sdk": "go",
   "dependencies": [
     {
-      "name": "module-example",
+      "name": "module-template",
       "source": ".."
     }
   ],

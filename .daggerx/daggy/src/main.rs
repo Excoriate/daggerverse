@@ -270,9 +270,29 @@ fn initialize_examples(module_cfg: &NewDaggerModule) -> Result<(), Error> {
         return Err(Error::new(ErrorKind::NotFound, "Failed to create main.go in examples directory"));
     }
 
+    // Copy testdata/common directory
+    let src_testdata = ".daggerx/templates/examples/go/testdata/common";
+    let dest_testdata = format!("{}/testdata/common", examples_path);
+    copy_dir_all(src_testdata, &dest_testdata)?;
+
     run_command_with_output("dagger install ../../", &examples_path)?;
     run_command_with_output("dagger develop -m go", &examples_path)?;
 
+    Ok(())
+}
+
+// New helper function to copy directories recursively
+fn copy_dir_all(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> Result<(), Error> {
+    fs::create_dir_all(&dst)?;
+    for entry in fs::read_dir(src)? {
+        let entry = entry?;
+        let ty = entry.file_type()?;
+        if ty.is_dir() {
+            copy_dir_all(entry.path(), dst.as_ref().join(entry.file_name()))?;
+        } else {
+            fs::copy(entry.path(), dst.as_ref().join(entry.file_name()))?;
+        }
+    }
     Ok(())
 }
 
@@ -305,6 +325,11 @@ fn initialize_tests(module_cfg: &NewDaggerModule) -> Result<(), Error> {
     if !Path::new(&dest_main_go_test).exists() {
         return Err(Error::new(ErrorKind::NotFound, "Failed to create main.go in tests directory"));
     }
+
+    // Copy testdata/common directory
+    let src_testdata = ".daggerx/templates/tests/testdata/common";
+    let dest_testdata = format!("{}/testdata/common", tests_path);
+    copy_dir_all(src_testdata, &dest_testdata)?;
 
     run_command_with_output("dagger install ../", &tests_path)?;
     run_command_with_output("dagger develop -m tests", &tests_path)?;

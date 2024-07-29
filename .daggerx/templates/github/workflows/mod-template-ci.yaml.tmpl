@@ -50,7 +50,6 @@ jobs:
                   version: ${{ matrix.dagversion }}
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
             - name: Dagger Develop on Examples Module for Go 📄 with Dagger ${{ matrix.dagversion }}
               uses: dagger/dagger-for-github@v6
               with:
@@ -76,7 +75,6 @@ jobs:
                   version: ${{ matrix.dagversion }}
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
             - name: Dagger Call on Test Examples/Go Module 📄 with Dagger ${{ matrix.dagversion }}
               uses: dagger/dagger-for-github@v6
               with:
@@ -97,6 +95,8 @@ jobs:
             - uses: actions/setup-go@v5
               with:
                   go-version: ${{ matrix.go }}
+
+      # Dagger main module 📦 (develop & golang ci-lint)
             - name: Dagger Develop on Module 📦 {{.module_name_pkg}} with Dagger ${{ matrix.dagversion }}
               uses: dagger/dagger-for-github@v6
               with:
@@ -111,6 +111,7 @@ jobs:
                   version: v1.58
                   args: --config .golangci.yml ./{{.module_name_pkg}}
 
+      # Dagger test module 🧪 (develop & golang ci-lint)
             - name: Dagger Develop on Module tests 🧪 {{.module_name_pkg}} with Dagger ${{ matrix.dagversion }}
               uses: dagger/dagger-for-github@v6
               with:
@@ -125,6 +126,7 @@ jobs:
                   version: v1.58
                   args: --config .golangci.yml ./{{.module_name_pkg}}/tests
 
+      # Dagger examples (go) module 📄 (develop & golang ci-lint)
             - name: Dagger Develop on Module Examples/Go 📄 {{.module_name_pkg}} with Dagger ${{ matrix.dagversion }}
               uses: dagger/dagger-for-github@v6
               with:
@@ -133,8 +135,7 @@ jobs:
                   version: ${{ matrix.dagversion }}
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-            - name: Run golangci-lint on {{.module_name_pkg}}/examples/go 📄
+            - name: Run golangci-lint on {{.module_name_pkg}}/examples/go 📄 (develop & golang ci-lint)
               uses: golangci/golangci-lint-action@v6
               with:
                   version: v1.58
@@ -179,7 +180,7 @@ jobs:
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    module-examples-go:
+    {{.module_name_pkg}}s-go:
         strategy:
             matrix:
                 go: ['1.22']

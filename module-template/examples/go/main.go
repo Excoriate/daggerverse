@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/excoriate/daggerverse/module-example/examples/go/internal/dagger"
+	"github.com/excoriate/daggerverse/module-template/examples/go/internal/dagger"
 )
 
-// Go is a Dagger module that exemplifies the usage of the ModuleExample module.
+// Go is a Dagger module that exemplifies the usage of the ModuleTemplate module.
 //
 // This module is used to create and manage containers.
 type Go struct {
@@ -49,11 +49,11 @@ func (m *Go) getTestDir() *dagger.Directory {
 		Directory("./testdata")
 }
 
-// PassedEnvVars demonstrates how to pass environment variables to the ModuleExample module.
+// PassedEnvVars demonstrates how to pass environment variables to the ModuleTemplate module.
 //
-// This method configures a ModuleExample module to use specific environment variables from the host.
+// This method configures a ModuleTemplate module to use specific environment variables from the host.
 func (m *Go) PassedEnvVars(ctx context.Context) error {
-	targetModule := dag.ModuleExample(dagger.ModuleExampleOpts{
+	targetModule := dag.ModuleTemplate(dagger.ModuleTemplateOpts{
 		EnvVarsFromHost: []string{"SOMETHING=SOMETHING,SOMETHING=SOMETHING"},
 	})
 
@@ -77,10 +77,10 @@ func (m *Go) PassedEnvVars(ctx context.Context) error {
 }
 
 // OpenTerminal demonstrates how to open an interactive terminal session
-// within a ModuleExample module container.
+// within a ModuleTemplate module container.
 //
 // This function showcases the initialization and configuration of a
-// ModuleExample module container using various options like enabling Cgo,
+// ModuleTemplate module container using various options like enabling Cgo,
 // utilizing build cache, and including a GCC compiler.
 //
 // Parameters:
@@ -94,8 +94,8 @@ func (m *Go) PassedEnvVars(ctx context.Context) error {
 //	This function can be used to interactively debug or inspect the
 //	container environment during test execution.
 func (m *Go) OpenTerminal() *dagger.Container {
-	// Configure the ModuleExample module container with necessary options
-	targetModule := dag.ModuleExample()
+	// Configure the ModuleTemplate module container with necessary options
+	targetModule := dag.ModuleTemplate()
 
 	// Retrieve and discard standard output
 	_, _ = targetModule.Ctr().
@@ -109,7 +109,7 @@ func (m *Go) OpenTerminal() *dagger.Container {
 // CreateNetRcFileForGithub creates and configures a .netrc file for GitHub authentication.
 //
 // This method exemplifies the creation of a .netrc file with credentials for accessing GitHub,
-// and demonstrates how to pass this file as a secret to the ModuleExample module.
+// and demonstrates how to pass this file as a secret to the ModuleTemplate module.
 //
 // Parameters:
 //   - ctx: The context for controlling the function's timeout and cancellation.
@@ -119,13 +119,13 @@ func (m *Go) OpenTerminal() *dagger.Container {
 //
 // Steps Involved:
 //  1. Define GitHub password as a secret.
-//  2. Configure the ModuleExample module to use the .netrc file with the provided credentials.
+//  2. Configure the ModuleTemplate module to use the .netrc file with the provided credentials.
 //  3. Run a command inside the container to verify the .netrc file's contents.
 func (m *Go) CreateNetRcFileForGithub(ctx context.Context) (*dagger.Container, error) {
 	passwordAsSecret := dag.SetSecret("mysecret", "ohboywhatapassword")
 
 	// Configure it for GitHub
-	targetModule := dag.ModuleExample().
+	targetModule := dag.ModuleTemplate().
 		WithNewNetrcFileAsSecretGitHub("supersecretuser", passwordAsSecret)
 
 	// Check if the .netrc file is created correctly
@@ -149,7 +149,7 @@ func (m *Go) CreateNetRcFileForGithub(ctx context.Context) (*dagger.Container, e
 // RunArbitraryCommand runs an arbitrary shell command in the test container.
 //
 // This function demonstrates how to execute a shell command within the container
-// using the ModuleExample module.
+// using the ModuleTemplate module.
 //
 // Parameters:
 //
@@ -159,7 +159,7 @@ func (m *Go) CreateNetRcFileForGithub(ctx context.Context) (*dagger.Container, e
 //
 //	A string containing the output of the executed command, or an error if the command fails or if the output is empty.
 func (m *Go) RunArbitraryCommand(ctx context.Context) (string, error) {
-	targetModule := dag.ModuleExample().WithSource(m.TestDir)
+	targetModule := dag.ModuleTemplate().WithSource(m.TestDir)
 
 	// Execute the 'ls -l' command
 	out, err := targetModule.
@@ -180,7 +180,7 @@ func (m *Go) RunArbitraryCommand(ctx context.Context) (string, error) {
 
 // CreateContainer initializes and returns a configured Dagger container.
 //
-// This method exemplifies the setup of a container within the ModuleExample module using the source directory.
+// This method exemplifies the setup of a container within the ModuleTemplate module using the source directory.
 //
 // Parameters:
 //   - ctx: The context for controlling the function's timeout and cancellation.
@@ -189,11 +189,11 @@ func (m *Go) RunArbitraryCommand(ctx context.Context) (string, error) {
 //   - A configured Dagger container if successful, or an error if the process fails.
 //
 // Steps Involved:
-//  1. Configure the ModuleExample module with the source directory.
+//  1. Configure the ModuleTemplate module with the source directory.
 //  2. Run a command inside the container to check the OS information.
 func (m *Go) CreateContainer(ctx context.Context) (*dagger.Container, error) {
 	targetModule := dag.
-		ModuleExample().
+		ModuleTemplate().
 		BaseAlpine().
 		WithUtilitiesInAlpineContainer(). // Install utilities
 		WithGitInAlpineContainer().       // Install git

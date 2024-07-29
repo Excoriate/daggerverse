@@ -1,5 +1,5 @@
 {
-  "name": "module-example",
+  "name": "module-template",
   "sdk": "go",
   "exclude": [
     "../.direnv",

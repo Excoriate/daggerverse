@@ -1,4 +1,4 @@
-// A generated module for test the ModuleExample functions
+// A generated module for test the ModuleTemplate functions
 //
 // This module has been generated via dagger init and serves as a reference to
 // basic module structure as you get started with Dagger.
@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/excoriate/daggerverse/module-example/tests/internal/dagger"
+	"github.com/excoriate/daggerverse/module-template/tests/internal/dagger"
 
 	"github.com/sourcegraph/conc/pool"
 )
@@ -92,7 +92,7 @@ func (m *Tests) TestAll(ctx context.Context) error {
 	polTests.Go(m.TestWithAWSKeys)
 	polTests.Go(m.TestWithAzureCredentials)
 
-	// From this point onwards, we're testing the specific functionality of the ModuleExample module.
+	// From this point onwards, we're testing the specific functionality of the ModuleTemplate module.
 
 	if err := polTests.Wait(); err != nil {
 		return fmt.Errorf("there are some failed tests: %w", err)
@@ -122,7 +122,7 @@ func (m *Tests) TestWithContainer(ctx context.Context) error {
 	newContainer = newContainer.
 		WithExec(installCmd)
 
-	targetModule := dag.ModuleExample()
+	targetModule := dag.ModuleTemplate()
 	targetModule = targetModule.
 		WithContainer(newContainer)
 
@@ -151,7 +151,7 @@ func (m *Tests) TestWithContainer(ctx context.Context) error {
 //
 // This is a helper method for tests, in order to get a terminal for testing purposes.
 func (m *Tests) TestTerminal() *dagger.Container {
-	targetModule := dag.ModuleExample()
+	targetModule := dag.ModuleTemplate()
 
 	_, _ = targetModule.
 		Ctr().
@@ -174,8 +174,8 @@ func (m *Tests) TestTerminal() *dagger.Container {
 //   - error: Returns an error if the Ubuntu image is not used or if the output is not as expected.
 func (m *Tests) TestUbuntuBase(ctx context.Context) error {
 	targetModule := dag.
-		ModuleExample().
-		BaseUbuntu(dagger.ModuleExampleBaseUbuntuOpts{Version: "22.04"})
+		ModuleTemplate().
+		BaseUbuntu(dagger.ModuleTemplateBaseUbuntuOpts{Version: "22.04"})
 
 	out, err := targetModule.Ctr().
 		WithExec([]string{"grep", "^ID=ubuntu$", "/etc/os-release"}).
@@ -203,8 +203,8 @@ func (m *Tests) TestUbuntuBase(ctx context.Context) error {
 // Returns:
 //   - error: Returns an error if the Alpine image is not used or if the output is not as expected.
 func (m *Tests) TestAlpineBase(ctx context.Context) error {
-	targetModule := dag.ModuleExample().
-		BaseAlpine(dagger.ModuleExampleBaseAlpineOpts{Version: "3.17.3"})
+	targetModule := dag.ModuleTemplate().
+		BaseAlpine(dagger.ModuleTemplateBaseAlpineOpts{Version: "3.17.3"})
 
 	out, err := targetModule.Ctr().WithExec([]string{"cat", "/etc/os-release"}).Stdout(ctx)
 	if err != nil {
@@ -231,8 +231,8 @@ func (m *Tests) TestAlpineBase(ctx context.Context) error {
 //   - error: Returns an error if the BusyBox image is not used or if the output is not as expected.
 func (m *Tests) TestBusyBoxBase(ctx context.Context) error {
 	targetModule := dag.
-		ModuleExample().
-		BaseBusyBox(dagger.ModuleExampleBaseBusyBoxOpts{Version: "1.35.0"})
+		ModuleTemplate().
+		BaseBusyBox(dagger.ModuleTemplateBaseBusyBoxOpts{Version: "1.35.0"})
 
 	out, err := targetModule.Ctr().
 		WithExec([]string{"busybox", "--help"}).
@@ -254,7 +254,7 @@ func (m *Tests) TestBusyBoxBase(ctx context.Context) error {
 // This is a helper method for tests, in order to test if the env vars are passed correctly in the constructor.
 func (m *Tests) TestPassingEnvVarsInConstructor(ctx context.Context) error {
 	targetModule := dag.
-		ModuleExample(dagger.ModuleExampleOpts{
+		ModuleTemplate(dagger.ModuleTemplateOpts{
 			EnvVarsFromHost: []string{"HOST=localhost", "PORT=8080", "USER=me", "PASS=1234"},
 		})
 
@@ -287,18 +287,18 @@ func (m *Tests) TestPassingEnvVarsInConstructor(ctx context.Context) error {
 // This is a helper method for tests, in order to test if the env vars are passed correctly in the API.
 func (m *Tests) TestWithEnvironmentVariable(ctx context.Context) error {
 	targetModule := dag.
-		ModuleExample().
-		WithEnvironmentVariable("HOST", "localhost", dagger.ModuleExampleWithEnvironmentVariableOpts{
+		ModuleTemplate().
+		WithEnvironmentVariable("HOST", "localhost", dagger.ModuleTemplateWithEnvironmentVariableOpts{
 			Expand: false,
 		})
 
 	targetModule = targetModule.
-		WithEnvironmentVariable("PORT", "8080", dagger.ModuleExampleWithEnvironmentVariableOpts{
+		WithEnvironmentVariable("PORT", "8080", dagger.ModuleTemplateWithEnvironmentVariableOpts{
 			Expand: false,
 		})
 
 	targetModule = targetModule.
-		WithEnvironmentVariable("USER", "me", dagger.ModuleExampleWithEnvironmentVariableOpts{
+		WithEnvironmentVariable("USER", "me", dagger.ModuleTemplateWithEnvironmentVariableOpts{
 			Expand: false,
 		})
 
@@ -333,7 +333,7 @@ func (m *Tests) TestWithEnvironmentVariable(ctx context.Context) error {
 // TestWithSource tests if the source directory is set correctly.
 func (m *Tests) TestWithSource(ctx context.Context) error {
 	targetModule := dag.
-		ModuleExample()
+		ModuleTemplate()
 
 	targetModule.
 		WithSource(m.TestDir)
@@ -363,7 +363,7 @@ func (m *Tests) TestWithSource(ctx context.Context) error {
 // Tests if the shell command is executed correctly in the container.
 func (m *Tests) TestRunShellCMD(ctx context.Context) error {
 	targetModule := dag.
-		ModuleExample()
+		ModuleTemplate()
 
 	out, err := targetModule.
 		RunShell(ctx, "ls -l")
@@ -396,8 +396,8 @@ func (m *Tests) TestRunShellCMD(ctx context.Context) error {
 //   - error: Returns an error if there is an issue printing environment variables,
 //     or if no environment variables are found in the output.
 func (m *Tests) TestPrintEnvVars(ctx context.Context) error {
-	// Retrieve the environment variables using the ModuleExample's PrintEnvVars function.
-	envVars, err := dag.ModuleExample().PrintEnvVars(ctx)
+	// Retrieve the environment variables using the ModuleTemplate's PrintEnvVars function.
+	envVars, err := dag.ModuleTemplate().PrintEnvVars(ctx)
 
 	// Check for errors retrieving the environment variables.
 	if err != nil {
@@ -426,7 +426,7 @@ func (m *Tests) TestPrintEnvVars(ctx context.Context) error {
 //     or if the inspected value does not match the expected result.
 func (m *Tests) TestInspectEnvVar(ctx context.Context) error {
 	// Initialize the target module.
-	targetModule := dag.ModuleExample()
+	targetModule := dag.ModuleTemplate()
 
 	// Define the environment variable key and value.
 	key := "SOMETHING"
@@ -434,7 +434,7 @@ func (m *Tests) TestInspectEnvVar(ctx context.Context) error {
 
 	// Set the environment variable in the target module.
 	targetModule = targetModule.
-		WithEnvironmentVariable(key, value, dagger.ModuleExampleWithEnvironmentVariableOpts{
+		WithEnvironmentVariable(key, value, dagger.ModuleTemplateWithEnvironmentVariableOpts{
 			Expand: true,
 		})
 
@@ -466,7 +466,7 @@ func (m *Tests) TestInspectEnvVar(ctx context.Context) error {
 func (m *Tests) TestWithUtilitiesInAlpineContainer(ctx context.Context) error {
 	// Initialize the target module with the Alpine container and utilities.
 	targetModule := dag.
-		ModuleExample()
+		ModuleTemplate()
 
 	targetModule = targetModule.WithUtilitiesInAlpineContainer()
 
@@ -506,7 +506,7 @@ func (m *Tests) TestWithUtilitiesInAlpineContainer(ctx context.Context) error {
 //     or if there is an issue with executing commands in the container.
 func (m *Tests) TestWithNewNetrcFileGitHub(ctx context.Context) error {
 	targetModule := dag.
-		ModuleExample()
+		ModuleTemplate()
 
 		// Create a new secret with the GitHub credentials.
 	githubSecret := dag.SetSecret("github-username", "github-password")
@@ -549,7 +549,7 @@ func (m *Tests) TestWithNewNetrcFileGitHub(ctx context.Context) error {
 //     or if there is an issue with executing commands in the container.
 func (m *Tests) TestWithNewNetrcFileAsSecretGitHub(ctx context.Context) error {
 	// Initialize the target module.
-	targetModule := dag.ModuleExample()
+	targetModule := dag.ModuleTemplate()
 
 	// Create a new secret with the GitHub credentials.
 	githubSecret := dag.SetSecret("github-username", "github-password")
@@ -588,7 +588,7 @@ func (m *Tests) TestWithNewNetrcFileAsSecretGitHub(ctx context.Context) error {
 //     content does not match the expected result,
 //     or if there is an issue with executing commands in the container.
 func (m *Tests) TestWithNewNetrcFileGitLab(ctx context.Context) error {
-	targetModule := dag.ModuleExample()
+	targetModule := dag.ModuleTemplate()
 
 	// Create a new secret with the GitLab credentials.
 	gitlabSecret := dag.SetSecret("gitlab-username", "gitlab-password")
@@ -626,7 +626,7 @@ func (m *Tests) TestWithNewNetrcFileGitLab(ctx context.Context) error {
 //     content does not match the expected result,
 //     or if there is an issue with executing commands in the container.
 func (m *Tests) TestWithNewNetrcFileAsSecretGitLab(ctx context.Context) error {
-	targetModule := dag.ModuleExample()
+	targetModule := dag.ModuleTemplate()
 
 	// Create a new secret with the GitLab credentials.
 	gitlabSecret := dag.SetSecret("gitlab-username", "gitlab-password")
@@ -670,7 +670,7 @@ func (m *Tests) TestWithSecretAsEnvVar(ctx context.Context) error {
 	secretAnother := dag.SetSecret("ANOTHER_SECRET", "another-secret-value")
 
 	// Initialize the target module and set secrets as environment variables.
-	targetModule := dag.ModuleExample().
+	targetModule := dag.ModuleTemplate().
 		WithSecretAsEnvVar("AWS_ACCESS_KEY_ID", secretAWS).
 		WithSecretAsEnvVar("GCP_PROJECT_ID", secretGCP).
 		WithSecretAsEnvVar("ANOTHER_SECRET", secretAnother)
@@ -714,7 +714,7 @@ func (m *Tests) TestWithSecretAsEnvVar(ctx context.Context) error {
 //   - error: Returns an error if there is an issue downloading the file, mounting it in the container,
 //     or if the file is not found.
 func (m *Tests) TestWithDownloadedFile(ctx context.Context) error {
-	targetModule := dag.ModuleExample()
+	targetModule := dag.ModuleTemplate()
 
 	// Download a file from a URL and mount it in the container, without filename passed.
 	fileURL := "https://framerusercontent.com/assets/cNNFYmZqESeYTV5PHp72ay0O2o.zip"
@@ -738,7 +738,7 @@ func (m *Tests) TestWithDownloadedFile(ctx context.Context) error {
 	// Downloading the file but with a name this time instead.
 	fileName := "mydownloadedfile.zip"
 	targetModule = targetModule.
-		WithDownloadedFile(fileURL, dagger.ModuleExampleWithDownloadedFileOpts{
+		WithDownloadedFile(fileURL, dagger.ModuleTemplateWithDownloadedFileOpts{
 			DestFileName: fileName,
 		})
 
@@ -761,12 +761,12 @@ func (m *Tests) TestWithDownloadedFile(ctx context.Context) error {
 
 // TestWithClonedGitRepo tests the WithClonedGitRepo function.
 func (m *Tests) TestWithClonedGitRepo(ctx context.Context) error {
-	targetModule := dag.ModuleExample()
+	targetModule := dag.ModuleTemplate()
 
 	// This is a public repository, the token isn't required.
 	targetModule = targetModule.
 		WithClonedGitRepo("https://github.com/excoriate/daggerverse",
-			dagger.ModuleExampleWithClonedGitRepoOpts{})
+			dagger.ModuleTemplateWithClonedGitRepoOpts{})
 
 	out, err := targetModule.Ctr().
 		WithExec([]string{"ls", "-l"}).
@@ -789,7 +789,7 @@ func (m *Tests) TestWithClonedGitRepo(ctx context.Context) error {
 
 // TestCloneGitRepo tests the CloneGitRepo function.
 func (m *Tests) TestCloneGitRepo(ctx context.Context) error {
-	targetModule := dag.ModuleExample()
+	targetModule := dag.ModuleTemplate()
 
 	// This is a public repository, the token isn't required.
 	clonedRepo := targetModule.
@@ -844,7 +844,7 @@ func (m *Tests) TestCloneGitRepo(ctx context.Context) error {
 //     or if the file is not found in the mounted path.
 func (m *Tests) TestDownloadFile(ctx context.Context) error {
 	// Initialize the target module.
-	targetModule := dag.ModuleExample()
+	targetModule := dag.ModuleTemplate()
 
 	// Define the URL of the file to be downloaded.
 	fileURL := "https://framerusercontent.com/assets/cNNFYmZqESeYTV5PHp72ay0O2o.zip"
@@ -889,7 +889,7 @@ func (m *Tests) TestDownloadFile(ctx context.Context) error {
 //   - error: Returns an error if there is an issue creating secrets, setting environment variables,
 //     executing commands in the container, or if the output does not contain the expected environment variables.
 func (m *Tests) TestWithAWSKeys(ctx context.Context) error {
-	targetModule := dag.ModuleExample()
+	targetModule := dag.ModuleTemplate()
 
 	awsKeyID := dag.SetSecret("AWS_ACCESS_KEY_ID", "AKIAIOSFODNN7EXAMPLE")
 	awsSecretAccessKey := dag.SetSecret("AWS_SECRET_ACCESS_KEY", "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY")
@@ -942,7 +942,7 @@ func (m *Tests) TestWithAWSKeys(ctx context.Context) error {
 //   - error: Returns an error if there is an issue creating secrets, setting environment variables,
 //     executing commands in the container, or if the output does not contain the expected environment variables.
 func (m *Tests) TestWithAzureCredentials(ctx context.Context) error {
-	targetModule := dag.ModuleExample()
+	targetModule := dag.ModuleTemplate()
 
 	azureClientID := dag.SetSecret("AZURE_CLIENT_ID", "00000000-0000-0000-0000-000000000000")
 	azureClientSecret := dag.SetSecret("AZURE_CLIENT_SECRET", "00000000-0000-0000-0000-000000000000")
