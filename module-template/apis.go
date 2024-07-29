@@ -276,34 +276,34 @@ func (m *ModuleTemplate) WithDownloadedFile(
 	return m
 }
 
-// DownloadFile downloads a file from the specified URL.
+// WithClonedGitRepo clones a Git repository and mounts it as a directory in the container.
+//
+// This method downloads a Git repository and mounts it as a directory in the container. It supports optional
+// authentication tokens for private repositories and can handle both GitHub and GitLab repositories.
 //
 // Parameters:
-//   - url: The URL of the file to download.
-//   - destFileName: The name of the file to download. Optional parameter.
-//     If not set, it'll default to the basename of the URL.
+//   - repoURL: The URL of the git repository to clone (e.g., "https://github.com/user/repo").
+//   - token: (Optional) The VCS token to use for authentication. If
+//     not provided, the repository will be cloned without authentication.
+//   - vcs: (Optional) The version control system (VCS) to use for
+//     authentication. Defaults to "github". Supported values are "github" and "gitlab".
 //
 // Returns:
-//   - *dagger.File: The downloaded file.
-//
-// Functionality:
-//
-// This method downloads a file from the provided URL. If the destination file
-// name is not specified, it defaults to the basename of the URL. The downloaded
-// file is then returned as a *dagger.File.
-func (m *ModuleTemplate) DownloadFile(
-	// url is the URL of the file to download.
-	url string,
-	// destFileName is the name of the file to download. If not set, it'll default to the basename of the URL.
+//   - *ModuleTemplate: The updated ModuleTemplate with the cloned repository mounted in the container.
+func (m *ModuleTemplate) WithClonedGitRepo(
+	repoURL string,
+	// token is the VCS token to use for authentication. Optional parameter.
 	// +optional
-	destFileName string,
-) *dagger.File {
-	fileName := filepath.Base(url)
-	if destFileName != "" {
-		fileName = destFileName
-	}
+	token string,
+	// vcs is the VCS to use for authentication. Optional parameter.
+	// +optional
+	vcs string,
+) *ModuleTemplate {
+	// Call the helper function to clone the repository.
+	clonedRepo := m.CloneGitRepo(repoURL, token, vcs)
 
-	fileDownloaded := dag.HTTP(url).WithName(fileName)
+	// Mount the cloned repository as a directory inside the container.
+	m.Ctr = m.Ctr.WithMountedDirectory(fixtures.MntPrefix, clonedRepo)
 
-	return fileDownloaded
+	return m
 }

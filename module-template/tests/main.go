@@ -64,22 +64,33 @@ func (m *Tests) getTestDir() *dagger.Directory {
 func (m *Tests) TestAll(ctx context.Context) error {
 	polTests := pool.New().WithErrors().WithContext(ctx)
 
-	polTests.Go(m.TestAPIWithContainer)
+	// Test different ways to configure the base container.
 	polTests.Go(m.TestUbuntuBase)
 	polTests.Go(m.TestAlpineBase)
 	polTests.Go(m.TestBusyBoxBase)
-	polTests.Go(m.TestAPIPassingEnvVarsInConstructor)
-	polTests.Go(m.TestAPIWithSource)
-	polTests.Go(m.TestAPIPassingEnvVars)
+	polTests.Go(m.TestPassingEnvVarsInConstructor)
+	// Test built-in commands
 	polTests.Go(m.TestRunShellCMD)
+	polTests.Go(m.TestPrintEnvVars)
+	polTests.Go(m.TestInspectEnvVar)
+	// Test API(s) usage scenarios. APIs -> With<something>
+	polTests.Go(m.TestWithContainer)
+	polTests.Go(m.TestWithSource)
+	polTests.Go(m.TestWithEnvironmentVariable)
 	polTests.Go(m.TestWithUtilitiesInAlpineContainer)
-	polTests.Go(m.TestNewNetrcFileGitHub)
+	polTests.Go(m.TestWithNewNetrcFileGitHub)
 	polTests.Go(m.TestWithNewNetrcFileAsSecretGitHub)
-	polTests.Go(m.TestNewNetrcFileGitLab)
+	polTests.Go(m.TestWithNewNetrcFileGitLab)
 	polTests.Go(m.TestWithNewNetrcFileAsSecretGitLab)
 	polTests.Go(m.TestWithSecretAsEnvVar)
 	polTests.Go(m.TestWithDownloadedFile)
+	polTests.Go(m.TestWithClonedGitRepo)
+	// Test utility functions.
 	polTests.Go(m.TestDownloadFile)
+	polTests.Go(m.TestCloneGitRepo)
+	// Test cloud-specific functions.
+	polTests.Go(m.TestWithAWSKeys)
+	polTests.Go(m.TestWithAzureCredentials)
 
 	// From this point onwards, we're testing the specific functionality of the ModuleTemplate module.
 
@@ -90,10 +101,10 @@ func (m *Tests) TestAll(ctx context.Context) error {
 	return nil
 }
 
-// TestAPIWithContainer tests if the container is set correctly.
+// TestWithContainer tests if the container is set correctly.
 //
 // This API is used to override the container set in the Dagger instance.
-func (m *Tests) TestAPIWithContainer(ctx context.Context) error {
+func (m *Tests) TestWithContainer(ctx context.Context) error {
 	// Create a new container from the ubuntu:latest image
 	newContainer := dag.Container().From("ubuntu:latest")
 
@@ -238,10 +249,10 @@ func (m *Tests) TestBusyBoxBase(ctx context.Context) error {
 	return nil
 }
 
-// TestAPIPassingEnvVarsInConstructor tests if the environment variables are passed correctly in the constructor.
+// TestPassingEnvVarsInConstructor tests if the environment variables are passed correctly in the constructor.
 //
 // This is a helper method for tests, in order to test if the env vars are passed correctly in the constructor.
-func (m *Tests) TestAPIPassingEnvVarsInConstructor(ctx context.Context) error {
+func (m *Tests) TestPassingEnvVarsInConstructor(ctx context.Context) error {
 	targetModule := dag.
 		ModuleTemplate(dagger.ModuleTemplateOpts{
 			EnvVarsFromHost: []string{"HOST=localhost", "PORT=8080", "USER=me", "PASS=1234"},
@@ -271,10 +282,10 @@ func (m *Tests) TestAPIPassingEnvVarsInConstructor(ctx context.Context) error {
 	return nil
 }
 
-// TestAPIPassingEnvVars tests if the environment variables are passed correctly in the API.
+// TestWithEnvironmentVariable tests if the environment variables are passed correctly in the API.
 //
 // This is a helper method for tests, in order to test if the env vars are passed correctly in the API.
-func (m *Tests) TestAPIPassingEnvVars(ctx context.Context) error {
+func (m *Tests) TestWithEnvironmentVariable(ctx context.Context) error {
 	targetModule := dag.
 		ModuleTemplate().
 		WithEnvironmentVariable("HOST", "localhost", dagger.ModuleTemplateWithEnvironmentVariableOpts{
@@ -319,8 +330,8 @@ func (m *Tests) TestAPIPassingEnvVars(ctx context.Context) error {
 	return nil
 }
 
-// TestAPIWithSource tests if the source directory is set correctly.
-func (m *Tests) TestAPIWithSource(ctx context.Context) error {
+// TestWithSource tests if the source directory is set correctly.
+func (m *Tests) TestWithSource(ctx context.Context) error {
 	targetModule := dag.
 		ModuleTemplate()
 
@@ -372,6 +383,76 @@ func (m *Tests) TestRunShellCMD(ctx context.Context) error {
 	return nil
 }
 
+// TestPrintEnvVars tests the PrintEnvVars function.
+//
+// This method verifies that environment variables can be printed within the context
+// of the target module's execution. It runs the `printenv` command within the container
+// and checks if any environment variables are present.
+//
+// Arguments:
+// - ctx (context.Context): The context for the test execution.
+//
+// Returns:
+//   - error: Returns an error if there is an issue printing environment variables,
+//     or if no environment variables are found in the output.
+func (m *Tests) TestPrintEnvVars(ctx context.Context) error {
+	// Retrieve the environment variables using the ModuleTemplate's PrintEnvVars function.
+	envVars, err := dag.ModuleTemplate().PrintEnvVars(ctx)
+
+	// Check for errors retrieving the environment variables.
+	if err != nil {
+		return fmt.Errorf("failed to get env vars: %w", err)
+	}
+
+	// Check if the output is empty, which indicates no environment variables were found.
+	if envVars == "" {
+		return fmt.Errorf("%w, expected to have at least one env var, got empty output", errEmptyOutput)
+	}
+
+	// Return nil if environment variables were successfully found in the output.
+	return nil
+}
+
+// TestInspectEnvVar tests the inspection of an environment variable set in the container.
+//
+// This method verifies that an environment variable is correctly set in the target module's container.
+// It sets an environment variable and then inspects it to check if the value matches the expected result.
+//
+// Arguments:
+// - ctx (context.Context): The context for the test execution.
+//
+// Returns:
+//   - error: Returns an error if there is an issue setting the environment variable, inspecting the variable,
+//     or if the inspected value does not match the expected result.
+func (m *Tests) TestInspectEnvVar(ctx context.Context) error {
+	// Initialize the target module.
+	targetModule := dag.ModuleTemplate()
+
+	// Define the environment variable key and value.
+	key := "SOMETHING"
+	value := "SOMETHING"
+
+	// Set the environment variable in the target module.
+	targetModule = targetModule.
+		WithEnvironmentVariable(key, value, dagger.ModuleTemplateWithEnvironmentVariableOpts{
+			Expand: true,
+		})
+
+	// Inspect the environment variable in the container.
+	out, err := targetModule.InspectEnvVar(ctx, key)
+	if err != nil {
+		return fmt.Errorf("failed to inspect env var %s: %w", key, err)
+	}
+
+	// Check if the inspected value matches the expected result.
+	if !strings.Contains(out, value) {
+		return fmt.Errorf("%w, expected %s to be %s, got %s", errExpectedContentNotMatch, key, value, out)
+	}
+
+	// Return nil if the environment variable was correctly set and inspected.
+	return nil
+}
+
 // TestWithUtilitiesInAlpineContainer tests if the Alpine container with utilities is set correctly.
 //
 // This method verifies that the Alpine container includes specific utilities by running a command within the container.
@@ -410,7 +491,7 @@ func (m *Tests) TestWithUtilitiesInAlpineContainer(ctx context.Context) error {
 	return nil
 }
 
-// TestNewNetrcFileGitHub tests the creation of a new .netrc file with GitHub credentials.
+// TestWithNewNetrcFileGitHub tests the creation of a new .netrc file with GitHub credentials.
 //
 // This function verifies that the GitHub credentials are set correctly in the .netrc file using a secret.
 // It creates a new secret with the GitHub credentials and sets them in the target module's .netrc file.
@@ -423,7 +504,7 @@ func (m *Tests) TestWithUtilitiesInAlpineContainer(ctx context.Context) error {
 //   - error: Returns an error if the creation of the .netrc file fails, if the file's content does
 //     not match the expected result,
 //     or if there is an issue with executing commands in the container.
-func (m *Tests) TestNewNetrcFileGitHub(ctx context.Context) error {
+func (m *Tests) TestWithNewNetrcFileGitHub(ctx context.Context) error {
 	targetModule := dag.
 		ModuleTemplate()
 
@@ -493,7 +574,7 @@ func (m *Tests) TestWithNewNetrcFileAsSecretGitHub(ctx context.Context) error {
 	return nil
 }
 
-// TestNewNetrcFileGitLab tests the creation of a new .netrc file with GitLab credentials.
+// TestWithNewNetrcFileGitLab tests the creation of a new .netrc file with GitLab credentials.
 //
 // This function verifies that the GitLab credentials are set correctly in the .netrc file using a secret.
 // It creates a new secret with the GitLab credentials and sets them in the target module's .netrc file.
@@ -506,7 +587,7 @@ func (m *Tests) TestWithNewNetrcFileAsSecretGitHub(ctx context.Context) error {
 //   - error: Returns an error if the creation of the .netrc file fails, if the file's
 //     content does not match the expected result,
 //     or if there is an issue with executing commands in the container.
-func (m *Tests) TestNewNetrcFileGitLab(ctx context.Context) error {
+func (m *Tests) TestWithNewNetrcFileGitLab(ctx context.Context) error {
 	targetModule := dag.ModuleTemplate()
 
 	// Create a new secret with the GitLab credentials.
@@ -678,6 +759,78 @@ func (m *Tests) TestWithDownloadedFile(ctx context.Context) error {
 	return nil
 }
 
+// TestWithClonedGitRepo tests the WithClonedGitRepo function.
+func (m *Tests) TestWithClonedGitRepo(ctx context.Context) error {
+	targetModule := dag.ModuleTemplate()
+
+	// This is a public repository, the token isn't required.
+	targetModule = targetModule.
+		WithClonedGitRepo("https://github.com/excoriate/daggerverse",
+			dagger.ModuleTemplateWithClonedGitRepoOpts{})
+
+	out, err := targetModule.Ctr().
+		WithExec([]string{"ls", "-l"}).
+		Stdout(ctx)
+
+	if err != nil {
+		return fmt.Errorf("failed to get ls output: %w", err)
+	}
+
+	if out == "" {
+		return fmt.Errorf("%w, expected to have at least one folder, got empty output", errEmptyOutput)
+	}
+
+	if !strings.Contains(out, "total") {
+		return fmt.Errorf("%w, expected to have at least one folder, got %s", errExpectedContentNotMatch, out)
+	}
+
+	return nil
+}
+
+// TestCloneGitRepo tests the CloneGitRepo function.
+func (m *Tests) TestCloneGitRepo(ctx context.Context) error {
+	targetModule := dag.ModuleTemplate()
+
+	// This is a public repository, the token isn't required.
+	clonedRepo := targetModule.
+		CloneGitRepo("https://github.com/excoriate/daggerverse")
+
+	// Mount it as a directory, and inspect if it contains .gitignore and LICENSE files.
+	ctr := targetModule.Ctr().
+		WithMountedDirectory("/mnt", clonedRepo)
+
+	out, err := ctr.
+		WithExec([]string{"ls", "-l", "/mnt"}).
+		Stdout(ctx)
+
+	if err != nil {
+		return fmt.Errorf("failed to get ls output: %w", err)
+	}
+
+	if out == "" {
+		return fmt.Errorf("%w, expected to have at least one folder, got empty output", errEmptyOutput)
+	}
+
+	if !strings.Contains(out, "total") {
+		return fmt.Errorf("%w, expected to have at least one folder, got %s", errExpectedContentNotMatch, out)
+	}
+
+	// Check if the .gitignore file is present.
+	out, err = ctr.
+		WithExec([]string{"cat", "/mnt/.gitignore"}).
+		Stdout(ctx)
+
+	if err != nil {
+		return fmt.Errorf("failed to get .gitignore file: %w", err)
+	}
+
+	if out == "" {
+		return fmt.Errorf("%w, expected to have at least one folder, got empty output", errEmptyOutput)
+	}
+
+	return nil
+}
+
 // TestDownloadFile tests the downloading of a file from a URL and mounts it in the container.
 //
 // This method verifies that a file can be downloaded from a URL, mounted
@@ -720,5 +873,104 @@ func (m *Tests) TestDownloadFile(ctx context.Context) error {
 	}
 
 	// Return nil if the file was successfully found.
+	return nil
+}
+
+// TestWithAWSKeys tests the setting of AWS keys as environment variables within the target module's container.
+//
+// This method creates secrets for AWS Access Key ID and AWS Secret Access Key, sets these secrets
+// as environment variables in the target module's container, and verifies if the expected environment
+// variables are set by running the `printenv` command within the container.
+//
+// Arguments:
+// - ctx (context.Context): The context for the test execution.
+//
+// Returns:
+//   - error: Returns an error if there is an issue creating secrets, setting environment variables,
+//     executing commands in the container, or if the output does not contain the expected environment variables.
+func (m *Tests) TestWithAWSKeys(ctx context.Context) error {
+	targetModule := dag.ModuleTemplate()
+
+	awsKeyID := dag.SetSecret("AWS_ACCESS_KEY_ID", "AKIAIOSFODNN7EXAMPLE")
+	awsSecretAccessKey := dag.SetSecret("AWS_SECRET_ACCESS_KEY", "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY")
+
+	// With required AWS keys only.
+	targetModule = targetModule.
+		WithAwskeys(awsKeyID, awsSecretAccessKey)
+
+	out, err := targetModule.Ctr().
+		WithExec([]string{"printenv"}).
+		Stdout(ctx)
+
+	if err != nil {
+		return fmt.Errorf("failed to get env vars: %w", err)
+	}
+
+	if !strings.Contains(out, "AWS_ACCESS_KEY_ID") {
+		return fmt.Errorf("%w, expected AWS_ACCESS_KEY_ID to be set, got %s", errExpectedContentNotMatch, out)
+	}
+
+	if !strings.Contains(out, "AWS_SECRET_ACCESS_KEY") {
+		return fmt.Errorf("%w, expected AWS_SECRET_ACCESS_KEY to be set, got %s", errExpectedContentNotMatch, out)
+	}
+
+	// Check if the content of the env vars is correct.
+	if !strings.Contains(out, "AKIAIOSFODNN7EXAMPLE") {
+		return fmt.Errorf("%w, expected AKIAIOSFODNN7EXAMPLE to be set, got %s", errExpectedContentNotMatch, out)
+	}
+
+	if !strings.Contains(out, "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY") {
+		return fmt.Errorf("%w, "+
+			"expected wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY to be set, got %s",
+			errExpectedContentNotMatch, out)
+	}
+
+	return nil
+}
+
+// TestWithAzureCredentials tests the setting of Azure credentials as
+// environment variables within the target module's container.
+//
+// This method creates secrets for Azure Client ID, Azure Client Secret, and Azure Tenant ID,
+// sets these secrets as environment variables in the target module's container, and verifies if the expected
+// environment variables are set by running the `printenv` command within the container.
+//
+// Arguments:
+// - ctx (context.Context): The context for the test execution.
+//
+// Returns:
+//   - error: Returns an error if there is an issue creating secrets, setting environment variables,
+//     executing commands in the container, or if the output does not contain the expected environment variables.
+func (m *Tests) TestWithAzureCredentials(ctx context.Context) error {
+	targetModule := dag.ModuleTemplate()
+
+	azureClientID := dag.SetSecret("AZURE_CLIENT_ID", "00000000-0000-0000-0000-000000000000")
+	azureClientSecret := dag.SetSecret("AZURE_CLIENT_SECRET", "00000000-0000-0000-0000-000000000000")
+	azureTenantID := dag.SetSecret("AZURE_TENANT_ID", "00000000-0000-0000-0000-000000000000")
+
+	// With required Azure keys only.
+	targetModule = targetModule.
+		WithAzureCredentials(azureClientID, azureClientSecret, azureTenantID)
+
+	out, err := targetModule.Ctr().
+		WithExec([]string{"printenv"}).
+		Stdout(ctx)
+
+	if err != nil {
+		return fmt.Errorf("failed to get env vars: %w", err)
+	}
+
+	if !strings.Contains(out, "AZURE_CLIENT_ID") {
+		return fmt.Errorf("%w, expected AZURE_CLIENT_ID to be set, got %s", errExpectedContentNotMatch, out)
+	}
+
+	if !strings.Contains(out, "AZURE_CLIENT_SECRET") {
+		return fmt.Errorf("%w, expected AZURE_CLIENT_SECRET to be set, got %s", errExpectedContentNotMatch, out)
+	}
+
+	if !strings.Contains(out, "AZURE_TENANT_ID") {
+		return fmt.Errorf("%w, expected AZURE_TENANT_ID to be set, got %s", errExpectedContentNotMatch, out)
+	}
+
 	return nil
 }
