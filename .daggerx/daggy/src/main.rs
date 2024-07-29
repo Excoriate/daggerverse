@@ -1,5 +1,5 @@
 use std::env;
-use std::fs::{self, File};
+use std::fs::{self};
 use std::io::{Write, Error, ErrorKind};
 use std::path::Path;
 use std::process::{Command, Output, Stdio};
@@ -435,10 +435,6 @@ fn capitalize_module_name(module_name: &str) -> String {
     }
 }
 
-fn replace_module_name_lowercase(content: &str, module_name: &str) -> String {
-    let re = Regex::new(r"\{\{\s*\.\s*module_name\s*\}\}").unwrap();
-    re.replace_all(content, module_name).to_string()
-}
 
 fn update_readme_content(module_cfg: &NewDaggerModule) -> Result<(), Error> {
     let readme_path = format!("{}/README.md", module_cfg.path);
