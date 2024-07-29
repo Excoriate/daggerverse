@@ -59,10 +59,21 @@ fn create_module(module: &str) -> Result<(), Error> {
 
     let new_module = get_module_configurations(module)?;
 
+    // Create the module directory structure
+    fs::create_dir_all(&new_module.path)?;
+    fs::create_dir_all(&format!("{}/examples/go", new_module.path))?;
+    fs::create_dir_all(&format!("{}/examples/go/testdata/common", new_module.path))?;
+    fs::create_dir_all(&format!("{}/tests", new_module.path))?;
+    fs::create_dir_all(&format!("{}/tests/testdata/common", new_module.path))?;
+
+    // Copy and process template files
+    copy_and_process_templates(&new_module)?;
+
     // Initialize the new module
     initialize_module(&new_module)?;
 
-    // Initialize tests for the module
+    // Initialize examples and tests
+    initialize_examples(&new_module)?;
     initialize_tests(&new_module)?;
 
     // Copy README and LICENSE files
@@ -74,15 +85,9 @@ fn create_module(module: &str) -> Result<(), Error> {
     // Generate GitHub Actions workflow
     generate_github_actions_workflow(&new_module)?;
 
-    // Add a cleanup function that checks whether in the module's source directory (module/dagger) there's a tests folder, if so, remove it.
-    // FIXME: Fix this ugly hack
-    let tests_path = format!("{}/dagger/tests", new_module.path);
-    if Path::new(&tests_path).exists() {
-        fs::remove_dir_all(&tests_path)?;
-    }
-
     // Run go fmt to format the code
     run_go_fmt(&new_module.path)?;
+    run_go_fmt(&format!("{}/examples/go", new_module.path))?;
     run_go_fmt(&new_module.module_test_src_path)?;
 
     println!("Module \"{}\" initialized successfully 🎉", new_module.name);
@@ -90,6 +95,57 @@ fn create_module(module: &str) -> Result<(), Error> {
     println!("It's recommended to run just cilocal <newmodule> to test the module locally before releasing it.");
 
     Ok(())
+}// New function
+fn copy_and_process_templates(module_cfg: &NewDaggerModule) -> Result<(), Error> {
+    let template_dir = Path::new(".daggerx/templates/module");
+    let dest_dir = Path::new(&module_cfg.path);
+
+    copy_dir_recursive(template_dir, dest_dir, module_cfg)?;
+
+    Ok(())
+}
+
+// New function
+// Modified function
+fn copy_dir_recursive(src: &Path, dest: &Path, module_cfg: &NewDaggerModule) -> Result<(), Error> {
+    if !dest.exists() {
+        fs::create_dir_all(dest)?;
+    }
+
+    for entry in fs::read_dir(src)? {
+        let entry = entry?;
+        let file_type = entry.file_type()?;
+        let src_path = entry.path();
+        let mut file_name = entry.file_name().to_string_lossy().to_string();
+
+        // Remove .tmpl extension if present
+        if file_name.ends_with(".tmpl") {
+            file_name = file_name.trim_end_matches(".tmpl").to_string();
+        }
+
+        let dest_path = dest.join(&file_name);
+
+        if file_type.is_dir() {
+            copy_dir_recursive(&src_path, &dest_path, module_cfg)?;
+        } else {
+            let content = fs::read_to_string(&src_path)?;
+            let processed_content = process_template_content(&content, module_cfg);
+            fs::write(dest_path, processed_content)?;
+        }
+    }
+
+    Ok(())
+}
+
+// New function
+fn process_template_content(content: &str, module_cfg: &NewDaggerModule) -> String {
+    let pkg_name = module_cfg.name.replace("-", "_");
+    let pascal_case_name = to_pascal_case(&module_cfg.name);
+    let lowercase_name = module_cfg.name.to_lowercase();
+
+    let content = content.replace("{{.module_name_pkg}}", &pkg_name);
+    let content = content.replace("{{.module_name}}", &pascal_case_name);
+    content.replace("{{.module_name_lowercase}}", &lowercase_name)
 }
 
 fn develop_modules() -> Result<(), Error> {
@@ -171,8 +227,6 @@ fn update_dagger_json(module_cfg: &NewDaggerModule) -> Result<(), Error> {
 }
 
 fn initialize_module(module_cfg: &NewDaggerModule) -> Result<(), Error> {
-    // Creates the destination directory for the new module.
-    fs::create_dir_all(&module_cfg.path)?;
     run_command_with_output(&format!("dagger init --sdk go --name {}", module_cfg.name), &module_cfg.path)?;
 
     // Update dagger.json to exclude some files
@@ -181,15 +235,81 @@ fn initialize_module(module_cfg: &NewDaggerModule) -> Result<(), Error> {
     // Running dagger develop to initialize the module
     run_command_with_output(&format!("dagger develop -m {}", module_cfg.name), &module_cfg.path)?;
 
-    let template_dir = ".daggerx/templates/module";
-    let destination_dir = &module_cfg.module_src_path;
+    Ok(())
+}
 
-    fs::create_dir_all(&destination_dir)?;
-    copy_and_replace_templates(template_dir, &destination_dir, &module_cfg.name)?;
+// New function
+// Modified function
+fn initialize_examples(module_cfg: &NewDaggerModule) -> Result<(), Error> {
+    let examples_path = format!("{}/examples/go", module_cfg.path);
+    run_command_with_output("dagger init --sdk go --name go", &examples_path)?;
+
+    // Remove the auto-generated main.go
+    let auto_generated_main = format!("{}/main.go", examples_path);
+    if Path::new(&auto_generated_main).exists() {
+        fs::remove_file(&auto_generated_main)
+            .map_err(|e| Error::new(ErrorKind::Other, format!("Failed to remove auto-generated main.go in examples: {}", e)))?;
+    }
+
+    // Read the template main.go.tmpl
+    let template_main_go_example = ".daggerx/templates/examples/go/main.go.tmpl";
+    let template_content = fs::read_to_string(template_main_go_example)
+        .map_err(|e| Error::new(ErrorKind::Other, format!("Failed to read template main.go for examples: {}", e)))?;
+
+    // Process the template content
+    let processed_content = process_template_content(&template_content, module_cfg);
+
+    // Write the processed content to the destination file
+    let dest_main_go_example = format!("{}/main.go", examples_path);
+    fs::write(&dest_main_go_example, processed_content)
+        .map_err(|e| Error::new(ErrorKind::Other, format!("Failed to write processed main.go for examples: {}", e)))?;
+
+    // Ensure the file was created successfully
+    if !Path::new(&dest_main_go_example).exists() {
+        return Err(Error::new(ErrorKind::NotFound, "Failed to create main.go in examples directory"));
+    }
+
+    run_command_with_output("dagger install ../../", &examples_path)?;
+    run_command_with_output("dagger develop -m go", &examples_path)?;
 
     Ok(())
 }
 
+// Modified function
+fn initialize_tests(module_cfg: &NewDaggerModule) -> Result<(), Error> {
+    let tests_path = format!("{}/tests", module_cfg.path);
+    run_command_with_output("dagger init --sdk go --name tests", &tests_path)?;
+
+    // Remove the auto-generated main.go
+    let auto_generated_main = format!("{}/main.go", tests_path);
+    if Path::new(&auto_generated_main).exists() {
+        fs::remove_file(&auto_generated_main)
+            .map_err(|e| Error::new(ErrorKind::Other, format!("Failed to remove auto-generated main.go: {}", e)))?;
+    }
+
+    // Read the template main.go.tmpl
+    let template_main_go_test = ".daggerx/templates/tests/main.go.tmpl";
+    let template_content = fs::read_to_string(template_main_go_test)
+        .map_err(|e| Error::new(ErrorKind::Other, format!("Failed to read template main.go: {}", e)))?;
+
+    // Process the template content
+    let processed_content = process_template_content(&template_content, module_cfg);
+
+    // Write the processed content to the destination file
+    let dest_main_go_test = format!("{}/main.go", tests_path);
+    fs::write(&dest_main_go_test, processed_content)
+        .map_err(|e| Error::new(ErrorKind::Other, format!("Failed to write processed main.go: {}", e)))?;
+
+    // Ensure the file was created successfully
+    if !Path::new(&dest_main_go_test).exists() {
+        return Err(Error::new(ErrorKind::NotFound, "Failed to create main.go in tests directory"));
+    }
+
+    run_command_with_output("dagger install ../", &tests_path)?;
+    run_command_with_output("dagger develop -m tests", &tests_path)?;
+
+    Ok(())
+}
 fn copy_and_replace_templates(template_dir: &str, destination_dir: &str, module_name: &str) -> Result<(), Error> {
     for entry in fs::read_dir(template_dir)? {
         let entry = entry?;
@@ -216,40 +336,6 @@ fn copy_and_replace_templates(template_dir: &str, destination_dir: &str, module_
     Ok(())
 }
 
-fn initialize_tests(module_cfg: &NewDaggerModule) -> Result<(), Error> {
-    let tests_path = format!("{}/tests", module_cfg.path);
-    fs::create_dir_all(&tests_path)?;
-    run_command_with_output("dagger init --sdk go --name tests", &tests_path)?;
-
-    let tests_dagger_json_path = format!("{}/tests/dagger.json", module_cfg.path);
-    let tests_dagger_json_content = fs::read_to_string(&tests_dagger_json_path)?;
-    let new_tests_dagger_json_content = tests_dagger_json_content.replace(
-        "}",
-        r#",
-        "exclude": ["../../.direnv", "../../.devenv", "../../go.work", "../../go.work.sum"]
-    }"#,
-    );
-
-    fs::write(tests_dagger_json_path, new_tests_dagger_json_content)?;
-
-    let test_template_dir = ".daggerx/templates/module/tests";
-    let test_destination_dir = &module_cfg.module_test_src_path;
-    copy_and_replace_templates(&test_template_dir, &test_destination_dir, &module_cfg.name)?;
-
-    let testdata_template_dir = ".daggerx/templates/module/tests/testdata";
-    let testdata_destination_dir = format!("{}/testdata", module_cfg.module_test_src_path);
-
-    if Path::new(testdata_template_dir).exists() {
-        fs::create_dir_all(&testdata_destination_dir)?;
-        copy_and_replace_templates(testdata_template_dir, &testdata_destination_dir, &module_cfg.name)?;
-    }
-
-    run_command_with_output("dagger install ../", &tests_path)?;
-    run_command_with_output("dagger develop -m tests", &tests_path)?;
-
-    Ok(())
-}
-
 fn copy_readme_and_license(module_cfg: &NewDaggerModule) -> Result<(), Error> {
     let readme_dest_path = format!("{}/README.md", module_cfg.path);
     let license_dest_path = format!("{}/LICENSE", module_cfg.path);
@@ -269,33 +355,33 @@ fn copy_readme_and_license(module_cfg: &NewDaggerModule) -> Result<(), Error> {
     Ok(())
 }
 
-fn generate_github_actions_workflow(module_cfg: &NewDaggerModule) -> Result<(), Error> {
-    fs::create_dir_all(&module_cfg.github_actions_workflow_path)?;
-    let template_path = ".daggerx/templates/github/workflows/mod-template-ci.yaml.tmpl";
-    let output_path = &module_cfg.github_actions_workflow;
 
-    let template_content = fs::read_to_string(template_path)?;
-    let new_content = replace_module_name_lowercase(&template_content, &module_cfg.name);
-    let mut output_file = File::create(output_path)?;
-    output_file.write_all(new_content.as_bytes())?;
-
-    Ok(())
-}
-
+// Modified function
 fn get_module_configurations(module: &str) -> Result<NewDaggerModule, Error> {
     let module_path_full = env::current_dir()?.join(module);
     let current_root_dir = env::current_dir()?;
 
     Ok(NewDaggerModule {
         path: module_path_full.to_string_lossy().to_string(),
-        // module_src_path: module_path_full.join("dagger").to_string_lossy().to_string(),
         module_src_path: module_path_full.to_string_lossy().to_string(),
-        // module_test_src_path: module_path_full.join("tests").join("dagger").to_string_lossy().to_string(),
         module_test_src_path: module_path_full.join("tests").to_string_lossy().to_string(),
         name: module.to_string(),
         github_actions_workflow_path: current_root_dir.join(".github/workflows").to_string_lossy().to_string(),
         github_actions_workflow: current_root_dir.join(".github/workflows").join(format!("mod-{}-ci.yaml", module)).to_string_lossy().to_string(),
     })
+}
+
+// Modified function
+fn generate_github_actions_workflow(module_cfg: &NewDaggerModule) -> Result<(), Error> {
+    fs::create_dir_all(&module_cfg.github_actions_workflow_path)?;
+    let template_path = ".daggerx/templates/github/workflows/mod-template-ci.yaml.tmpl";
+    let output_path = &module_cfg.github_actions_workflow;
+
+    let template_content = fs::read_to_string(template_path)?;
+    let new_content = process_template_content(&template_content, module_cfg);
+    fs::write(output_path, new_content)?;
+
+    Ok(())
 }
 
 fn dagger_module_exists(module: &str) -> Result<(), Error> {
