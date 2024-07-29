@@ -139,7 +139,8 @@ fn copy_dir_recursive(src: &Path, dest: &Path, module_cfg: &NewDaggerModule) -> 
 
 // New function
 fn process_template_content(content: &str, module_cfg: &NewDaggerModule) -> String {
-    let pkg_name = module_cfg.name.replace("-", "_");
+    // let pkg_name = module_cfg.name.replace("-", "_");
+    let pkg_name = module_cfg.name.to_string().to_lowercase().trim().replace(" ", "-");
     let pascal_case_name = to_pascal_case(&module_cfg.name);
     let lowercase_name = module_cfg.name.to_lowercase();
 
