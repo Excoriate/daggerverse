@@ -1,3 +1,3 @@
-module github.com/Excoriate/daggerverse/test/testdata/gotest
+module test_module_tests
 
 go 1.22.3

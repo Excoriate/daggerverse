@@ -6,6 +6,7 @@ use std::process::{Command, Output, Stdio};
 use clap::Parser;
 use serde::Deserialize;
 use regex::Regex;
+use serde_json::{json, Value};
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -214,21 +215,78 @@ fn develop_modules() -> Result<(), Error> {
 
 fn update_dagger_json(module_cfg: &NewDaggerModule) -> Result<(), Error> {
     let dagger_json_path = format!("{}/dagger.json", module_cfg.path);
-    let dagger_json_content = fs::read_to_string(&dagger_json_path)?;
-    let new_dagger_json_content = dagger_json_content.replace(
-        "}",
-        r#",
-        "exclude": ["../.direnv", "../.devenv", "../go.work", "../go.work.sum", "tests"]
-    }"#,
-    );
 
-    fs::write(dagger_json_path, new_dagger_json_content)?;
+    let mut json_content: Value = fs::read_to_string(&dagger_json_path)
+        .map_err(|e| Error::new(ErrorKind::Other, format!("Failed to read dagger.json: {}", e)))
+        .and_then(|content| serde_json::from_str(&content)
+            .map_err(|e| Error::new(ErrorKind::Other, format!("Failed to parse dagger.json: {}", e))))?;
+
+    json_content["exclude"] = json!([
+        "../.direnv",
+        "../.devenv",
+        "../go.work",
+        "../go.work.sum",
+        "tests",
+        "examples/go",
+    ]);
+
+    fs::write(dagger_json_path, serde_json::to_string_pretty(&json_content)?)
+        .map_err(|e| Error::new(ErrorKind::Other, format!("Failed to write updated dagger.json: {}", e)))?;
+
+    Ok(())
+}
+
+// New function
+fn update_tests_dagger_json(module_cfg: &NewDaggerModule) -> Result<(), Error> {
+    let dagger_json_path = format!("{}/tests/dagger.json", module_cfg.path);
+    let mut json_content: Value = fs::read_to_string(&dagger_json_path)
+        .map_err(|e| Error::new(ErrorKind::Other, format!("Failed to read tests/dagger.json: {}", e)))
+        .and_then(|content| serde_json::from_str(&content)
+            .map_err(|e| Error::new(ErrorKind::Other, format!("Failed to parse tests/dagger.json: {}", e))))?;
+
+    json_content["exclude"] = json!([
+        "../../.direnv",
+        "../../.devenv",
+        "../../go.work",
+        "../../go.work.sum"
+    ]);
+
+    fs::write(dagger_json_path, serde_json::to_string_pretty(&json_content)?)
+        .map_err(|e| Error::new(ErrorKind::Other, format!("Failed to write updated tests/dagger.json: {}", e)))?;
+
+    Ok(())
+}
+
+// New function
+fn update_examples_dagger_json(module_cfg: &NewDaggerModule) -> Result<(), Error> {
+    let dagger_json_path = format!("{}/examples/go/dagger.json", module_cfg.path);
+    let mut json_content: Value = fs::read_to_string(&dagger_json_path)
+        .map_err(|e| Error::new(ErrorKind::Other, format!("Failed to read examples/go/dagger.json: {}", e)))
+        .and_then(|content| serde_json::from_str(&content)
+            .map_err(|e| Error::new(ErrorKind::Other, format!("Failed to parse examples/go/dagger.json: {}", e))))?;
+
+    json_content["exclude"] = json!([
+        "../../../.direnv",
+        "../../../.devenv",
+        "../../../go.work",
+        "../../../go.work.sum"
+    ]);
+
+    fs::write(dagger_json_path, serde_json::to_string_pretty(&json_content)?)
+        .map_err(|e| Error::new(ErrorKind::Other, format!("Failed to write updated examples/go/dagger.json: {}", e)))?;
 
     Ok(())
 }
 
 fn initialize_module(module_cfg: &NewDaggerModule) -> Result<(), Error> {
-    run_command_with_output(&format!("dagger init --sdk go --name {}", module_cfg.name), &module_cfg.path)?;
+    // Get the parent directory of the module path
+    let parent_dir = Path::new(&module_cfg.path).parent()
+        .ok_or_else(|| Error::new(ErrorKind::Other, "Failed to get parent directory"))?
+        .to_str()
+        .ok_or_else(|| Error::new(ErrorKind::Other, "Failed to convert path to string"))?;
+
+    // Run dagger init in the parent directory
+    run_command_with_output(&format!("dagger init --sdk go --name {} --source .", module_cfg.name), parent_dir)?;
 
     // Update dagger.json to exclude some files
     update_dagger_json(module_cfg)?;
@@ -238,12 +296,14 @@ fn initialize_module(module_cfg: &NewDaggerModule) -> Result<(), Error> {
 
     Ok(())
 }
-
 // New function
 // Modified function
 fn initialize_examples(module_cfg: &NewDaggerModule) -> Result<(), Error> {
     let examples_path = format!("{}/examples/go", module_cfg.path);
-    run_command_with_output("dagger init --sdk go --name go", &examples_path)?;
+    run_command_with_output("dagger init --sdk=go go", &examples_path)?;
+
+    // Update dagger.json for examples
+    update_examples_dagger_json(module_cfg)?;
 
     // Remove the auto-generated main.go
     let auto_generated_main = format!("{}/main.go", examples_path);
@@ -299,7 +359,10 @@ fn copy_dir_all(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> Result<(), Erro
 // Modified function
 fn initialize_tests(module_cfg: &NewDaggerModule) -> Result<(), Error> {
     let tests_path = format!("{}/tests", module_cfg.path);
-    run_command_with_output("dagger init --sdk go --name tests", &tests_path)?;
+    run_command_with_output("dagger init --sdk=go tests", &tests_path)?;
+
+    // Update dagger.json for tests
+    update_tests_dagger_json(module_cfg)?;
 
     // Remove the auto-generated main.go
     let auto_generated_main = format!("{}/main.go", tests_path);
@@ -422,12 +485,27 @@ fn dagger_module_exists(module: &str) -> Result<(), Error> {
 
     Ok(())
 }
+
+fn find_git_root() -> Result<String, Error> {
+    let output = Command::new("git")
+        .args(&["rev-parse", "--show-toplevel"])
+        .output()?;
+
+    if output.status.success() {
+        Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
+    } else {
+        Err(Error::new(ErrorKind::Other, "Not in a git repository"))
+    }
+}
 fn run_command_with_output(command: &str, target_dir: &str) -> Result<Output, Error> {
     println!("Running command: {}", command);
+    let target_directory = if target_dir.is_empty() { find_git_root()? } else { target_dir.to_string() };
+
+    println!("Running command in directory: {}", target_directory);
     let output = Command::new("sh")
         .arg("-c")
         .arg(command)
-        .current_dir(target_dir)
+        .current_dir(target_directory)
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
         .output()?;
