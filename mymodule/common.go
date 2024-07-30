@@ -3,7 +3,7 @@ package main
 import (
 	"path/filepath"
 
-	"github.com/Excoriate/daggerverse/{{.module_name_pkg}}/internal/dagger"
+	"github.com/Excoriate/daggerverse/mymodule/internal/dagger"
 )
 
 // DownloadFile downloads a file from the specified URL.
@@ -21,7 +21,7 @@ import (
 // This method downloads a file from the provided URL. If the destination file
 // name is not specified, it defaults to the basename of the URL. The downloaded
 // file is then returned as a *dagger.File.
-func (m *{{.module_name}}) DownloadFile(
+func (m *Mymodule) DownloadFile(
 	// url is the URL of the file to download.
 	url string,
 	// destFileName is the name of the file to download. If not set, it'll default to the basename of the URL.
@@ -52,7 +52,7 @@ func (m *{{.module_name}}) DownloadFile(
 //
 // If a token is provided, it will be securely set using Dagger's
 // secret mechanism and used for authentication during the clone operation.
-func (m *{{.module_name}}) CloneGitRepo(
+func (m *Mymodule) CloneGitRepo(
 	// repoURL is the URL of the git repo to clone.
 	repoURL string,
 	// token is the VCS token to use for authentication. Optional parameter.

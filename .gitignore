@@ -53,3 +53,4 @@
 Cargo.lock
 /.daggerx/daggy/target/
 .aider*
+/internal/telemetry

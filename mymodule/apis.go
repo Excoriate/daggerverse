@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/Excoriate/daggerverse/{{.module_name_pkg}}/internal/dagger"
+	"github.com/Excoriate/daggerverse/mymodule/internal/dagger"
 
 	"github.com/Excoriate/daggerx/pkg/fixtures"
 )
@@ -26,7 +26,7 @@ const netRcRootPath = "/root/.netrc"
 //   - expand: Whether to replace `${VAR}` or $VAR in the value according to the current
 //     environment variables defined in the container (e.g., "/opt/bin:$PATH").
 //     Optional parameter.
-func (m *{{.module_name}}) WithEnvironmentVariable(
+func (m *Mymodule) WithEnvironmentVariable(
 	// name is the name of the environment variable.
 	name string,
 	// value is the value of the environment variable.
@@ -34,7 +34,7 @@ func (m *{{.module_name}}) WithEnvironmentVariable(
 	// expand is whether to replace `${VAR}` or $VAR in the value according to the current
 	// +optional
 	expand bool,
-) *{{.module_name}} {
+) *Mymodule {
 	m.Ctr = m.Ctr.WithEnvVariable(name, value, dagger.ContainerWithEnvVariableOpts{
 		Expand: expand,
 	})
@@ -47,13 +47,13 @@ func (m *{{.module_name}}) WithEnvironmentVariable(
 // Parameters:
 // - src: The directory that contains all the source code, including the module directory.
 // - workdir: The working directory within the container. Optional parameter.
-func (m *{{.module_name}}) WithSource(
+func (m *Mymodule) WithSource(
 	// src is the directory that contains all the source code, including the module directory.
 	src *dagger.Directory,
 	// workdir is the working directory within the container. If not set it'll default to /mnt
 	// +optional
 	workdir string,
-) *{{.module_name}} {
+) *Mymodule {
 	ctr := m.Ctr.WithMountedDirectory(fixtures.MntPrefix, src)
 
 	if workdir != "" {
@@ -71,9 +71,9 @@ func (m *{{.module_name}}) WithSource(
 //
 // Parameters:
 // - ctr: The container to run the command in. If passed, it will override the container set in the Dagger instance.
-func (m *{{.module_name}}) WithContainer(
+func (m *Mymodule) WithContainer(
 	ctr *dagger.Container,
-) *{{.module_name}} {
+) *Mymodule {
 	m.Ctr = ctr
 
 	return m
@@ -85,7 +85,7 @@ func (m *{{.module_name}}) WithContainer(
 // Parameters:
 //   - dockerVersion: The version of the Docker engine to use, e.g., "v20.10.17".
 //     Optional parameter. If not provided, a default version is used.
-func (m *{{.module_name}}) WithDockerService(
+func (m *Mymodule) WithDockerService(
 	dockerVersion string,
 ) *dagger.Service {
 	if dockerVersion == "" {
@@ -121,11 +121,11 @@ func (m *{{.module_name}}) WithDockerService(
 // - file: The file to add to the container.
 // - dest: The destination path in the container. Optional parameter.
 // - owner: The owner of the file. Optional parameter.
-func (m *{{.module_name}}) WithFileMountedInContainer(
+func (m *Mymodule) WithFileMountedInContainer(
 	file *dagger.File,
 	dest string,
 	owner string,
-) *{{.module_name}} {
+) *Mymodule {
 	path := filepath.Join(fixtures.MntPrefix, dest)
 	if owner != "" {
 		m.Ctr = m.Ctr.WithMountedFile(path, file, dagger.ContainerWithMountedFileOpts{
@@ -143,7 +143,7 @@ func (m *{{.module_name}}) WithFileMountedInContainer(
 // WithGitInAlpineContainer installs Git in the golang/alpine container.
 //
 // It installs Git in the golang/alpine container.
-func (m *{{.module_name}}) WithGitInAlpineContainer() *{{.module_name}} {
+func (m *Mymodule) WithGitInAlpineContainer() *Mymodule {
 	m.Ctr = m.Ctr.
 		WithExec([]string{"apk", "add", "git"})
 
@@ -153,10 +153,10 @@ func (m *{{.module_name}}) WithGitInAlpineContainer() *{{.module_name}} {
 // WithNewNetrcFileGitHub creates a new .netrc file with the GitHub credentials.
 //
 // The .netrc file is created in the root directory of the container.
-func (m *{{.module_name}}) WithNewNetrcFileGitHub(
+func (m *Mymodule) WithNewNetrcFileGitHub(
 	username string,
 	password string,
-) *{{.module_name}} {
+) *Mymodule {
 	machineCMD := "machine github.com\nlogin " + username + "\npassword " + password + "\n"
 
 	m.Ctr = m.Ctr.WithNewFile(netRcRootPath, machineCMD)
@@ -168,7 +168,7 @@ func (m *{{.module_name}}) WithNewNetrcFileGitHub(
 //
 // The .netrc file is created in the root directory of the container.
 // The argument 'password' is a secret that is not exposed in the logs.
-func (m *{{.module_name}}) WithNewNetrcFileAsSecretGitHub(username string, password *dagger.Secret) *{{.module_name}} {
+func (m *Mymodule) WithNewNetrcFileAsSecretGitHub(username string, password *dagger.Secret) *Mymodule {
 	passwordTxtValue, _ := password.Plaintext(context.Background())
 	machineCMD := fmt.Sprintf("machine github.com\nlogin %s\npassword %s\n", username, passwordTxtValue)
 	//nolint:exhaustruct // This is a method that is used to set the base image and version.
@@ -180,10 +180,10 @@ func (m *{{.module_name}}) WithNewNetrcFileAsSecretGitHub(username string, passw
 // WithNewNetrcFileGitLab creates a new .netrc file with the GitLab credentials.
 //
 // The .netrc file is created in the root directory of the container.
-func (m *{{.module_name}}) WithNewNetrcFileGitLab(
+func (m *Mymodule) WithNewNetrcFileGitLab(
 	username string,
 	password string,
-) *{{.module_name}} {
+) *Mymodule {
 	machineCMD := "machine gitlab.com\nlogin " + username + "\npassword " + password + "\n"
 
 	m.Ctr = m.Ctr.WithNewFile(netRcRootPath, machineCMD)
@@ -195,7 +195,7 @@ func (m *{{.module_name}}) WithNewNetrcFileGitLab(
 //
 // The .netrc file is created in the root directory of the container.
 // The argument 'password' is a secret that is not exposed in the logs.
-func (m *{{.module_name}}) WithNewNetrcFileAsSecretGitLab(username string, password *dagger.Secret) *{{.module_name}} {
+func (m *Mymodule) WithNewNetrcFileAsSecretGitLab(username string, password *dagger.Secret) *Mymodule {
 	passwordTxtValue, _ := password.Plaintext(context.Background())
 	machineCMD := fmt.Sprintf("machine gitlab.com\nlogin %s\npassword %s\n", username, passwordTxtValue)
 
@@ -208,7 +208,7 @@ func (m *{{.module_name}}) WithNewNetrcFileAsSecretGitLab(username string, passw
 // WithUtilitiesInAlpineContainer installs common utilities in the golang/alpine container.
 //
 // It installs utilities such as curl, wget, and others that are commonly used.
-func (m *{{.module_name}}) WithUtilitiesInAlpineContainer() *{{.module_name}} {
+func (m *Mymodule) WithUtilitiesInAlpineContainer() *Mymodule {
 	m.Ctr = m.Ctr.
 		WithExec([]string{"apk", "update"}).
 		WithExec([]string{"apk", "add", "curl", "wget", "bash", "jq", "vim"})
@@ -223,11 +223,11 @@ func (m *{{.module_name}}) WithUtilitiesInAlpineContainer() *{{.module_name}} {
 //   - secret: The secret containing the value of the environment variable.
 //
 // Returns:
-//   - *{{.module_name}}: The updated {{.module_name}} with the environment variable set.
+//   - *Mymodule: The updated Mymodule with the environment variable set.
 //
 // Behavior:
 //   - The secret value is expanded according to the current environment variables defined in the container.
-func (m *{{.module_name}}) WithSecretAsEnvVar(name string, secret *dagger.Secret) *{{.module_name}} {
+func (m *Mymodule) WithSecretAsEnvVar(name string, secret *dagger.Secret) *Mymodule {
 	secretValue, err := secret.Plaintext(context.Background())
 	if err != nil {
 		return nil
@@ -248,14 +248,14 @@ func (m *{{.module_name}}) WithSecretAsEnvVar(name string, secret *dagger.Secret
 //     If not provided, it defaults to the predefined mount prefix.
 //
 // Returns:
-//   - *{{.module_name}}: The updated {{.module_name}} with the downloaded file mounted in the container.
-func (m *{{.module_name}}) WithDownloadedFile(
+//   - *Mymodule: The updated Mymodule with the downloaded file mounted in the container.
+func (m *Mymodule) WithDownloadedFile(
 	// url is the URL of the file to download.
 	url string,
 	// destFileName is the name of the file to download. If not set, it'll default to the basename of the URL.
 	// +optional
 	destFileName string,
-) *{{.module_name}} {
+) *Mymodule {
 	// Extract the filename from the last part of the URL.
 	fileName := filepath.Base(url)
 	if destFileName != "" {
@@ -289,8 +289,8 @@ func (m *{{.module_name}}) WithDownloadedFile(
 //     authentication. Defaults to "github". Supported values are "github" and "gitlab".
 //
 // Returns:
-//   - *{{.module_name}}: The updated {{.module_name}} with the cloned repository mounted in the container.
-func (m *{{.module_name}}) WithClonedGitRepo(
+//   - *Mymodule: The updated Mymodule with the cloned repository mounted in the container.
+func (m *Mymodule) WithClonedGitRepo(
 	repoURL string,
 	// token is the VCS token to use for authentication. Optional parameter.
 	// +optional
@@ -298,7 +298,7 @@ func (m *{{.module_name}}) WithClonedGitRepo(
 	// vcs is the VCS to use for authentication. Optional parameter.
 	// +optional
 	vcs string,
-) *{{.module_name}} {
+) *Mymodule {
 	// Call the helper function to clone the repository.
 	clonedRepo := m.CloneGitRepo(repoURL, token, vcs)
 

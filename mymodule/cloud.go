@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 
-	"github.com/Excoriate/daggerverse/{{.module_name_pkg}}/internal/dagger"
+	"github.com/Excoriate/daggerverse/mymodule/internal/dagger"
 )
 
 // WithAWSKeys sets AWS credentials as environment variables.
@@ -12,7 +12,7 @@ import (
 // awsSessionToken is the AWS Session Token; optional.
 // awsRegion is the AWS Region; optional.
 // awsProfile is the AWS Profile; optional.
-func (m *{{.module_name}}) WithAWSKeys(
+func (m *Mymodule) WithAWSKeys(
 	// awsKeyId is the AWS Access Key ID.
 	awsKeyID *dagger.Secret,
 	// awsSecretAccessKey is the AWS Secret Access Key.
@@ -26,7 +26,7 @@ func (m *{{.module_name}}) WithAWSKeys(
 	// awsProfile is the AWS Profile; optional.
 	// +optional
 	awsProfile *dagger.Secret,
-) *{{.module_name}} {
+) *Mymodule {
 	awsKeyValue, _ := awsKeyID.Plaintext(context.Background())
 	awsSecretValue, _ := awsSecretAccessKey.Plaintext(context.Background())
 
@@ -60,14 +60,14 @@ func (m *{{.module_name}}) WithAWSKeys(
 // azureClientId is the Azure Client ID.
 // azureClientSecret is the Azure Client Secret.
 // azureTenantId is the Azure Tenant ID.
-func (m *{{.module_name}}) WithAzureCredentials(
+func (m *Mymodule) WithAzureCredentials(
 	// azureClientId is the Azure Client ID.
 	azureClientID *dagger.Secret,
 	// azureClientSecret is the Azure Client Secret.
 	azureClientSecret *dagger.Secret,
 	// azureTenantId is the Azure Tenant ID.
 	azureTenantID *dagger.Secret,
-) *{{.module_name}} {
+) *Mymodule {
 	azureClientIDValue, _ := azureClientID.Plaintext(context.Background())
 	azureClientSecretValue, _ := azureClientSecret.Plaintext(context.Background())
 	azureTenantIDValue, _ := azureTenantID.Plaintext(context.Background())
