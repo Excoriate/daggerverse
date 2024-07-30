@@ -1,0 +1,14 @@
+go 1.22.3
+
+use (
+	.
+	./gitlab-cicd-vars/dagger
+	./goreleaser/dagger
+	//./gotest/dagger
+	//./gotest/test
+	./terraform/dagger
+	./terragrunt/dagger
+	./terratest/dagger
+	./tflint/dagger
+	./utils
+)
