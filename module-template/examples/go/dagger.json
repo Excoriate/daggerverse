@@ -9,7 +9,7 @@
   ],
   "dependencies": [
     {
-      "name": "mymodule",
+      "name": "module-template",
       "source": "../.."
     }
   ],
