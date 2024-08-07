@@ -114,15 +114,7 @@ jobs:
 
             - name: Run golangci-lint on module-template 📦
               run: |
-                echo "Running GolangCI Linter in directory: ${PWD}"
                 golangci-lint run --config=../.golangci.yml --verbose
-
-#            - name: Run golangci-lint on module-template 📦
-#              uses: golangci/golangci-lint-action@v6
-#              with:
-#                  version: v1.59
-#                  args: --verbose
-#                  working-directory: module-template
 
       # Dagger test module 🧪 (develop & golang ci-lint)
             - name: Dagger Develop on Module tests 🧪 module-template with Dagger ${{ matrix.dagversion }}
@@ -134,10 +126,10 @@ jobs:
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             - name: Run golangci-lint on module-template/tests 🧪
-              uses: golangci/golangci-lint-action@v6
-              with:
-                  version: v1.59
-                  args: --config ../../.golangci.yml ./module-template/tests
+              run: |
+                cd tests
+                ls -ltrah
+                golangci-lint run --config=../.golangci.yml --verbose
 
       # Dagger examples (go) module 📄 (develop & golang ci-lint)
             - name: Dagger Develop on Module Examples/Go 📄 module-template with Dagger ${{ matrix.dagversion }}
@@ -149,10 +141,10 @@ jobs:
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             - name: Run golangci-lint on module-template/examples/go 📄 (develop & golang ci-lint)
-              uses: golangci/golangci-lint-action@v6
-              with:
-                  version: v1.59
-                  args: --config ../../../.golangci.yml ./module-template/examples/go
+              run: |
+                cd examples/go
+                ls -ltrah
+                golangci-lint run --config=../../.golangci.yml --verbose
 
     module-test:
         strategy:
