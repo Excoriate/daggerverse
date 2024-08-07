@@ -36,7 +36,7 @@
 
             packages = with pkgs; [
 #              dagger
-#              golangci-lint
+              golangci-lint
               just
               git
               semver-tool
