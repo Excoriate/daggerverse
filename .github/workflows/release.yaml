@@ -45,7 +45,9 @@ jobs:
             DAG_VERSION: 0.12.3
         strategy:
             matrix:
-                module: [gotest, module-template]
+                module:
+                    - module-template
+#                    - gotest
         name: Publishing ${{ matrix.module }} in the Daggerverse 🚀 'README.md'))
         steps:
             - uses: actions/checkout@v4
@@ -61,6 +63,7 @@ jobs:
                   verb: develop
                   module: ${{ matrix.module }}
                   version: ${{ env.DAG_VERSION }}
+                  cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             - name: Publishing ${{ matrix.module }} in the Daggerverse 🚀
@@ -69,3 +72,4 @@ jobs:
                   verb: publish
                   module: ${{ matrix.module }}
                   version: ${{ env.DAG_VERSION }}
+                  cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}

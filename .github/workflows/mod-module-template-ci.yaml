@@ -197,11 +197,11 @@ jobs:
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    module-templates-recipes-go:
+    module-template-recipes-go:
         strategy:
             matrix:
                 go: ['1.22']
-                dagversion: [0.12.4]
+                dagversion: [0.12.0, 0.12.1, 0.12.2, 0.12.3, 0.12.4]
         needs: [dagger-linter, golangci-lint]
         name: Run recipes 🥗 in module-template/examples/go on ${{ matrix.os }} with Dagger ${{ matrix.dagversion }}
         runs-on: ubuntu-latest
