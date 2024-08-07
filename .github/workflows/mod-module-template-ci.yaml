@@ -129,7 +129,7 @@ jobs:
               run: |
                 cd tests
                 ls -ltrah
-                golangci-lint run --config=../.golangci.yml --verbose
+                golangci-lint run --config=../../.golangci.yml --verbose
 
       # Dagger examples (go) module 📄 (develop & golang ci-lint)
             - name: Dagger Develop on Module Examples/Go 📄 module-template with Dagger ${{ matrix.dagversion }}
@@ -144,7 +144,7 @@ jobs:
               run: |
                 cd examples/go
                 ls -ltrah
-                golangci-lint run --config=../../.golangci.yml --verbose
+                golangci-lint run --config=../../../.golangci.yml --verbose
 
     module-test:
         strategy:
