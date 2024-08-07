@@ -85,9 +85,6 @@ jobs:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     golangci-lint:
-        defaults:
-            run:
-                working-directory: module-template
         strategy:
             matrix:
                 go: ['1.22']
@@ -111,8 +108,9 @@ jobs:
             - name: Run golangci-lint on module-template 📦
               uses: golangci/golangci-lint-action@v6
               with:
-                  version: v1.58
+                  version: v1.59
                   args: --config ../.golangci.yml --verbose
+                  working-directory: module-template
 
       # Dagger test module 🧪 (develop & golang ci-lint)
             - name: Dagger Develop on Module tests 🧪 module-template with Dagger ${{ matrix.dagversion }}
@@ -126,7 +124,7 @@ jobs:
             - name: Run golangci-lint on module-template/tests 🧪
               uses: golangci/golangci-lint-action@v6
               with:
-                  version: v1.58
+                  version: v1.59
                   args: --config ../../.golangci.yml ./module-template/tests
 
       # Dagger examples (go) module 📄 (develop & golang ci-lint)
@@ -141,7 +139,7 @@ jobs:
             - name: Run golangci-lint on module-template/examples/go 📄 (develop & golang ci-lint)
               uses: golangci/golangci-lint-action@v6
               with:
-                  version: v1.58
+                  version: v1.59
                   args: --config ../../../.golangci.yml ./module-template/examples/go
 
     module-test:

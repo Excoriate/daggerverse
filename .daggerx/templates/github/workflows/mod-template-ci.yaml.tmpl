@@ -108,7 +108,7 @@ jobs:
             - name: Run golangci-lint on {{.module_name_pkg}} 📦
               uses: golangci/golangci-lint-action@v6
               with:
-                  version: v1.58
+                  version: v1.59
                   args: --config .golangci.yml ./{{.module_name_pkg}}
 
       # Dagger test module 🧪 (develop & golang ci-lint)
@@ -123,7 +123,7 @@ jobs:
             - name: Run golangci-lint on {{.module_name_pkg}}/tests 🧪
               uses: golangci/golangci-lint-action@v6
               with:
-                  version: v1.58
+                  version: v1.59
                   args: --config .golangci.yml ./{{.module_name_pkg}}/tests
 
       # Dagger examples (go) module 📄 (develop & golang ci-lint)
@@ -138,7 +138,7 @@ jobs:
             - name: Run golangci-lint on {{.module_name_pkg}}/examples/go 📄 (develop & golang ci-lint)
               uses: golangci/golangci-lint-action@v6
               with:
-                  version: v1.58
+                  version: v1.59
                   args: --config .golangci.yml ./{{.module_name_pkg}}/examples/go
 
     module-test:
