@@ -109,7 +109,7 @@ jobs:
               uses: golangci/golangci-lint-action@v6
               with:
                   version: v1.58
-                  args: --config .golangci.yml --verbose
+                  args: --config ../.golangci.yml --verbose
 
       # Dagger test module 🧪 (develop & golang ci-lint)
             - name: Dagger Develop on Module tests 🧪 module-template with Dagger ${{ matrix.dagversion }}
@@ -124,7 +124,7 @@ jobs:
               uses: golangci/golangci-lint-action@v6
               with:
                   version: v1.58
-                  args: --config .golangci.yml ./module-template/tests
+                  args: --config ../../.golangci.yml ./module-template/tests
 
       # Dagger examples (go) module 📄 (develop & golang ci-lint)
             - name: Dagger Develop on Module Examples/Go 📄 module-template with Dagger ${{ matrix.dagversion }}
@@ -139,7 +139,7 @@ jobs:
               uses: golangci/golangci-lint-action@v6
               with:
                   version: v1.58
-                  args: --config .golangci.yml ./module-template/examples/go
+                  args: --config ../../../.golangci.yml ./module-template/examples/go
 
     module-test:
         strategy:
