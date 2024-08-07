@@ -62,6 +62,10 @@ fn create_module(module: &str) -> Result<(), Error> {
     env::set_current_dir(git_root)?;
 
     let new_module = get_module_configurations(module)?;
+    println!("Module path: {}", new_module.path);
+    println!("Module src path: {}", new_module.module_src_path);
+    println!("Module test src path: {}", new_module.module_test_src_path);
+    println!("GitHub Actions workflow path: {}", new_module.github_actions_workflow_path);
 
     // Initialize the new module
     initialize_module(&new_module)?;
@@ -80,6 +84,7 @@ fn create_module(module: &str) -> Result<(), Error> {
     generate_github_actions_workflow(&new_module)?;
 
     // Run go fmt to format the code
+    println!("Running go fmt and ensuring the code is formatted correctly 🧹");
     run_go_fmt(&new_module.path)?;
     run_go_fmt(&format!("{}/examples/go", new_module.path))?;
     run_go_fmt(&new_module.module_test_src_path)?;
@@ -285,33 +290,10 @@ fn update_examples_dagger_json(module_cfg: &NewDaggerModule) -> Result<(), Error
     Ok(())
 }
 
-// fn initialize_module(module_cfg: &NewDaggerModule) -> Result<(), Error> {
-//     println!("Creating parent module 🚀: {}", module_cfg.name);
-//     // Create the module directory
-//     fs::create_dir_all(&module_cfg.path)?;
-//
-//     // Change to the module directory
-//     env::set_current_dir(&module_cfg.path)?;
-//
-//     // Run dagger init in the module directory
-//     run_command_with_output(&format!("dagger init --sdk go --name {} --source .", module_cfg.name), ".")?;
-//
-//     // Update dagger.json to exclude some files
-//     update_dagger_json(module_cfg)?;
-//
-//     // Running dagger develop to initialize the module
-//     run_command_with_output(&format!("dagger develop -m {}", module_cfg.name), ".")?;
-//
-//     // Change back to the root directory
-//     env::set_current_dir("..")?;
-//
-//     Ok(())
-// }
-
 fn initialize_module(module_cfg: &NewDaggerModule) -> Result<(), Error> {
     // Create the module directory
     fs::create_dir_all(&module_cfg.path)?;
-    println!("Creating module 🚀: {}", module_cfg.name);
+    println!("Creating parent module 📦: {}", module_cfg.name);
 
     // Change to the module directory
     env::set_current_dir(&module_cfg.path)?;
@@ -342,6 +324,7 @@ fn initialize_module(module_cfg: &NewDaggerModule) -> Result<(), Error> {
 // Modified function
 fn initialize_examples(module_cfg: &NewDaggerModule) -> Result<(), Error> {
     let examples_path = format!("{}/examples/go", module_cfg.path);
+    println!("Creating examples module (recipes)  📄: {}", module_cfg.name);
 
     // Create the examples directory
     fs::create_dir_all(&examples_path)?;
@@ -395,6 +378,7 @@ fn copy_dir_all(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> Result<(), Erro
 // Modified function
 fn initialize_tests(module_cfg: &NewDaggerModule) -> Result<(), Error> {
     let tests_path = format!("{}/tests", module_cfg.path);
+    println!("Creating tests module (tests) 🧪: {}", module_cfg.name);
 
     // Create the tests directory
     fs::create_dir_all(&tests_path)?;
@@ -471,6 +455,7 @@ fn copy_and_replace_templates(template_dir: &str, destination_dir: &str, module_
 fn copy_readme_and_license(module_cfg: &NewDaggerModule) -> Result<(), Error> {
     let readme_dest_path = format!("{}/README.md", module_cfg.path);
     let license_dest_path = format!("{}/LICENSE", module_cfg.path);
+    println!("Copying README.md and LICENSE files 📄: {}", module_cfg.name);
 
     // Ensure the destination directory exists
     fs::create_dir_all(&module_cfg.path)?;
@@ -505,6 +490,7 @@ fn get_module_configurations(module: &str) -> Result<NewDaggerModule, Error> {
 
 // Modified function
 fn generate_github_actions_workflow(module_cfg: &NewDaggerModule) -> Result<(), Error> {
+    println!("Generating GitHub Actions workflow 🚀: {}", module_cfg.name);
     fs::create_dir_all(&module_cfg.github_actions_workflow_path)?;
     let template_path = ".daggerx/templates/github/workflows/mod-template-ci.yaml.tmpl";
     let output_path = &module_cfg.github_actions_workflow;
@@ -584,6 +570,7 @@ fn capitalize_module_name(module_name: &str) -> String {
 
 fn update_readme_content(module_cfg: &NewDaggerModule) -> Result<(), Error> {
     let readme_path = format!("{}/README.md", module_cfg.path);
+    println!("Updating README.md content 📄: {}", module_cfg.name);
 
     if !Path::new(&readme_path).exists() {
         return Err(Error::new(ErrorKind::NotFound, format!("README.md file not found in {}", module_cfg.path)));
