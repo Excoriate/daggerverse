@@ -9,6 +9,16 @@ dev:
   @echo "Entering Nix development environment 🧰 ..."
   @nix develop --impure --extra-experimental-features nix-command --extra-experimental-features flakes
 
+# Recipe clean Go cache, Go modules cache, and Nix/DevEnv/DirEnv cache
+clean-cache:
+  @echo "Cleaning Go cache 🧹 ..."
+  @go clean -cache
+  @echo "Cleaning Go modules cache 🧹 ..."
+  @go clean -modcache
+  @echo "Cleaning Nix/DevEnv/DirEnv cache 🧹 ..."
+  @nix-collect-garbage -d
+  @nix develop --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command "rm -rf .devenv .direnv .cache"
+
 # Recipe to initialize the project
 init:
   @echo "Initializing the project 🚀 ..."
