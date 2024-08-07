@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.20.0](https://github.com/Excoriate/daggerverse/compare/v1.19.0...v1.20.0) (2024-08-07)
+
+
+### Features
+
+* add open-terminal command ([af1b0d4](https://github.com/Excoriate/daggerverse/commit/af1b0d4913b924209abe0a952eebb16728acb1a2))
+
 ## [1.19.0](https://github.com/Excoriate/daggerverse/compare/v1.18.0...v1.19.0) (2024-07-01)
 
 
