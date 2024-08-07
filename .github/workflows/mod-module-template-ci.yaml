@@ -114,7 +114,7 @@ jobs:
 
             - name: Run golangci-lint on module-template 📦
               run: |
-                cd module-template
+                echo "Running GolangCI Linter in directory: ${PWD}"
                 golangci-lint run --config=../.golangci.yml --verbose
 
 #            - name: Run golangci-lint on module-template 📦
