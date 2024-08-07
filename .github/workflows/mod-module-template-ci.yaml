@@ -107,9 +107,11 @@ jobs:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             - name: Run golangci-lint on module-template 📦
               uses: golangci/golangci-lint-action@v6
+              working-directory: module-template
               with:
                   version: v1.58
-                  args: --config .golangci.yml ./module-template
+#                  args: --config .golangci.yml ./module-template
+                  args: --config ../.golangci.yml --verbose
 
       # Dagger test module 🧪 (develop & golang ci-lint)
             - name: Dagger Develop on Module tests 🧪 module-template with Dagger ${{ matrix.dagversion }}
