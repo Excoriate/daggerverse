@@ -9,6 +9,15 @@ dev:
   @echo "Entering Nix development environment 🧰 ..."
   @nix develop --impure --extra-experimental-features nix-command --extra-experimental-features flakes
 
+# Recipe clean Go cache, Go modules cache, and Nix/DevEnv/DirEnv cache
+clean-cache:
+  @echo "Cleaning Go cache 🧹 ..."
+  @go clean -cache
+  @echo "Cleaning Go modules cache 🧹 ..."
+  @go clean -modcache
+  @echo "Cleaning Nix/DevEnv/DirEnv cache 🧹 ..."
+  @nix-collect-garbage -d
+
 # Recipe to initialize the project
 init:
   @echo "Initializing the project 🚀 ..."
@@ -90,11 +99,11 @@ golint mod:
   @echo "Running Go (GolangCI)... 🧹 "
   @test -d {{mod}} || (echo "Module not found" && exit 1)
   @echo "Currently in {{mod}} module 📦, path=`pwd`/{{mod}}"
-  @nix-shell -p golangci-lint --run "golangci-lint run --config .golangci.yml ./{{mod}}"
+  @cd ./{{mod}} && nix-shell -p golangci-lint --run "golangci-lint run --config ../.golangci.yml"
   @echo "Checking now the tests 🧪 project ..."
-  @nix-shell -p golangci-lint --run "golangci-lint run --config .golangci.yml ./{{mod}}/tests"
+  @cd ./{{mod}}/tests && nix-shell -p golangci-lint --run "golangci-lint run --config ../../.golangci.yml"
   @echo "Checking now the examples 📄 project ..."
-  @nix-shell -p golangci-lint --run "golangci-lint run --config .golangci.yml ./{{mod}}/examples/go"
+  @cd ./{{mod}}/examples/go && nix-shell -p golangci-lint --run "golangci-lint run --config ../../../.golangci.yml"
 
 # Recipe to run the whole CI locally
 cilocal mod: (reloadall mod) (golint mod) (test mod) (examplesgo mod) (ci-module-docs mod)

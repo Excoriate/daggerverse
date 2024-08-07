@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/Excoriate/daggerverse/{{.module_name_pkg}}/internal/dagger"
+	"github.com/Excoriate/daggerverse/module-template/internal/dagger"
 )
 
 const (
@@ -31,7 +31,7 @@ var (
 // - None.
 // Returns:
 // - *Terminal: The terminal for the container.
-func (m *{{.module_name}}) OpenTerminal() *dagger.Container {
+func (m *ModuleTemplate) OpenTerminal() *dagger.Container {
 	return m.Ctr.Terminal()
 }
 
@@ -43,7 +43,7 @@ func (m *{{.module_name}}) OpenTerminal() *dagger.Container {
 // Returns:
 // - string: The output of the command.
 // - error: An error if the command fails.
-func (m *{{.module_name}}) RunShell(cmd string) (string, error) {
+func (m *ModuleTemplate) RunShell(cmd string) (string, error) {
 	out, err := m.Ctr.WithoutEntrypoint().WithExec([]string{"sh", "-c", cmd}).Stdout(context.Background())
 	if err != nil {
 		return "", fmt.Errorf("failed to run shell command: %w", err)
@@ -67,14 +67,14 @@ func (m *{{.module_name}}) RunShell(cmd string) (string, error) {
 //
 // Usage example:
 // ```go
-// envVars, err := {{.module_name}}Instance.PrintEnvVars()
+// envVars, err := ModuleTemplateInstance.PrintEnvVars()
 //
 //	if err != nil {
 //	    log.Fatalf("Error retrieving environment variables: %v", err)
 //	}
 //
 // fmt.Println(envVars).
-func (m *{{.module_name}}) PrintEnvVars() (string, error) {
+func (m *ModuleTemplate) PrintEnvVars() (string, error) {
 	out, err := m.
 		Ctr.
 		WithExec([]string{"printenv"}).
@@ -93,7 +93,7 @@ func (m *{{.module_name}}) PrintEnvVars() (string, error) {
 // Returns:
 // - string: The value of the environment variable.
 // - error: An error if the key is invalid or the environment variable is not found.
-func (m *{{.module_name}}) InspectEnvVar(key string) (string, error) {
+func (m *ModuleTemplate) InspectEnvVar(key string) (string, error) {
 	// Validate if the key is empty or contains invalid characters
 	if key == "" {
 		return "", fmt.Errorf("%w", errEmptyEnvVarKeyError)

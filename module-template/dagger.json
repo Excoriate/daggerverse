@@ -6,8 +6,9 @@
     "../.devenv",
     "../go.work",
     "../go.work.sum",
-    "tests"
+    "tests",
+    "examples/go"
   ],
-  "source": "dagger",
-  "engineVersion": "v0.12.3"
+  "source": ".",
+  "engineVersion": "v0.12.4"
 }

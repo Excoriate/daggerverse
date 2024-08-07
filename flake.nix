@@ -2,7 +2,7 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
-    devenv.url = "github:cachix/devenv/v0.6.3";
+    devenv.url = "github:cachix/devenv";
     dagger.url = "github:dagger/nix";
     dagger.inputs.nixpkgs.follows = "nixpkgs";
   };
@@ -13,7 +13,7 @@
         inputs.devenv.flakeModule
       ];
 
-      systems = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+      systems = [ "x86_64-linux" "x86_64-darwin" "aarch64-darwin" ];
 
       perSystem = { config, self', inputs', pkgs, system, ... }: rec {
         _module.args.pkgs = import inputs.nixpkgs {
@@ -30,24 +30,19 @@
           default = {
             languages = {
               go.enable = true;
+              rust.enable = true;
+              nix.enable = true;
             };
 
             packages = with pkgs; [
 #              dagger
               golangci-lint
               just
-              pre-commit
-              makeWrapper
-              yamllint
-              markdownlint-cli
-              hadolint
               git
               semver-tool
               jq
-              yq
               yq-go
               moreutils
-              terraform
             ];
 
             # https://github.com/cachix/devenv/issues/528#issuecomment-1556108767

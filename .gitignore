@@ -39,7 +39,6 @@
 /dagger.gen.go
 /internal/dagger
 /internal/querybuilder
-go.work
 
 /.direnv
 /result
@@ -54,3 +53,4 @@ go.work
 Cargo.lock
 /.daggerx/daggy/target/
 .aider*
+/internal/telemetry
