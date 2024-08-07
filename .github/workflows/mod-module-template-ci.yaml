@@ -85,6 +85,9 @@ jobs:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     golangci-lint:
+        defaults:
+            run:
+                working-directory: module-template
         strategy:
             matrix:
                 go: ['1.22']
