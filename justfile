@@ -57,6 +57,44 @@ dce mod *args:
   @test -d {{mod}}/examples/go || (echo "Module examples not found" && exit 1)
   @cd {{mod}}/examples/go && dagger call {{args}}
 
+# Recipe to bump version of a module
+bump-version mod bump='minor':
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    echo "Bumping version for {{mod}} module"
+    
+    # Verify that the module directory exists and contains a dagger.json file
+    if [ ! -d "{{mod}}" ] || [ ! -f "{{mod}}/dagger.json" ]; then
+        echo "Module {{mod}} not found or dagger.json missing"
+        exit 1
+    fi
+
+    # Get the latest tag for this module
+    latest_tag=$(git describe --tags --abbrev=0 --match "{{mod}}/*" 2>/dev/null || echo "{{mod}}/v0.0.0")
+    current_version=$(echo $latest_tag | sed 's/{{mod}}\/v//')
+
+    # Calculate the new version
+    new_version="v$(semver bump {{bump}} "v$current_version")"
+
+    echo "Current version: v$current_version"
+    echo "New version: $new_version"
+
+    read -p "Proceed with version bump? (y/N) " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo "Aborting"
+        exit 1
+    fi
+
+    # Create and push the new tag
+    new_tag="{{mod}}/$new_version"
+    git tag -a "$new_tag" -m "Bump {{mod}} to $new_version"
+    git push origin "$new_tag"
+
+    echo "Version bumped to $new_version and tag $new_tag created"
+    echo "Tag has been pushed to the remote repository"
+
 # Recipe to reload Dagger module (Dagger Develop)
 reloadmod mod:
   @echo "Running Dagger development in a given module..."
