@@ -51,13 +51,13 @@ jobs:
             module_from_tag=$(echo "$tag" | cut -d'/' -f1)
             version_from_tag=$(echo "$tag" | cut -d'/' -f2)
             if [[ " ${all_modules[*]} " =~ " ${module_from_tag} " ]]; then
-              modules_to_publish=("$module_from_tag")
+              modules_to_publish+=("$module_from_tag:$tag")
             fi
           else
             for module in "${all_modules[@]}"; do
               latest_tag=$(git describe --tags --abbrev=0 --match "${module}/*" 2>/dev/null || echo "")
               if [[ $latest_tag =~ ^${module}/v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-                modules_to_publish+=("$module")
+                modules_to_publish+=("$module:$latest_tag")
               fi
             done
           fi
@@ -75,13 +75,13 @@ jobs:
         env:
           MODULES: ${{ steps.identify-modules.outputs.modules_to_publish }}
         run: |
-          echo "$MODULES" | jq -r '.[]' | while read -r module; do
-            echo "Publishing module: $module"
-            dagger_version=$(jq -r '.sdk // empty' "$module/dagger.json")
-            dagger_version=${dagger_version:-$DAG_VERSION}
+          echo "$MODULES" | jq -r '.[]' | while read -r module_info; do
+            module_name=$(echo "$module_info" | cut -d':' -f1)
+            git_tag=$(echo "$module_info" | cut -d':' -f2)
 
-            echo "Publishing $module to Daggerverse"
-            dagger publish -m $module
+            echo "Publishing module: $module_name with tag $git_tag"
+
+            dagger publish -m $module_name github.com/Excoriate/daggerverse/${module_name}@${git_tag}
           done
 
       - name: Notify on failure
