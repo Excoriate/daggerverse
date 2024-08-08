@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.21.0](https://github.com/Excoriate/daggerverse/compare/v1.20.0...v1.21.0) (2024-08-08)
+
+
+### Features
+
+* Clone Git repository with optional VCS ([#116](https://github.com/Excoriate/daggerverse/issues/116)) ([8409c89](https://github.com/Excoriate/daggerverse/commit/8409c8965783bfc4bee9780033cd2cf8659902ae))
+
 ## [1.20.0](https://github.com/Excoriate/daggerverse/compare/v1.19.0...v1.20.0) (2024-08-07)
 
 
