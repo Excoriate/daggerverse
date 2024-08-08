@@ -63,7 +63,7 @@ bump-version mod bump='minor':
     set -euo pipefail
 
     echo "Bumping version for {{mod}} module"
-    
+
     # Verify that the module directory exists and contains a dagger.json file
     if [ ! -d "{{mod}}" ] || [ ! -f "{{mod}}/dagger.json" ]; then
         echo "Module {{mod}} not found or dagger.json missing"
