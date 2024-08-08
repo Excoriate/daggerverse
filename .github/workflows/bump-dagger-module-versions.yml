@@ -28,6 +28,17 @@ jobs:
           sudo apt-get update
           sudo apt-get install jq
 
+      - name: Identify all modules
+        id: identify-modules
+        run: |
+          modules=()
+          for dir in $(find . -type f -name dagger.json -exec dirname {} \;); do
+            modules+=($dir)
+          done
+          all_modules=$(printf '%s\n' "${modules[@]}" | jq -R . | jq -s .)
+          echo "all_modules=$all_modules" >> $GITHUB_OUTPUT
+          echo "All identified modules: $all_modules"
+
       - name: Detect changed modules
         id: set-modules
         run: |
@@ -37,12 +48,13 @@ jobs:
               modules+=($dir)
             fi
           done
-          changed_modules=$(IFS=,; echo "${modules[*]}")
+          changed_modules=$(printf '%s\n' "${modules[@]}" | jq -R . | jq -s .)
           echo "changed_modules=$changed_modules" >> $GITHUB_OUTPUT
+          echo "Modules with changes: $changed_modules"
 
   bump-version:
     needs: detect-modules
-    if: needs.detect-modules.outputs.changed_modules != ''
+    if: needs.detect-modules.outputs.changed_modules != '[]'
     runs-on: ubuntu-latest
     strategy:
       matrix:
