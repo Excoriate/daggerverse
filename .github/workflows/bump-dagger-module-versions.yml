@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   detect-modules:
-    if: github.event.pull_request.merged == true
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true || github.event_name == 'push'
     runs-on: ubuntu-latest
     outputs:
       changed_modules: ${{ steps.set-modules.outputs.changed_modules }}
