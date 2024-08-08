@@ -45,7 +45,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        module: [${{ fromJSON(needs.detect-modules.outputs.changed_modules) }}]
+        module: ${{ fromJson(needs.detect-modules.outputs.changed_modules) }}
     steps:
       - uses: actions/checkout@v4
         with:
