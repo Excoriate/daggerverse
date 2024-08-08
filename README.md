@@ -39,4 +39,47 @@ just create <module-name>
 just cilocal <module-name>
 ```
 
+A new module will be generated with the following structure, with already included **tests** and **examples** (for now, only Go examples):
+
+```bash
+ tre module-template 
+module-template
+├── .gitattributes
+├── .gitignore
+├── LICENSE
+├── README.md
+├── apis.go
+├── cloud.go
+├── commands.go
+├── common.go
+├── config.go
+├── dagger.json
+├── examples
+│   └── go
+│       ├── .gitattributes
+│       ├── .gitignore
+│       ├── dagger.json
+│       ├── go.mod
+│       ├── go.sum
+│       ├── main.go
+│       └── testdata
+│           └── common
+│               ├── README.md
+│               └── test-file.yml
+├── go.mod
+├── go.sum
+├── main.go
+└── tests
+    ├── .gitattributes
+    ├── .gitignore
+    ├── dagger.json
+    ├── go.mod
+    ├── go.sum
+    ├── main.go
+    └── testdata
+        └── common
+            ├── README.md
+            └── test-file.yml
+```
+
 >**NOTE**: See the [Module Template](./module-template) for more information for the new module structure, and the boilerplate code that's generated.
