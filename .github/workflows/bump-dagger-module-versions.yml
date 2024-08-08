@@ -4,12 +4,11 @@ name: Bump Dagger Module Versions 🚀
 on:
   pull_request:
     types: [closed]
-    # branches:
-    #   - main
   workflow_dispatch:
   push:
     branches:
       - '**'
+
 permissions:
   contents: write
   pull-requests: write
@@ -34,8 +33,10 @@ jobs:
         id: identify-modules
         run: |
           modules=()
-          for dir in $(find . -type f -name dagger.json -exec dirname {} \;); do
-            modules+=($dir)
+          for dir in $(find . -maxdepth 1 -type d); do
+            if [ -f "$dir/dagger.json" ]; then
+              modules+=("$dir")
+            fi
           done
           all_modules=$(printf '%s\n' "${modules[@]}" | jq -R . | jq -s .)
           echo "all_modules=$all_modules" >> $GITHUB_OUTPUT
@@ -45,9 +46,9 @@ jobs:
         id: set-modules
         run: |
           modules=()
-          for dir in $(find . -type f -name dagger.json -exec dirname {} \;); do
-            if git diff --name-only HEAD~1 HEAD -- $dir/ | grep -q .; then
-              modules+=($dir)
+          for dir in $(find . -maxdepth 1 -type d); do
+            if [ -f "$dir/dagger.json" ] && git diff --name-only HEAD~1 HEAD -- "$dir/" | grep -q .; then
+              modules+=("$dir")
             fi
           done
           changed_modules=$(printf '%s\n' "${modules[@]}" | jq -R . | jq -s .)
@@ -83,6 +84,7 @@ jobs:
           else
               git tag -a "$new_tag" -m "Bump $module_path to $new_version"
               git push origin "$new_tag"
+              echo "New version bumped to $new_version and tagged as $new_tag"
           fi
         env:
           bump: ${{ inputs.bump || 'minor' }}
