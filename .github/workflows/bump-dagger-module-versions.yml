@@ -4,10 +4,12 @@ name: Bump Dagger Module Versions 🚀
 on:
   pull_request:
     types: [closed]
-    branches:
-      - main
+    # branches:
+    #   - main
   workflow_dispatch:
-
+  push:
+    branches:
+      - '**'
 permissions:
   contents: write
   pull-requests: write
