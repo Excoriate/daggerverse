@@ -1,3 +1,4 @@
+---
 name: Bump Dagger Module Versions 🚀
 
 on:
@@ -64,11 +65,17 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Semver Tool
         run: |
           curl -L https://github.com/fsaintjacques/semver-tool/archive/master.tar.gz | tar xz
           sudo cp semver-tool-master/src/semver /usr/local/bin/
+
+      - name: Configure Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
 
       - name: Bump Version and Tag
         run: |
@@ -98,3 +105,4 @@ jobs:
           done
         env:
           bump: ${{ inputs.bump || 'minor' }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
