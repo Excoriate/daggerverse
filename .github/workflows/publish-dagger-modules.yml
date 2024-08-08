@@ -35,17 +35,21 @@ jobs:
             fi
           done < <(find . -maxdepth 1 -type d -print0)
 
+          modules_to_publish=()
           if [[ "${{ github.event_name }}" == "push" ]]; then
             tag="${{ github.ref_name }}"
             module_from_tag=$(echo "$tag" | cut -d'/' -f1)
             version_from_tag=$(echo "$tag" | cut -d'/' -f2)
             if [[ " ${all_modules[*]} " =~ " ${module_from_tag} " ]]; then
               modules_to_publish=("$module_from_tag")
-            else
-              modules_to_publish=()
             fi
           else
-            modules_to_publish=("${all_modules[@]}")
+            for module in "${all_modules[@]}"; do
+              latest_tag=$(git describe --tags --abbrev=0 --match "${module}/*" 2>/dev/null || echo "")
+              if [[ $latest_tag =~ ^${module}/v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+                modules_to_publish+=("$module")
+              fi
+            done
           fi
 
           json_modules=$(printf '%s\n' "${modules_to_publish[@]}" | jq -R . | jq -sc)
@@ -63,14 +67,19 @@ jobs:
         run: |
           echo "$MODULES" | jq -r '.[]' | while read -r module; do
             echo "Publishing module: $module"
-            dagger_version=$(jq -r '.sdk' "$module/dagger.json")
+            dagger_version=$(jq -r '.sdk // empty' "$module/dagger.json")
             dagger_version=${dagger_version:-$DAG_VERSION}
 
             echo "Developing module $module with Dagger $dagger_version"
             dagger -m $module develop --sdk $dagger_version --cloud-token ${{ secrets.DAGGER_CLOUD_TOKEN }}
 
             echo "Publishing $module to Daggerverse"
-            dagger -m $module publish --sdk $dagger_version --cloud-token ${{ secrets.DAGGER_CLOUD_TOKEN }}
+            uses: dagger/dagger-for-github@v6
+            with:
+              verb: publish
+              module: $module
+              version: $dagger_version
+              cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
           done
 
       - name: Notify on failure
