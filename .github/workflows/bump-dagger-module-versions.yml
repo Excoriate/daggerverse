@@ -73,12 +73,17 @@ jobs:
       - name: Bump Version and Tag
         run: |
           changed_modules='${{ needs.detect-modules.outputs.changed_modules }}'
-          if [ "$changed_modules" == "[]" ]; then
+          if [ "$changed_modules" == "[]" ] || [ "$changed_modules" == '[""]' ]; then
             echo "::notice::No changes detected in any modules. Skipping version bump."
             exit 0
           fi
 
           echo "$changed_modules" | jq -r '.[]' | while read -r module_path; do
+            if [ -z "$module_path" ]; then
+              echo "::warning::Empty module path detected. Skipping."
+              continue
+            fi
+
             latest_tag=$(git describe --tags --abbrev=0 --match "${module_path}/*" 2>/dev/null || echo "${module_path}/v0.0.0")
             current_version=$(echo $latest_tag | sed "s|${module_path}/v||")
             new_version="v$(semver bump ${bump} "v$current_version")"

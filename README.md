@@ -42,7 +42,7 @@ just cilocal <module-name>
 A new module will be generated with the following structure, with already included **tests** and **examples** (for now, only Go examples):
 
 ```bash
- tre module-template 
+ tre module-template
 module-template
 ├── .gitattributes
 ├── .gitignore
