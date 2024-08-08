@@ -56,52 +56,52 @@ jobs:
           echo "changed_modules=$changed_modules" >> $GITHUB_OUTPUT
           echo "Modules with changes: $changed_modules"
 
-bump-version:
-  needs: detect-modules
-  if: needs.detect-modules.outputs.changed_modules != '[]'
-  runs-on: ubuntu-latest
-  steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        token: ${{ secrets.GITHUB_TOKEN }}
+  bump-version:
+    needs: detect-modules
+    if: needs.detect-modules.outputs.changed_modules != '[]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Setup Semver Tool
-      run: |
-        curl -L https://github.com/fsaintjacques/semver-tool/archive/master.tar.gz | tar xz
-        sudo cp semver-tool-master/src/semver /usr/local/bin/
+      - name: Setup Semver Tool
+        run: |
+          curl -L https://github.com/fsaintjacques/semver-tool/archive/master.tar.gz | tar xz
+          sudo cp semver-tool-master/src/semver /usr/local/bin/
 
-    - name: Configure Git
-      run: |
-        git config --global user.name 'github-actions[bot]'
-        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+      - name: Configure Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
 
-    - name: Bump Version and Tag
-      run: |
-        changed_modules='${{ needs.detect-modules.outputs.changed_modules }}'
-        if [ "$changed_modules" == "[]" ] || [ "$changed_modules" == '[""]' ]; then
-          echo "::notice::No changes detected in any modules. Skipping version bump."
-          exit 0
-        fi
-
-        echo "$changed_modules" | jq -r '.[]' | while read -r module_path; do
-          if [ -z "$module_path" ]; then
-            echo "::warning::Empty module path detected. Skipping."
-            continue
+      - name: Bump Version and Tag
+        run: |
+          changed_modules='${{ needs.detect-modules.outputs.changed_modules }}'
+          if [ "$changed_modules" == "[]" ] || [ "$changed_modules" == '[""]' ]; then
+            echo "::notice::No changes detected in any modules. Skipping version bump."
+            exit 0
           fi
 
-          latest_tag=$(git describe --tags --abbrev=0 --match "${module_path}/*" 2>/dev/null || echo "${module_path}/v0.0.0")
-          current_version=$(echo $latest_tag | sed "s|${module_path}/v||")
-          new_version="v$(semver bump ${bump} "v$current_version")"
-          new_tag="${module_path}/$new_version"
-          if git rev-parse "$new_tag" >/dev/null 2>&1; then
-              echo "::warning::Tag $new_tag already exists, skipping tag creation"
-          else
-              git tag -a "$new_tag" -m "Bump $module_path to $new_version"
-              git push origin "$new_tag"
-              echo "::notice::New version bumped to $new_version and tagged as $new_tag"
-          fi
-        done
-      env:
-        bump: ${{ inputs.bump || 'minor' }}
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          echo "$changed_modules" | jq -r '.[]' | while read -r module_path; do
+            if [ -z "$module_path" ]; then
+              echo "::warning::Empty module path detected. Skipping."
+              continue
+            fi
+
+            latest_tag=$(git describe --tags --abbrev=0 --match "${module_path}/*" 2>/dev/null || echo "${module_path}/v0.0.0")
+            current_version=$(echo $latest_tag | sed "s|${module_path}/v||")
+            new_version="v$(semver bump ${bump} "v$current_version")"
+            new_tag="${module_path}/$new_version"
+            if git rev-parse "$new_tag" >/dev/null 2>&1; then
+                echo "::warning::Tag $new_tag already exists, skipping tag creation"
+            else
+                git tag -a "$new_tag" -m "Bump $module_path to $new_version"
+                git push origin "$new_tag"
+                echo "::notice::New version bumped to $new_version and tagged as $new_tag"
+            fi
+          done
+        env:
+          bump: ${{ inputs.bump || 'minor' }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
