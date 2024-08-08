@@ -33,12 +33,13 @@ jobs:
         id: identify-modules
         run: |
           modules=()
-          for dir in $(find . -maxdepth 1 -type d); do
-            if [ -f "$dir/dagger.json" ]; then
-              modules+=("$dir")
+          while IFS= read -r -d '' dir; do
+            if [[ -f "$dir/dagger.json" ]]; then
+              modules+=("${dir#./}")
             fi
-          done
-          all_modules=$(printf '%s\n' "${modules[@]}" | jq -R . | jq -s .)
+          done < <(find . -maxdepth 1 -type d -print0)
+
+          all_modules=$(printf '%s\n' "${modules[@]}" | jq -R . | jq -sc)
           echo "all_modules=$all_modules" >> $GITHUB_OUTPUT
           echo "All identified modules: $all_modules"
 
@@ -46,12 +47,13 @@ jobs:
         id: set-modules
         run: |
           modules=()
-          for dir in $(find . -maxdepth 1 -type d); do
-            if [ -f "$dir/dagger.json" ] && git diff --name-only HEAD~1 HEAD -- "$dir/" | grep -q .; then
-              modules+=("$dir")
+          while IFS= read -r -d '' dir; do
+            if [[ -f "$dir/dagger.json" ]] && git diff --name-only HEAD~1 HEAD -- "$dir/" | grep -q .; then
+              modules+=("${dir#./}")
             fi
-          done
-          changed_modules=$(printf '%s\n' "${modules[@]}" | jq -R . | jq -s .)
+          done < <(find . -maxdepth 1 -type d -print0)
+
+          changed_modules=$(printf '%s\n' "${modules[@]}" | jq -R . | jq -sc)
           echo "changed_modules=$changed_modules" >> $GITHUB_OUTPUT
           echo "Modules with changes: $changed_modules"
 
@@ -76,15 +78,15 @@ jobs:
         run: |
           module_path="${{ matrix.module }}"
           latest_tag=$(git describe --tags --abbrev=0 --match "${module_path}/*" 2>/dev/null || echo "${module_path}/v0.0.0")
-          current_version=$(echo $latest_tag | sed 's|${module_path}/v||')
+          current_version=$(echo $latest_tag | sed "s|${module_path}/v||")
           new_version="v$(semver bump ${bump} "v$current_version")"
           new_tag="${module_path}/$new_version"
           if git rev-parse "$new_tag" >/dev/null 2>&1; then
-              echo "Tag $new_tag already exists, skipping tag creation"
+              echo "::warning::Tag $new_tag already exists, skipping tag creation"
           else
               git tag -a "$new_tag" -m "Bump $module_path to $new_version"
               git push origin "$new_tag"
-              echo "New version bumped to $new_version and tagged as $new_tag"
+              echo "::notice::New version bumped to $new_version and tagged as $new_tag"
           fi
         env:
           bump: ${{ inputs.bump || 'minor' }}
