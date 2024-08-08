@@ -80,11 +80,8 @@ jobs:
             dagger_version=$(jq -r '.sdk // empty' "$module/dagger.json")
             dagger_version=${dagger_version:-$DAG_VERSION}
 
-            echo "Developing module $module with Dagger $dagger_version"
-            dagger -m $module develop --cloud-token ${{ secrets.DAGGER_CLOUD_TOKEN }}
-
             echo "Publishing $module to Daggerverse"
-            dagger -m $module publish --cloud-token ${{ secrets.DAGGER_CLOUD_TOKEN }}
+            dagger publish -m $module
           done
 
       - name: Notify on failure
