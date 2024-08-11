@@ -1,5 +1,5 @@
 ---
-name: Bump Dagger Module Versions 🚀
+name: CD Bump Dagger Module Versions 🏷️
 
 on:
   pull_request:
