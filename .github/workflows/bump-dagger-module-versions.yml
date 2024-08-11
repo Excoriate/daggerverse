@@ -5,9 +5,10 @@ on:
   pull_request:
     types: [closed]
   workflow_dispatch:
-  push:
-    branches:
-      - '**'
+#  Only for torubleshooting purposes, uncomment the following lines
+#  push:
+#    branches:
+#      - '**'
 
 permissions:
   contents: write
