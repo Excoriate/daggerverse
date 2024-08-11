@@ -1,4 +1,3 @@
----
 name: Publish Dagger Modules 🚀
 
 on:
@@ -49,15 +48,16 @@ jobs:
           if [[ "${{ github.event_name }}" == "push" ]]; then
             tag="${{ github.ref_name }}"
             module_from_tag=$(echo "$tag" | cut -d'/' -f1)
-            version_from_tag=$(echo "$tag" | cut -d'/' -f2)
+            version_from_tag=$(echo "$tag" | cut -d'/' -f2-)
             if [[ " ${all_modules[*]} " =~ " ${module_from_tag} " ]]; then
-              modules_to_publish+=("$module_from_tag:$tag")
+              modules_to_publish+=("$module_from_tag:$version_from_tag")
             fi
           else
             for module in "${all_modules[@]}"; do
               latest_tag=$(git describe --tags --abbrev=0 --match "${module}/*" 2>/dev/null || echo "")
               if [[ $latest_tag =~ ^${module}/v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-                modules_to_publish+=("$module:$latest_tag")
+                version=${latest_tag#${module}/}
+                modules_to_publish+=("$module:$version")
               fi
             done
           fi
@@ -77,11 +77,12 @@ jobs:
         run: |
           echo "$MODULES" | jq -r '.[]' | while read -r module_info; do
             module_name=$(echo "$module_info" | cut -d':' -f1)
-            git_tag=$(echo "$module_info" | cut -d':' -f2)
+            version=$(echo "$module_info" | cut -d':' -f2)
 
-            echo "Publishing module: $module_name with tag $git_tag"
+            echo "Publishing module: $module_name with version $version"
 
-            dagger publish -m $module_name github.com/Excoriate/daggerverse/${module_name}@${git_tag}
+            git checkout "refs/tags/${module_name}/${version}"
+            dagger publish -m $module_name github.com/Excoriate/daggerverse/${module_name}@${version}
           done
 
       - name: Notify on failure
