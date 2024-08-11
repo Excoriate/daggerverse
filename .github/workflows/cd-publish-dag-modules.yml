@@ -1,5 +1,5 @@
 ---
-name: Publish Dagger Modules 🚀
+name: CD Publish Dagger Modules 🚀
 
 on:
   workflow_dispatch:
