@@ -299,7 +299,7 @@ func (m *ModuleTemplate) WithClonedGitRepo(
 	// +optional
 	vcs string,
 ) *ModuleTemplate {
-	// Clone the repository
+	// Clone the repository and mount it
 	clonedRepo := m.CloneGitRepo(repoURL, token, vcs)
 
 	// Mount the cloned repository as a directory inside the container.
