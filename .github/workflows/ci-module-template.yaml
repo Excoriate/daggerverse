@@ -1,5 +1,5 @@
 ---
-name: module-template CI 🧹
+name: CI module-template 🧹
 on:
     push:
         branches:
