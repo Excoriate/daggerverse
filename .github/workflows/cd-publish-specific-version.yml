@@ -2,93 +2,104 @@
 name: 🎯 Publish Specific Dagger Module Version
 
 on:
-  workflow_dispatch:
-    inputs:
-      module:
-        description: 'Module to publish'
-        required: true
-      version:
-        description: 'Version to publish (e.g., v1.2.3)'
-        required: true
+    workflow_dispatch:
+        inputs:
+            module:
+                description: Module to publish (e.g., module-template)
+                required: true
+            version:
+                description: Version to publish (e.g., v0.1.0)
+                required: true
 
 env:
-  GO_VERSION: ~1.22
-  DAG_VERSION: 0.12.4
+    GO_VERSION: ~1.22
+    DAG_VERSION: 0.12.4
 
 jobs:
-  publish-specific-version:
-    runs-on: ubuntu-latest
-    steps:
-      - name: 🛒 Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+    publish-specific-version:
+        runs-on: ubuntu-latest
+        steps:
+            - name: 📥 Checkout repository
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
 
-      - name: 🛠️ Set up environment
-        run: |
-          sudo apt-get update
-          sudo apt-get install jq
-          curl -L https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=${{ env.DAG_VERSION }} sh
-          sudo mv bin/dagger /usr/local/bin/
-          dagger version
-          if [[ $(dagger version | grep -oP '(?<=dagger v)\S+') != "${{ env.DAG_VERSION }}" ]]; then
-            echo "::error::Installed Dagger version does not match DAG_VERSION"
-            exit 1
-          fi
+            - name: 🛠️ Set up environment
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install jq
+                  echo "🔧 Environment setup complete"
 
-      - name: 🔍 Validate inputs
-        id: validate-inputs
-        run: |
-          module="${{ github.event.inputs.module }}"
-          version="${{ github.event.inputs.version }}"
+            - name: 🐳 Install Dagger CLI
+              run: |
+                  curl -L https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=${{ env.DAG_VERSION }} sh
+                  sudo mv bin/dagger /usr/local/bin/
+                  dagger version
+                  if [[ $(dagger version | grep -oP '(?<=dagger v)\S+') != "${{ env.DAG_VERSION }}" ]]; then
+                    echo "::error::❌ Installed Dagger version does not match DAG_VERSION"
+                    exit 1
+                  fi
+                  echo "✅ Dagger CLI installed successfully"
 
-          if [[ ! -d "$module" || ! -f "$module/dagger.json" ]]; then
-            echo "::error::Invalid module: $module"
-            exit 1
-          fi
+            - name: 🔍 Validate inputs and tag
+              id: validate-inputs
+              run: |
+                  module="${{ github.event.inputs.module }}"
+                  version="${{ github.event.inputs.version }}"
 
-          if [[ ! $version =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "::error::Invalid version format: $version. Expected format: vX.Y.Z"
-            exit 1
-          fi
+                  if [[ ! -d "$module" || ! -f "$module/dagger.json" ]]; then
+                    echo "::error::❌ Invalid module: $module"
+                    exit 1
+                  fi
 
-          echo "module=$module" >> $GITHUB_OUTPUT
-          echo "version=$version" >> $GITHUB_OUTPUT
-          echo "::notice::Inputs validated. Module: $module, Version: $version"
+                  if [[ ! $version =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+                    echo "::error::❌ Invalid version format: $version. Expected format: vX.Y.Z"
+                    exit 1
+                  fi
 
-      - name: 🏷️ Check tag existence
-        id: check-tag
-        run: |
-          module=${{ steps.validate-inputs.outputs.module }}
-          version=${{ steps.validate-inputs.outputs.version }}
-          tag="$module/$version"
+                  tag="${module}/${version}"
+                  if ! git rev-parse "$tag" >/dev/null 2>&1; then
+                    echo "::error::❌ Tag $tag does not exist. Cannot publish non-existent version."
+                    exit 1
+                  fi
 
-          if git rev-parse "$tag" >/dev/null 2>&1; then
-            echo "::notice::Tag $tag exists. Proceeding with publication."
-            echo "tag_exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "::error::Tag $tag does not exist. Cannot publish non-existent version."
-            exit 1
-          fi
+                  echo "module=$module" >> $GITHUB_OUTPUT
+                  echo "version=$version" >> $GITHUB_OUTPUT
+                  echo "tag=$tag" >> $GITHUB_OUTPUT
+                  echo "✅ Inputs validated. Module: $module, Version: $version, Tag: $tag"
 
-      - name: 🚀 Publish to Daggerverse
-        if: steps.check-tag.outputs.tag_exists == 'true'
-        run: |
-          module=${{ steps.validate-inputs.outputs.module }}
-          version=${{ steps.validate-inputs.outputs.version }}
-          tag="$module/$version"
+            - name: 🐹 Set up Go
+              uses: actions/setup-go@v5
+              with:
+                  go-version: ${{ env.GO_VERSION }}
 
-          echo "Publishing $module version $version to Daggerverse"
-          git checkout "refs/tags/$tag"
-          dagger publish -m $module github.com/Excoriate/daggerverse/${module}@${version}
-          git checkout -
-          echo "::notice::Successfully published $module version $version to Daggerverse"
+            - name: 🚀 Publish to Daggerverse
+              run: |
+                  module=${{ steps.validate-inputs.outputs.module }}
+                  version=${{ steps.validate-inputs.outputs.version }}
+                  tag=${{ steps.validate-inputs.outputs.tag }}
 
-      - name: 🎉 Notify on completion
-        run: |
-          echo "::notice::Module publication process completed. Check logs for details."
+                  echo "📢 Publishing module: $module with version $version"
 
-      - name: ❌ Notify on failure
-        if: failure()
-        run: |
-          echo "::error::Failed to publish the module. Please check the logs for details."
+                  git checkout "refs/tags/$tag"
+                  if dagger publish -m $module github.com/Excoriate/daggerverse/${module}@${version}; then
+                    echo "✅ Successfully published $module version $version to Daggerverse"
+                    echo "🔗 Install with: dagger install github.com/Excoriate/daggerverse/${module}@${version}"
+                  else
+                    echo "::error::❌ Failed to publish $module version $version"
+                    exit 1
+                  fi
+                  git checkout -
+
+            - name: 🎉 Publish success notification
+              if: success()
+              run: |
+                  module=${{ steps.validate-inputs.outputs.module }}
+                  version=${{ steps.validate-inputs.outputs.version }}
+                  echo "::notice::🎊 Successfully published ${module}@${version}!"
+                  echo "::notice::🔗 Install with: dagger install github.com/Excoriate/daggerverse/${module}@${version}"
+
+            - name: ❌ Notify on failure
+              if: failure()
+              run: |
+                  echo "::error::💥 Failed to publish the module. Please check the logs for details."
