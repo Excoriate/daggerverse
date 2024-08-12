@@ -2,123 +2,123 @@
 name: 🚀 CD Bump and Publish Dagger Modules
 
 on:
-  workflow_dispatch:
-    inputs:
-      module:
-        description: 'Module to publish (or "all" for all modules)'
-        required: true
-        default: 'all'
-      bump:
-        description: 'Version bump type'
-        required: true
-        default: 'auto'
-        type: choice
-        options:
-          - auto
-          - patch
-          - minor
-          - major
+    workflow_dispatch:
+        inputs:
+            module:
+                description: Module to publish (or "all" for all modules)
+                required: true
+                default: all
+            bump:
+                description: Version bump type
+                required: true
+                default: auto
+                type: choice
+                options:
+                    - auto
+                    - patch
+                    - minor
+                    - major
 
 env:
-  GO_VERSION: ~1.22
-  DAG_VERSION: 0.12.4
+    GO_VERSION: ~1.22
+    DAG_VERSION: 0.12.4
 
 jobs:
-  publish-and-bump:
-    runs-on: ubuntu-latest
-    steps:
-      - name: 📥 Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+    publish-and-bump:
+        runs-on: ubuntu-latest
+        steps:
+            - name: 📥 Checkout repository
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
 
-      - name: 🛠️ Set up environment
-        run: |
-          sudo apt-get update
-          sudo apt-get install jq
-          curl -L https://github.com/fsaintjacques/semver-tool/archive/master.tar.gz | tar xz
-          sudo cp semver-tool-master/src/semver /usr/local/bin/
-          curl -L https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=${{ env.DAG_VERSION }} sh
-          sudo mv bin/dagger /usr/local/bin/
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          echo "✅ Environment setup complete"
+            - name: 🛠️ Set up environment
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install jq
+                  curl -L https://github.com/fsaintjacques/semver-tool/archive/master.tar.gz | tar xz
+                  sudo cp semver-tool-master/src/semver /usr/local/bin/
+                  curl -L https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=${{ env.DAG_VERSION }} sh
+                  sudo mv bin/dagger /usr/local/bin/
+                  git config --global user.name 'github-actions[bot]'
+                  git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+                  echo "✅ Environment setup complete"
 
-      - name: 🔍 Identify all modules
-        id: identify-modules
-        run: |
-          all_modules=()
-          while IFS= read -r -d '' dir; do
-            if [[ -f "$dir/dagger.json" ]]; then
-              all_modules+=("${dir#./}")
-            fi
-          done < <(find . -maxdepth 1 -type d -print0)
-          echo "📦 All identified modules: ${all_modules[*]}"
-          echo "all_modules=${all_modules[*]}" >> $GITHUB_OUTPUT
+            - name: 🔍 Identify all modules
+              id: identify-modules
+              run: |
+                  all_modules=()
+                  while IFS= read -r -d '' dir; do
+                    if [[ -f "$dir/dagger.json" ]]; then
+                      all_modules+=("${dir#./}")
+                    fi
+                  done < <(find . -maxdepth 1 -type d -print0)
+                  echo "📦 All identified modules: ${all_modules[*]}"
+                  echo "all_modules=${all_modules[*]}" >> $GITHUB_OUTPUT
 
-      - name: ✅ Validate and set target modules
-        id: set-target-modules
-        run: |
-          all_modules=(${{ steps.identify-modules.outputs.all_modules }})
-          input_module="${{ github.event.inputs.module }}"
-          if [[ "$input_module" == "all" ]]; then
-            target_modules=("${all_modules[@]}")
-            echo "🎯 Targeting all modules"
-          elif [[ " ${all_modules[*]} " =~ " ${input_module} " ]]; then
-            target_modules=("$input_module")
-            echo "🎯 Targeting specific module: $input_module"
-          else
-            echo "::error::❌ Invalid module name: $input_module"
-            exit 1
-          fi
-          echo "target_modules=${target_modules[*]}" >> $GITHUB_OUTPUT
+            - name: ✅ Validate and set target modules
+              id: set-target-modules
+              run: |
+                  all_modules=(${{ steps.identify-modules.outputs.all_modules }})
+                  input_module="${{ github.event.inputs.module }}"
+                  if [[ "$input_module" == "all" ]]; then
+                    target_modules=("${all_modules[@]}")
+                    echo "🎯 Targeting all modules"
+                  elif [[ " ${all_modules[*]} " =~ " ${input_module} " ]]; then
+                    target_modules=("$input_module")
+                    echo "🎯 Targeting specific module: $input_module"
+                  else
+                    echo "::error::❌ Invalid module name: $input_module"
+                    exit 1
+                  fi
+                  echo "target_modules=${target_modules[*]}" >> $GITHUB_OUTPUT
 
-      - name: 🔄 Process and publish modules
-        env:
-          TARGET_MODULES: ${{ steps.set-target-modules.outputs.target_modules }}
-        run: |
-          determine_bump_type() {
-            local current_version=$1
-            if [[ "${{ github.event.inputs.bump }}" != "auto" ]]; then
-              echo "${{ github.event.inputs.bump }}"
-            else
-              echo "minor"  # Default to 'minor' if auto is selected
-            fi
-          }
+            - name: 🔄 Process and publish modules
+              env:
+                  TARGET_MODULES: ${{ steps.set-target-modules.outputs.target_modules }}
+              run: |
+                  determine_bump_type() {
+                    local current_version=$1
+                    if [[ "${{ github.event.inputs.bump }}" != "auto" ]]; then
+                      echo "${{ github.event.inputs.bump }}"
+                    else
+                      echo "minor"  # Default to 'minor' if auto is selected
+                    fi
+                  }
 
-          for module in $TARGET_MODULES; do
-            echo "🔧 Processing module: $module"
+                  for module in $TARGET_MODULES; do
+                    echo "🔧 Processing module: $module"
 
-            latest_tag=$(git describe --tags --abbrev=0 --match "${module}/*" 2>/dev/null || echo "${module}/v0.0.0")
-            current_version=$(echo $latest_tag | sed "s|${module}/v||")
-            echo "📌 Current version: $current_version"
+                    latest_tag=$(git describe --tags --abbrev=0 --match "${module}/*" 2>/dev/null || echo "${module}/v0.0.0")
+                    current_version=$(echo $latest_tag | sed "s|${module}/v||")
+                    echo "📌 Current version: $current_version"
 
-            bump_type=$(determine_bump_type "$current_version")
-            echo "📈 Bump type: $bump_type"
+                    bump_type=$(determine_bump_type "$current_version")
+                    echo "📈 Bump type: $bump_type"
 
-            new_version="v$(semver bump $bump_type "v$current_version")"
-            new_tag="${module}/$new_version"
+                    new_version="v$(semver bump $bump_type "v$current_version")"
+                    new_tag="${module}/$new_version"
 
-            git tag -a "$new_tag" -m "Bump $module to $new_version"
-            git push origin "$new_tag"
-            echo "🏷️ New version bumped to $new_version and tagged as $new_tag for $module"
+                    git tag -a "$new_tag" -m "Bump $module to $new_version"
+                    git push origin "$new_tag"
+                    echo "🏷️ New version bumped to $new_version and tagged as $new_tag for $module"
 
-            echo "🚀 Publishing $module to Daggerverse"
-            git checkout "refs/tags/$new_tag"
-            if dagger publish -m $module github.com/Excoriate/daggerverse/${module}@${new_version}; then
-              echo "✅ Successfully published $module version $new_version to Daggerverse"
-            else
-              echo "::error::❌ Failed to publish $module version $new_version"
-              exit 1
-            fi
-            git checkout -
-          done
+                    echo "🚀 Publishing $module to Daggerverse"
+                    git checkout "refs/tags/$new_tag"
+                    if dagger publish -m $module github.com/Excoriate/daggerverse/${module}@${new_version}; then
+                      echo "✅ Successfully published $module version $new_version to Daggerverse"
+                    else
+                      echo "::error::❌ Failed to publish $module version $new_version"
+                      exit 1
+                    fi
+                    git checkout -
+                  done
 
-      - name: 🎉 Notify on completion
-        run: |
-          echo "::notice::🏁 Module processing completed. Check logs for details on each module's status."
+            - name: 🎉 Notify on completion
+              run: |
+                  echo "::notice::🏁 Module processing completed. Check logs for details on each module's status."
 
-      - name: ❌ Notify on failure
-        if: failure()
-        run: |
-          echo "::error::💥 Failed to process one or more modules. Please check the logs for details."
+            - name: ❌ Notify on failure
+              if: failure()
+              run: |
+                  echo "::error::💥 Failed to process one or more modules. Please check the logs for details."
