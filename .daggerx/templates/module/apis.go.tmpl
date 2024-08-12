@@ -8,7 +8,7 @@ package main
 
 import (
 	"context"
-    "fmt"
+  	"fmt"
 	"path/filepath"
 	"time"
 
@@ -151,6 +151,20 @@ func (m *{{.module_name}}) WithGitInAlpineContainer() *{{.module_name}} {
 	return m
 }
 
+// WithGitInUbuntuContainer installs Git in the Ubuntu-based container.
+//
+// This method installs Git in the Ubuntu-based container.
+//
+// Returns:
+//   - *{{.module_name}}: The updated {{.module_name}} with Git installed in the container.
+func (m *{{.module_name}}) WithGitInUbuntuContainer() *{{.module_name}} {
+	m.Ctr = m.Ctr.
+		WithExec([]string{"apt-get", "update", "-y"}).
+		WithExec([]string{"apt-get", "install", "-y", "git"})
+
+	return m
+}
+
 // WithNewNetrcFileGitHub creates a new .netrc file with the GitHub credentials.
 //
 // The .netrc file is created in the root directory of the container.
@@ -213,6 +227,21 @@ func (m *{{.module_name}}) WithUtilitiesInAlpineContainer() *{{.module_name}} {
 	m.Ctr = m.Ctr.
 		WithExec([]string{"apk", "update"}).
 		WithExec([]string{"apk", "add", "curl", "wget", "bash", "jq", "vim"})
+
+	return m
+}
+
+// WithUtilitiesInUbuntuContainer installs common utilities in the Ubuntu-based container.
+//
+// This method updates the package lists for upgrades and installs the specified utilities
+// such as curl, wget, bash, jq, and vim in the Ubuntu-based container.
+//
+// Returns:
+//   - *{{.module_name}}: The updated {{.module_name}} with the utilities installed in the container.
+func (m *{{.module_name}}) WithUtilitiesInUbuntuContainer() *{{.module_name}} {
+	m.Ctr = m.Ctr.
+		WithExec([]string{"apt-get", "update"}).
+		WithExec([]string{"apt-get", "install", "-y", "curl", "wget", "bash", "jq", "vim"})
 
 	return m
 }
