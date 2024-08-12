@@ -94,7 +94,6 @@ jobs:
                     fi
                   }
 
-
                   for module in $TARGET_MODULES; do
                     echo "🔧 Processing module: $module"
 
@@ -114,11 +113,32 @@ jobs:
 
                     echo "🚀 Publishing $module to Daggerverse"
                     git checkout "refs/tags/$new_tag"
-                    if dagger publish -m $module github.com/Excoriate/daggerverse/${module}@${new_version#v}; then
+
+                    # Clean untracked files
+                    git clean -fd
+
+                    # Stash any changes
+                    git stash --include-untracked
+
+                    if dagger publish --force -m $module github.com/Excoriate/daggerverse/${module}@${new_version#v}; then
                       echo "✅ Successfully published $module version $new_version to Daggerverse"
                     else
                       echo "::error::❌ Failed to publish $module version $new_version"
                       exit 1
                     fi
+
+                    # Pop stashed changes if any
+                    git stash pop || true
+
                     git checkout -
                   done
+
+            - name: 🎉 Publish success notification
+              if: success()
+              run: |
+                  echo "::notice::🎊 Successfully published all targeted modules!"
+
+            - name: ❌ Notify on failure
+              if: failure()
+              run: |
+                  echo "::error::💥 Failed to publish one or more modules. Please check the logs for details."
