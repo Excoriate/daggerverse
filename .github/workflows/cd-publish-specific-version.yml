@@ -96,11 +96,21 @@ jobs:
               run: |
                   module=${{ steps.validate-inputs.outputs.module }}
                   version=${{ steps.validate-inputs.outputs.version }}
+                  tag="${module}/${version}"
 
                   echo "📢 Publishing module: $module with version $version"
 
-                  git checkout "refs/tags/${module}/${version}"
+                  # Fetch all tags and checkout the specific tag
+                  git fetch --all --tags --force
+                  git checkout "refs/tags/$tag"
 
+                  # Verify we're on the correct commit
+                  if [ "$(git rev-parse HEAD)" != "$(git rev-parse refs/tags/$tag)" ]; then
+                    echo "::error::❌ Failed to checkout the correct commit for tag: $tag"
+                    exit 1
+                  fi
+
+                  # Use the tag directly in the publish command
                   if dagger publish -m $module github.com/Excoriate/daggerverse/${module}@${version}; then
                     echo "✅ Successfully published $module version $version to Daggerverse"
                     echo "🔗 Install with: dagger install github.com/Excoriate/daggerverse/${module}@${version}"
@@ -108,6 +118,8 @@ jobs:
                     echo "::error::❌ Failed to publish $module version $version"
                     exit 1
                   fi
+
+
             - name: 🎉 Publish success notification
               if: success()
               run: |
