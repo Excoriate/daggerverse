@@ -256,7 +256,6 @@ func (m *ModuleTemplate) WithDownloadedFile(
 	// +optional
 	destFileName string,
 ) *ModuleTemplate {
-	// Extract the filename from the last part of the URL.
 	fileName := filepath.Base(url)
 	if destFileName != "" {
 		fileName = destFileName
