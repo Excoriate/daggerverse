@@ -69,6 +69,12 @@ jobs:
                   echo "module=$module" >> $GITHUB_OUTPUT
                   echo "✅ Module $module validated successfully"
 
+            - name: 👤 Configure Git
+              run: |
+                  git config --global user.name 'github-actions[bot]'
+                  git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+                  echo "✅ Git configured for GitHub Actions"
+
             - name: 📋 List existing tags
               run: |
                   echo "📑 Existing tags for ${{ steps.validate-module.outputs.module }}:"
