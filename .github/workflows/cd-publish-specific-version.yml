@@ -95,14 +95,13 @@ jobs:
 
                   echo "📢 Publishing module: $module with version $version"
 
-                  if dagger publish -m $module github.com/Excoriate/daggerverse/${module}@${version}; then
+                  if dagger publish -m $module github.com/Excoriate/daggerverse/${module}@${version#v}; then
                     echo "✅ Successfully published $module version $version to Daggerverse"
                     echo "🔗 Install with: dagger install github.com/Excoriate/daggerverse/${module}@${version}"
                   else
                     echo "::error::❌ Failed to publish $module version $version"
                     exit 1
                   fi
-
             - name: 🎉 Publish success notification
               if: success()
               run: |
