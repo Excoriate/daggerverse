@@ -1,6 +1,5 @@
 # Module {{.module_name}} for Dagger
 
-![Dagger Version](https://img.shields.io/badge/dagger%20version-%3E=0.10.0-0f0f19.svg?style=flat-square)
 
 A simple [Dagger](https://dagger.io) _place the description of the module here_
 
@@ -11,6 +10,49 @@ Through the [Dagger CLI](https://docs.dagger.io/cli/465058/install), or by using
 * ⚙️ `ctr`: The container to use as a base container. If not specified, a new container is created.
 * ⚙️ `version`: The version of the Go image to use. Defaults to `latest`.
 * ⚙️ `image`: The Go image to use. Defaults to `golang:alpine`.
+
+### Structure 🏗️
+```text
+{{.module_name_pkg}} // main module
+├── .gitattributes
+├── .gitignore
+├── LICENSE
+├── README.md
+├── apis.go
+├── cloud.go
+├── commands.go
+├── common.go
+├── config.go
+├── dagger.json
+├── examples // Sub modules that represent examples of the module's functions with each SDK
+│   └── go
+│       ├── .gitattributes
+│       ├── .gitignore
+│       ├── dagger.json
+│       ├── go.mod
+│       ├── go.sum
+│       ├── main.go
+│       └── testdata
+│           └── common
+│               ├── README.md
+│               └── test-file.yml
+├── go.mod
+├── go.sum
+├── main.go
+└── tests // Sub module that represent tests of the module's functions 
+    ├── .gitattributes
+    ├── .gitignore
+    ├── dagger.json
+    ├── go.mod
+    ├── go.sum
+    ├── main.go
+    └── testdata
+        └── common
+            ├── README.md
+            └── test-file.yml
+
+```
+>NOTE: This structure comes out of the box if it's generated through **Daggy**. Just run `just create <module-name>` and you'll get the structure.
 
 ---
 
@@ -73,6 +115,11 @@ just test {{.module_name}}
 just cilocal {{.module_name}}
 ```
 
-Additionally, this module brings a new [Daggerverse](https://daggerverse.dev/) functionality that allows to automatically generate the module's documentation using an special (sub) module called [**examples**/]({{.module_name_pkg}}/examples). This module contains a set of examples hat demonstrate how to use the module's functions. To generate the documentation
+### Examples (aka Recipes) 🍲
+
+Additionally, this module brings a new [Daggerverse](https://daggerverse.dev/) functionality that allows to automatically generate the module's documentation using an special (sub) module called [**{{.module_name_pkg}}/examples/sdk**]({{.module_name_pkg}}/examples). This module contains a set of examples hat demonstrate how to use the module's functions. 
+
+To generate the documentation
+It's important to notice that each **example** function in order to be rendered in the documentation, it must be preprocessed by module's name, in this case (camelCase) `{{.module_name}}`.
 
 >NOTE: The `just` command entails the use of the [**Justfile**](https://just.systems) for task automation. If you don't have it, don't worry, you just need [Nix](https://nixos.org) to run the tasks using the `dev-shell` built-in command: `nix develop --impure --extra-experimental-features nix-command --extra-experimental-features flakes`
