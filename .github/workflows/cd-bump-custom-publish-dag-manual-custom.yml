@@ -98,8 +98,15 @@ jobs:
                     exit 1
                   fi
 
+                  # Create a new commit with the version bump
+                  echo "$new_version" > $module/VERSION
+                  git add $module/VERSION
+                  git commit -m "Bump $module to $new_version"
+
+                  # Create and push the new tag
                   git tag -a "$new_tag" -m "Bump $module to $new_version"
-                  git push origin "$new_tag"
+                  git push origin HEAD:${{ github.ref }} --tags
+
                   echo "new_tag=$new_tag" >> $GITHUB_OUTPUT
                   echo "new_version=${new_version#v}" >> $GITHUB_OUTPUT
                   echo "🎉 New version bumped to $new_version and tagged as $new_tag for $module"
@@ -118,25 +125,7 @@ jobs:
                   echo "📢 Publishing module: $module with version $version"
                   echo "🏷️ Using tag: $tag"
 
-                  git fetch --all --tags --force
-                  git checkout "refs/tags/$tag"
-
-                  # Verify we're on the correct commit
-                  current_commit=$(git rev-parse HEAD)
-                  tag_commit=$(git rev-parse $tag)
-                  if [ "$current_commit" != "$tag_commit" ]; then
-                    echo "::error::❌ Failed to checkout the correct commit for tag: $tag"
-                    echo "Current commit: $current_commit"
-                    echo "Tag commit: $tag_commit"
-                    exit 1
-                  fi
-
-                  # Clean untracked files
-                  git clean -fd
-
-                  # Stash any changes
-                  git stash --include-untracked
-
+                  # Publish directly from the current state
                   if dagger publish --force -m $module github.com/Excoriate/daggerverse/${module}@${version}; then
                     echo "✅ Successfully published $module version $version to Daggerverse"
                     echo "🔗 Install with: dagger install github.com/Excoriate/daggerverse/${module}@${version}"
@@ -144,11 +133,6 @@ jobs:
                     echo "::error::❌ Failed to publish $module version $version"
                     exit 1
                   fi
-
-                  # Pop stashed changes if any
-                  git stash pop || true
-
-                  git checkout -
 
             - name: 🎉 Publish success notification
               if: success()
