@@ -103,6 +103,14 @@ reloadmod mod:
   @cd {{mod}} && dagger develop
   @echo "Module reloaded successfully ✅"
 
+# Recipe to reload a Dagger module's tests (Dagger Develop)
+reloadtest mod:
+  @echo "Running Dagger development in a given module's tests..."
+  @echo "Currently in {{mod}}/tests module 📦, path=`pwd`"
+  @test -d {{mod}} || (echo "Module not found" && exit 1)
+  @cd {{mod}}/tests && dagger develop
+  @echo "Module Tests reloaded successfully ✅"
+
 # Recipe to reload Dagger module and its underlying tests (Dagger Develop & Dagger Call/Functions)
 reloadall mod:
   @echo "Reloading Dagger module and also the tests..."
@@ -116,10 +124,11 @@ reloadall mod:
   @cd {{mod}} && dagger call && dagger functions
 
 # Recipe to run all the tests in the target module
-test mod: (reloadmod mod)
+test mod: (reloadmod mod) (reloadtest mod)
   @echo "Running Dagger module tests..."
   @echo "Currently in {{mod}} module 🧪, path=`pwd`"
   @test -d {{mod}}/tests || (echo "Module not found" && exit 1)
+  @cd {{mod}}/tests && dagger functions
   @cd {{mod}}/tests && dagger call test-all
 
 # Recipe to run all the examples in the target module
@@ -165,10 +174,11 @@ call mod *args:
   @cd {{mod}} && dagger call {{args}}
 
 # Recipe for dagger call tests in a certain module, E.g.: just calltests modexample my-function
-calltests mod *args:
+calltests mod *args: (reloadtest mod)
   @echo "Running Dagger call tests..."
   @echo "Currently in {{mod}} module 🧪, path=`pwd`"
   @test -d {{mod}}/tests || (echo "Module not found" && exit 1)
+  @cd {{mod}}/tests && dagger functions
   @cd {{mod}}/tests && dagger call {{args}}
 
 # Recipe to run dagger develop in all modules
