@@ -65,7 +65,7 @@ func New(
 		})
 
 		if err != nil {
-			return nil, fmt.Errorf("failed to get image URL: %w", err)
+			return nil, WrapError(err, "failed to get image URL")
 		}
 
 		dagModule.Base(imageURL)
@@ -77,7 +77,7 @@ func New(
 	if len(envVarsFromHost) > 0 {
 		envVars, err := envvars.ToDaggerEnvVarsFromSlice(envVarsFromHost)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse environment variables: %w", err)
+			return nil, WrapError(err, "failed to parse environment variables")
 		}
 
 		for _, envVar := range envVars {

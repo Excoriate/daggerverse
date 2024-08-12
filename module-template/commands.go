@@ -2,26 +2,13 @@ package main
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"regexp"
 
 	"github.com/Excoriate/daggerverse/module-template/internal/dagger"
 )
 
 const (
-	errEmptyEnvVarKey          = "environment variable key cannot be empty"
-	errInvalidEnvVarKeyPattern = "failed to validate key"
-	errEnvVarPatternMismatch   = "the key %s is invalid, does not match the pattern %s"
-	errInspectingEnvVar        = "failed to inspect env var %s"
-	errEnvVarNotFound          = "environment variable %s not found"
-	validKeyPattern            = `^[a-zA-Z0-9_]+$`
-)
-
-var (
-	errEmptyEnvVarKeyError        = errors.New(errEmptyEnvVarKey)
-	errEnvVarPatternMismatchError = errors.New(errEnvVarPatternMismatch)
-	errEnvVarNotFoundError        = errors.New(errEnvVarNotFound)
+	validKeyPattern = `^[a-zA-Z0-9_]+$`
 )
 
 // OpenTerminal returns a terminal
@@ -46,7 +33,7 @@ func (m *ModuleTemplate) OpenTerminal() *dagger.Container {
 func (m *ModuleTemplate) RunShell(cmd string) (string, error) {
 	out, err := m.Ctr.WithoutEntrypoint().WithExec([]string{"sh", "-c", cmd}).Stdout(context.Background())
 	if err != nil {
-		return "", fmt.Errorf("failed to run shell command: %w", err)
+		return "", WrapErrorf(err, "failed to run shell command: %s", cmd)
 	}
 
 	return out, nil
@@ -81,7 +68,7 @@ func (m *ModuleTemplate) PrintEnvVars() (string, error) {
 		Stdout(context.Background())
 
 	if err != nil {
-		return "", fmt.Errorf("failed to get env vars: %w", err)
+		return "", WrapError(err, "failed to get env vars")
 	}
 
 	return out, nil
@@ -96,16 +83,16 @@ func (m *ModuleTemplate) PrintEnvVars() (string, error) {
 func (m *ModuleTemplate) InspectEnvVar(key string) (string, error) {
 	// Validate if the key is empty or contains invalid characters
 	if key == "" {
-		return "", fmt.Errorf("%w", errEmptyEnvVarKeyError)
+		return "", Errorf("environment variable key cannot be empty")
 	}
 
 	matched, err := regexp.MatchString(validKeyPattern, key)
 	if err != nil {
-		return "", fmt.Errorf("%s: %w", errInvalidEnvVarKeyPattern, err)
+		return "", WrapErrorf(err, "failed to inspect environment variable by key: %s", key)
 	}
 
 	if !matched {
-		return "", fmt.Errorf("%w", errEnvVarPatternMismatchError)
+		return "", Errorf("the key %s is invalid, does not match the pattern %s", key, validKeyPattern)
 	}
 
 	// Execute the printenv command to get the environment variable's value
@@ -115,12 +102,12 @@ func (m *ModuleTemplate) InspectEnvVar(key string) (string, error) {
 		Stdout(context.Background())
 
 	if envVarErr != nil {
-		return "", fmt.Errorf("%s: %w", fmt.Sprintf(errInspectingEnvVar, key), envVarErr)
+		return "", WrapErrorf(envVarErr, "failed to inspect the environment variable: %s", key)
 	}
 
 	// Check if the output is empty, which indicates the environment variable was not found
 	if out == "" {
-		return "", fmt.Errorf("%w", errEnvVarNotFoundError)
+		return "", Errorf("the environment variable %s was not found", key)
 	}
 
 	return out, nil
