@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 )
@@ -105,7 +106,11 @@ func JoinErrors(errs ...error) *ModuleError {
 
 	for _, err := range errs {
 		if err != nil {
-			messages = append(messages, err.Error())
+			var me *ModuleError
+			if errors.As(err, &me) {
+				// If it's already a ModuleError, strip the prefix
+				messages = append(messages, strings.TrimPrefix(me.Error(), fmt.Sprintf("%s [%s] ", ErrorEmoji, ModuleName)))
+			}
 		}
 	}
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 )
@@ -88,13 +89,13 @@ func WrapErrorf(err error, format string, args ...interface{}) *ModuleTestError 
 	}
 }
 
-// JoinErrors joins multiple errors into a single ModuleTestError.
+// JoinErrors joins multiple errors into a single ModuleError.
 //
 // Parameters:
 //   - errs: A variadic list of errors to be joined.
 //
 // Returns:
-//   - *ModuleTestError: A new ModuleTestError containing the joined error messages,
+//   - *ModuleError: A new ModuleError containing the joined error messages,
 //     or nil if no errors were provided.
 func JoinErrors(errs ...error) *ModuleTestError {
 	if len(errs) == 0 {
@@ -105,7 +106,11 @@ func JoinErrors(errs ...error) *ModuleTestError {
 
 	for _, err := range errs {
 		if err != nil {
-			messages = append(messages, err.Error())
+			var me *ModuleTestError
+			if errors.As(err, &me) {
+				// If it's already a ModuleError, strip the prefix
+				messages = append(messages, strings.TrimPrefix(me.Error(), fmt.Sprintf("%s [%s] ", ErrorEmoji, ModuleName)))
+			}
 		}
 	}
 
