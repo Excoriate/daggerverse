@@ -159,6 +159,7 @@ func (m *ModuleTemplate) WithGitInAlpineContainer() *ModuleTemplate {
 //   - *ModuleTemplate: The updated ModuleTemplate with Git installed in the container.
 func (m *ModuleTemplate) WithGitInUbuntuContainer() *ModuleTemplate {
 	m.Ctr = m.Ctr.
+		WithExec([]string{"apt-get", "update", "-y"}).
 		WithExec([]string{"apt-get", "install", "-y", "git"})
 
 	return m
