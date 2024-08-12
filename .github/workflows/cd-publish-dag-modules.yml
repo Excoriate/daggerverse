@@ -1,92 +1,107 @@
 ---
-name: CD Publish Dagger Modules 🚀
+name: 🚀 CD Publish Dagger Modules
 
 on:
-    workflow_dispatch:
-    push:
-        tags:
-            - '*/v*.*.*'
+  workflow_dispatch:
+  push:
+    tags:
+      - '*/v*.*.*'
 
 env:
-    GO_VERSION: ~1.22
-    DAG_VERSION: 0.12.4
+  GO_VERSION: ~1.22
+  DAG_VERSION: 0.12.4
 
 jobs:
-    detect-and-publish-modules:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v4
-              with:
-                  fetch-depth: 0
+  detect-and-publish-modules:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-            - name: Set up environment
-              run: |
-                  sudo apt-get update
-                  sudo apt-get install jq
+      - name: 🛠️ Set up environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install jq
+          echo "🔧 Environment setup complete"
 
-            - name: Install Dagger CLI
-              run: |
-                  curl -L https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=${{ env.DAG_VERSION }} sh
-                  sudo mv bin/dagger /usr/local/bin/
-                  dagger version
-                  if [[ $(dagger version | grep -oP '(?<=dagger v)\S+') != "${{ env.DAG_VERSION }}" ]]; then
-                    echo "Installed Dagger version does not match DAG_VERSION"
-                    exit 1
-                  fi
+      - name: 🐳 Install Dagger CLI
+        run: |
+          curl -L https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=${{ env.DAG_VERSION }} sh
+          sudo mv bin/dagger /usr/local/bin/
+          dagger version
+          if [[ $(dagger version | grep -oP '(?<=dagger v)\S+') != "${{ env.DAG_VERSION }}" ]]; then
+            echo "::error::❌ Installed Dagger version does not match DAG_VERSION"
+            exit 1
+          fi
+          echo "✅ Dagger CLI installed successfully"
 
-            - name: Identify modules to publish
-              id: identify-modules
-              run: |
-                  all_modules=()
-                  while IFS= read -r -d '' dir; do
-                    if [[ -f "$dir/dagger.json" ]]; then
-                      module_name="${dir#./}"
-                      all_modules+=("$module_name")
-                    fi
-                  done < <(find . -maxdepth 1 -type d -print0)
+      - name: 🔍 Identify modules to publish
+        id: identify-modules
+        run: |
+          all_modules=()
+          while IFS= read -r -d '' dir; do
+            if [[ -f "$dir/dagger.json" ]]; then
+              module_name="${dir#./}"
+              all_modules+=("$module_name")
+            fi
+          done < <(find . -maxdepth 1 -type d -print0)
 
-                  modules_to_publish=()
-                  if [[ "${{ github.event_name }}" == "push" ]]; then
-                    tag="${{ github.ref_name }}"
-                    module_from_tag=$(echo "$tag" | cut -d'/' -f1)
-                    version_from_tag=$(echo "$tag" | cut -d'/' -f2-)
-                    if [[ " ${all_modules[*]} " =~ " ${module_from_tag} " ]]; then
-                      modules_to_publish+=("$module_from_tag:$version_from_tag")
-                    fi
-                  else
-                    for module in "${all_modules[@]}"; do
-                      latest_tag=$(git describe --tags --abbrev=0 --match "${module}/*" 2>/dev/null || echo "")
-                      if [[ $latest_tag =~ ^${module}/v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-                        version=${latest_tag#${module}/}
-                        modules_to_publish+=("$module:$version")
-                      fi
-                    done
-                  fi
+          modules_to_publish=()
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            tag="${{ github.ref_name }}"
+            module_from_tag=$(echo "$tag" | cut -d'/' -f1)
+            version_from_tag=$(echo "$tag" | cut -d'/' -f2-)
+            if [[ " ${all_modules[*]} " =~ " ${module_from_tag} " ]]; then
+              modules_to_publish+=("$module_from_tag:$version_from_tag")
+              echo "📦 Tag push detected: Publishing $module_from_tag version $version_from_tag"
+            fi
+          else
+            for module in "${all_modules[@]}"; do
+              latest_tag=$(git describe --tags --abbrev=0 --match "${module}/*" 2>/dev/null || echo "")
+              if [[ $latest_tag =~ ^${module}/v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+                version=${latest_tag#${module}/}
+                modules_to_publish+=("$module:$version")
+                echo "📦 Identified for publishing: $module version $version"
+              fi
+            done
+          fi
 
-                  json_modules=$(printf '%s\n' "${modules_to_publish[@]}" | jq -R . | jq -sc)
-                  echo "modules_to_publish=$json_modules" >> $GITHUB_OUTPUT
-                  echo "Modules to publish: $json_modules"
+          json_modules=$(printf '%s\n' "${modules_to_publish[@]}" | jq -R . | jq -sc)
+          echo "modules_to_publish=$json_modules" >> $GITHUB_OUTPUT
+          echo "🔢 Total modules to publish: $(echo $json_modules | jq length)"
 
-            - name: Set up Go
-              uses: actions/setup-go@v5
-              with:
-                  go-version: ${{ env.GO_VERSION }}
+      - name: 🐹 Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
 
-            - name: Publish modules
-              env:
-                  MODULES: ${{ steps.identify-modules.outputs.modules_to_publish }}
-              run: |
-                  echo "$MODULES" | jq -r '.[]' | while read -r module_info; do
-                    module_name=$(echo "$module_info" | cut -d':' -f1)
-                    version=$(echo "$module_info" | cut -d':' -f2)
+      - name: 🚀 Publish modules
+        env:
+          MODULES: ${{ steps.identify-modules.outputs.modules_to_publish }}
+        run: |
+          echo "$MODULES" | jq -r '.[]' | while read -r module_info; do
+            module_name=$(echo "$module_info" | cut -d':' -f1)
+            version=$(echo "$module_info" | cut -d':' -f2)
 
-                    echo "Publishing module: $module_name with version $version"
+            echo "📢 Publishing module: $module_name with version $version"
 
-                    git checkout "refs/tags/${module_name}/${version}"
-                    dagger publish -m $module_name github.com/Excoriate/daggerverse/${module_name}@${version}
-                  done
+            git checkout "refs/tags/${module_name}/${version}"
+            if dagger publish -m $module_name github.com/Excoriate/daggerverse/${module_name}@${version}; then
+              echo "✅ Successfully published $module_name version $version"
+            else
+              echo "::error::❌ Failed to publish $module_name version $version"
+              exit 1
+            fi
+          done
 
-            - name: Notify on failure
-              if: failure()
-              run: |
-                  echo "::error::Failed to publish one or more modules. Please check the logs for details."
+      - name: 🎉 Publish success notification
+        if: success()
+        run: |
+          echo "::notice::🎊 Successfully published all modules! Great job!"
+
+      - name: ❌ Notify on failure
+        if: failure()
+        run: |
+          echo "::error::💥 Failed to publish one or more modules. Please check the logs for details."
