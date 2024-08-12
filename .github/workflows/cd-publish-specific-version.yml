@@ -15,6 +15,10 @@ env:
     GO_VERSION: ~1.22
     DAG_VERSION: 0.12.4
 
+permissions:
+    contents: write
+    pull-requests: write
+
 jobs:
     publish-specific-version:
         runs-on: ubuntu-latest
@@ -95,7 +99,9 @@ jobs:
 
                   echo "📢 Publishing module: $module with version $version"
 
-                  if dagger publish -m $module github.com/Excoriate/daggerverse/${module}@${version#v}; then
+                  git checkout "refs/tags/${module}/${version}"
+
+                  if dagger publish -m $module github.com/Excoriate/daggerverse/${module}@${version}; then
                     echo "✅ Successfully published $module version $version to Daggerverse"
                     echo "🔗 Install with: dagger install github.com/Excoriate/daggerverse/${module}@${version}"
                   else
