@@ -121,6 +121,16 @@ jobs:
                   git fetch --all --tags --force
                   git checkout "refs/tags/$tag"
 
+                  # Verify we're on the correct commit
+                  current_commit=$(git rev-parse HEAD)
+                  tag_commit=$(git rev-parse $tag)
+                  if [ "$current_commit" != "$tag_commit" ]; then
+                    echo "::error::❌ Failed to checkout the correct commit for tag: $tag"
+                    echo "Current commit: $current_commit"
+                    echo "Tag commit: $tag_commit"
+                    exit 1
+                  fi
+
                   # Clean untracked files
                   git clean -fd
 
