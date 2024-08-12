@@ -11,8 +11,6 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/Excoriate/daggerverse/gotoolbox/internal/dagger"
 	"github.com/Excoriate/daggerx/pkg/containerx"
 	"github.com/Excoriate/daggerx/pkg/envvars"
@@ -53,7 +51,7 @@ func New(
 		dagModule.Ctr = ctr
 	} else {
 		if version != "" {
-			version = fmt.Sprintf("%s-alpine3.19", version)
+			version += "-alpine3.19"
 		}
 
 		imageURL, err := containerx.GetImageURL(&containerx.NewBaseContainerOpts{
@@ -63,7 +61,7 @@ func New(
 		})
 
 		if err != nil {
-			return nil, fmt.Errorf("failed to get image URL: %w", err)
+			return nil, WrapError(err, "failed to get image URL")
 		}
 
 		dagModule.Base(imageURL)
@@ -75,7 +73,7 @@ func New(
 	if len(envVarsFromHost) > 0 {
 		envVars, err := envvars.ToDaggerEnvVarsFromSlice(envVarsFromHost)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse environment variables: %w", err)
+			return nil, WrapError(err, "failed to parse environment variables")
 		}
 
 		for _, envVar := range envVars {

@@ -113,12 +113,12 @@ func (m *Tests) TestBaseContainer(ctx context.Context) error {
 
 	// Check for errors executing the command to get the Go version.
 	if err != nil {
-		return fmt.Errorf("failed to get Go version: %w", err)
+		return WrapError(err, "failed to get Go version")
 	}
 
 	// Verify that the output contains the expected Go version.
 	if !strings.Contains(out, "go version go1.22.3 ") {
-		return fmt.Errorf("expected Go version go1.22.3, got %s", out)
+		return WrapErrorf(err, "expected Go version go1.22.3, got %s", out)
 	}
 
 	// Run a command to check the OS release information.
@@ -128,12 +128,12 @@ func (m *Tests) TestBaseContainer(ctx context.Context) error {
 
 	// Check for errors executing the command to get the OS release information.
 	if err != nil {
-		return fmt.Errorf("failed to get OS release information: %w", err)
+		return WrapError(err, "failed to get OS release information")
 	}
 
 	// Verify that the output contains "Alpine Linux".
 	if !strings.Contains(out, "Alpine Linux") {
-		return fmt.Errorf("expected Alpine Linux OS, got %s", out)
+		return WrapErrorf(err, "expected Alpine Linux OS, got %s", out)
 	}
 
 	// Passing a specific version to the container.
@@ -148,12 +148,12 @@ func (m *Tests) TestBaseContainer(ctx context.Context) error {
 
 	// Check for errors executing the command to get the Go version.
 	if err != nil {
-		return fmt.Errorf("failed to get Go version, the output was: %w", err)
+		return WrapErrorf(err, "failed to get Go version, the output was: %s", outSpecificVersion)
 	}
 
 	// Verify that the output contains the expected Go version.
 	if !strings.Contains(outSpecificVersion, "go version go1.20.14 ") {
-		return fmt.Errorf("expected Go version go1.21.3, got %s", outSpecificVersion)
+		return WrapErrorf(err, "expected Go version go1.21.3, got %s", outSpecificVersion)
 	}
 
 	// Pass a container with another different version of go, in an ubuntu image.
@@ -180,12 +180,12 @@ func (m *Tests) TestBaseContainer(ctx context.Context) error {
 
 	// Check for errors executing the command to get the Go version.
 	if ubuntuErr != nil {
-		return fmt.Errorf("failed to get Go version, the output was: %w", ubuntuErr)
+		return WrapErrorf(ubuntuErr, "failed to get Go version, the output was: %s", outUbuntu)
 	}
 
 	// Verify that the output contains the expected Go version.
 	if !strings.Contains(outUbuntu, "go version go1.22.3 ") {
-		return fmt.Errorf("expected Go version go1.22.3, got %s", outUbuntu)
+		return WrapErrorf(err, "expected Go version go1.22.3, got %s", outUbuntu)
 	}
 
 	return nil
@@ -223,15 +223,15 @@ func (m *Tests) TestWithContainer(ctx context.Context) error {
 		Stdout(ctx)
 
 	if err != nil {
-		return fmt.Errorf("%w, failed to validate an specific ubuntu command: %w", errUnderlyingDagger, err)
+		return WrapErrorf(err, "failed to validate an specific ubuntu command: %s", out)
 	}
 
 	if out == "" {
-		return fmt.Errorf("%w, failed to validate the overridden container, got empty output", errUnderlyingDagger)
+		return WrapError(err, "failed to validate the overridden container, got empty output")
 	}
 
 	if !strings.Contains(out, "Ubuntu") {
-		return fmt.Errorf("%w, failed to validate the container, got %s instead of Ubuntu", errUnderlyingDagger, out)
+		return WrapErrorf(err, "failed to validate the container, got %s instead of Ubuntu", out)
 	}
 
 	return nil
@@ -267,19 +267,19 @@ func (m *Tests) TestPassingEnvVarsInConstructor(ctx context.Context) error {
 		Stdout(ctx)
 
 	if err != nil {
-		return fmt.Errorf("failed to get env vars: %w", err)
+		return WrapError(err, "failed to get env vars")
 	}
 
 	if !strings.Contains(out, "HOST=localhost") {
-		return fmt.Errorf("%w, expected HOST to be set, got %s", errExpectedContentNotMatch, out)
+		return WrapErrorf(err, "expected HOST to be set, got %s", out)
 	}
 
 	if !strings.Contains(out, "PORT=8080") {
-		return fmt.Errorf("%w, expected PORT to be set, got %s", errExpectedContentNotMatch, out)
+		return WrapErrorf(err, "expected PORT to be set, got %s", out)
 	}
 
 	if !strings.Contains(out, "USER=me") {
-		return fmt.Errorf("%w, expected USER to be set, got %s", errExpectedContentNotMatch, out)
+		return WrapErrorf(err, "expected USER to be set, got %s", out)
 	}
 
 	return nil
@@ -311,23 +311,23 @@ func (m *Tests) TestWithEnvironmentVariable(ctx context.Context) error {
 		Stdout(ctx)
 
 	if err != nil {
-		return fmt.Errorf("failed to get env vars: %w", err)
+		return WrapError(err, "failed to get env vars")
 	}
 
 	if out == "" {
-		return fmt.Errorf("%w, expected to have at least one env var, got empty output", errEmptyOutput)
+		return WrapErrorf(err, "expected to have at least one env var, got empty output")
 	}
 
 	if !strings.Contains(out, "HOST=localhost") {
-		return fmt.Errorf("%w, expected HOST to be set, got %s", errExpectedContentNotMatch, out)
+		return WrapErrorf(err, "expected HOST to be set, got %s", out)
 	}
 
 	if !strings.Contains(out, "PORT=8080") {
-		return fmt.Errorf("%w, expected PORT to be set, got %s", errExpectedContentNotMatch, out)
+		return WrapErrorf(err, "expected PORT to be set, got %s", out)
 	}
 
 	if !strings.Contains(out, "USER=me") {
-		return fmt.Errorf("%w, expected USER to be set, got %s", errExpectedContentNotMatch, out)
+		return WrapErrorf(err, "expected USER to be set, got %s", out)
 	}
 
 	return nil
@@ -347,15 +347,15 @@ func (m *Tests) TestWithSource(ctx context.Context) error {
 		Stdout(ctx)
 
 	if err != nil {
-		return fmt.Errorf("failed to get ls output: %w", err)
+		return WrapError(err, "failed to get ls output")
 	}
 
 	if out == "" {
-		return fmt.Errorf("%w, %s", errExpectedContentNotMatch, out)
+		return NewError("expected to have at least one folder, got empty output")
 	}
 
 	if !strings.Contains(out, "total") {
-		return fmt.Errorf("%w, %s", errExpectedContentNotMatch, out)
+		return Errorf("expected to have at least one folder, got %s", out)
 	}
 
 	return nil
@@ -372,15 +372,15 @@ func (m *Tests) TestRunShellCMD(ctx context.Context) error {
 		RunShell(ctx, "ls -l")
 
 	if err != nil {
-		return fmt.Errorf("%w, failed to run shell command: %w", errUnderlyingDagger, err)
+		return WrapError(err, "failed to run shell command")
 	}
 
 	if out == "" {
-		return fmt.Errorf("%w, expected to have at least one folder, got empty output", errEmptyOutput)
+		return Errorf("expected to have at least one folder, got empty output")
 	}
 
 	if !strings.Contains(out, "total") {
-		return fmt.Errorf("%w, expected to have at least one folder, got %s", errExpectedContentNotMatch, out)
+		return Errorf("expected to have at least one folder, got %s", out)
 	}
 
 	return nil
@@ -404,12 +404,12 @@ func (m *Tests) TestPrintEnvVars(ctx context.Context) error {
 
 	// Check for errors retrieving the environment variables.
 	if err != nil {
-		return fmt.Errorf("failed to get env vars: %w", err)
+		return WrapError(err, "failed to get env vars")
 	}
 
 	// Check if the output is empty, which indicates no environment variables were found.
 	if envVars == "" {
-		return fmt.Errorf("%w, expected to have at least one env var, got empty output", errEmptyOutput)
+		return Errorf("expected to have at least one env var, got empty output")
 	}
 
 	// Return nil if environment variables were successfully found in the output.
@@ -444,12 +444,12 @@ func (m *Tests) TestInspectEnvVar(ctx context.Context) error {
 	// Inspect the environment variable in the container.
 	out, err := targetModule.InspectEnvVar(ctx, key)
 	if err != nil {
-		return fmt.Errorf("failed to inspect env var %s: %w", key, err)
+		return WrapErrorf(err, "failed to inspect env var %s", key)
 	}
 
 	// Check if the inspected value matches the expected result.
 	if !strings.Contains(out, value) {
-		return fmt.Errorf("%w, expected %s to be %s, got %s", errExpectedContentNotMatch, key, value, out)
+		return Errorf("expected %s to be %s, got %s", key, value, out)
 	}
 
 	// Return nil if the environment variable was correctly set and inspected.
@@ -480,15 +480,15 @@ func (m *Tests) TestWithUtilitiesInAlpineContainer(ctx context.Context) error {
 		Stdout(ctx)
 
 	if err != nil {
-		return fmt.Errorf("%w, failed to run shell command: %w", errUnderlyingDagger, err)
+		return Errorf("failed to run shell command: %s", out)
 	}
 
 	if out == "" {
-		return fmt.Errorf("%w, expected to have at least one folder, got empty output", errEmptyOutput)
+		return Errorf("expected to have at least one folder, got empty output")
 	}
 
 	if !strings.Contains(out, "curl") {
-		return fmt.Errorf("%w, expected 'curl' to be available in the container, got %s", errExpectedContentNotMatch, out)
+		return Errorf("expected 'curl' to be available in the container, got %s", out)
 	}
 
 	return nil
@@ -526,20 +526,20 @@ func (m *Tests) TestWithSecretAsEnvVar(ctx context.Context) error {
 
 	// Check for errors executing the command.
 	if err != nil {
-		return fmt.Errorf("failed to get env vars: %w", err)
+		return Errorf("failed to get env vars: %s", out)
 	}
 
 	// Check if the expected environment variables are set.
 	if !strings.Contains(out, "AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE") {
-		return fmt.Errorf("%w, expected AWS_ACCESS_KEY_ID to be set, got %s", errExpectedContentNotMatch, out)
+		return Errorf("expected AWS_ACCESS_KEY_ID to be set, got %s", out)
 	}
 
 	if !strings.Contains(out, "GCP_PROJECT_ID=example-project-id") {
-		return fmt.Errorf("%w, expected GCP_PROJECT_ID to be set, got %s", errExpectedContentNotMatch, out)
+		return Errorf("expected GCP_PROJECT_ID to be set, got %s", out)
 	}
 
 	if !strings.Contains(out, "ANOTHER_SECRET=another-secret-value") {
-		return fmt.Errorf("%w, expected ANOTHER_SECRET to be set, got %s", errExpectedContentNotMatch, out)
+		return Errorf("expected ANOTHER_SECRET to be set, got %s", out)
 	}
 
 	// Return nil if all expected environment variables are set.
@@ -571,12 +571,12 @@ func (m *Tests) TestWithCacheBuster(ctx context.Context) error {
 		Stdout(ctx)
 
 	if err != nil {
-		return fmt.Errorf("failed to get env vars: %w", err)
+		return Errorf("failed to get env vars: %s", out)
 	}
 
 	// Check if the cache-busting environment variable is set
 	if !strings.Contains(out, "CACHE_BUSTER") {
-		return fmt.Errorf("%w, expected CACHE_BUSTER to be set, got %s", errExpectedContentNotMatch, out)
+		return Errorf("expected CACHE_BUSTER to be set, got %s", out)
 	}
 
 	return nil
