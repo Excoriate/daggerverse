@@ -10,6 +10,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"time"
 
 	"github.com/Excoriate/daggerverse/module-template/internal/dagger"
 
@@ -304,6 +305,22 @@ func (m *ModuleTemplate) WithClonedGitRepo(
 
 	// Mount the cloned repository as a directory inside the container.
 	m.Ctr = m.Ctr.WithMountedDirectory(fixtures.MntPrefix, clonedRepo)
+
+	return m
+}
+
+// WithCacheBuster sets a cache-busting environment variable in the container.
+//
+// This method sets an environment variable "CACHE_BUSTER" with a timestamp value in RFC3339Nano format.
+// This can be useful for invalidating caches by providing a unique value.
+//
+// Returns:
+//   - *ModuleTemplate: The updated ModuleTemplate with the cache-busting environment variable set.
+func (m *ModuleTemplate) WithCacheBuster() *ModuleTemplate {
+	m.Ctr = m.Ctr.
+		WithEnvVariable("CACHE_BUSTER", time.
+			Now().
+			Format(time.RFC3339Nano))
 
 	return m
 }
