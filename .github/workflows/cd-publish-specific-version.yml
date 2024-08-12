@@ -73,15 +73,28 @@ jobs:
               with:
                   go-version: ${{ env.GO_VERSION }}
 
-            - name: 🚀 Publish to Daggerverse
+            - name: 🏷️ Verify and checkout tag
               run: |
                   module=${{ steps.validate-inputs.outputs.module }}
                   version=${{ steps.validate-inputs.outputs.version }}
                   tag=${{ steps.validate-inputs.outputs.tag }}
 
+                  git fetch --all --tags
+                  if git rev-parse "$tag" >/dev/null 2>&1; then
+                    git checkout "refs/tags/$tag"
+                    echo "✅ Successfully checked out tag: $tag"
+                  else
+                    echo "::error::❌ Failed to checkout tag: $tag"
+                    exit 1
+                  fi
+
+            - name: 🚀 Publish to Daggerverse
+              run: |
+                  module=${{ steps.validate-inputs.outputs.module }}
+                  version=${{ steps.validate-inputs.outputs.version }}
+
                   echo "📢 Publishing module: $module with version $version"
 
-                  git checkout "refs/tags/$tag"
                   if dagger publish -m $module github.com/Excoriate/daggerverse/${module}@${version}; then
                     echo "✅ Successfully published $module version $version to Daggerverse"
                     echo "🔗 Install with: dagger install github.com/Excoriate/daggerverse/${module}@${version}"
@@ -89,7 +102,6 @@ jobs:
                     echo "::error::❌ Failed to publish $module version $version"
                     exit 1
                   fi
-                  git checkout -
 
             - name: 🎉 Publish success notification
               if: success()
