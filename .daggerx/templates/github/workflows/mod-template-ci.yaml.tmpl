@@ -219,32 +219,11 @@ jobs:
                   cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-            - name: Running Recipes create container 💣 in {{.module_name_pkg}}/examples/go on ${{ matrix.os }} with Dagger ${{ matrix.dagversion }}
+            - name: Running Recipes all recipes 💣 in {{.module_name_pkg}}/examples/go on ${{ matrix.os }} with Dagger ${{ matrix.dagversion }}
               uses: dagger/dagger-for-github@v6
               with:
                   verb: call
-                  args: create-container
-                  module: {{.module_name_pkg}}/examples/go
-                  version: ${{ matrix.dagversion }}
-                  cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-            - name: Running Recipes passed env vars 💣 in {{.module_name_pkg}}/examples/go on ${{ matrix.os }} with Dagger ${{ matrix.dagversion }}
-              uses: dagger/dagger-for-github@v6
-              with:
-                  verb: call
-                  args: passed-env-vars
-                  module: {{.module_name_pkg}}/examples/go
-                  version: ${{ matrix.dagversion }}
-                  cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-            - name: Running Recipes run-arbitrary-command 💣 in {{.module_name_pkg}}/examples/go on ${{ matrix.os }} with Dagger ${{ matrix.dagversion }}
-              uses: dagger/dagger-for-github@v6
-              with:
-                  verb: call
-                  args: run-arbitrary-command
+                  args: all-recipes
                   module: {{.module_name_pkg}}/examples/go
                   version: ${{ matrix.dagversion }}
                   cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}

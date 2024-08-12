@@ -127,10 +127,7 @@ examplesgo mod: (reloadmod mod)
   @echo "Running Dagger module examples (Go SDK)..."
   @echo "Currently in {{mod}} module 🧪, path=`pwd`"
   @test -d {{mod}}/examples/go || (echo "Module examples not found" && exit 1)
-  @cd {{mod}}/examples/go && dagger call create-container
-  @cd {{mod}}/examples/go && dagger call run-arbitrary-command
-  @cd {{mod}}/examples/go && dagger call passed-env-vars
-  @cd {{mod}}/examples/go && dagger call create-net-rc-file-for-github
+  @cd {{mod}}/examples/go && dagger call all-recipes
 
 # Recipe to run GolangCI Lint
 golint mod:
