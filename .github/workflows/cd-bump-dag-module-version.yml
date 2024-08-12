@@ -1,5 +1,5 @@
 ---
-name: 🏷️ CD Bump Dagger Module Versions
+name: 🏷️ CD Bump Dagger Module Versions on Change
 
 on:
     workflow_dispatch:
