@@ -1,0 +1,154 @@
+---
+name: 🚀 Bump Custom Version and Publish Dagger Module
+
+on:
+    workflow_dispatch:
+        inputs:
+            module:
+                description: Module to bump and publish (e.g., module-template)
+                required: true
+            bump:
+                description: Semver bump type (patch, minor, major)
+                required: true
+                default: minor
+                type: choice
+                options:
+                    - patch
+                    - minor
+                    - major
+            version:
+                description: Specific version to set (e.g., v1.2.3, overrides bump if provided)
+                required: false
+
+env:
+    GO_VERSION: ~1.22
+    DAG_VERSION: 0.12.4
+
+permissions:
+    contents: write
+    pull-requests: write
+
+jobs:
+    bump-and-publish:
+        runs-on: ubuntu-latest
+        steps:
+            - name: 📥 Checkout repository
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+
+            - name: 🛠️ Set up environment
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install jq
+                  curl -L https://github.com/fsaintjacques/semver-tool/archive/master.tar.gz | tar xz
+                  sudo cp semver-tool-master/src/semver /usr/local/bin/
+                  curl -L https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=${{ env.DAG_VERSION }} sh
+                  sudo mv bin/dagger /usr/local/bin/
+                  git config --global user.name 'github-actions[bot]'
+                  git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+                  echo "🔧 Environment setup complete"
+
+            - name: 🐳 Verify Dagger CLI
+              run: |
+                  dagger version
+                  if [[ $(dagger version | grep -oP '(?<=dagger v)\S+') != "${{ env.DAG_VERSION }}" ]]; then
+                    echo "::error::❌ Installed Dagger version does not match DAG_VERSION"
+                    exit 1
+                  fi
+                  echo "✅ Dagger CLI verified successfully"
+
+            - name: 🔍 Validate module
+              id: validate-module
+              run: |
+                  module="${{ github.event.inputs.module }}"
+                  if [[ ! -d "$module" || ! -f "$module/dagger.json" ]]; then
+                    echo "::error::❌ Invalid module: $module. Module directory not found or missing dagger.json"
+                    exit 1
+                  fi
+                  echo "module=$module" >> $GITHUB_OUTPUT
+                  echo "✅ Module $module validated successfully"
+
+            - name: 📋 List existing tags
+              run: |
+                  echo "📑 Existing tags for ${{ steps.validate-module.outputs.module }}:"
+                  git tag -l "${{ steps.validate-module.outputs.module }}/*" | sort -V
+
+            - name: 🏷️ Bump Version and Create Tag
+              id: bump-version
+              run: |
+                  module="${{ steps.validate-module.outputs.module }}"
+                  latest_tag=$(git describe --tags --abbrev=0 --match "${module}/*" 2>/dev/null || echo "${module}/v0.0.0")
+                  current_version=$(echo $latest_tag | sed "s|${module}/v||")
+
+                  if [[ -n "${{ github.event.inputs.version }}" ]]; then
+                    new_version="${{ github.event.inputs.version }}"
+                    if [[ ! $new_version =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+                      echo "::error::❌ Invalid version format. Expected vX.Y.Z"
+                      exit 1
+                    fi
+                  else
+                    new_version="v$(semver bump ${{ github.event.inputs.bump }} "v$current_version")"
+                  fi
+
+                  new_tag="${module}/${new_version}"
+
+                  if git rev-parse "$new_tag" >/dev/null 2>&1; then
+                    echo "::error::❌ Tag $new_tag already exists"
+                    exit 1
+                  fi
+
+                  git tag -a "$new_tag" -m "Bump $module to $new_version"
+                  git push origin "$new_tag"
+                  echo "new_tag=$new_tag" >> $GITHUB_OUTPUT
+                  echo "new_version=${new_version#v}" >> $GITHUB_OUTPUT
+                  echo "🎉 New version bumped to $new_version and tagged as $new_tag for $module"
+
+            - name: 🐹 Set up Go
+              uses: actions/setup-go@v5
+              with:
+                  go-version: ${{ env.GO_VERSION }}
+
+            - name: 🚀 Publish to Daggerverse
+              run: |
+                  module="${{ steps.validate-module.outputs.module }}"
+                  version="${{ steps.bump-version.outputs.new_version }}"
+                  tag="${{ steps.bump-version.outputs.new_tag }}"
+
+                  echo "📢 Publishing module: $module with version $version"
+                  echo "🏷️ Using tag: $tag"
+
+                  git fetch --all --tags --force
+                  git checkout "refs/tags/$tag"
+
+                  # Clean untracked files
+                  git clean -fd
+
+                  # Stash any changes
+                  git stash --include-untracked
+
+                  if dagger publish --force -m $module github.com/Excoriate/daggerverse/${module}@${version}; then
+                    echo "✅ Successfully published $module version $version to Daggerverse"
+                    echo "🔗 Install with: dagger install github.com/Excoriate/daggerverse/${module}@${version}"
+                  else
+                    echo "::error::❌ Failed to publish $module version $version"
+                    exit 1
+                  fi
+
+                  # Pop stashed changes if any
+                  git stash pop || true
+
+                  git checkout -
+
+            - name: 🎉 Publish success notification
+              if: success()
+              run: |
+                  module="${{ steps.validate-module.outputs.module }}"
+                  version="${{ steps.bump-version.outputs.new_version }}"
+                  echo "::notice::🎊 Successfully bumped version and published ${module}@${version}!"
+                  echo "::notice::🔗 Install with: dagger install github.com/Excoriate/daggerverse/${module}@${version}"
+
+            - name: ❌ Notify on failure
+              if: failure()
+              run: |
+                  echo "::error::💥 Failed to bump version or publish the module. Please check the logs for details."
