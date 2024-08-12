@@ -16,8 +16,8 @@ env:
     DAG_VERSION: 0.12.4
 
 permissions:
-    contents: write
-    pull-requests: write
+    contents: read
+    id-token: write
 
 jobs:
     publish-specific-version:
@@ -50,9 +50,10 @@ jobs:
               run: |
                   module="${{ github.event.inputs.module }}"
                   version="${{ github.event.inputs.version }}"
+                  normalized_module=$(echo "$module" | tr '[:upper:]' '[:lower:]' | tr -d ' ')
 
-                  if [[ ! -d "$module" || ! -f "$module/dagger.json" ]]; then
-                    echo "::error::❌ Invalid module: $module"
+                  if [[ ! -d "$normalized_module" || ! -f "$normalized_module/dagger.json" ]]; then
+                    echo "::error::❌ Invalid module: $normalized_module"
                     exit 1
                   fi
 
@@ -61,47 +62,38 @@ jobs:
                     exit 1
                   fi
 
-                  tag="${module}/${version}"
-                  if ! git rev-parse "$tag" >/dev/null 2>&1; then
-                    echo "::error::❌ Tag $tag does not exist. Cannot publish non-existent version."
-                    exit 1
-                  fi
-
-                  echo "module=$module" >> $GITHUB_OUTPUT
+                  tag="${normalized_module}/${version}"
+                  echo "module=$normalized_module" >> $GITHUB_OUTPUT
                   echo "version=$version" >> $GITHUB_OUTPUT
                   echo "tag=$tag" >> $GITHUB_OUTPUT
-                  echo "✅ Inputs validated. Module: $module, Version: $version, Tag: $tag"
+                  echo "✅ Inputs validated. Module: $normalized_module, Version: $version, Tag: $tag"
 
             - name: 🐹 Set up Go
               uses: actions/setup-go@v5
               with:
                   go-version: ${{ env.GO_VERSION }}
 
-            - name: 🏷️ Verify and checkout tag
+            - name: 🚀 Publish to Daggerverse
               run: |
-                  module=${{ steps.validate-inputs.outputs.module }}
-                  version=${{ steps.validate-inputs.outputs.version }}
-                  tag=${{ steps.validate-inputs.outputs.tag }}
+                  module="${{ steps.validate-inputs.outputs.module }}"
+                  version="${{ steps.validate-inputs.outputs.version }}"
+                  tag="${{ steps.validate-inputs.outputs.tag }}"
 
-                  git fetch --all --tags
-                  if git rev-parse "$tag" >/dev/null 2>&1; then
-                    git checkout "refs/tags/$tag"
-                    echo "✅ Successfully checked out tag: $tag"
-                  else
-                    echo "::error::❌ Failed to checkout tag: $tag"
+                  echo "📢 Publishing module: $module with version $version"
+                  echo "🏷️ Using tag: $tag"
+
+                  # Fetch all tags and find the correct one
+                  git fetch --all --tags --force
+
+                  # Check if the tag exists
+                  if ! git rev-parse "refs/tags/$tag" >/dev/null 2>&1; then
+                    echo "::error::❌ Tag $tag does not exist in the repository"
+                    echo "Available tags:"
+                    git tag -l
                     exit 1
                   fi
 
-            - name: 🚀 Publish to Daggerverse
-              run: |
-                  module=${{ steps.validate-inputs.outputs.module }}
-                  version=${{ steps.validate-inputs.outputs.version }}
-                  tag="${module}/${version}"
-
-                  echo "📢 Publishing module: $module with version $version"
-
-                  # Fetch all tags and checkout the specific tag
-                  git fetch --all --tags --force
+                  # Checkout the specific tag
                   git checkout "refs/tags/$tag"
 
                   # Verify we're on the correct commit
@@ -111,7 +103,7 @@ jobs:
                   fi
 
                   # Use the tag directly in the publish command
-                  if dagger publish -m $module github.com/Excoriate/daggerverse/${module}@${version}; then
+                  if dagger publish -m "$module" "github.com/Excoriate/daggerverse/${module}@${version}"; then
                     echo "✅ Successfully published $module version $version to Daggerverse"
                     echo "🔗 Install with: dagger install github.com/Excoriate/daggerverse/${module}@${version}"
                   else
@@ -119,12 +111,11 @@ jobs:
                     exit 1
                   fi
 
-
             - name: 🎉 Publish success notification
               if: success()
               run: |
-                  module=${{ steps.validate-inputs.outputs.module }}
-                  version=${{ steps.validate-inputs.outputs.version }}
+                  module="${{ steps.validate-inputs.outputs.module }}"
+                  version="${{ steps.validate-inputs.outputs.version }}"
                   echo "::notice::🎊 Successfully published ${module}@${version}!"
                   echo "::notice::🔗 Install with: dagger install github.com/Excoriate/daggerverse/${module}@${version}"
 
