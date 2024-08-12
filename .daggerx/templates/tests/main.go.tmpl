@@ -85,6 +85,7 @@ func (m *Tests) TestAll(ctx context.Context) error {
 	polTests.Go(m.TestWithSecretAsEnvVar)
 	polTests.Go(m.TestWithDownloadedFile)
 	polTests.Go(m.TestWithClonedGitRepo)
+	polTests.Go(m.TestWithCacheBuster)
 	// Test utility functions.
 	polTests.Go(m.TestDownloadFile)
 	polTests.Go(m.TestCloneGitRepo)
@@ -782,6 +783,42 @@ func (m *Tests) TestWithClonedGitRepo(ctx context.Context) error {
 
 	if !strings.Contains(out, "total") {
 		return fmt.Errorf("%w, expected to have at least one folder, got %s", errExpectedContentNotMatch, out)
+	}
+
+	return nil
+}
+
+// TestWithCacheBuster tests the setting of a cache-busting environment variable
+// within the target module's container.
+//
+// This method sets a cache-busting environment variable (`CACHE_BUSTER`) in
+// the target module's container and verifies if it is correctly set by running
+// the `printenv` command within the container.
+//
+// Arguments:
+// - ctx (context.Context): The context for the test execution.
+//
+// Returns:
+//   - error: Returns an error if there is an issue setting the environment variable,
+//     executing commands in the container, or if the `CACHE_BUSTER` environment variable
+//     is not found in the output.
+func (m *Tests) TestWithCacheBuster(ctx context.Context) error {
+	targetModule := dag.{{.module_name}}()
+
+	// Set the cache-busting environment variable
+	targetModule = targetModule.WithCacheBuster()
+
+	out, err := targetModule.Ctr().
+		WithExec([]string{"printenv"}).
+		Stdout(ctx)
+
+	if err != nil {
+		return fmt.Errorf("failed to get env vars: %w", err)
+	}
+
+	// Check if the cache-busting environment variable is set
+	if !strings.Contains(out, "CACHE_BUSTER") {
+		return fmt.Errorf("%w, expected CACHE_BUSTER to be set, got %s", errExpectedContentNotMatch, out)
 	}
 
 	return nil
