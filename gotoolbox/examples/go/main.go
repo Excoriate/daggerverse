@@ -32,7 +32,6 @@ func New() *Go {
 var (
 	errEnvVarsEmpty            = errors.New("env vars are empty")
 	errEnvVarsDontMatch        = errors.New("expected env vars to be passed, got empty output")
-	errNetRCFileNotFound       = errors.New("netrc file not found")
 	errExpectedFoldersNotFound = errors.New("expected to have at least one folder, got empty output")
 )
 
@@ -95,11 +94,6 @@ func (m *Go) BuiltInRecipes(ctx context.Context) error {
 		return fmt.Errorf("failed to run arbitrary command: %w", err)
 	}
 
-	// Create a .netrc file for GitHub using Gotoolbox_CreateNetRcFileForGithub
-	if _, err := m.Gotoolbox_CreateNetRcFileForGithub(ctx); err != nil {
-		return fmt.Errorf("failed to create netrc file: %w", err)
-	}
-
 	return nil
 }
 
@@ -160,46 +154,6 @@ func (m *Go) Gotoolbox_OpenTerminal() *dagger.Container {
 		Terminal()
 }
 
-// Gotoolbox_CreateNetRcFileForGithub creates and configures a .netrc file for GitHub authentication.
-//
-// This method exemplifies the creation of a .netrc file with credentials for accessing GitHub,
-// and demonstrates how to pass this file as a secret to the Gotoolbox module.
-//
-// Parameters:
-//   - ctx: The context for controlling the function's timeout and cancellation.
-//
-// Returns:
-//   - A configured Container with the .netrc file set as a secret, or an error if the process fails.
-//
-// Steps Involved:
-//  1. Define GitHub password as a secret.
-//  2. Configure the Gotoolbox module to use the .netrc file with the provided credentials.
-//  3. Run a command inside the container to verify the .netrc file's contents.
-func (m *Go) Gotoolbox_CreateNetRcFileForGithub(ctx context.Context) (*dagger.Container, error) {
-	passwordAsSecret := dag.SetSecret("mysecret", "ohboywhatapassword")
-
-	// Configure it for GitHub
-	targetModule := dag.Gotoolbox().
-		WithNewNetrcFileAsSecretGitHub("supersecretuser", passwordAsSecret)
-
-	// Check if the .netrc file is created correctly
-	out, err := targetModule.
-		Ctr().
-		WithExec([]string{"cat", "/root/.netrc"}).
-		Stdout(ctx)
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to get netrc file configured for github: %w", err)
-	}
-
-	expectedContent := "machine github.com\nlogin supersecretuser\npassword ohboywhatapassword"
-	if !strings.Contains(out, expectedContent) {
-		return nil, errNetRCFileNotFound
-	}
-
-	return targetModule.Ctr(), nil
-}
-
 // Gotoolbox_RunArbitraryCommand runs an arbitrary shell command in the test container.
 //
 // This function demonstrates how to execute a shell command within the container
@@ -248,7 +202,6 @@ func (m *Go) Gotoolbox_RunArbitraryCommand(ctx context.Context) (string, error) 
 func (m *Go) Gotoolbox_CreateContainer(ctx context.Context) (*dagger.Container, error) {
 	targetModule := dag.
 		Gotoolbox().
-		BaseAlpine().
 		WithUtilitiesInAlpineContainer(). // Install utilities
 		WithGitInAlpineContainer().       // Install git
 		WithSource(m.TestDir)

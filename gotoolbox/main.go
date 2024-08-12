@@ -96,5 +96,7 @@ func (m *Gotoolbox) Base(imageURL string) *Gotoolbox {
 	c := dag.Container().From(imageURL)
 	m.Ctr = c
 
-	return m
+	return m.
+		WithGitInAlpineContainer().
+		WithUtilitiesInAlpineContainer()
 }
