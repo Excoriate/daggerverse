@@ -76,7 +76,11 @@ jobs:
             - name: 🔄 Process and publish modules
               env:
                   TARGET_MODULES: ${{ steps.set-target-modules.outputs.target_modules }}
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               run: |
+                  git config --global user.name 'github-actions[bot]'
+                  git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
                   determine_bump_type() {
                     local current_version=$1
                     if [[ "${{ github.event.inputs.bump }}" != "auto" ]]; then
@@ -85,6 +89,7 @@ jobs:
                       echo "minor"  # Default to 'minor' if auto is selected
                     fi
                   }
+
 
                   for module in $TARGET_MODULES; do
                     echo "🔧 Processing module: $module"
@@ -100,12 +105,12 @@ jobs:
                     new_tag="${module}/$new_version"
 
                     git tag -a "$new_tag" -m "Bump $module to $new_version"
-                    git push origin "$new_tag"
+                    git push https://${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git "$new_tag"
                     echo "🏷️ New version bumped to $new_version and tagged as $new_tag for $module"
 
                     echo "🚀 Publishing $module to Daggerverse"
                     git checkout "refs/tags/$new_tag"
-                    if dagger publish -m $module github.com/Excoriate/daggerverse/${module}@${new_version}; then
+                    if dagger publish -m $module github.com/Excoriate/daggerverse/${module}@${new_version#v}; then
                       echo "✅ Successfully published $module version $new_version to Daggerverse"
                     else
                       echo "::error::❌ Failed to publish $module version $new_version"
@@ -113,12 +118,3 @@ jobs:
                     fi
                     git checkout -
                   done
-
-            - name: 🎉 Notify on completion
-              run: |
-                  echo "::notice::🏁 Module processing completed. Check logs for details on each module's status."
-
-            - name: ❌ Notify on failure
-              if: failure()
-              run: |
-                  echo "::error::💥 Failed to process one or more modules. Please check the logs for details."
