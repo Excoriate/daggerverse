@@ -131,6 +131,15 @@ issues:
         - linters:
               - lll
           source: '^//go:generate '
+        - linters:
+              - revive
+          text: don't use underscores in Go names
+          path: main\.go$
+        - linters:
+              - stylecheck
+          text: 'ST1003: should not use underscores in Go names'
+          path: main\.go$
+
     exclude-use-default: false
     exclude-case-sensitive: false
     exclude-dirs:
