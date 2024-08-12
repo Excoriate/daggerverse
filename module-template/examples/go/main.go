@@ -52,7 +52,8 @@ func (m *Go) getTestDir() *dagger.Directory {
 
 // AllRecipes executes all tests.
 //
-// AllRecipes is a helper method for tests, executing the built-in recipes and other specific functionalities of the ModuleTemplate module.
+// AllRecipes is a helper method for tests, executing the built-in recipes and
+// other specific functionalities of the ModuleTemplate module.
 func (m *Go) AllRecipes(ctx context.Context) error {
 	polTests := pool.New().WithErrors().WithContext(ctx)
 
