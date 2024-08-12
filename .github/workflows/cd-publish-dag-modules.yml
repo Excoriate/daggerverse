@@ -11,6 +11,11 @@ env:
     GO_VERSION: ~1.22
     DAG_VERSION: 0.12.4
 
+permissions:
+    contents: write
+    pull-requests: write
+
+
 jobs:
     detect-and-publish-modules:
         runs-on: ubuntu-latest
