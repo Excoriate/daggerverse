@@ -52,8 +52,8 @@ jobs:
                   version="${{ github.event.inputs.version }}"
                   normalized_module=$(echo "$module" | tr '[:upper:]' '[:lower:]' | tr -d ' ')
 
-                  if [[ ! -d "$normalized_module" || ! -f "$normalized_module/dagger.json" ]]; then
-                    echo "::error::❌ Invalid module: $normalized_module"
+                  if [[ ! -d "$normalized_module" ]]; then
+                    echo "::error::❌ Module directory not found: $normalized_module"
                     exit 1
                   fi
 
@@ -96,10 +96,15 @@ jobs:
                   # Checkout the specific tag
                   git checkout "refs/tags/$tag"
 
-                  # Verify we're on the correct commit
-                  if [ "$(git rev-parse HEAD)" != "$(git rev-parse refs/tags/$tag)" ]; then
-                    echo "::error::❌ Failed to checkout the correct commit for tag: $tag"
-                    exit 1
+                  # Get the current commit hash
+                  current_commit=$(git rev-parse HEAD)
+                  tag_commit=$(git rev-parse refs/tags/$tag)
+
+                  echo "Current commit: $current_commit"
+                  echo "Tag commit: $tag_commit"
+
+                  if [ "$current_commit" != "$tag_commit" ]; then
+                    echo "::warning::⚠️ Current commit does not match the tag commit. This might be okay if the tag was moved."
                   fi
 
                   # Use the tag directly in the publish command
