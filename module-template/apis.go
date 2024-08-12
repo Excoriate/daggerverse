@@ -256,6 +256,7 @@ func (m *ModuleTemplate) WithDownloadedFile(
 	// +optional
 	destFileName string,
 ) *ModuleTemplate {
+	// Extract the filename from the last part of the URL.
 	fileName := filepath.Base(url)
 	if destFileName != "" {
 		fileName = destFileName
@@ -298,7 +299,7 @@ func (m *ModuleTemplate) WithClonedGitRepo(
 	// +optional
 	vcs string,
 ) *ModuleTemplate {
-	// Clone the repository and mount it
+	// Call the helper function to clone the repository.
 	clonedRepo := m.CloneGitRepo(repoURL, token, vcs)
 
 	// Mount the cloned repository as a directory inside the container.
