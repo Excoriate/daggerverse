@@ -1,5 +1,5 @@
 ---
-name: CD Bump Dagger Module Versions 🏷️
+name: 🏷️ CD Bump Dagger Module Versions
 
 on:
   workflow_dispatch:
@@ -20,16 +20,18 @@ jobs:
     outputs:
       changed_modules: ${{ steps.set-modules.outputs.changed_modules }}
     steps:
-      - uses: actions/checkout@v4
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Set up environment
+      - name: 🛠️ Set up environment
         run: |
           sudo apt-get update
           sudo apt-get install jq
+          echo "✅ Environment setup complete"
 
-      - name: Identify all modules
+      - name: 🔍 Identify all modules
         id: identify-modules
         run: |
           modules=()
@@ -41,9 +43,9 @@ jobs:
 
           all_modules=$(printf '%s\n' "${modules[@]}" | jq -R . | jq -sc)
           echo "all_modules=$all_modules" >> $GITHUB_OUTPUT
-          echo "All identified modules: $all_modules"
+          echo "📦 All identified modules: $all_modules"
 
-      - name: Detect changed modules
+      - name: 🔎 Detect changed modules
         id: set-modules
         run: |
           modules=()
@@ -55,39 +57,42 @@ jobs:
 
           changed_modules=$(printf '%s\n' "${modules[@]}" | jq -R . | jq -sc)
           echo "changed_modules=$changed_modules" >> $GITHUB_OUTPUT
-          echo "Modules with changes: $changed_modules"
+          echo "🔄 Modules with changes: $changed_modules"
 
   bump-version:
     needs: detect-modules
     if: needs.detect-modules.outputs.changed_modules != '[]'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Setup Semver Tool
+      - name: 🔧 Setup Semver Tool
         run: |
           curl -L https://github.com/fsaintjacques/semver-tool/archive/master.tar.gz | tar xz
           sudo cp semver-tool-master/src/semver /usr/local/bin/
+          echo "✅ Semver tool installed successfully"
 
-      - name: Configure Git
+      - name: 👤 Configure Git
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          echo "✅ Git configured for GitHub Actions"
 
-      - name: Bump Version and Tag
+      - name: 🏷️ Bump Version and Tag
         run: |
           changed_modules='${{ needs.detect-modules.outputs.changed_modules }}'
           if [ "$changed_modules" == "[]" ] || [ "$changed_modules" == '[""]' ]; then
-            echo "::notice::No changes detected in any modules. Skipping version bump."
+            echo "::notice::🚫 No changes detected in any modules. Skipping version bump."
             exit 0
           fi
 
           echo "$changed_modules" | jq -r '.[]' | while read -r module_path; do
             if [ -z "$module_path" ]; then
-              echo "::warning::Empty module path detected. Skipping."
+              echo "::warning::⚠️ Empty module path detected. Skipping."
               continue
             fi
 
@@ -95,14 +100,24 @@ jobs:
             current_version=$(echo $latest_tag | sed "s|${module_path}/v||")
             new_version="v$(semver bump ${bump} "v$current_version")"
             new_tag="${module_path}/$new_version"
+          
             if git rev-parse "$new_tag" >/dev/null 2>&1; then
-                echo "::warning::Tag $new_tag already exists, skipping tag creation"
+                echo "::warning::⚠️ Tag $new_tag already exists, skipping tag creation"
             else
                 git tag -a "$new_tag" -m "Bump $module_path to $new_version"
                 git push origin "$new_tag"
-                echo "::notice::New version bumped to $new_version and tagged as $new_tag"
+                echo "::notice::🎉 New version bumped to $new_version and tagged as $new_tag for $module_path"
             fi
           done
         env:
           bump: ${{ inputs.bump || 'minor' }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🎉 Notify on completion
+        run: |
+          echo "::notice::✅ Version bump process completed. Check logs for details on each module's status."
+
+      - name: ❌ Notify on failure
+        if: failure()
+        run: |
+          echo "::error::💥 Failed to bump version for one or more modules. Please check the logs for details."
