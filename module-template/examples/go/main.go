@@ -49,10 +49,10 @@ func (m *Go) getTestDir() *dagger.Directory {
 		Directory("./testdata")
 }
 
-// PassedEnvVars demonstrates how to pass environment variables to the ModuleTemplate module.
+// ModuleTemplatePassedEnvVars demonstrates how to pass environment variables to the ModuleTemplate module.
 //
 // This method configures a ModuleTemplate module to use specific environment variables from the host.
-func (m *Go) PassedEnvVars(ctx context.Context) error {
+func (m *Go) ModuleTemplatePassedEnvVars(ctx context.Context) error {
 	targetModule := dag.ModuleTemplate(dagger.ModuleTemplateOpts{
 		EnvVarsFromHost: []string{"SOMETHING=SOMETHING,SOMETHING=SOMETHING"},
 	})
@@ -76,7 +76,7 @@ func (m *Go) PassedEnvVars(ctx context.Context) error {
 	return nil
 }
 
-// OpenTerminal demonstrates how to open an interactive terminal session
+// ModuleTemplateOpenTerminal demonstrates how to open an interactive terminal session
 // within a ModuleTemplate module container.
 //
 // This function showcases the initialization and configuration of a
@@ -93,7 +93,7 @@ func (m *Go) PassedEnvVars(ctx context.Context) error {
 //
 //	This function can be used to interactively debug or inspect the
 //	container environment during test execution.
-func (m *Go) OpenTerminal() *dagger.Container {
+func (m *Go) ModuleTemplateOpenTerminal() *dagger.Container {
 	// Configure the ModuleTemplate module container with necessary options
 	targetModule := dag.ModuleTemplate()
 
@@ -106,7 +106,7 @@ func (m *Go) OpenTerminal() *dagger.Container {
 		Terminal()
 }
 
-// CreateNetRcFileForGithub creates and configures a .netrc file for GitHub authentication.
+// ModuleTemplateCreateNetRcFileForGithub creates and configures a .netrc file for GitHub authentication.
 //
 // This method exemplifies the creation of a .netrc file with credentials for accessing GitHub,
 // and demonstrates how to pass this file as a secret to the ModuleTemplate module.
@@ -121,7 +121,7 @@ func (m *Go) OpenTerminal() *dagger.Container {
 //  1. Define GitHub password as a secret.
 //  2. Configure the ModuleTemplate module to use the .netrc file with the provided credentials.
 //  3. Run a command inside the container to verify the .netrc file's contents.
-func (m *Go) CreateNetRcFileForGithub(ctx context.Context) (*dagger.Container, error) {
+func (m *Go) ModuleTemplateCreateNetRcFileForGithub(ctx context.Context) (*dagger.Container, error) {
 	passwordAsSecret := dag.SetSecret("mysecret", "ohboywhatapassword")
 
 	// Configure it for GitHub
@@ -146,7 +146,7 @@ func (m *Go) CreateNetRcFileForGithub(ctx context.Context) (*dagger.Container, e
 	return targetModule.Ctr(), nil
 }
 
-// RunArbitraryCommand runs an arbitrary shell command in the test container.
+// ModuleTemplateRunArbitraryCommand runs an arbitrary shell command in the test container.
 //
 // This function demonstrates how to execute a shell command within the container
 // using the ModuleTemplate module.
@@ -158,7 +158,7 @@ func (m *Go) CreateNetRcFileForGithub(ctx context.Context) (*dagger.Container, e
 // Returns:
 //
 //	A string containing the output of the executed command, or an error if the command fails or if the output is empty.
-func (m *Go) RunArbitraryCommand(ctx context.Context) (string, error) {
+func (m *Go) ModuleTemplateRunArbitraryCommand(ctx context.Context) (string, error) {
 	targetModule := dag.ModuleTemplate().WithSource(m.TestDir)
 
 	// Execute the 'ls -l' command
@@ -178,7 +178,7 @@ func (m *Go) RunArbitraryCommand(ctx context.Context) (string, error) {
 	return out, nil
 }
 
-// CreateContainer initializes and returns a configured Dagger container.
+// ModuleTemplateCreateContainer initializes and returns a configured Dagger container.
 //
 // This method exemplifies the setup of a container within the ModuleTemplate module using the source directory.
 //
@@ -191,7 +191,7 @@ func (m *Go) RunArbitraryCommand(ctx context.Context) (string, error) {
 // Steps Involved:
 //  1. Configure the ModuleTemplate module with the source directory.
 //  2. Run a command inside the container to check the OS information.
-func (m *Go) CreateContainer(ctx context.Context) (*dagger.Container, error) {
+func (m *Go) ModuleTemplateCreateContainer(ctx context.Context) (*dagger.Container, error) {
 	targetModule := dag.
 		ModuleTemplate().
 		BaseAlpine().
