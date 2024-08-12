@@ -16,7 +16,7 @@ env:
     DAG_VERSION: 0.12.4
 
 permissions:
-    contents: read
+    contents: write
     id-token: write
 
 jobs:
@@ -32,18 +32,20 @@ jobs:
               run: |
                   sudo apt-get update
                   sudo apt-get install jq
-                  echo "🔧 Environment setup complete"
-
-            - name: 🐳 Install Dagger CLI
-              run: |
                   curl -L https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=${{ env.DAG_VERSION }} sh
                   sudo mv bin/dagger /usr/local/bin/
+                  git config --global user.name 'github-actions[bot]'
+                  git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+                  echo "🔧 Environment setup complete"
+
+            - name: 🐳 Verify Dagger CLI
+              run: |
                   dagger version
                   if [[ $(dagger version | grep -oP '(?<=dagger v)\S+') != "${{ env.DAG_VERSION }}" ]]; then
                     echo "::error::❌ Installed Dagger version does not match DAG_VERSION"
                     exit 1
                   fi
-                  echo "✅ Dagger CLI installed successfully"
+                  echo "✅ Dagger CLI verified successfully"
 
             - name: 🔍 Validate inputs and tag
               id: validate-inputs
@@ -74,6 +76,8 @@ jobs:
                   go-version: ${{ env.GO_VERSION }}
 
             - name: 🚀 Publish to Daggerverse
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               run: |
                   module="${{ steps.validate-inputs.outputs.module }}"
                   version="${{ steps.validate-inputs.outputs.version }}"
@@ -96,19 +100,14 @@ jobs:
                   # Checkout the specific tag
                   git checkout "refs/tags/$tag"
 
-                  # Get the current commit hash
-                  current_commit=$(git rev-parse HEAD)
-                  tag_commit=$(git rev-parse refs/tags/$tag)
+                  # Clean untracked files
+                  git clean -fd
 
-                  echo "Current commit: $current_commit"
-                  echo "Tag commit: $tag_commit"
+                  # Stash any changes
+                  git stash --include-untracked
 
-                  if [ "$current_commit" != "$tag_commit" ]; then
-                    echo "::warning::⚠️ Current commit does not match the tag commit. This might be okay if the tag was moved."
-                  fi
-
-                  # Use the tag directly in the publish command
-                  if dagger publish -m "$module" "github.com/Excoriate/daggerverse/${module}@${version}"; then
+                  # Use the tag directly in the publish command with --force
+                  if dagger publish --force -m "$module" "github.com/Excoriate/daggerverse/${module}@${version#v}"; then
                     echo "✅ Successfully published $module version $version to Daggerverse"
                     echo "🔗 Install with: dagger install github.com/Excoriate/daggerverse/${module}@${version}"
                   else
@@ -116,15 +115,4 @@ jobs:
                     exit 1
                   fi
 
-            - name: 🎉 Publish success notification
-              if: success()
-              run: |
-                  module="${{ steps.validate-inputs.outputs.module }}"
-                  version="${{ steps.validate-inputs.outputs.version }}"
-                  echo "::notice::🎊 Successfully published ${module}@${version}!"
-                  echo "::notice::🔗 Install with: dagger install github.com/Excoriate/daggerverse/${module}@${version}"
-
-            - name: ❌ Notify on failure
-              if: failure()
-              run: |
-                  echo "::error::💥 Failed to publish the module. Please check the logs for details."
+                  # Pop stashed changes if any

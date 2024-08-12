@@ -1,5 +1,5 @@
 ---
-name: 🚀 CD Bump and Publish Dagger Modules
+name: 🚀 CD Bump and Publish Dagger Module(s)
 
 on:
     workflow_dispatch:

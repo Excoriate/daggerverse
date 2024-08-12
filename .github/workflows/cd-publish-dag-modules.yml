@@ -1,5 +1,5 @@
 ---
-name: 🚀 CD Publish Dagger Modules
+name: 🚀 CD Publish Dagger Module(s) latest versions
 
 on:
     workflow_dispatch:
@@ -15,7 +15,6 @@ permissions:
     contents: write
     pull-requests: write
 
-
 jobs:
     detect-and-publish-modules:
         runs-on: ubuntu-latest
@@ -29,18 +28,20 @@ jobs:
               run: |
                   sudo apt-get update
                   sudo apt-get install jq
-                  echo "🔧 Environment setup complete"
-
-            - name: 🐳 Install Dagger CLI
-              run: |
                   curl -L https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=${{ env.DAG_VERSION }} sh
                   sudo mv bin/dagger /usr/local/bin/
+                  git config --global user.name 'github-actions[bot]'
+                  git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+                  echo "🔧 Environment setup complete"
+
+            - name: 🐳 Verify Dagger CLI
+              run: |
                   dagger version
                   if [[ $(dagger version | grep -oP '(?<=dagger v)\S+') != "${{ env.DAG_VERSION }}" ]]; then
                     echo "::error::❌ Installed Dagger version does not match DAG_VERSION"
                     exit 1
                   fi
-                  echo "✅ Dagger CLI installed successfully"
+                  echo "✅ Dagger CLI verified successfully"
 
             - name: 🔍 Identify modules to publish
               id: identify-modules
@@ -92,13 +93,26 @@ jobs:
 
                     echo "📢 Publishing module: $module_name with version $version"
 
+                    git fetch --all --tags --force
                     git checkout "refs/tags/${module_name}/${version}"
-                    if dagger publish -m $module_name github.com/Excoriate/daggerverse/${module_name}@${version}; then
+
+                    # Clean untracked files
+                    git clean -fd
+
+                    # Stash any changes
+                    git stash --include-untracked
+
+                    if dagger publish --force -m $module_name github.com/Excoriate/daggerverse/${module_name}@${version#v}; then
                       echo "✅ Successfully published $module_name version $version"
                     else
                       echo "::error::❌ Failed to publish $module_name version $version"
                       exit 1
                     fi
+
+                    # Pop stashed changes if any
+                    git stash pop || true
+
+                    git checkout -
                   done
 
             - name: 🎉 Publish success notification
