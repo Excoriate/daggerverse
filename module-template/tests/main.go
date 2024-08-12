@@ -16,7 +16,6 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/Excoriate/daggerverse/module-template/tests/internal/dagger"
@@ -99,7 +98,7 @@ func (m *Tests) TestAll(ctx context.Context) error {
 	// From this point onwards, we're testing the specific functionality of the ModuleTemplate module.
 
 	if err := polTests.Wait(); err != nil {
-		return fmt.Errorf("there are some failed tests: %w", err)
+		return WrapError(err, "there are some failed tests")
 	}
 
 	return nil
@@ -137,15 +136,15 @@ func (m *Tests) TestWithContainer(ctx context.Context) error {
 		Stdout(ctx)
 
 	if err != nil {
-		return fmt.Errorf("%w, failed to validate an specific ubuntu command: %w", errUnderlyingDagger, err)
+		return WrapError(err, "failed to validate an specific ubuntu command")
 	}
 
 	if out == "" {
-		return fmt.Errorf("%w, failed to validate the overridden container, got empty output", errUnderlyingDagger)
+		return WrapError(err, "failed to validate the overridden container, got empty output")
 	}
 
 	if !strings.Contains(out, "Ubuntu") {
-		return fmt.Errorf("%w, failed to validate the container, got %s instead of Ubuntu", errUnderlyingDagger, out)
+		return WrapErrorf(err, "failed to validate the container, got %s instead of Ubuntu", out)
 	}
 
 	return nil
@@ -186,11 +185,11 @@ func (m *Tests) TestUbuntuBase(ctx context.Context) error {
 		Stdout(ctx)
 
 	if err != nil {
-		return fmt.Errorf("failed to get Ubuntu image: %w", err)
+		return WrapError(err, "failed to get Ubuntu image")
 	}
 
 	if !strings.Contains(out, "ID=ubuntu") {
-		return fmt.Errorf("%w, expected Ubuntu 22.04 or ID=ubuntu, got %s", errExpectedContentNotMatch, out)
+		return WrapErrorf(err, "expected Ubuntu 22.04 or ID=ubuntu, got %s", out)
 	}
 
 	return nil
@@ -212,12 +211,12 @@ func (m *Tests) TestAlpineBase(ctx context.Context) error {
 
 	out, err := targetModule.Ctr().WithExec([]string{"cat", "/etc/os-release"}).Stdout(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to get Alpine image: %w", err)
+		return WrapError(err, "failed to get Alpine image")
 	}
 
 	// Adjust the conditions to match the actual output.
 	if !strings.Contains(out, "Alpine Linux") || !strings.Contains(out, "VERSION_ID=3.17.3") {
-		return fmt.Errorf("%w, expected Alpine Linux VERSION_ID=3.17.3, got %s", errExpectedContentNotMatch, out)
+		return WrapErrorf(err, "expected Alpine Linux VERSION_ID=3.17.3, got %s", out)
 	}
 
 	return nil
@@ -243,11 +242,11 @@ func (m *Tests) TestBusyBoxBase(ctx context.Context) error {
 		Stdout(ctx)
 
 	if err != nil {
-		return fmt.Errorf("failed to get BusyBox image: %w", err)
+		return WrapError(err, "failed to get BusyBox image")
 	}
 
 	if !strings.Contains(out, "v1.35.0") {
-		return fmt.Errorf("%w, expected BusyBox v1.35.0, got %s", errExpectedContentNotMatch, out)
+		return WrapErrorf(err, "expected BusyBox v1.35.0, got %s", out)
 	}
 
 	return nil
@@ -268,19 +267,19 @@ func (m *Tests) TestPassingEnvVarsInConstructor(ctx context.Context) error {
 		Stdout(ctx)
 
 	if err != nil {
-		return fmt.Errorf("failed to get env vars: %w", err)
+		return WrapError(err, "failed to get env vars")
 	}
 
 	if !strings.Contains(out, "HOST=localhost") {
-		return fmt.Errorf("%w, expected HOST to be set, got %s", errExpectedContentNotMatch, out)
+		return WrapErrorf(err, "expected HOST to be set, got %s", out)
 	}
 
 	if !strings.Contains(out, "PORT=8080") {
-		return fmt.Errorf("%w, expected PORT to be set, got %s", errExpectedContentNotMatch, out)
+		return WrapErrorf(err, "expected PORT to be set, got %s", out)
 	}
 
 	if !strings.Contains(out, "USER=me") {
-		return fmt.Errorf("%w, expected USER to be set, got %s", errExpectedContentNotMatch, out)
+		return WrapErrorf(err, "expected USER to be set, got %s", out)
 	}
 
 	return nil
@@ -312,23 +311,23 @@ func (m *Tests) TestWithEnvironmentVariable(ctx context.Context) error {
 		Stdout(ctx)
 
 	if err != nil {
-		return fmt.Errorf("failed to get env vars: %w", err)
+		return WrapError(err, "failed to get env vars")
 	}
 
 	if out == "" {
-		return fmt.Errorf("%w, expected to have at least one env var, got empty output", errEmptyOutput)
+		return WrapError(err, "expected to have at least one env var, got empty output")
 	}
 
 	if !strings.Contains(out, "HOST=localhost") {
-		return fmt.Errorf("%w, expected HOST to be set, got %s", errExpectedContentNotMatch, out)
+		return WrapErrorf(err, "expected HOST to be set, got %s", out)
 	}
 
 	if !strings.Contains(out, "PORT=8080") {
-		return fmt.Errorf("%w, expected PORT to be set, got %s", errExpectedContentNotMatch, out)
+		return WrapErrorf(err, "expected PORT to be set, got %s", out)
 	}
 
 	if !strings.Contains(out, "USER=me") {
-		return fmt.Errorf("%w, expected USER to be set, got %s", errExpectedContentNotMatch, out)
+		return WrapErrorf(err, "expected USER to be set, got %s", out)
 	}
 
 	return nil
@@ -348,15 +347,15 @@ func (m *Tests) TestWithSource(ctx context.Context) error {
 		Stdout(ctx)
 
 	if err != nil {
-		return fmt.Errorf("failed to get ls output: %w", err)
+		return WrapError(err, "failed to get ls output")
 	}
 
 	if out == "" {
-		return fmt.Errorf("%w, %s", errExpectedContentNotMatch, out)
+		return WrapError(err, "expected to have at least one folder, got empty output")
 	}
 
 	if !strings.Contains(out, "total") {
-		return fmt.Errorf("%w, %s", errExpectedContentNotMatch, out)
+		return WrapErrorf(err, "expected to have at least one folder, got %s", out)
 	}
 
 	return nil
@@ -373,15 +372,15 @@ func (m *Tests) TestRunShellCMD(ctx context.Context) error {
 		RunShell(ctx, "ls -l")
 
 	if err != nil {
-		return fmt.Errorf("%w, failed to run shell command: %w", errUnderlyingDagger, err)
+		return WrapError(err, "failed to run shell command")
 	}
 
 	if out == "" {
-		return fmt.Errorf("%w, expected to have at least one folder, got empty output", errEmptyOutput)
+		return WrapError(err, "expected to have at least one folder, got empty output")
 	}
 
 	if !strings.Contains(out, "total") {
-		return fmt.Errorf("%w, expected to have at least one folder, got %s", errExpectedContentNotMatch, out)
+		return WrapErrorf(err, "expected to have at least one folder, got %s", out)
 	}
 
 	return nil
@@ -405,12 +404,12 @@ func (m *Tests) TestPrintEnvVars(ctx context.Context) error {
 
 	// Check for errors retrieving the environment variables.
 	if err != nil {
-		return fmt.Errorf("failed to get env vars: %w", err)
+		return WrapError(err, "failed to get env vars")
 	}
 
 	// Check if the output is empty, which indicates no environment variables were found.
 	if envVars == "" {
-		return fmt.Errorf("%w, expected to have at least one env var, got empty output", errEmptyOutput)
+		return WrapError(err, "expected to have at least one env var, got empty output")
 	}
 
 	// Return nil if environment variables were successfully found in the output.
@@ -445,12 +444,12 @@ func (m *Tests) TestInspectEnvVar(ctx context.Context) error {
 	// Inspect the environment variable in the container.
 	out, err := targetModule.InspectEnvVar(ctx, key)
 	if err != nil {
-		return fmt.Errorf("failed to inspect env var %s: %w", key, err)
+		return WrapErrorf(err, "failed to inspect env var %s", key)
 	}
 
 	// Check if the inspected value matches the expected result.
 	if !strings.Contains(out, value) {
-		return fmt.Errorf("%w, expected %s to be %s, got %s", errExpectedContentNotMatch, key, value, out)
+		return WrapErrorf(err, "expected %s to be %s, got %s", key, value, out)
 	}
 
 	// Return nil if the environment variable was correctly set and inspected.
@@ -481,15 +480,15 @@ func (m *Tests) TestWithUtilitiesInAlpineContainer(ctx context.Context) error {
 		Stdout(ctx)
 
 	if err != nil {
-		return fmt.Errorf("%w, failed to run shell command: %w", errUnderlyingDagger, err)
+		return WrapError(err, "failed to run shell command")
 	}
 
 	if out == "" {
-		return fmt.Errorf("%w, expected to have at least one folder, got empty output", errEmptyOutput)
+		return WrapError(err, "expected to have at least one folder, got empty output")
 	}
 
 	if !strings.Contains(out, "curl") {
-		return fmt.Errorf("%w, expected 'curl' to be available in the container, got %s", errExpectedContentNotMatch, out)
+		return WrapErrorf(err, "expected 'curl' to be available in the container, got %s", out)
 	}
 
 	return nil
@@ -525,15 +524,15 @@ func (m *Tests) TestWithUtilitiesInUbuntuContainer(ctx context.Context) error {
 		Stdout(ctx)
 
 	if err != nil {
-		return fmt.Errorf("%w, failed to run shell command: %w", errUnderlyingDagger, err)
+		return WrapError(err, "failed to run shell command")
 	}
 
 	if out == "" {
-		return fmt.Errorf("%w, expected to have at least one folder, got empty output", errEmptyOutput)
+		return WrapError(err, "expected to have at least one folder, got empty output")
 	}
 
 	if !strings.Contains(out, "curl") {
-		return fmt.Errorf("%w, expected 'curl' to be available in the container, got %s", errExpectedContentNotMatch, out)
+		return WrapErrorf(err, "expected 'curl' to be available in the container, got %s", out)
 	}
 
 	return nil
@@ -562,17 +561,17 @@ func (m *Tests) TestWithGitInAlpineContainer(ctx context.Context) error {
 		Stdout(ctx)
 
 	if err != nil {
-		return fmt.Errorf("%w, failed to run shell command: %w", errUnderlyingDagger, err)
+		return WrapError(err, "failed to run shell command")
 	}
 
 	// Check if the command output is empty
 	if out == "" {
-		return fmt.Errorf("%w, expected to have at least one folder, got empty output", errEmptyOutput)
+		return WrapError(err, "expected to have at least one folder, got empty output")
 	}
 
 	// Check if the Git version information is present in the output
 	if !strings.Contains(out, "git version") {
-		return fmt.Errorf("%w, expected 'git' to be available in the container, got %s", errExpectedContentNotMatch, out)
+		return WrapErrorf(err, "expected 'git' to be available in the container, got %s", out)
 	}
 
 	return nil
@@ -611,17 +610,17 @@ func (m *Tests) TestWithGitInUbuntuContainer(ctx context.Context) error {
 
 		// Check for errors executing the command.
 	if err != nil {
-		return fmt.Errorf("%w, failed to run shell command: %w", errUnderlyingDagger, err)
+		return WrapError(err, "failed to run shell command")
 	}
 
 	// Check if the output is empty, which indicates the command may have failed.
 	if out == "" {
-		return fmt.Errorf("%w, expected to have at least one folder, got empty output", errEmptyOutput)
+		return WrapError(err, "expected to have at least one folder, got empty output")
 	}
 
 	// Check if the output contains 'git version' to confirm 'git' is available.
 	if !strings.Contains(out, "git version") {
-		return fmt.Errorf("%w, expected 'git' to be available in the container, got %s", errExpectedContentNotMatch, out)
+		return WrapErrorf(err, "expected 'git' to be available in the container, got %s", out)
 	}
 
 	// Return nil if 'git' was successfully verified.
@@ -660,12 +659,12 @@ func (m *Tests) TestWithNewNetrcFileGitHub(ctx context.Context) error {
 
 	// Check for errors executing the command.
 	if err != nil {
-		return fmt.Errorf("%w, failed to get netrc file: %w", errUnderlyingDagger, err)
+		return WrapError(err, "failed to get netrc file")
 	}
 
 	// Check if the .netrc file contains the expected machine entry.
 	if !strings.Contains(out, "machine github.com") {
-		return fmt.Errorf("%w, expected netrc file to be created, got %s", errExpectedContentNotMatch, out)
+		return WrapErrorf(err, "expected netrc file to be created, got %s", out)
 	}
 
 	return nil
@@ -699,12 +698,12 @@ func (m *Tests) TestWithNewNetrcFileAsSecretGitHub(ctx context.Context) error {
 
 	// Check for errors executing the command.
 	if err != nil {
-		return fmt.Errorf("%w, failed to get netrc file: %w", errUnderlyingDagger, err)
+		return WrapError(err, "failed to get netrc file")
 	}
 
 	// Check if the .netrc file contains the expected machine entry.
 	if !strings.Contains(out, "machine github.com") {
-		return fmt.Errorf("%w, expected netrc file to be created, got %s", errExpectedContentNotMatch, out)
+		return WrapErrorf(err, "expected netrc file to be created, got %s", out)
 	}
 
 	// Return nil if the netrc file is created and contains the expected entry.
@@ -731,19 +730,22 @@ func (m *Tests) TestWithNewNetrcFileGitLab(ctx context.Context) error {
 	gitlabSecret := dag.SetSecret("gitlab-username", "gitlab-password")
 
 	// Set the GitLab credentials as a secret in the target module's .netrc file.
-	targetModule = targetModule.WithNewNetrcFileAsSecretGitLab("gitlab-username", gitlabSecret)
+	targetModule = targetModule.
+		WithNewNetrcFileAsSecretGitLab("gitlab-username", gitlabSecret)
 
 	// Execute a command to read the .netrc file from the container.
-	out, err := targetModule.Ctr().WithExec([]string{"cat", "/root/.netrc"}).Stdout(ctx)
+	out, err := targetModule.Ctr().
+		WithExec([]string{"cat", "/root/.netrc"}).
+		Stdout(ctx)
 
 	// Check for errors executing the command.
 	if err != nil {
-		return fmt.Errorf("%w, failed to get netrc file: %w", errUnderlyingDagger, err)
+		return WrapError(err, "failed to get netrc file")
 	}
 
 	// Check if the .netrc file contains the expected machine entry.
 	if !strings.Contains(out, "machine gitlab.com") {
-		return fmt.Errorf("%w, expected netrc file to be created, got %s", errExpectedContentNotMatch, out)
+		return WrapErrorf(err, "expected netrc file to be created, got %s", out)
 	}
 
 	return nil
@@ -772,16 +774,19 @@ func (m *Tests) TestWithNewNetrcFileAsSecretGitLab(ctx context.Context) error {
 	targetModule = targetModule.WithNewNetrcFileAsSecretGitLab("gitlab-username", gitlabSecret)
 
 	// Execute a command to read the .netrc file from the container.
-	out, err := targetModule.Ctr().WithExec([]string{"cat", "/root/.netrc"}).Stdout(ctx)
+	out, err := targetModule.
+		Ctr().
+		WithExec([]string{"cat", "/root/.netrc"}).
+		Stdout(ctx)
 
 	// Check for errors executing the command.
 	if err != nil {
-		return fmt.Errorf("%w, failed to get netrc file: %w", errUnderlyingDagger, err)
+		return WrapError(err, "failed to get netrc file")
 	}
 
 	// Check if the .netrc file contains the expected machine entry.
 	if !strings.Contains(out, "machine gitlab.com") {
-		return fmt.Errorf("%w, expected netrc file to be created, got %s", errExpectedContentNotMatch, out)
+		return WrapErrorf(err, "expected netrc file to be created, got %s", out)
 	}
 
 	return nil
@@ -819,20 +824,20 @@ func (m *Tests) TestWithSecretAsEnvVar(ctx context.Context) error {
 
 	// Check for errors executing the command.
 	if err != nil {
-		return fmt.Errorf("failed to get env vars: %w", err)
+		return WrapError(err, "failed to get env vars")
 	}
 
 	// Check if the expected environment variables are set.
 	if !strings.Contains(out, "AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE") {
-		return fmt.Errorf("%w, expected AWS_ACCESS_KEY_ID to be set, got %s", errExpectedContentNotMatch, out)
+		return WrapErrorf(err, "expected AWS_ACCESS_KEY_ID to be set, got %s", out)
 	}
 
 	if !strings.Contains(out, "GCP_PROJECT_ID=example-project-id") {
-		return fmt.Errorf("%w, expected GCP_PROJECT_ID to be set, got %s", errExpectedContentNotMatch, out)
+		return WrapErrorf(err, "expected GCP_PROJECT_ID to be set, got %s", out)
 	}
 
 	if !strings.Contains(out, "ANOTHER_SECRET=another-secret-value") {
-		return fmt.Errorf("%w, expected ANOTHER_SECRET to be set, got %s", errExpectedContentNotMatch, out)
+		return WrapErrorf(err, "expected ANOTHER_SECRET to be set, got %s", out)
 	}
 
 	// Return nil if all expected environment variables are set.
@@ -865,11 +870,11 @@ func (m *Tests) TestWithDownloadedFile(ctx context.Context) error {
 		Stdout(ctx)
 
 	if err != nil {
-		return fmt.Errorf("failed to get download file from url %s: %w", fileURL, err)
+		return WrapErrorf(err, "failed to get download file from url %s", fileURL)
 	}
 
 	if out == "" {
-		return fmt.Errorf("%w, expected to have at least one folder, got empty output", errEmptyOutput)
+		return WrapError(err, "expected to have at least one folder, got empty output")
 	}
 
 	// Downloading the file but with a name this time instead.
@@ -886,11 +891,11 @@ func (m *Tests) TestWithDownloadedFile(ctx context.Context) error {
 		Stdout(ctx)
 
 	if err != nil {
-		return fmt.Errorf("failed to get download file from url %s: %w", fileURL, err)
+		return WrapErrorf(err, "failed to get download file from url %s", fileURL)
 	}
 
 	if out == "" {
-		return fmt.Errorf("%w, expected to have at least one folder, got empty output", errEmptyOutput)
+		return WrapError(err, "expected to have at least one folder, got empty output")
 	}
 
 	return nil
@@ -910,15 +915,15 @@ func (m *Tests) TestWithClonedGitRepo(ctx context.Context) error {
 		Stdout(ctx)
 
 	if err != nil {
-		return fmt.Errorf("failed to get ls output: %w", err)
+		return WrapError(err, "failed to get ls output")
 	}
 
 	if out == "" {
-		return fmt.Errorf("%w, expected to have at least one folder, got empty output", errEmptyOutput)
+		return WrapError(err, "expected to have at least one folder, got empty output")
 	}
 
 	if !strings.Contains(out, "total") {
-		return fmt.Errorf("%w, expected to have at least one folder, got %s", errExpectedContentNotMatch, out)
+		return WrapErrorf(err, "expected to have at least one folder, got %s", out)
 	}
 
 	return nil
@@ -949,12 +954,12 @@ func (m *Tests) TestWithCacheBuster(ctx context.Context) error {
 		Stdout(ctx)
 
 	if err != nil {
-		return fmt.Errorf("failed to get env vars: %w", err)
+		return WrapError(err, "failed to get env vars")
 	}
 
 	// Check if the cache-busting environment variable is set
 	if !strings.Contains(out, "CACHE_BUSTER") {
-		return fmt.Errorf("%w, expected CACHE_BUSTER to be set, got %s", errExpectedContentNotMatch, out)
+		return WrapErrorf(err, "expected CACHE_BUSTER to be set, got %s", out)
 	}
 
 	return nil
@@ -977,15 +982,15 @@ func (m *Tests) TestCloneGitRepo(ctx context.Context) error {
 		Stdout(ctx)
 
 	if err != nil {
-		return fmt.Errorf("failed to get ls output: %w", err)
+		return WrapError(err, "failed to get ls output")
 	}
 
 	if out == "" {
-		return fmt.Errorf("%w, expected to have at least one folder, got empty output", errEmptyOutput)
+		return WrapError(err, "expected to have at least one folder, got empty output")
 	}
 
 	if !strings.Contains(out, "total") {
-		return fmt.Errorf("%w, expected to have at least one folder, got %s", errExpectedContentNotMatch, out)
+		return WrapErrorf(err, "expected to have at least one folder, got %s", out)
 	}
 
 	// Check if the .gitignore file is present.
@@ -994,11 +999,11 @@ func (m *Tests) TestCloneGitRepo(ctx context.Context) error {
 		Stdout(ctx)
 
 	if err != nil {
-		return fmt.Errorf("failed to get .gitignore file: %w", err)
+		return WrapError(err, "failed to get .gitignore file")
 	}
 
 	if out == "" {
-		return fmt.Errorf("%w, expected to have at least one folder, got empty output", errEmptyOutput)
+		return WrapError(err, "could not inspect (cat) the .gitignore file")
 	}
 
 	return nil
@@ -1037,12 +1042,12 @@ func (m *Tests) TestDownloadFile(ctx context.Context) error {
 
 	// Check for errors executing the command.
 	if err != nil {
-		return fmt.Errorf("failed to get download file from url %s: %w", fileURL, err)
+		return WrapErrorf(err, "failed to get download file from url %s", fileURL)
 	}
 
 	// Check if the output is empty, which indicates the file was not found.
 	if out == "" {
-		return fmt.Errorf("%w, expected to find the file at /mnt/myfile.zip, but got empty output", errEmptyOutput)
+		return WrapError(err, "expected to find the file at /mnt/myfile.zip, but got empty output")
 	}
 
 	// Return nil if the file was successfully found.
@@ -1076,26 +1081,24 @@ func (m *Tests) TestWithAWSKeys(ctx context.Context) error {
 		Stdout(ctx)
 
 	if err != nil {
-		return fmt.Errorf("failed to get env vars: %w", err)
+		return WrapError(err, "failed to get AWS Keys environment variables")
 	}
 
 	if !strings.Contains(out, "AWS_ACCESS_KEY_ID") {
-		return fmt.Errorf("%w, expected AWS_ACCESS_KEY_ID to be set, got %s", errExpectedContentNotMatch, out)
+		return WrapErrorf(err, "expected AWS_ACCESS_KEY_ID to be set, got %s", out)
 	}
 
 	if !strings.Contains(out, "AWS_SECRET_ACCESS_KEY") {
-		return fmt.Errorf("%w, expected AWS_SECRET_ACCESS_KEY to be set, got %s", errExpectedContentNotMatch, out)
+		return WrapErrorf(err, "expected AWS_SECRET_ACCESS_KEY to be set, got %s", out)
 	}
 
 	// Check if the content of the env vars is correct.
 	if !strings.Contains(out, "AKIAIOSFODNN7EXAMPLE") {
-		return fmt.Errorf("%w, expected AKIAIOSFODNN7EXAMPLE to be set, got %s", errExpectedContentNotMatch, out)
+		return WrapErrorf(err, "expected AKIAIOSFODNN7EXAMPLE to be set, got %s", out)
 	}
 
 	if !strings.Contains(out, "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY") {
-		return fmt.Errorf("%w, "+
-			"expected wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY to be set, got %s",
-			errExpectedContentNotMatch, out)
+		return WrapErrorf(err, "expected wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY to be set, got %s", out)
 	}
 
 	return nil
@@ -1130,19 +1133,19 @@ func (m *Tests) TestWithAzureCredentials(ctx context.Context) error {
 		Stdout(ctx)
 
 	if err != nil {
-		return fmt.Errorf("failed to get env vars: %w", err)
+		return WrapError(err, "failed to get Azure Keys environment variables")
 	}
 
 	if !strings.Contains(out, "AZURE_CLIENT_ID") {
-		return fmt.Errorf("%w, expected AZURE_CLIENT_ID to be set, got %s", errExpectedContentNotMatch, out)
+		return WrapErrorf(err, "expected AZURE_CLIENT_ID to be set, got %s", out)
 	}
 
 	if !strings.Contains(out, "AZURE_CLIENT_SECRET") {
-		return fmt.Errorf("%w, expected AZURE_CLIENT_SECRET to be set, got %s", errExpectedContentNotMatch, out)
+		return WrapErrorf(err, "expected AZURE_CLIENT_SECRET to be set, got %s", out)
 	}
 
 	if !strings.Contains(out, "AZURE_TENANT_ID") {
-		return fmt.Errorf("%w, expected AZURE_TENANT_ID to be set, got %s", errExpectedContentNotMatch, out)
+		return WrapErrorf(err, "expected AZURE_TENANT_ID to be set, got %s", out)
 	}
 
 	return nil
