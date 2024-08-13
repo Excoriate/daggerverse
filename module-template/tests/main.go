@@ -100,7 +100,7 @@ func (m *Tests) TestAll(ctx context.Context) error {
 	polTests.Go(m.TestHTTPCurl)
 	polTests.Go(m.TestHTTPDoJSONAPICall)
 
-	// Test CLIs APIs
+	// Test CLI APIs
 	polTests.Go(m.TestWithAWSCLIInAlpineContainer)
 	polTests.Go(m.TestWithAWSCLIInUbuntuContainer)
 
