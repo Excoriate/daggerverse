@@ -15,6 +15,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"strings"
 
 	"github.com/Excoriate/daggerverse/module-template/tests/internal/dagger"
@@ -1644,6 +1645,79 @@ func (m *Tests) TestGoWithGoBuild(ctx context.Context) error {
 
 	if !strings.Contains(out, expectedOutput) {
 		return Errorf("expected output to contain %s, got %s", expectedOutput, out)
+	}
+
+	return nil
+}
+
+func (m *Tests) TestHTTPCurl(ctx context.Context) error {
+	targetURL := "https://fakestoreapiserver.reactbd.com/smart"
+
+	targetModule := dag.ModuleTemplate()
+
+	targetModule = targetModule.
+		WithUtilitiesInAlpineContainer().
+		WithHttpcurl(targetURL)
+
+	out, err := targetModule.Ctr().Stdout(ctx)
+
+	if out == "" {
+		return Errorf("failed to inspect the curl output of the url %s. Got empty output", targetURL)
+	}
+
+	if err != nil {
+		return WrapErrorf(err, "failed to curl this url %s", targetURL)
+	}
+
+	return nil
+}
+
+type ProductJSONApiTest struct {
+	ID          int    `json:"_id"`
+	Title       string `json:"title"`
+	IsNew       bool   `json:"isNew"`
+	OldPrice    string `json:"oldPrice"`
+	Price       int    `json:"price"`
+	Description string `json:"description"`
+	Category    string `json:"category"`
+	Image       string `json:"image"`
+	Rating      int    `json:"rating"`
+}
+
+func (m *Tests) TestHTTPDoJSONAPICall(ctx context.Context) error {
+	targetURL := "https://fakestoreapiserver.reactbd.com/products"
+
+	targetModule := dag.ModuleTemplate()
+	jsonFile := targetModule.DoJsonapicall("GET", targetURL)
+
+	if jsonFile == nil {
+		return Errorf("failed to get the json response from the url %s", targetURL)
+	}
+
+	content, err := jsonFile.Contents(ctx)
+	if err != nil {
+		return WrapErrorf(err, "failed to get the contents of the file /response.json")
+	}
+
+	if content == "" {
+		return Errorf("failed to get the contents of the file /response.json")
+	}
+
+	// Check if the response is an error message
+	if strings.Contains(content, "Bad request") || strings.Contains(content, "BAD_REQUEST") {
+		return Errorf("API returned an error: %s", content)
+	}
+
+	// It's a json file, so we can unmarshal it
+	var products []ProductJSONApiTest
+	err = json.Unmarshal([]byte(content), &products)
+	if err != nil {
+		return WrapErrorf(err, "failed to unmarshal the json response. Raw content: %s", content)
+	}
+
+	// Check if the unmarshalling was successful
+	if len(products) == 0 {
+		return Errorf("failed to unmarshal the json response or the response was empty")
 	}
 
 	return nil
