@@ -8,7 +8,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"path/filepath"
 	"time"
 
@@ -137,111 +136,6 @@ func (m *ModuleTemplate) WithFileMountedInContainer(
 	}
 
 	m.Ctr = m.Ctr.WithMountedFile(path, file)
-
-	return m
-}
-
-// WithGitInAlpineContainer installs Git in the golang/alpine container.
-//
-// It installs Git in the golang/alpine container.
-func (m *ModuleTemplate) WithGitInAlpineContainer() *ModuleTemplate {
-	m.Ctr = m.Ctr.
-		WithExec([]string{"apk", "add", "git"})
-
-	return m
-}
-
-// WithGitInUbuntuContainer installs Git in the Ubuntu-based container.
-//
-// This method installs Git in the Ubuntu-based container.
-//
-// Returns:
-//   - *ModuleTemplate: The updated ModuleTemplate with Git installed in the container.
-func (m *ModuleTemplate) WithGitInUbuntuContainer() *ModuleTemplate {
-	m.Ctr = m.Ctr.
-		WithExec([]string{"apt-get", "update", "-y"}).
-		WithExec([]string{"apt-get", "install", "-y", "git"})
-
-	return m
-}
-
-// WithNewNetrcFileGitHub creates a new .netrc file with the GitHub credentials.
-//
-// The .netrc file is created in the root directory of the container.
-func (m *ModuleTemplate) WithNewNetrcFileGitHub(
-	username string,
-	password string,
-) *ModuleTemplate {
-	machineCMD := "machine github.com\nlogin " + username + "\npassword " + password + "\n"
-
-	m.Ctr = m.Ctr.WithNewFile(netRcRootPath, machineCMD)
-
-	return m
-}
-
-// WithNewNetrcFileAsSecretGitHub creates a new .netrc file with the GitHub credentials.
-//
-// The .netrc file is created in the root directory of the container.
-// The argument 'password' is a secret that is not exposed in the logs.
-func (m *ModuleTemplate) WithNewNetrcFileAsSecretGitHub(username string, password *dagger.Secret) *ModuleTemplate {
-	passwordTxtValue, _ := password.Plaintext(context.Background())
-	machineCMD := fmt.Sprintf("machine github.com\nlogin %s\npassword %s\n", username, passwordTxtValue)
-	//nolint:exhaustruct // This is a method that is used to set the base image and version.
-	m.Ctr = m.Ctr.WithNewFile(netRcRootPath, machineCMD)
-
-	return m
-}
-
-// WithNewNetrcFileGitLab creates a new .netrc file with the GitLab credentials.
-//
-// The .netrc file is created in the root directory of the container.
-func (m *ModuleTemplate) WithNewNetrcFileGitLab(
-	username string,
-	password string,
-) *ModuleTemplate {
-	machineCMD := "machine gitlab.com\nlogin " + username + "\npassword " + password + "\n"
-
-	m.Ctr = m.Ctr.WithNewFile(netRcRootPath, machineCMD)
-
-	return m
-}
-
-// WithNewNetrcFileAsSecretGitLab creates a new .netrc file with the GitLab credentials.
-//
-// The .netrc file is created in the root directory of the container.
-// The argument 'password' is a secret that is not exposed in the logs.
-func (m *ModuleTemplate) WithNewNetrcFileAsSecretGitLab(username string, password *dagger.Secret) *ModuleTemplate {
-	passwordTxtValue, _ := password.Plaintext(context.Background())
-	machineCMD := fmt.Sprintf("machine gitlab.com\nlogin %s\npassword %s\n", username, passwordTxtValue)
-
-	//nolint:exhaustruct // This is a method that is used to set the base image and version.
-	m.Ctr = m.Ctr.WithNewFile(netRcRootPath, machineCMD)
-
-	return m
-}
-
-// WithUtilitiesInAlpineContainer installs common utilities in the golang/alpine container.
-//
-// It installs utilities such as curl, wget, and others that are commonly used.
-func (m *ModuleTemplate) WithUtilitiesInAlpineContainer() *ModuleTemplate {
-	m.Ctr = m.Ctr.
-		WithExec([]string{"apk", "update"}).
-		WithExec([]string{"apk", "add", "curl", "wget", "bash", "jq", "vim", "unzip", "yq"})
-
-	return m
-}
-
-// WithUtilitiesInUbuntuContainer installs common utilities in the Ubuntu-based container.
-//
-// This method updates the package lists for upgrades and installs the specified utilities
-// such as curl, wget, bash, jq, and vim in the Ubuntu-based container.
-//
-// Returns:
-//   - *ModuleTemplate: The updated ModuleTemplate with the utilities installed in the container.
-func (m *ModuleTemplate) WithUtilitiesInUbuntuContainer() *ModuleTemplate {
-	m.Ctr = m.Ctr.
-		WithExec([]string{"apt-get", "update"}).
-		WithExec([]string{"apt-get", "install", "-y", "curl", "wget", "bash", "jq", "vim", "unzip", "yq"})
 
 	return m
 }
