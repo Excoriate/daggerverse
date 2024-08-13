@@ -100,6 +100,10 @@ func (m *Tests) TestAll(ctx context.Context) error {
 	polTests.Go(m.TestHTTPCurl)
 	polTests.Go(m.TestHTTPDoJSONAPICall)
 
+	// Test CLI APIs
+	polTests.Go(m.TestWithAWSCLIInAlpineContainer)
+	polTests.Go(m.TestWithAWSCLIInUbuntuContainer)
+
 	// From this point onwards, we're testing the specific functionality of the ModuleTemplate module.
 
 	if err := polTests.Wait(); err != nil {
