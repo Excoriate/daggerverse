@@ -202,7 +202,7 @@ func (m *ModuleTemplate) WithGoModCache(
 //
 // Example:
 //
-//	moduleTemplate.WithGoInstall([]string{"github.com/Excoriate/daggerverse@latest", "github.com/another/package@v1.0"})
+//	ModuleTemplate.WithGoInstall([]string{"github.com/Excoriate/daggerverse@latest", "github.com/another/package@v1.0"})
 //
 // Returns:
 // - *ModuleTemplate: A pointer to the updated ModuleTemplate instance.
@@ -240,7 +240,7 @@ func (m *ModuleTemplate) WithGoInstall(
 //
 // Example:
 //
-//	moduleTemplate.WithGoExec([]string{"build", "./..."}, "linux/amd64")
+//	ModuleTemplate.WithGoExec([]string{"build", "./..."}, "linux/amd64")
 //
 // Returns:
 // - *ModuleTemplate: A pointer to the updated ModuleTemplate instance.
