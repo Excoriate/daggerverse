@@ -136,8 +136,9 @@ func (m *ModuleTemplate) DoHTTPRequest(
 		return nil, WrapError(bodyErr, "Error reading HTTP response body")
 	}
 
-	m.Ctr = m.Ctr.WithNewFile("/http_response.txt", string(respBody))
-	m.Ctr = m.Ctr.WithNewFile("/http_status.txt", fmt.Sprintf("%d", resp.StatusCode))
+	// Store both status code and response body in the same file
+	responseContent := fmt.Sprintf("%d\n%s", resp.StatusCode, string(respBody))
+	m.Ctr = m.Ctr.WithNewFile("/http_response.txt", responseContent)
 
 	return m.Ctr, nil
 }
@@ -197,29 +198,32 @@ func (m *ModuleTemplate) DoJSONAPICall(
 		return nil, WrapError(err, "Failed to perform HTTP request")
 	}
 
-	// Get the HTTP status code
-	statusCode, catErr := container.WithExec([]string{"cat", "/http_status.txt"}).Stdout(ctx)
-	if catErr != nil {
-		return nil, WrapError(catErr, "Failed to read HTTP status code")
-	}
-
 	content, fileErr := container.File("/http_response.txt").Contents(ctx)
 	if fileErr != nil {
 		return nil, WrapError(fileErr, "Failed to read HTTP response")
 	}
 
-	// If status code is not 2xx, return an error with more details
-	statusCodeInt, _ := strconv.Atoi(strings.TrimSpace(statusCode))
-	if statusCodeInt < 200 || statusCodeInt >= 300 {
-		return nil, Errorf("HTTP request failed with status %s. Response: %s", statusCode, content)
+	// Split the content into status code and body
+	const responseSplitCount = 2
+	parts := strings.SplitN(content, "\n", responseSplitCount)
+
+	if len(parts) != responseSplitCount {
+		return nil, Errorf("Invalid response format")
 	}
 
-	jsonFile := dag.Directory().WithNewFile("response.json", content)
+	statusCode, _ := strconv.Atoi(strings.TrimSpace(parts[0]))
+	responseBody := parts[1]
+
+	// If status code is not 2xx, return an error with more details
+	if statusCode < 200 || statusCode >= 300 {
+		return nil, Errorf("HTTP request failed with status %d. Response: %s", statusCode, responseBody)
+	}
+
+	jsonFile := dag.Directory().WithNewFile("response.json", responseBody)
 
 	return jsonFile.File("response.json"), nil
 }
 
-// Helper functions
 func parseHeaders(headers []string) map[string]string {
 	headerMap := make(map[string]string)
 
@@ -266,10 +270,6 @@ func createRequest(ctx context.Context, method, baseURL, body string) (*http.Req
 
 	if method == "" {
 		method = http.MethodGet
-	}
-
-	if method == http.MethodGet {
-		method = http.MethodPost
 	}
 
 	if method == http.MethodPost && body != "" {
@@ -327,5 +327,6 @@ func parseTimeout(timeout string) (time.Duration, error) {
 	if err != nil {
 		return 0, WrapError(err, "Failed to parse timeout")
 	}
+
 	return parsedTimeout, nil
 }
