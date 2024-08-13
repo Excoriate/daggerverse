@@ -3,7 +3,7 @@ package main
 import (
 	"strings"
 
-	"github.com/Excoriate/daggerverse/module-template/internal/dagger"
+	"github.com/Excoriate/daggerverse/{{.module_name_pkg}}/internal/dagger"
 	"github.com/containerd/containerd/platforms"
 )
 
@@ -17,14 +17,14 @@ import (
 // - platform (dagger.Platform): The target platform.
 //
 // Returns:
-// - *ModuleTemplate: A pointer to the updated ModuleTemplate instance.
-func (m *ModuleTemplate) WithGoPlatform(
+// - *{{.module_name}}: A pointer to the updated {{.module_name}} instance.
+func (m *{{.module_name}}) WithGoPlatform(
 	// platform is the target platform specified in the format "[os]/[platform]/[version]".
 	// For example, "darwin/arm64/v7", "windows/amd64", "linux/arm64". If the platform
 	// is not provided, it defaults to "linux/amd64".
 	// +optional
 	platform dagger.Platform,
-) *ModuleTemplate {
+) *{{.module_name}} {
 	if platform == "" {
 		platform = "linux/amd64"
 	}
@@ -52,8 +52,8 @@ func (m *ModuleTemplate) WithGoPlatform(
 // means it can link against C libraries and send code to the C compiler.
 //
 // Returns:
-// - *ModuleTemplate: A pointer to the updated ModuleTemplate instance.
-func (m *ModuleTemplate) WithGoCgoEnabled() *ModuleTemplate {
+// - *{{.module_name}}: A pointer to the updated {{.module_name}} instance.
+func (m *{{.module_name}}) WithGoCgoEnabled() *{{.module_name}} {
 	m.Ctr = m.Ctr.WithEnvVariable("CGO_ENABLED", "1")
 
 	return m
@@ -67,8 +67,8 @@ func (m *ModuleTemplate) WithGoCgoEnabled() *ModuleTemplate {
 // where C dependencies are not available.
 //
 // Returns:
-// - *ModuleTemplate: A pointer to the updated ModuleTemplate instance.
-func (m *ModuleTemplate) WithCgoDisabled() *ModuleTemplate {
+// - *{{.module_name}}: A pointer to the updated {{.module_name}} instance.
+func (m *{{.module_name}}) WithCgoDisabled() *{{.module_name}} {
 	m.Ctr = m.Ctr.WithEnvVariable("CGO_ENABLED", "0")
 
 	return m
@@ -90,8 +90,8 @@ func (m *ModuleTemplate) WithCgoDisabled() *ModuleTemplate {
 // provided, it defaults to "shared".
 //
 // Returns:
-// - *ModuleTemplate: A pointer to the updated ModuleTemplate instance.
-func (m *ModuleTemplate) WithGoBuildCache(
+// - *{{.module_name}}: A pointer to the updated {{.module_name}} instance.
+func (m *{{.module_name}}) WithGoBuildCache(
 	// cacheRoot is the path to the cache volume's root.
 	// +optional
 	cacheRoot string,
@@ -104,7 +104,7 @@ func (m *ModuleTemplate) WithGoBuildCache(
 	// sharing is the Sharing mode of the cache volume.
 	// +optional
 	sharing dagger.CacheSharingMode,
-) *ModuleTemplate {
+) *{{.module_name}} {
 	if cacheRoot == "" {
 		cacheRoot = "/root/.cache/go-build"
 	}
@@ -148,8 +148,8 @@ func (m *ModuleTemplate) WithGoBuildCache(
 // not provided, it defaults to "shared".
 //
 // Returns:
-// - *ModuleTemplate: A pointer to the updated ModuleTemplate instance.
-func (m *ModuleTemplate) WithGoModCache(
+// - *{{.module_name}}: A pointer to the updated {{.module_name}} instance.
+func (m *{{.module_name}}) WithGoModCache(
 	// cacheRoot is the path to the cache volume's root.
 	// +optional
 	cacheRoot string,
@@ -162,7 +162,7 @@ func (m *ModuleTemplate) WithGoModCache(
 	// sharing is the Sharing mode of the cache volume.
 	// +optional
 	sharing dagger.CacheSharingMode,
-) *ModuleTemplate {
+) *{{.module_name}} {
 	if cacheRoot == "" {
 		cacheRoot = "/go/pkg/mod"
 	}
@@ -202,14 +202,14 @@ func (m *ModuleTemplate) WithGoModCache(
 //
 // Example:
 //
-//	moduleTemplate.WithGoInstall([]string{"github.com/Excoriate/daggerverse@latest", "github.com/another/package@v1.0"})
+//	{{.module_name}}.WithGoInstall([]string{"github.com/Excoriate/daggerverse@latest", "github.com/another/package@v1.0"})
 //
 // Returns:
-// - *ModuleTemplate: A pointer to the updated ModuleTemplate instance.
-func (m *ModuleTemplate) WithGoInstall(
+// - *{{.module_name}}: A pointer to the updated {{.module_name}} instance.
+func (m *{{.module_name}}) WithGoInstall(
 	// pkgs are the URLs of the packages to install.
 	pkgs []string,
-) *ModuleTemplate {
+) *{{.module_name}} {
 	if len(pkgs) == 0 {
 		// Optionally, handle empty URLs here or return an error
 		// For now, we'll just exit early.
@@ -240,11 +240,11 @@ func (m *ModuleTemplate) WithGoInstall(
 //
 // Example:
 //
-//	moduleTemplate.WithGoExec([]string{"build", "./..."}, "linux/amd64")
+//	{{.module_name}}.WithGoExec([]string{"build", "./..."}, "linux/amd64")
 //
 // Returns:
-// - *ModuleTemplate: A pointer to the updated ModuleTemplate instance.
-func (m *ModuleTemplate) WithGoExec(
+// - *{{.module_name}}: A pointer to the updated {{.module_name}} instance.
+func (m *{{.module_name}}) WithGoExec(
 	// args are the arguments to pass to the Go command.
 	args []string,
 	// platform is the target platform specified in the format "[os]/[platform]/[version]".
@@ -252,7 +252,7 @@ func (m *ModuleTemplate) WithGoExec(
 	// is not provided, it defaults to "linux/amd64".
 	// +optional
 	platform dagger.Platform,
-) *ModuleTemplate {
+) *{{.module_name}} {
 	if platform == "" {
 		platform = "linux/amd64"
 	}
@@ -315,8 +315,8 @@ type goBuildCmdOptions struct {
 // - buildMode (string) +optional: Specify the build mode.
 //
 // Returns:
-// - *ModuleTemplate: A pointer to the updated ModuleTemplate instance.
-func (m *ModuleTemplate) WithGoBuild(
+// - *{{.module_name}}: A pointer to the updated {{.module_name}} instance.
+func (m *{{.module_name}}) WithGoBuild(
 	// pkg is the Go package to compile.
 	// +optional
 	pkg string,
@@ -360,7 +360,7 @@ func (m *ModuleTemplate) WithGoBuild(
 	// buildMode specifies the build mode.
 	// +optional
 	buildMode string,
-) *ModuleTemplate { // Set the target platform if provided
+) *{{.module_name}} { // Set the target platform if provided
 	m.WithGoPlatform(platform)
 
 	// Build the package
@@ -388,7 +388,7 @@ func (m *ModuleTemplate) WithGoBuild(
 //
 // Returns:
 //   - []string: A slice of strings representing the arguments to pass to the Go build command.
-func (m *ModuleTemplate) buildGoArgs(opts goBuildCmdOptions) []string {
+func (m *{{.module_name}}) buildGoArgs(opts goBuildCmdOptions) []string {
 	args := []string{"build"}
 
 	if opts.Race {
