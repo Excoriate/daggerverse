@@ -1705,7 +1705,7 @@ func (m *Tests) TestHTTPCurl(ctx context.Context) error {
 // - Image: URL to the product's image.
 // - Rating: Rating of the product out of 5.
 type ProductJSONApiTest struct {
-	ID          int     `json:"_id"` //nolint:tagliatelle
+	ID          int     `json:"_id"` //nolint:tagliatelle // ID is a unique identifier for each product.
 	Title       string  `json:"title"`
 	IsNew       bool    `json:"isNew"`
 	OldPrice    string  `json:"oldPrice"`
