@@ -226,7 +226,7 @@ func (m *ModuleTemplate) WithNewNetrcFileAsSecretGitLab(username string, passwor
 func (m *ModuleTemplate) WithUtilitiesInAlpineContainer() *ModuleTemplate {
 	m.Ctr = m.Ctr.
 		WithExec([]string{"apk", "update"}).
-		WithExec([]string{"apk", "add", "curl", "wget", "bash", "jq", "vim"})
+		WithExec([]string{"apk", "add", "curl", "wget", "bash", "jq", "vim", "unzip", "yq"})
 
 	return m
 }
@@ -241,7 +241,7 @@ func (m *ModuleTemplate) WithUtilitiesInAlpineContainer() *ModuleTemplate {
 func (m *ModuleTemplate) WithUtilitiesInUbuntuContainer() *ModuleTemplate {
 	m.Ctr = m.Ctr.
 		WithExec([]string{"apt-get", "update"}).
-		WithExec([]string{"apt-get", "install", "-y", "curl", "wget", "bash", "jq", "vim"})
+		WithExec([]string{"apt-get", "install", "-y", "curl", "wget", "bash", "jq", "vim", "unzip", "yq"})
 
 	return m
 }
