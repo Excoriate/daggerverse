@@ -96,6 +96,9 @@ func (m *Tests) TestAll(ctx context.Context) error {
 	polTests.Go(m.TestGoWithCgoDisabled)
 	polTests.Go(m.TestGoWithGoExec)
 	polTests.Go(m.TestGoWithGoInstall)
+	polTests.Go(m.TestGoWithGoPrivate)
+	polTests.Go(m.TestGoWithGCCCompiler)
+	polTests.Go(m.TestGoWithGoTestSum)
 	// Test HTTP specific functions.
 	polTests.Go(m.TestHTTPCurl)
 	polTests.Go(m.TestHTTPDoJSONAPICall)
