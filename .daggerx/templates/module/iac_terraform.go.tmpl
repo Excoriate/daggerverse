@@ -1,0 +1,103 @@
+package main
+
+import (
+	"github.com/Excoriate/daggerverse/{{.module_name_pkg}}/internal/dagger"
+)
+
+const (
+	latestVersion       = "latest"
+	terraformReleaseURL = "https://releases.hashicorp.com/terraform"
+	hashicorpGPGURL     = "https://apt.releases.hashicorp.com/gpg"
+	hashicorpRepoURL    = "https://apt.releases.hashicorp.com"
+)
+
+// resolveTerraformVersion resolves the provided version to "latest" if it's empty.
+func resolveTerraformVersion(version string) string {
+	if version == "" {
+		return latestVersion
+	}
+
+	return version
+}
+
+// getLatestTerraformVersion fetches the latest Terraform version.
+// This is a placeholder function. In a real scenario, you'd implement logic to fetch the latest version.
+func getLatestTerraformVersion() string {
+	// Placeholder: In reality, you'd fetch this from Terraform's releases page or API
+	return "1.9.4" // Example latest version
+}
+
+// WithTerraformUbuntu sets up the container with Terraform on Ubuntu.
+// It updates the package list, installs required dependencies, and then installs the specified version of Terraform.
+//
+// Parameters:
+// version - The version of Terraform to install. If empty, "latest" will be installed.
+func (m *{{.module_name}}) WithTerraformUbuntu(
+	// version is the version of Terraform to install. If empty, it will be installed as "latest".
+	// +optional
+	version string,
+) *{{.module_name}} {
+	version = resolveTerraformVersion(version)
+	if version == latestVersion {
+		version = getLatestTerraformVersion()
+	}
+
+	m.Ctr = m.downloadRequiredUtilitiesUbuntu()
+
+	m.Ctr = m.downloadAndInstallTerraform(version)
+
+	return m.verifyTerraformInstallation()
+}
+
+// WithTerraformAlpine sets up the container with Terraform on Alpine Linux.
+// It updates the package list, installs required dependencies, and then installs the
+// specified version of Terraform.
+//
+// Parameters:
+// version - The version of Terraform to install. If empty, "latest" will be installed.
+func (m *{{.module_name}}) WithTerraformAlpine(
+	// version is the version of Terraform to install. If empty, it will be installed as "latest".
+	// +optional
+	version string,
+) *{{.module_name}} {
+	version = resolveTerraformVersion(version)
+	if version == latestVersion {
+		version = getLatestTerraformVersion()
+	}
+
+	m.Ctr = m.downloadRequiredUtilitiesAlpine()
+
+	m.Ctr = m.downloadAndInstallTerraform(version)
+
+	return m.verifyTerraformInstallation()
+}
+
+func (m *{{.module_name}}) downloadAndInstallTerraform(version string) *dagger.Container {
+	terraformURL := terraformReleaseURL + "/" + version + "/terraform_" + version + "_linux_amd64.zip"
+	zipFile := "terraform_" + version + "_linux_amd64.zip"
+
+	return m.Ctr.
+		WithExec([]string{"wget", terraformURL}).
+		WithExec([]string{"unzip", zipFile}).
+		WithExec([]string{"rm", zipFile}).
+		WithExec([]string{"mv", "terraform", "/usr/local/bin"}).
+		WithExec([]string{"chmod", "+x", "/usr/local/bin/terraform"})
+}
+
+func (m *{{.module_name}}) verifyTerraformInstallation() *{{.module_name}} {
+	m.Ctr = m.Ctr.WithExec([]string{"terraform", "version"})
+
+	return m
+}
+
+func (m *{{.module_name}}) downloadRequiredUtilitiesAlpine() *dagger.Container {
+	return m.Ctr.
+		WithExec([]string{"apk", "update"}).
+		WithExec([]string{"apk", "add", "curl", "wget", "bash", "unzip", "yq"})
+}
+
+func (m *{{.module_name}}) downloadRequiredUtilitiesUbuntu() *dagger.Container {
+	return m.Ctr.
+		WithExec([]string{"apt-get", "update"}).
+		WithExec([]string{"apt-get", "install", "-y", "curl", "wget", "unzip"})
+}
