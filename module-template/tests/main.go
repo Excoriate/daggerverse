@@ -102,10 +102,12 @@ func (m *Tests) TestAll(ctx context.Context) error {
 	// Test HTTP specific functions.
 	polTests.Go(m.TestHTTPCurl)
 	polTests.Go(m.TestHTTPDoJSONAPICall)
-
 	// Test CLI APIs
 	polTests.Go(m.TestWithAWSCLIInAlpineContainer)
 	polTests.Go(m.TestWithAWSCLIInUbuntuContainer)
+	// Test IAC specific functions.
+	polTests.Go(m.TestIACWithTerraformUbuntu)
+	polTests.Go(m.TestIACWithTerraformAlpine)
 
 	// From this point onwards, we're testing the specific functionality of the ModuleTemplate module.
 
