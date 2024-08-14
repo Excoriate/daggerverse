@@ -504,3 +504,149 @@ func (m *Tests) TestGoWithGoBuild(ctx context.Context) error {
 
 	return nil
 }
+
+// TestGoWithGoPrivate tests the configuration of the GOPRIVATE environment variable
+// using the WithGoPrivate method. It ensures that the GOPRIVATE environment variable
+// is set correctly within the specified context.
+//
+// This function performs the following steps:
+// 1. Sets up the Go module container using the default module template.
+// 2. Configures the GOPRIVATE environment variable to the specified value.
+// 3. Executes the `go env GOPRIVATE` command to retrieve the GOPRIVATE environment variable.
+// 4. Validates that the GOPRIVATE environment variable is set to the expected value.
+//
+// Parameters:
+// - ctx: The context to control the execution.
+//
+// Returns:
+// - error: If any of the steps fail, an error is returned indicating what went wrong.
+func (m *Tests) TestGoWithGoPrivate(ctx context.Context) error {
+	// Setting up the Go module container using the default module template.
+	targetModule := dag.{{.module_name}}(
+		dagger.{{.module_name}}Opts{
+			Ctr: getGolangAlpineContainer(""),
+		},
+	)
+
+	// Set the GOPRIVATE environment variable to the specified value.
+	targetModule = targetModule.
+		WithGoPrivate("github.com/Excoriate")
+
+	// Execute the `go env GOPRIVATE` command to retrieve the GOPRIVATE environment variable.
+	envOut, err := targetModule.Ctr().
+		WithExec([]string{"go", "env", "GOPRIVATE"}).
+		Stdout(ctx)
+
+	if err != nil {
+		return WrapError(err, "failed to get GOPRIVATE environment variable")
+	}
+
+	// Validate that the GOPRIVATE environment variable is set to the expected value.
+	if envOut == "" {
+		return Errorf("expected to have at least one folder, got empty output")
+	}
+
+	if !strings.Contains(envOut, "github.com/Excoriate") {
+		return WrapErrorf(err, "expected GOPRIVATE to be set "+
+			"to github.com/Excoriate, got %s", envOut)
+	}
+
+	return nil
+}
+
+// TestGoWithGCCCompiler verifies the installation and presence of the GCC compiler
+// within the specified context, using the provided Alpine container setup.
+//
+// This function performs the following steps:
+// 1. Sets up the Go module container using the default module template.
+// 2. Installs the GCC compiler and associated development tools.
+// 3. Executes the `gcc --version` command to verify the GCC compiler installation.
+// 4. Validates the output to confirm the presence of the GCC compiler.
+//
+// Parameters:
+// - ctx: The context to control the execution.
+//
+// Returns:
+//   - error: If any of the installation or verification steps fail, an error is returned
+//     indicating what went wrong.
+func (m *Tests) TestGoWithGCCCompiler(ctx context.Context) error {
+	// Setting up the Go module container using the default module template.
+	targetModule := dag.{{.module_name}}(
+		dagger.{{.module_name}}Opts{
+			Ctr: getGolangAlpineContainer(""),
+		},
+	)
+
+	// Install the GCC compiler and development tools.
+	targetModule = targetModule.
+		WithGoGcccompiler()
+
+	// Execute the `gcc --version` command to check if the GCC compiler is installed.
+	cmdOut, cmdErr := targetModule.Ctr().
+		WithExec([]string{"gcc", "--version"}).
+		Stdout(ctx)
+
+	if cmdErr != nil {
+		return WrapError(cmdErr, "failed to run gcc --version command")
+	}
+
+	// Validate that the GCC compiler is installed.
+	if cmdOut == "" {
+		return Errorf("expected to have output when running gcc --version, " +
+			"got empty output")
+	}
+
+	if !strings.Contains(cmdOut, "gcc") {
+		return Errorf("expected to have found gcc in the output, got %s", cmdOut)
+	}
+
+	return nil
+}
+
+// TestGoWithGoTestSum verifies the installation and presence of the GoTestSum tool
+// within the specified context, using the provided Alpine container setup.
+//
+// This function performs the following steps:
+// 1. Sets up the Go module container using the default module template.
+// 2. Installs the GoTestSum tool and its dependency `tparse` in the container.
+// 3. Executes the `gotestsum --version` command to verify the GoTestSum tool installation.
+// 4. Validates the output to confirm the presence of the GoTestSum tool.
+//
+// Parameters:
+// - ctx: The context to control the execution.
+//
+// Returns:
+//   - error: If any of the installation or verification steps fail, an error is returned
+//     indicating what went wrong.
+func (m *Tests) TestGoWithGoTestSum(ctx context.Context) error {
+	// Setting up the Go module container using the default module template.
+	targetModule := dag.{{.module_name}}(
+		dagger.{{.module_name}}Opts{
+			Ctr: getGolangAlpineContainer(""),
+		},
+	)
+
+	// Install the GoTestSum tool and its dependency `tparse` in the container.
+	targetModule = targetModule.
+		WithGoTestSum()
+
+	// Execute the `gotestsum --version` command to check if the GoTestSum tool is installed.
+	cmdOut, cmdErr := targetModule.Ctr().
+		WithExec([]string{"gotestsum", "--version"}).
+		Stdout(ctx)
+
+	if cmdErr != nil {
+		return WrapError(cmdErr, "failed to run gotestsum --version command")
+	}
+
+	// Validate that the GoTestSum tool is installed.
+	if cmdOut == "" {
+		return Errorf("expected to have output when running gotestsum --version, got empty output")
+	}
+
+	if !strings.Contains(cmdOut, "gotestsum") {
+		return Errorf("expected to have found gotestsum in the output, got %s", cmdOut)
+	}
+
+	return nil
+}
