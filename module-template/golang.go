@@ -429,3 +429,80 @@ func (m *ModuleTemplate) buildGoArgs(opts goBuildCmdOptions) []string {
 
 	return args
 }
+
+// WithGoPrivate configures the GOPRIVATE environment variable for the container environment.
+//
+// This method sets the GOPRIVATE variable, which is used by the Go toolchain to identify
+// private modules or repositories that should not be fetched from public proxies.
+//
+// Parameters:
+// - privateHost (string): The hostname of the private host for the Go packages or modules.
+//
+// Returns:
+// - *ModuleTemplate: A pointer to the updated ModuleTemplate instance.
+func (m *ModuleTemplate) WithGoPrivate(
+	// privateHost is the hostname of the private host for the Go packages or modules.
+	privateHost string,
+) *ModuleTemplate {
+	// Set the GOPRIVATE environment variable within the container
+	m.Ctr = m.Ctr.
+		WithExec(
+			[]string{"go", "env", "GOPRIVATE", privateHost},
+			dagger.ContainerWithExecOpts{
+				InsecureRootCapabilities: true,
+			},
+		).
+		WithEnvVariable("GOPRIVATE", privateHost)
+
+	return m
+}
+
+// WithGoGCCCompiler installs the GCC compiler and development tools in the container environment.
+//
+// This method uses the Alpine package manager (`apk`) to install the GCC compiler along
+// with `musl-dev`, which is the development package of the standard C library on Alpine.
+//
+// Example usage:
+//
+//	ModuleTemplate.WithGCCCompiler()
+//
+// Returns:
+// - *ModuleTemplate: A pointer to the updated ModuleTemplate instance.
+func (m *ModuleTemplate) WithGoGCCCompiler() *ModuleTemplate {
+	m.Ctr = m.Ctr.
+		WithExec([]string{"apk", "add", "--no-cache", "gcc", "musl-dev"})
+
+	return m
+}
+
+// WithGoTestSum installs the GoTestSum tool and its dependency `tparse` in the container environment.
+//
+// This method installs `gotest.tools/gotestsum` and `github.com/mfridman/tparse`
+// using the specified version. If no version is provided, it defaults to "latest".
+//
+// Parameters:
+//   - version (string) +optional: The version of GoTestSum to use, e.g., "v0.8.0".
+//     If empty, it defaults to "latest".
+//
+// Example:
+//
+//	m := &ModuleTemplate{}
+//	m.WithGoTestSum("v0.8.0") // Install specific version
+//	m.WithGoTestSum("")        // Install latest version
+//
+// Returns:
+// - *ModuleTemplate: A pointer to the updated ModuleTemplate instance.
+func (m *ModuleTemplate) WithGoTestSum(
+	// version is the version of GoTestSum to use, e.g., "v0.8.0".
+	// +optional
+	version string,
+) *ModuleTemplate {
+	if version == "" {
+		version = defaultContainerVersion
+	}
+
+	return m.WithGoInstall([]string{
+		"gotest.tools/gotestsum@" + version,
+		"github.com/mfridman/tparse@" + version,
+	})
+}
