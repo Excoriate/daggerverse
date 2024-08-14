@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/Excoriate/daggerverse/module-template/internal/dagger"
 )
 
@@ -46,40 +44,9 @@ func (m *ModuleTemplate) WithTerraformUbuntu(
 
 	m.Ctr = m.downloadRequiredUtilitiesUbuntu()
 
-	m.Ctr = m.Ctr.
-		WithExec([]string{"apt-get", "update"}).
-		WithExec([]string{"apt-get", "install", "-y", "gnupg", "software-properties-common"}).
-		WithExec(m.getGPGKeyCommand()).
-		WithExec(m.getAddRepoCommand()).
-		WithExec([]string{"apt-get", "update"})
-
-	m.Ctr = m.installTerraformUbuntu(version)
+	m.Ctr = m.downloadAndInstallTerraform(version)
 
 	return m.verifyTerraformInstallation()
-}
-
-func (m *ModuleTemplate) getGPGKeyCommand() []string {
-	command := fmt.Sprintf("wget -O- %s | gpg --dearmor | "+
-		"tee /usr/share/keyrings/hashicorp-archive-keyring.gpg > /dev/null", hashicorpGPGURL)
-
-	return []string{"bash", "-c", command}
-}
-
-func (m *ModuleTemplate) getAddRepoCommand() []string {
-	distro := "$(lsb_release -cs)"
-	repoLine := fmt.Sprintf(
-		`echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] %s %s main"`,
-		hashicorpRepoURL, distro,
-	)
-
-	command := repoLine + " | tee /etc/apt/sources.list.d/hashicorp.list"
-
-	return []string{"bash", "-c", command}
-}
-
-func (m *ModuleTemplate) installTerraformUbuntu(version string) *dagger.Container {
-	return m.Ctr.
-		WithExec([]string{"apt-get", "install", "-y", "terraform=" + version})
 }
 
 // WithTerraformAlpine sets up the container with Terraform on Alpine Linux.
@@ -106,16 +73,15 @@ func (m *ModuleTemplate) WithTerraformAlpine(
 }
 
 func (m *ModuleTemplate) downloadAndInstallTerraform(version string) *dagger.Container {
-	terraformURL := fmt.Sprintf("%s/%s/terraform_%s_linux_amd64.zip",
-		terraformReleaseURL, version, version)
-
-	zipFile := fmt.Sprintf("terraform_%s_linux_amd64.zip", version)
+	terraformURL := terraformReleaseURL + "/" + version + "/terraform_" + version + "_linux_amd64.zip"
+	zipFile := "terraform_" + version + "_linux_amd64.zip"
 
 	return m.Ctr.
 		WithExec([]string{"wget", terraformURL}).
 		WithExec([]string{"unzip", zipFile}).
 		WithExec([]string{"rm", zipFile}).
-		WithExec([]string{"mv", "terraform", "/usr/local/bin"})
+		WithExec([]string{"mv", "terraform", "/usr/local/bin"}).
+		WithExec([]string{"chmod", "+x", "/usr/local/bin/terraform"})
 }
 
 func (m *ModuleTemplate) verifyTerraformInstallation() *ModuleTemplate {
@@ -133,5 +99,5 @@ func (m *ModuleTemplate) downloadRequiredUtilitiesAlpine() *dagger.Container {
 func (m *ModuleTemplate) downloadRequiredUtilitiesUbuntu() *dagger.Container {
 	return m.Ctr.
 		WithExec([]string{"apt-get", "update"}).
-		WithExec([]string{"apt-get", "install", "-y", "curl", "wget", "bash", "unzip", "yq"})
+		WithExec([]string{"apt-get", "install", "-y", "curl", "wget", "unzip"})
 }

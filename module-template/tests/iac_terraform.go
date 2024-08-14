@@ -116,3 +116,54 @@ func (m *Tests) verifyTerraformHelp(ctx context.Context, module *dagger.ModuleTe
 
 	return nil
 }
+
+// TestIACWithTerraformUbuntu checks the installation, PATH inclusion, and functionality of Terraform
+// on an Ubuntu Linux environment across various Terraform versions.
+//
+// It verifies Terraform installation by running `terraform version`, ensures Terraform is in
+// the system PATH by using `which terraform`, and tests that Terraform commands work correctly
+// by running `terraform --help`.
+//
+// Args:
+//
+//	ctx: Context to control execution.
+//	version: List of Terraform versions to test. An empty string implies the latest version.
+//
+// Returns:
+//
+//	An error if any of the Terraform checks fail for any version; otherwise, nil.
+func (m *Tests) TestIACWithTerraformUbuntu(ctx context.Context) error {
+	// Set up Ubuntu container.
+	ubuntuCtr := dag.Container().From("ubuntu:latest")
+
+	// List of Terraform versions to test. An empty string implies the latest version.
+	versions := []string{"", "1.0.0", "1.9.0", "1.8.0"}
+
+	for _, version := range versions {
+		// Initialize the module with the specified Terraform version on Ubuntu.
+		targetModule := dag.
+			ModuleTemplate(dagger.ModuleTemplateOpts{
+				Ctr: ubuntuCtr,
+			}).
+			WithTerraformUbuntu(dagger.ModuleTemplateWithTerraformUbuntuOpts{
+				Version: version,
+			})
+
+		// Verify the installation of Terraform.
+		if err := m.verifyTerraformInstallation(ctx, targetModule, version); err != nil {
+			return err
+		}
+
+		// Verify that Terraform is in the system PATH.
+		if err := m.verifyTerraformInPath(ctx, targetModule, version); err != nil {
+			return err
+		}
+
+		// Verify the functionality of Terraform by running the help command.
+		if err := m.verifyTerraformHelp(ctx, targetModule, version); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
