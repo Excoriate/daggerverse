@@ -91,24 +91,37 @@ func (m *Tests) testDaggerVersion(ctx context.Context, version string) error {
 	return nil
 }
 
+// TestDaggerSetupDaggerInDagger tests the setup of Dagger within another Dagger environment.
+//
+// This function performs a series of actions to ensure that Dagger can be correctly installed and run
+// inside a container that is managed by another instance of Dagger. It checks the installation of the Dagger CLI,
+// the Docker service, and the initialization of a Dagger module.
+//
+// ctx: The context for managing timeout and cancellation.
+// Returns an error if any of the setup checks fail.
+//
+// Usage:
+// err := m.TestDaggerSetupDaggerInDagger(ctx)
+//
+//	if err != nil {
+//	  log.Fatalf("Test failed with error: %v", err)
+//	}
+//
+//nolint:cyclop // The test handles multiple commands and environments, requiring a longer function.
 func (m *Tests) TestDaggerSetupDaggerInDagger(ctx context.Context) error {
 	// Initialize the target module.
 	targetModule := dag.ModuleTemplate()
 
-	// Set the Dagger version.
+	// Define versions for Dagger and Docker.
 	dagVersion := "v0.12.4"
-
-	// Set the Docker version.
 	dockerVersion := "24.0"
 
-	// Setup Dagger in Dagger.
-	targetModule = targetModule.
-		SetupDaggerInDagger(dagVersion, dagger.
-			ModuleTemplateSetupDaggerInDaggerOpts{
-			DockerVersion: dockerVersion,
-		})
+	// Setup Dagger in Dagger environment.
+	targetModule = targetModule.SetupDaggerInDagger(dagVersion, dagger.ModuleTemplateSetupDaggerInDaggerOpts{
+		DockerVersion: dockerVersion,
+	})
 
-	// Check if the Dagger CLI is installed and in the system PATH.
+	// Verify that the Dagger CLI is installed and in the system PATH.
 	daggerVersionOut, daggerVersionErr := targetModule.Ctr().
 		WithExec([]string{"dagger", "version"}).
 		Stdout(ctx)
@@ -118,30 +131,26 @@ func (m *Tests) TestDaggerSetupDaggerInDagger(ctx context.Context) error {
 	}
 
 	if daggerVersionOut == "" {
-		return Errorf("expected to have dagger version output "+
-			"with this version %s, got empty output", dagVersion)
+		return Errorf("expected to have dagger version output with this version %s, got empty output", dagVersion)
 	}
 
-	// Check if the entry point is set to the Dagger binary, in the OS path (bin/dagger).
+	// Verify that the Dagger binary is set as the entry point.
 	expectedEntryPoint := "/bin/dagger"
 	daggerEntryPoint, daggerEntryPointErr := targetModule.Ctr().
 		WithExec([]string{"which", "dagger"}).
 		Stdout(ctx)
 
 	if daggerEntryPointErr != nil {
-		return WrapErrorf(daggerEntryPointErr, "failed to get Dagger entry point expected %s", expectedEntryPoint)
+		return WrapErrorf(daggerEntryPointErr, "failed to get Dagger entry point, expected %s", expectedEntryPoint)
 	}
 
 	if !strings.Contains(daggerEntryPoint, expectedEntryPoint) {
 		return Errorf("expected to have Dagger entry point %s, got %s", expectedEntryPoint, daggerEntryPoint)
 	}
 
-	// Run docker ps -a and check whether the Dagger container is running.
-	// expected to get registry.dagger.io/engine as part of the output
+	// Verify that the Dagger container is running by checking the output of `docker ps -a`.
 	dockerPsCmd := []string{"docker", "ps", "-a"}
-	dockerPsOut, dockerPsErr := targetModule.Ctr().
-		WithExec(dockerPsCmd).
-		Stdout(ctx)
+	dockerPsOut, dockerPsErr := targetModule.Ctr().WithExec(dockerPsCmd).Stdout(ctx)
 
 	if dockerPsErr != nil {
 		return WrapError(dockerPsErr, "failed to validate the docker ps command")
@@ -155,23 +164,21 @@ func (m *Tests) TestDaggerSetupDaggerInDagger(ctx context.Context) error {
 		return Errorf("expected to have registry.dagger.io/engine in the docker ps output, got %s", dockerPsOut)
 	}
 
-	// Checking the Docker service, by running docker run --rm alpine echo "Docker is working!"
+	// Verify that the Docker service is running by executing a simple container run.
 	dockerRunCmd := []string{"docker", "run", "--rm", "alpine", "echo", "Docker is working!"}
-	dockerRunOut, dockerRunErr := targetModule.Ctr().
-		WithExec(dockerRunCmd).
-		Stdout(ctx)
+	dockerRunOut, dockerRunErr := targetModule.Ctr().WithExec(dockerRunCmd).Stdout(ctx)
 
 	if dockerRunErr != nil {
-		return WrapError(dockerRunErr, "failed to validate the docker "+
-			"service by running docker run --rm alpine echo \"Docker is working!\"")
+		return WrapError(dockerRunErr, "failed to validate the "+
+			"Docker service by running 'docker run --rm "+
+			"alpine echo \"Docker is working!\"'")
 	}
 
 	if dockerRunOut == "" {
 		return Errorf("expected to have docker run output, got empty output")
 	}
 
-	// Create a module (mkdir -p test-module) inside Dagger setup, and initialize it with Go.
-	// cd test-module && dagger init --sdk go --name test-module
+	// Create and initialize a Dagger module inside the Docker container.
 	daggerInitOut, daggerInitErr := targetModule.Ctr().
 		WithExec([]string{"mkdir", "-p", "test-module"}).
 		WithExec([]string{"sh", "-c", "cd test-module && dagger init --sdk go --name test-module"}).
