@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"strings"
 
 	"github.com/Excoriate/daggerverse/module-template/internal/dagger"
+	"golang.org/x/mod/semver"
 )
 
 // getDaggerInstallCMDByVersion returns the command to install the Dagger engine.
@@ -109,6 +111,8 @@ func (m *ModuleTemplate) WithDaggerDockerService(version string) *dagger.Service
 		WithExposedPort(dockerPort).
 		WithExec([]string{
 			"dockerd",
+			"--dns", "8.8.8.8",
+			"--dns", "8.8.4.4",
 			"--host=tcp://0.0.0.0:2375",
 			"--host=unix:///var/run/docker.sock",
 			"--tls=false",
@@ -116,4 +120,82 @@ func (m *ModuleTemplate) WithDaggerDockerService(version string) *dagger.Service
 			InsecureRootCapabilities: true,
 		}).
 		AsService()
+}
+
+func (m *ModuleTemplate) validateDaggerVersion(dagVersion string) error {
+	if dagVersion == "" {
+		return WrapError(nil, "empty dagVersion")
+	}
+
+	// If version is lower than 0.12.0, it's not supported.
+	if semver.Compare(dagVersion, "0.12.0") < 0 {
+		return Errorf("unsupported dagger version %s, it must be greater "+
+			"than or equal to 0.12.0", dagVersion)
+	}
+
+	return nil
+}
+
+// SetupDaggerInDagger sets up the Dagger CLI inside a Docker-in-Docker context.
+//
+// This method validates the specified Dagger Engine version, installs the Dagger CLI
+// in an Alpine-based container, replaces the existing container with a Docker-in-Docker
+// container, and sets up the Docker service within the Dagger context.
+//
+// Parameters:
+//   - dagVersion: The version of the Dagger Engine to use, e.g., "v0.12.4".
+//   - dockerVersion: The version of the Docker Engine to use, e.g., "24.0". This is optional.
+//
+// Returns:
+//   - *ModuleTemplate: The modified ModuleTemplate instance with Dagger and Docker configured.
+//   - error: An error if the setup process fails at any step.
+func (m *ModuleTemplate) SetupDaggerInDagger(
+	dagVersion string, // The version of the Dagger Engine to use.
+	dockerVersion string, // The version of the Docker Engine to use. +optional
+) (*ModuleTemplate, error) {
+	// Validate the specified Dagger Engine version.
+	if err := m.validateDaggerVersion(dagVersion); err != nil {
+		return nil, WrapErrorf(err, "failed to validate dagger version %s", dagVersion)
+	}
+
+	// Setup Docker service within the Dagger context.
+	dockerd := m.WithDaggerDockerService(dockerVersion)
+	dockerHost, dockerHostErr := dockerd.Endpoint(context.Background(),
+		dagger.ServiceEndpointOpts{
+			Scheme: "tcp",
+		})
+
+	if dockerHostErr != nil {
+		return nil, WrapError(dockerHostErr, "failed to get docker host")
+	}
+
+	// Get the Docker-in-Docker image
+	dindImage := getDockerInDockerImage(dockerVersion)
+
+	// Set up the container with the Docker-in-Docker image
+	m.Ctr = dag.Container().From(dindImage)
+
+	// Install necessary packages
+	m.Ctr = m.Ctr.WithExec([]string{"apk", "add", "--no-cache", "git", "curl"})
+
+	// Configure DNS
+	m.Ctr = m.Ctr.
+		WithEnvVariable("GODEBUG", "netdns=go").
+		WithEnvVariable("DNS_RESOLVER", "8.8.8.8 8.8.4.4")
+
+	// Setup the Dagger CLI in an Alpine-based container.
+	m.WithDaggerCLIAlpine(dagVersion)
+
+	// Configure Git
+	m.Ctr = m.Ctr.WithExec([]string{"git", "config", "--global", "http.https://gopkg.in.followRedirects", "true"})
+
+	// Bind the Docker service and set the DOCKER_HOST environment variable.
+	m.Ctr = m.Ctr.
+		WithServiceBinding("docker", dockerd).
+		WithEnvVariable("DOCKER_HOST", dockerHost)
+
+	// Set the entrypoint to the Dagger binary.
+	m.Ctr = m.Ctr.WithEntrypoint([]string{"/bin/dagger"})
+
+	return m, nil
 }

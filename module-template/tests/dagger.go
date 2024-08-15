@@ -90,3 +90,102 @@ func (m *Tests) testDaggerVersion(ctx context.Context, version string) error {
 
 	return nil
 }
+
+func (m *Tests) TestDaggerSetupDaggerInDagger(ctx context.Context) error {
+	// Initialize the target module.
+	targetModule := dag.ModuleTemplate()
+
+	// Set the Dagger version.
+	dagVersion := "v0.12.4"
+
+	// Set the Docker version.
+	dockerVersion := "24.0"
+
+	// Setup Dagger in Dagger.
+	targetModule = targetModule.
+		SetupDaggerInDagger(dagVersion, dagger.
+			ModuleTemplateSetupDaggerInDaggerOpts{
+			DockerVersion: dockerVersion,
+		})
+
+	// Check if the Dagger CLI is installed and in the system PATH.
+	daggerVersionOut, daggerVersionErr := targetModule.Ctr().
+		WithExec([]string{"dagger", "version"}).
+		Stdout(ctx)
+
+	if daggerVersionErr != nil {
+		return WrapError(daggerVersionErr, "failed to get Dagger version")
+	}
+
+	if daggerVersionOut == "" {
+		return Errorf("expected to have dagger version output "+
+			"with this version %s, got empty output", dagVersion)
+	}
+
+	// Check if the entry point is set to the Dagger binary, in the OS path (bin/dagger).
+	expectedEntryPoint := "/bin/dagger"
+	daggerEntryPoint, daggerEntryPointErr := targetModule.Ctr().
+		WithExec([]string{"which", "dagger"}).
+		Stdout(ctx)
+
+	if daggerEntryPointErr != nil {
+		return WrapErrorf(daggerEntryPointErr, "failed to get Dagger entry point expected %s", expectedEntryPoint)
+	}
+
+	if !strings.Contains(daggerEntryPoint, expectedEntryPoint) {
+		return Errorf("expected to have Dagger entry point %s, got %s", expectedEntryPoint, daggerEntryPoint)
+	}
+
+	// Run docker ps -a and check whether the Dagger container is running.
+	// expected to get registry.dagger.io/engine as part of the output
+	dockerPsCmd := []string{"docker", "ps", "-a"}
+	dockerPsOut, dockerPsErr := targetModule.Ctr().
+		WithExec(dockerPsCmd).
+		Stdout(ctx)
+
+	if dockerPsErr != nil {
+		return WrapError(dockerPsErr, "failed to validate the docker ps command")
+	}
+
+	if dockerPsOut == "" {
+		return Errorf("expected to have docker ps output, got empty output")
+	}
+
+	if !strings.Contains(dockerPsOut, "registry.dagger.io/engine") {
+		return Errorf("expected to have registry.dagger.io/engine in the docker ps output, got %s", dockerPsOut)
+	}
+
+	// Checking the Docker service, by running docker run --rm alpine echo "Docker is working!"
+	dockerRunCmd := []string{"docker", "run", "--rm", "alpine", "echo", "Docker is working!"}
+	dockerRunOut, dockerRunErr := targetModule.Ctr().
+		WithExec(dockerRunCmd).
+		Stdout(ctx)
+
+	if dockerRunErr != nil {
+		return WrapError(dockerRunErr, "failed to validate the docker "+
+			"service by running docker run --rm alpine echo \"Docker is working!\"")
+	}
+
+	if dockerRunOut == "" {
+		return Errorf("expected to have docker run output, got empty output")
+	}
+
+	// Create a module (mkdir -p test-module) inside Dagger setup, and initialize it with Go.
+	// cd test-module && dagger init --sdk go --name test-module
+	daggerInitOut, daggerInitErr := targetModule.Ctr().
+		WithExec([]string{"mkdir", "-p", "test-module"}).
+		WithExec([]string{"sh", "-c", "cd test-module && dagger init --sdk go --name test-module"}).
+		WithExec([]string{"sh", "-c", "cd test-module && dagger develop"}).
+		WithExec([]string{"cat", "test-module/dagger.json"}).
+		Stdout(ctx)
+
+	if daggerInitErr != nil {
+		return WrapError(daggerInitErr, "failed to validate the dagger init command")
+	}
+
+	if daggerInitOut == "" {
+		return Errorf("expected to have dagger init output, got empty output")
+	}
+
+	return nil
+}
