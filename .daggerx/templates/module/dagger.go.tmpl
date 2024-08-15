@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/Excoriate/daggerverse/module-template/internal/dagger"
+	"github.com/Excoriate/daggerverse/{{.module_name_pkg}}/internal/dagger"
 	"golang.org/x/mod/semver"
 )
 
@@ -28,7 +28,7 @@ func getDaggerInstallCMDByVersion(version string) string {
 	}, " ")
 }
 
-// WithDaggerCLIAlpine sets up the Dagger CLI entry point for Alpine within the ModuleTemplate.
+// WithDaggerCLIAlpine sets up the Dagger CLI entry point for Alpine within the {{.module_name}}.
 //
 // Parameters:
 //   - version: The version of the Dagger Engine to use, e.g., "v0.12.1".
@@ -39,8 +39,8 @@ func getDaggerInstallCMDByVersion(version string) string {
 //  3. Sets the DAGGER_VERSION environment variable in the container.
 //
 // Returns:
-//   - *ModuleTemplate: Returns the modified ModuleTemplate instance with the Dagger CLI configured.
-func (m *ModuleTemplate) WithDaggerCLIAlpine(version string) *ModuleTemplate {
+//   - *{{.module_name}}: Returns the modified {{.module_name}} instance with the Dagger CLI configured.
+func (m *{{.module_name}}) WithDaggerCLIAlpine(version string) *{{.module_name}} {
 	daggerInstallCommand := getDaggerInstallCMDByVersion(version)
 	installDaggerCLI := []string{"sh", "-c", daggerInstallCommand}
 
@@ -55,7 +55,7 @@ func (m *ModuleTemplate) WithDaggerCLIAlpine(version string) *ModuleTemplate {
 	return m
 }
 
-// WithDaggerCLIUbuntu sets up the Dagger CLI entry point for Ubuntu within the ModuleTemplate.
+// WithDaggerCLIUbuntu sets up the Dagger CLI entry point for Ubuntu within the {{.module_name}}.
 //
 // Parameters:
 //   - version: The version of the Dagger Engine to use, e.g., "v0.12.1".
@@ -67,8 +67,8 @@ func (m *ModuleTemplate) WithDaggerCLIAlpine(version string) *ModuleTemplate {
 //  4. Sets the DAGGER_VERSION environment variable in the container.
 //
 // Returns:
-//   - *ModuleTemplate: Returns the modified ModuleTemplate instance with the Dagger CLI configured.
-func (m *ModuleTemplate) WithDaggerCLIUbuntu(version string) *ModuleTemplate {
+//   - *{{.module_name}}: Returns the modified {{.module_name}} instance with the Dagger CLI configured.
+func (m *{{.module_name}}) WithDaggerCLIUbuntu(version string) *{{.module_name}} {
 	daggerInstallCommand := getDaggerInstallCMDByVersion(version)
 	installDaggerCLI := []string{"bash", "-c", daggerInstallCommand}
 
@@ -92,7 +92,7 @@ func (m *ModuleTemplate) WithDaggerCLIUbuntu(version string) *ModuleTemplate {
 //
 // Returns:
 //   - *dagger.Service: A Dagger service configured with Docker.
-func (m *ModuleTemplate) WithDaggerDockerService(version string) *dagger.Service {
+func (m *{{.module_name}}) WithDaggerDockerService(version string) *dagger.Service {
 	if version == "" {
 		version = dockerVersionDefault
 	}
@@ -122,7 +122,7 @@ func (m *ModuleTemplate) WithDaggerDockerService(version string) *dagger.Service
 		AsService()
 }
 
-func (m *ModuleTemplate) validateDaggerVersion(dagVersion string) error {
+func (m *{{.module_name}}) validateDaggerVersion(dagVersion string) error {
 	if dagVersion == "" {
 		return WrapError(nil, "empty dagVersion")
 	}
@@ -147,12 +147,12 @@ func (m *ModuleTemplate) validateDaggerVersion(dagVersion string) error {
 //   - dockerVersion: The version of the Docker Engine to use, e.g., "24.0". This is optional.
 //
 // Returns:
-//   - *ModuleTemplate: The modified ModuleTemplate instance with Dagger and Docker configured.
+//   - *{{.module_name}}: The modified {{.module_name}} instance with Dagger and Docker configured.
 //   - error: An error if the setup process fails at any step.
-func (m *ModuleTemplate) SetupDaggerInDagger(
+func (m *{{.module_name}}) SetupDaggerInDagger(
 	dagVersion string, // The version of the Dagger Engine to use.
 	dockerVersion string, // The version of the Docker Engine to use. +optional
-) (*ModuleTemplate, error) {
+) (*{{.module_name}}, error) {
 	// Validate the specified Dagger Engine version.
 	if err := m.validateDaggerVersion(dagVersion); err != nil {
 		return nil, WrapErrorf(err, "failed to validate dagger version %s", dagVersion)
