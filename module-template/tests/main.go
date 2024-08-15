@@ -108,6 +108,8 @@ func (m *Tests) TestAll(ctx context.Context) error {
 	// Test IAC specific functions.
 	polTests.Go(m.TestIACWithTerraformUbuntu)
 	polTests.Go(m.TestIACWithTerraformAlpine)
+	// Test Dagger specific functions.
+	polTests.Go(m.TestDaggerWithDaggerCLI)
 
 	// From this point onwards, we're testing the specific functionality of the ModuleTemplate module.
 
