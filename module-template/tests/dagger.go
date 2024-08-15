@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/Excoriate/daggerverse/module-template/tests/internal/dagger"
@@ -20,7 +19,7 @@ import (
 // err := m.TestDaggerWithDaggerCLI(ctx)
 //
 //	if err != nil {
-//		 log.Fatalf("Test failed with error: %v", err)
+//	  log.Fatalf("Test failed with error: %v", err)
 //	}
 func (m *Tests) TestDaggerWithDaggerCLI(ctx context.Context) error {
 	versions := []string{"v0.12.1", "v0.12.2", "v0.12.3", "v0.12.4"}
@@ -30,6 +29,7 @@ func (m *Tests) TestDaggerWithDaggerCLI(ctx context.Context) error {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -41,22 +41,21 @@ func (m *Tests) testDaggerVersion(ctx context.Context, version string) error {
 	targetModule := dag.ModuleTemplate()
 
 	// Set the Dagger CLI version in Alpine
-	targetModule = targetModule.
-		WithDaggerClialpine(version)
+	targetModule = targetModule.WithDaggerClialpine(version)
 
 	// Run the 'dagger version' command
 	daggerVersionOut, daggerVersionErr := targetModule.Ctr().WithExec([]string{"dagger", "version"}).Stdout(ctx)
 
 	// Check for errors
 	if daggerVersionErr != nil {
-		return WrapError(daggerVersionErr, fmt.Sprintf("failed to get Dagger version for %s", version))
+		return WrapError(daggerVersionErr, "failed to get Dagger version for "+version)
 	}
 
 	if daggerVersionOut == "" {
 		return Errorf("expected to have dagger version output, got empty output for %s", version)
 	}
 
-	expectedVersionContains := fmt.Sprintf("dagger %s", version)
+	expectedVersionContains := "dagger " + version
 
 	if !strings.Contains(daggerVersionOut, expectedVersionContains) {
 		return Errorf("expected Dagger version to contain %s, got %s", expectedVersionContains, daggerVersionOut)
@@ -67,22 +66,23 @@ func (m *Tests) testDaggerVersion(ctx context.Context, version string) error {
 		Ctr: dag.Container().From("ubuntu:latest"),
 	})
 
-	targetModuleUbuntu = targetModuleUbuntu.
-		WithDaggerCliubuntu(version)
+	targetModuleUbuntu = targetModuleUbuntu.WithDaggerCliubuntu(version)
 
 	// Run the 'dagger version' command
-	daggerVersionOutUbuntu, daggerVersionErrUbuntu := targetModuleUbuntu.Ctr().WithExec([]string{"dagger", "version"}).Stdout(ctx)
+	daggerVersionOutUbuntu, daggerVersionErrUbuntu := targetModuleUbuntu.Ctr().
+		WithExec([]string{"dagger", "version"}).
+		Stdout(ctx)
 
 	// Check for errors
 	if daggerVersionErrUbuntu != nil {
-		return WrapError(daggerVersionErrUbuntu, fmt.Sprintf("failed to get Dagger version for %s", version))
+		return WrapError(daggerVersionErrUbuntu, "failed to get Dagger version for "+version)
 	}
 
 	if daggerVersionOutUbuntu == "" {
 		return Errorf("expected to have dagger version output, got empty output for %s", version)
 	}
 
-	expectedVersionContainsUbuntu := fmt.Sprintf("dagger %s", version)
+	expectedVersionContainsUbuntu := "dagger " + version
 
 	if !strings.Contains(daggerVersionOutUbuntu, expectedVersionContainsUbuntu) {
 		return Errorf("expected Dagger version to contain %s, got %s", expectedVersionContainsUbuntu, daggerVersionOutUbuntu)
