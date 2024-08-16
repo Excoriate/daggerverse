@@ -16,6 +16,8 @@ import (
 	"github.com/Excoriate/daggerx/pkg/fixtures"
 )
 
+const netRcRootPath = "/root/.netrc"
+
 // WithEnvironmentVariable sets an environment variable in the container.
 //
 // Parameters:
@@ -77,52 +79,6 @@ func (m *Gotoolbox) WithContainer(
 	return m
 }
 
-// WithFileMountedInContainer adds a file to the container.
-//
-// Parameters:
-// - file: The file to add to the container.
-// - dest: The destination path in the container. Optional parameter.
-// - owner: The owner of the file. Optional parameter.
-func (m *Gotoolbox) WithFileMountedInContainer(
-	file *dagger.File,
-	dest string,
-	owner string,
-) *Gotoolbox {
-	path := filepath.Join(fixtures.MntPrefix, dest)
-	if owner != "" {
-		m.Ctr = m.Ctr.WithMountedFile(path, file, dagger.ContainerWithMountedFileOpts{
-			Owner: owner,
-		})
-
-		return m
-	}
-
-	m.Ctr = m.Ctr.WithMountedFile(path, file)
-
-	return m
-}
-
-// WithGitInAlpineContainer installs Git in the golang/alpine container.
-//
-// It installs Git in the golang/alpine container.
-func (m *Gotoolbox) WithGitInAlpineContainer() *Gotoolbox {
-	m.Ctr = m.Ctr.
-		WithExec([]string{"apk", "add", "git"})
-
-	return m
-}
-
-// WithUtilitiesInAlpineContainer installs common utilities in the golang/alpine container.
-//
-// It installs utilities such as curl, wget, and others that are commonly used.
-func (m *Gotoolbox) WithUtilitiesInAlpineContainer() *Gotoolbox {
-	m.Ctr = m.Ctr.
-		WithExec([]string{"apk", "update"}).
-		WithExec([]string{"apk", "add", "curl", "wget", "bash", "jq", "yq"})
-
-	return m
-}
-
 // WithSecretAsEnvVar sets an environment variable in the container using a secret.
 //
 // Parameters:
@@ -143,6 +99,74 @@ func (m *Gotoolbox) WithSecretAsEnvVar(name string, secret *dagger.Secret) *Goto
 	m.Ctr = m.Ctr.WithEnvVariable(name, secretValue, dagger.ContainerWithEnvVariableOpts{
 		Expand: true,
 	})
+
+	return m
+}
+
+// WithDownloadedFile downloads a file from the specified URL and mounts it in the container.
+//
+// Parameters:
+//   - url: The URL of the file to download.
+//   - destDir: The directory within the container where the file will be downloaded. Optional parameter.
+//     If not provided, it defaults to the predefined mount prefix.
+//
+// Returns:
+//   - *Gotoolbox: The updated Gotoolbox with the downloaded file mounted in the container.
+func (m *Gotoolbox) WithDownloadedFile(
+	// url is the URL of the file to download.
+	url string,
+	// destFileName is the name of the file to download. If not set, it'll default to the basename of the URL.
+	// +optional
+	destFileName string,
+) *Gotoolbox {
+	// Extract the filename from the last part of the URL.
+	fileName := filepath.Base(url)
+	if destFileName != "" {
+		fileName = destFileName
+	}
+
+	// Download the file
+	fileDownloaded := dag.HTTP(url).WithName(fileName)
+
+	// Define the path in the container
+	destFilePath := filepath.Join(fixtures.MntPrefix, fileName)
+
+	// Mount the file in the container
+	m.Ctr = m.
+		Ctr.
+		WithMountedFile(destFilePath, fileDownloaded)
+
+	return m
+}
+
+// WithClonedGitRepo clones a Git repository and mounts it as a directory in the container.
+//
+// This method downloads a Git repository and mounts it as a directory in the container. It supports optional
+// authentication tokens for private repositories and can handle both GitHub and GitLab repositories.
+//
+// Parameters:
+//   - repoURL: The URL of the git repository to clone (e.g., "https://github.com/user/repo").
+//   - token: (Optional) The VCS token to use for authentication. If
+//     not provided, the repository will be cloned without authentication.
+//   - vcs: (Optional) The version control system (VCS) to use for
+//     authentication. Defaults to "github". Supported values are "github" and "gitlab".
+//
+// Returns:
+//   - *Gotoolbox: The updated Gotoolbox with the cloned repository mounted in the container.
+func (m *Gotoolbox) WithClonedGitRepo(
+	repoURL string,
+	// token is the VCS token to use for authentication. Optional parameter.
+	// +optional
+	token string,
+	// vcs is the VCS to use for authentication. Optional parameter.
+	// +optional
+	vcs string,
+) *Gotoolbox {
+	// Call the helper function to clone the repository.
+	clonedRepo := m.CloneGitRepo(repoURL, token, vcs)
+
+	// Mount the cloned repository as a directory inside the container.
+	m.Ctr = m.Ctr.WithMountedDirectory(fixtures.MntPrefix, clonedRepo)
 
 	return m
 }
