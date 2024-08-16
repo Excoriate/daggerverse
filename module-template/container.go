@@ -3,9 +3,10 @@ package main
 import "fmt"
 
 const (
-	defaultAlpineImage  = "alpine"
-	defaultUbuntuImage  = "ubuntu"
-	defaultBusyBoxImage = "busybox"
+	defaultAlpineImage        = "alpine"
+	defaultUbuntuImage        = "ubuntu"
+	defaultBusyBoxImage       = "busybox"
+	defaultImageVersionLatest = "latest"
 )
 
 // BaseAlpine sets the base image to an Alpine Linux image and creates the base container.
@@ -20,7 +21,7 @@ func (m *ModuleTemplate) BaseAlpine(
 	version string,
 ) *ModuleTemplate {
 	if version == "" {
-		version = "latest"
+		version = defaultImageVersionLatest
 	}
 
 	imageURL := fmt.Sprintf("%s:%s", defaultAlpineImage, version)
@@ -40,7 +41,7 @@ func (m *ModuleTemplate) BaseUbuntu(
 	version string,
 ) *ModuleTemplate {
 	if version == "" {
-		version = "latest"
+		version = defaultImageVersionLatest
 	}
 
 	imageURL := fmt.Sprintf("%s:%s", defaultUbuntuImage, version)
@@ -60,7 +61,7 @@ func (m *ModuleTemplate) BaseBusyBox(
 	version string,
 ) *ModuleTemplate {
 	if version == "" {
-		version = "latest"
+		version = defaultImageVersionLatest
 	}
 
 	imageURL := fmt.Sprintf("%s:%s", defaultBusyBoxImage, version)
