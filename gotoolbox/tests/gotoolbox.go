@@ -52,3 +52,37 @@ func (m *Tests) TestgotoolboxWithGoVersions(ctx context.Context) error {
 	}
 	return nil
 }
+
+func (m *Tests) TestgotoolboxWithOverridingContainer(ctx context.Context) error {
+	// Initialize the Go toolbox with the specified version.
+	targetModDefault := dag.
+		Gotoolbox(dagger.GotoolboxOpts{
+			Ctr: dag.Container().From("ubuntu:22.04"),
+		})
+
+	// Installing Go on Ubuntu
+	installedContainer := targetModDefault.
+		Ctr().
+		WithExec([]string{"apt-get", "update"}).
+		WithExec([]string{"apt-get", "install", "-y", "golang-go"})
+
+	// Check if Go is installed correctly
+	goVersionOut, goVersionErr := installedContainer.
+		WithExec([]string{"/usr/bin/go", "version"}).
+		Stdout(ctx)
+
+	if goVersionErr != nil {
+		return WrapErrorf(goVersionErr, "failed to get Go version for Ubuntu")
+	}
+
+	if goVersionOut == "" {
+		return NewError("expected to have Go version output, got empty output for Ubuntu")
+	}
+
+	// We're not checking for a specific version, just that Go is installed and working
+	if !strings.Contains(goVersionOut, "go version go") {
+		return WrapErrorf(goVersionErr, "unexpected Go version output: %s", goVersionOut)
+	}
+
+	return nil
+}
