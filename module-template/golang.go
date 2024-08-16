@@ -475,34 +475,51 @@ func (m *ModuleTemplate) WithGoGCCCompiler() *ModuleTemplate {
 	return m
 }
 
-// WithGoTestSum installs the GoTestSum tool and its dependency `tparse` in the container environment.
+// WithGoTestSum installs the GoTestSum tool and optionally its dependency `tparse` in the container environment.
 //
-// This method installs `gotest.tools/gotestsum` and `github.com/mfridman/tparse`
-// using the specified version. If no version is provided, it defaults to "latest".
+// This method installs `gotest.tools/gotestsum` using the specified version, and optionally installs
+// `github.com/mfridman/tparse` using a specified version, unless the skipTParse flag is set to true.
 //
 // Parameters:
-//   - version (string) +optional: The version of GoTestSum to use, e.g., "v0.8.0".
+//   - goTestSumVersion (string) +optional: The version of GoTestSum to use, e.g., "v0.8.0".
 //     If empty, it defaults to "latest".
+//   - tParseVersion (string) +optional: The version of TParse to use, e.g., "v0.8.0".
+//     If empty, it defaults to the same version as goTestSumVersion.
+//   - skipTParse (bool) +optional: If true, TParse will not be installed. Default is false.
 //
 // Example:
 //
 //	m := &ModuleTemplate{}
-//	m.WithGoTestSum("v0.8.0") // Install specific version
-//	m.WithGoTestSum("")        // Install latest version
+//	m.WithGoTestSum("v0.8.0", "v0.7.0", false)   // Install specific versions
+//	m.WithGoTestSum("", "", true)                // Install latest version of GoTestSum and skip TParse
 //
 // Returns:
 // - *ModuleTemplate: A pointer to the updated ModuleTemplate instance.
 func (m *ModuleTemplate) WithGoTestSum(
-	// version is the version of GoTestSum to use, e.g., "v0.8.0".
+	// goTestSumVersion is the version of GoTestSum to use, e.g., "v0.8.0".
 	// +optional
-	version string,
+	goTestSumVersion string,
+
+	// tParseVersion is the version of TParse to use, e.g., "v0.8.0".
+	// +optional
+	tParseVersion string,
+
+	// skipTParse is a flag to indicate whether TParse should be skipped.
+	// +optional
+	skipTParse bool,
 ) *ModuleTemplate {
-	if version == "" {
-		version = defaultContainerVersion
+	if goTestSumVersion == "" {
+		goTestSumVersion = "latest"
 	}
 
-	return m.WithGoInstall([]string{
-		"gotest.tools/gotestsum@" + version,
-		"github.com/mfridman/tparse@" + version,
-	})
+	if tParseVersion == "" {
+		tParseVersion = goTestSumVersion
+	}
+
+	pkgs := []string{"gotest.tools/gotestsum@" + goTestSumVersion}
+	if !skipTParse {
+		pkgs = append(pkgs, "github.com/mfridman/tparse@"+tParseVersion)
+	}
+
+	return m.WithGoInstall(pkgs)
 }
