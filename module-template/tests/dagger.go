@@ -113,7 +113,7 @@ func (m *Tests) TestDaggerSetupDaggerInDagger(ctx context.Context) error {
 	targetModule := dag.ModuleTemplate()
 
 	// Define versions for Dagger and Docker.
-	dagVersion := "v0.12.4"
+	dagVersion := "v0.12.5"
 	dockerVersion := "24.0"
 
 	// Setup Dagger in Dagger environment.
