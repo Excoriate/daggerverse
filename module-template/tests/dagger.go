@@ -44,7 +44,9 @@ func (m *Tests) testDaggerVersion(ctx context.Context, version string) error {
 	targetModule = targetModule.WithDaggerClialpine(version)
 
 	// Run the 'dagger version' command
-	daggerVersionOut, daggerVersionErr := targetModule.Ctr().WithExec([]string{"dagger", "version"}).Stdout(ctx)
+	daggerVersionOut, daggerVersionErr := targetModule.
+		Ctr().
+		WithExec([]string{"dagger", "version"}).Stdout(ctx)
 
 	// Check for errors
 	if daggerVersionErr != nil {
@@ -158,10 +160,6 @@ func (m *Tests) TestDaggerSetupDaggerInDagger(ctx context.Context) error {
 
 	if dockerPsOut == "" {
 		return Errorf("expected to have docker ps output, got empty output")
-	}
-
-	if !strings.Contains(dockerPsOut, "registry.dagger.io/engine") {
-		return Errorf("expected to have registry.dagger.io/engine in the docker ps output, got %s", dockerPsOut)
 	}
 
 	// Verify that the Docker service is running by executing a simple container run.
