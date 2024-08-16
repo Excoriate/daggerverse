@@ -11,8 +11,6 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/Excoriate/daggerverse/{{.module_name_pkg}}/internal/dagger"
 
 	"github.com/Excoriate/daggerx/pkg/containerx"
@@ -65,7 +63,7 @@ func New(
 		})
 
 		if err != nil {
-			return nil, WrapError(err, "failed to get image URL")
+			return nil, WrapErrorf(err, "failed to get container image URl %s", imageURL)
 		}
 
 		dagModule.Base(imageURL)
@@ -98,70 +96,4 @@ func (m *{{.module_name}}) Base(imageURL string) *{{.module_name}} {
 	m.Ctr = c
 
 	return m
-}
-
-const (
-	defaultAlpineImage  = "alpine"
-	defaultUbuntuImage  = "ubuntu"
-	defaultBusyBoxImage = "busybox"
-)
-
-// BaseAlpine sets the base image to an Alpine Linux image and creates the base container.
-//
-// Parameters:
-// - version: The version of the Alpine image to use. Optional parameter. Defaults to "latest".
-//
-// Returns a pointer to the {{.module_name}} instance.
-func (m *{{.module_name}}) BaseAlpine(
-	// version is the version of the Alpine image to use, e.g., "3.17.3".
-	// +optional
-	version string,
-) *{{.module_name}} {
-	if version == "" {
-		version = "latest"
-	}
-
-	imageURL := fmt.Sprintf("%s:%s", defaultAlpineImage, version)
-
-	return m.Base(imageURL)
-}
-
-// BaseUbuntu sets the base image to an Ubuntu Linux image and creates the base container.
-//
-// Parameters:
-// - version: The version of the Ubuntu image to use. Optional parameter. Defaults to "latest".
-//
-// Returns a pointer to the {{.module_name}} instance.
-func (m *{{.module_name}}) BaseUbuntu(
-	// version is the version of the Ubuntu image to use, e.g., "22.04".
-	// +optional
-	version string,
-) *{{.module_name}} {
-	if version == "" {
-		version = "latest"
-	}
-
-	imageURL := fmt.Sprintf("%s:%s", defaultUbuntuImage, version)
-
-	return m.Base(imageURL)
-}
-
-// BaseBusyBox sets the base image to a BusyBox Linux image and creates the base container.
-//
-// Parameters:
-// - version: The version of the BusyBox image to use. Optional parameter. Defaults to "latest".
-//
-// Returns a pointer to the {{.module_name}} instance.
-func (m *{{.module_name}}) BaseBusyBox(
-	// version is the version of the BusyBox image to use, e.g., "1.35.0".
-	// +optional
-	version string,
-) *{{.module_name}} {
-	if version == "" {
-		version = "latest"
-	}
-
-	imageURL := fmt.Sprintf("%s:%s", defaultBusyBoxImage, version)
-
-	return m.Base(imageURL)
 }
