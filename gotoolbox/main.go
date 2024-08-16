@@ -39,9 +39,6 @@ func New(
 	// version is the version of the container image to use.
 	// +optional
 	version string,
-	// image is the container image to use.
-	// +optional
-	image string,
 	// ctr is the container to use as a base container.
 	// +optional
 	ctr *dagger.Container,
