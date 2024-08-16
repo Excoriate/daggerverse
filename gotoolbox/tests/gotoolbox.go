@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/Excoriate/daggerverse/gotoolbox/tests/internal/dagger"
@@ -51,9 +50,18 @@ func (m *Tests) TestgotoolboxWithGoVersions(ctx context.Context) error {
 				goVersionOut)
 		}
 	}
+
 	return nil
 }
 
+// TestgotoolboxWithOverridingContainer tests the installation of Go on an Ubuntu container.
+//
+// This function overrides the default container with Ubuntu, installs Go,
+// and verifies that Go is correctly installed and functional.
+//
+// ctx: The context for the test execution, to control cancellation and deadlines.
+//
+// Returns an error if the Go installation or verification fails.
 func (m *Tests) TestgotoolboxWithOverridingContainer(ctx context.Context) error {
 	// Initialize the Go toolbox with the specified version.
 	targetModDefault := dag.
@@ -88,6 +96,14 @@ func (m *Tests) TestgotoolboxWithOverridingContainer(ctx context.Context) error 
 	return nil
 }
 
+// TestgotoolboxWithGoTest tests the GoTestSum functionality with various configurations.
+//
+// This function sets up different test cases for GoTestSum, verifies its installation,
+// and runs tests using GoTestSum with different options.
+//
+// ctx: The context for the test execution, to control cancellation and deadlines.
+//
+// Returns an error if any of the GoTestSum setups or test executions fail.
 func (m *Tests) TestgotoolboxWithGoTest(ctx context.Context) error {
 	// Initialize the Go toolbox with the specified version.
 	baseModule := dag.
@@ -110,14 +126,14 @@ func (m *Tests) TestgotoolboxWithGoTest(ctx context.Context) error {
 		{"Skip TParse", "v1.10.0", "", true},
 	}
 
-	for _, tc := range testCases {
+	for _, testCase := range testCases {
 		// Use WithGoTestSum with the test case parameters
 		targetMod := baseModule.
-			//WithGoTestSum(tc.goTestSumVersion, tc.tParseVersion, tc.skipTParse)
+			// WithGoTestSum(testCase.goTestSumVersion, testCase.tParseVersion, testCase.skipTParse)
 			WithGoTestSum(dagger.GotoolboxWithGoTestSumOpts{
-				GoTestSumVersion: tc.goTestSumVersion,
-				TParseVersion:    tc.tParseVersion,
-				SkipTparse:       tc.skipTParse,
+				GoTestSumVersion: testCase.goTestSumVersion,
+				TParseVersion:    testCase.tParseVersion,
+				SkipTparse:       testCase.skipTParse,
 			})
 
 		// Check gotestsum version
@@ -127,26 +143,26 @@ func (m *Tests) TestgotoolboxWithGoTest(ctx context.Context) error {
 			Stdout(ctx)
 
 		if gotestsumVersionErr != nil {
-			return WrapError(gotestsumVersionErr, fmt.Sprintf("%s: failed to get gotestsum version", tc.name))
+			return WrapError(gotestsumVersionErr, testCase.name+": failed to get gotestsum version")
 		}
 
 		if gotestsumVersionOut == "" {
-			return WrapError(gotestsumVersionErr, fmt.Sprintf("%s: expected to have gotestsum version output, got empty output", tc.name))
+			return WrapError(gotestsumVersionErr, testCase.name+": expected to have gotestsum version output, got empty output")
 		}
 
 		// Check tparse version if not skipped
-		if !tc.skipTParse {
+		if !testCase.skipTParse {
 			tparseVersionOut, tparseVersionErr := targetMod.
 				Ctr().
 				WithExec([]string{"tparse", "--version"}).
 				Stdout(ctx)
 
 			if tparseVersionErr != nil {
-				return WrapError(tparseVersionErr, fmt.Sprintf("%s: failed to get tparse version", tc.name))
+				return WrapError(tparseVersionErr, testCase.name+": failed to get tparse version")
 			}
 
 			if tparseVersionOut == "" {
-				return WrapError(tparseVersionErr, fmt.Sprintf("%s: expected to have tparse version output, got empty output", tc.name))
+				return WrapError(tparseVersionErr, testCase.name+": expected to have tparse version output, got empty output")
 			}
 		}
 
@@ -157,11 +173,11 @@ func (m *Tests) TestgotoolboxWithGoTest(ctx context.Context) error {
 			Stdout(ctx)
 
 		if goTestSumErr != nil {
-			return WrapError(goTestSumErr, fmt.Sprintf("%s: failed to run gotestsum command", tc.name))
+			return WrapError(goTestSumErr, testCase.name+": failed to run gotestsum command")
 		}
 
 		if goTestSumOut == "" {
-			return WrapError(goTestSumErr, fmt.Sprintf("%s: expected to have gotestsum output, got empty output", tc.name))
+			return WrapError(goTestSumErr, testCase.name+": expected to have gotestsum output, got empty output")
 		}
 	}
 
