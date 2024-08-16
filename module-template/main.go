@@ -63,7 +63,7 @@ func New(
 		})
 
 		if err != nil {
-			return nil, WrapError(err, "failed to get image URL")
+			return nil, WrapErrorf(err, "failed to get container image URl %s", imageURL)
 		}
 
 		dagModule.Base(imageURL)
