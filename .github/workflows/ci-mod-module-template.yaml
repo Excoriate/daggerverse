@@ -201,7 +201,7 @@ jobs:
         strategy:
             matrix:
                 go: ['1.22']
-                dagversion: [0.12.4]
+                dagversion: [0.12.5]
         needs: [dagger-linter, golangci-lint]
         name: Run recipes 🥗 in module-template/examples/go on ${{ matrix.os }} with Dagger ${{ matrix.dagversion }}
         runs-on: ubuntu-latest
