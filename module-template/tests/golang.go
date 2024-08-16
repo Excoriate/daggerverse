@@ -619,15 +619,16 @@ func (m *Tests) TestGoWithGCCCompiler(ctx context.Context) error {
 // Returns:
 //   - error: If any of the installation or verification steps fail, an error is returned
 //     indicating what went wrong.
+//
+// TestGoWithGoTestSum verifies the installation and presence of the GoTestSum tool
+// within the specified context, using the provided Alpine container setup.
 func (m *Tests) TestGoWithGoTestSum(ctx context.Context) error {
-	// Setting up the Go module container using the default module template.
 	baseModule := dag.ModuleTemplate(
 		dagger.ModuleTemplateOpts{
 			Ctr: getGolangAlpineContainer("1.20.4"),
 		},
 	)
 
-	// Test cases
 	testCases := []struct {
 		name             string
 		goTestSumVersion string
@@ -640,91 +641,102 @@ func (m *Tests) TestGoWithGoTestSum(ctx context.Context) error {
 		{"Skip TParse", "v1.10.0", "", true},
 	}
 
-	for _, tc := range testCases {
-		// Install GoTestSum and optionally TParse
-		targetModule := baseModule.
-			WithGoTestSum(dagger.ModuleTemplateWithGoTestSumOpts{
-				GoTestSumVersion: tc.goTestSumVersion,
-				TParseVersion:    tc.tParseVersion,
-				SkipTparse:       tc.skipTParse,
-			})
-
-		// Check GoTestSum installation
-		gotestsumOut, gotestsumErr := targetModule.Ctr().
-			WithExec([]string{"gotestsum", "--version"}).
-			Stdout(ctx)
-
-		if gotestsumErr != nil {
-			return WrapError(gotestsumErr, fmt.Sprintf("%s: failed to run gotestsum --version command", tc.name))
-		}
-
-		if gotestsumOut == "" {
-			return Errorf("%s: expected to have output when running gotestsum --version, got empty output", tc.name)
-		}
-
-		if !strings.Contains(gotestsumOut, "gotestsum") {
-			return Errorf("%s: expected to have found gotestsum in the output, got %s", tc.name, gotestsumOut)
-		}
-
-		installedVersion := extractVersion(gotestsumOut)
-		fmt.Printf("%s: Installed gotestsum version: %s\n", tc.name, installedVersion)
-
-		if tc.goTestSumVersion != "" && tc.goTestSumVersion != "latest" {
-			if installedVersion == "dev" {
-				fmt.Printf("%s: Warning: gotestsum is installed with 'dev' version\n", tc.name)
-			} else if !strings.HasPrefix(installedVersion, tc.goTestSumVersion) {
-				return Errorf("%s: expected gotestsum version starting with %s, but got %s", tc.name, tc.goTestSumVersion, installedVersion)
-			}
-		}
-
-		// Check TParse installation if not skipped
-		if !tc.skipTParse {
-			tparseOut, tparseErr := targetModule.Ctr().
-				WithExec([]string{"tparse", "--version"}).
-				Stdout(ctx)
-
-			if tparseErr != nil {
-				return WrapError(tparseErr, fmt.Sprintf("%s: failed to run tparse --version command", tc.name))
-			}
-
-			if tparseOut == "" {
-				return Errorf("%s: expected to have output when running tparse --version, got empty output", tc.name)
-			}
-
-			if !strings.Contains(tparseOut, "tparse") {
-				return Errorf("%s: expected to have found tparse in the output, got %s", tc.name, tparseOut)
-			}
-
-			installedTParseVersion := extractVersion(tparseOut)
-			fmt.Printf("%s: Installed tparse version: %s\n", tc.name, installedTParseVersion)
-
-			if tc.tParseVersion != "" && tc.tParseVersion != "latest" {
-				if installedTParseVersion == "dev" {
-					fmt.Printf("%s: Warning: tparse is installed with 'dev' version\n", tc.name)
-				} else if !strings.HasPrefix(installedTParseVersion, tc.tParseVersion) {
-					return Errorf("%s: expected tparse version starting with %s, but got %s", tc.name, tc.tParseVersion, installedTParseVersion)
-				}
-			}
-		} else {
-			// Verify that TParse is not installed when skipped
-			_, tparseErr := targetModule.Ctr().
-				WithExec([]string{"tparse", "--version"}).
-				Stdout(ctx)
-
-			if tparseErr == nil {
-				return Errorf("%s: expected tparse to not be installed, but it was found", tc.name)
-			}
+	for _, testCase := range testCases {
+		if err := m.runGoTestSumTestCase(ctx, baseModule, testCase); err != nil {
+			return err
 		}
 	}
 
 	return nil
 }
 
-// Helper function to extract version from output
+func (m *Tests) runGoTestSumTestCase(ctx context.Context, baseModule *dagger.ModuleTemplate, testCase struct {
+	name             string
+	goTestSumVersion string
+	tParseVersion    string
+	skipTParse       bool
+}) error {
+	targetModule := baseModule.
+		WithGoTestSum(dagger.ModuleTemplateWithGoTestSumOpts{
+			GoTestSumVersion: testCase.goTestSumVersion,
+			TParseVersion:    testCase.tParseVersion,
+			SkipTparse:       testCase.skipTParse,
+		})
+
+	if err := m.checkToolInstallation(ctx, targetModule, "gotestsum",
+		testCase.goTestSumVersion, testCase.name); err != nil {
+		return err
+	}
+
+	if !testCase.skipTParse {
+		if err := m.checkToolInstallation(ctx, targetModule, "tparse", testCase.tParseVersion, testCase.name); err != nil {
+			return err
+		}
+	} else {
+		if err := m.verifyToolNotInstalled(ctx, targetModule, "tparse", testCase.name); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *Tests) checkToolInstallation(ctx context.Context, targetModule *dagger.ModuleTemplate,
+	toolName, expectedVersion,
+	testCaseName string) error {
+	toolOut, toolErr := targetModule.Ctr().
+		WithExec([]string{toolName, "--version"}).
+		Stdout(ctx)
+
+	if toolErr != nil {
+		return WrapError(toolErr, fmt.Sprintf("%s: failed to run %s --version command", testCaseName, toolName))
+	}
+
+	if toolOut == "" {
+		return Errorf("%s: expected to have output when running %s --version, got empty output", testCaseName, toolName)
+	}
+
+	if !strings.Contains(toolOut, toolName) {
+		return Errorf("%s: expected to have found %s in the output, got %s", testCaseName, toolName, toolOut)
+	}
+
+	installedVersion := extractVersion(toolOut)
+	fmt.Printf("%s: Installed %s version: %s\n", testCaseName, toolName, installedVersion)
+
+	if expectedVersion != "" && expectedVersion != "latest" {
+		if installedVersion == "dev" {
+			fmt.Printf("%s: Warning: %s is installed with 'dev' version\n", testCaseName, toolName)
+		} else if !strings.HasPrefix(installedVersion, expectedVersion) {
+			return Errorf("%s: expected %s version starting with %s, but got %s",
+				testCaseName, toolName, expectedVersion, installedVersion)
+		}
+	}
+
+	return nil
+}
+
+func (m *Tests) verifyToolNotInstalled(ctx context.Context,
+	targetModule *dagger.ModuleTemplate, toolName, testCaseName string) error {
+	_, toolErr := targetModule.Ctr().
+		WithExec([]string{toolName, "--version"}).
+		Stdout(ctx)
+
+	if toolErr == nil {
+		return Errorf("%s: expected %s to not be installed, but it was found", testCaseName, toolName)
+	}
+
+	return nil
+}
+
+// extractVersion returns the version from the output string.
 func extractVersion(output string) string {
+	const minParts = 2
+
 	parts := strings.Fields(output)
-	if len(parts) >= 2 {
+
+	if len(parts) >= minParts {
 		return parts[len(parts)-1]
 	}
+
 	return ""
 }
