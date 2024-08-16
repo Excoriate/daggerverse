@@ -7,6 +7,7 @@ import (
 	"github.com/Excoriate/daggerverse/module-template/tests/internal/dagger"
 )
 
+// TestIACWithTerragruntAlpine tests Terragrunt installation on Alpine.
 func (m *Tests) TestIACWithTerragruntAlpine(ctx context.Context) error {
 	targetModule := dag.ModuleTemplate(dagger.ModuleTemplateOpts{
 		Ctr: dag.
@@ -18,6 +19,7 @@ func (m *Tests) TestIACWithTerragruntAlpine(ctx context.Context) error {
 	return m.testTerragruntVersions(ctx, targetModule, true)
 }
 
+// TestIACWithTerragruntUbuntu tests Terragrunt installation on Ubuntu.
 func (m *Tests) TestIACWithTerragruntUbuntu(ctx context.Context) error {
 	targetModule := dag.ModuleTemplate(dagger.ModuleTemplateOpts{
 		Ctr: dag.
@@ -43,23 +45,43 @@ func (m *Tests) testTerragruntVersions(ctx context.Context, targetModule *dagger
 			return err
 		}
 	}
+
 	return nil
 }
 
-func (m *Tests) verifyModule(ctx context.Context, targetModule *dagger.ModuleTemplate, terragruntVersion, tfVersion string, isAlpine bool) error {
+func (m *Tests) verifyModule(
+	ctx context.Context,
+	targetModule *dagger.ModuleTemplate,
+	terragruntVersion, tfVersion string,
+	isAlpine bool,
+) error {
 	var opts interface{}
 	if isAlpine {
 		opts = dagger.ModuleTemplateWithTerragruntAlpineOpts{
 			Version:   terragruntVersion,
 			TfVersion: tfVersion,
 		}
-		targetModule = targetModule.WithTerragruntAlpine(opts.(dagger.ModuleTemplateWithTerragruntAlpineOpts))
+
+		alpineOpts, ok := opts.(dagger.ModuleTemplateWithTerragruntAlpineOpts)
+
+		if !ok {
+			return Errorf("failed to assert type for Alpine options")
+		}
+
+		targetModule = targetModule.WithTerragruntAlpine(alpineOpts)
 	} else {
 		opts = dagger.ModuleTemplateWithTerragruntUbuntuOpts{
 			Version:   terragruntVersion,
 			TfVersion: tfVersion,
 		}
-		targetModule = targetModule.WithTerragruntUbuntu(opts.(dagger.ModuleTemplateWithTerragruntUbuntuOpts))
+
+		ubuntuOpts, ok := opts.(dagger.ModuleTemplateWithTerragruntUbuntuOpts)
+
+		if !ok {
+			return Errorf("failed to assert type for Ubuntu options")
+		}
+
+		targetModule = targetModule.WithTerragruntUbuntu(ubuntuOpts)
 	}
 
 	tests := []struct {
@@ -75,9 +97,11 @@ func (m *Tests) verifyModule(ctx context.Context, targetModule *dagger.ModuleTem
 
 	for _, test := range tests {
 		out, err := targetModule.Ctr().WithExec(test.command).Stdout(ctx)
+
 		if err != nil {
 			return WrapErrorf(err, "failed to get %s, the output was: %s", test.check, out)
 		}
+
 		if !strings.Contains(out, test.output) {
 			return Errorf("expected %s to contain %s, got %s", test.check, test.output, out)
 		}

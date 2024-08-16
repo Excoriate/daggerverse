@@ -17,9 +17,10 @@ const (
 
 // resolveTerragruntVersion resolves the provided version to "latest" if it's empty.
 func resolveTerragruntVersion(version string) string {
-	if version == "" || version == "latest" {
+	if version == "" || version == terragruntLatestVersion {
 		return getLatestTerragruntVersion()
 	}
+
 	return version
 }
 
@@ -28,6 +29,7 @@ func resolveTerraformVersionInTerragrunt(version string) string {
 	if version == "" {
 		return terragruntLatestVersion
 	}
+
 	return version
 }
 
@@ -46,7 +48,8 @@ func getLatestTerraformVersionInTerragrunt() string {
 }
 
 // WithTerragruntUbuntu sets up the container with Terragrunt and optionally Terraform on Ubuntu.
-// It updates the package list, installs required dependencies, and then installs the specified versions of Terragrunt and Terraform.
+// It updates the package list, installs required dependencies, and then installs
+// the specified versions of Terragrunt and Terraform.
 //
 // Parameters:
 // version - The version of Terragrunt to install. If empty, "latest" will be installed.
@@ -84,7 +87,8 @@ func (m *ModuleTemplate) WithTerragruntUbuntu(
 }
 
 // WithTerragruntAlpine sets up the container with Terragrunt and optionally Terraform on Alpine Linux.
-// It updates the package list, installs required dependencies, and then installs the specified versions of Terragrunt and Terraform.
+// It updates the package list, installs required dependencies, and then installs
+// the specified versions of Terragrunt and Terraform.
 //
 // Parameters:
 // version - The version of Terragrunt to install. If empty, "latest" will be installed.
@@ -125,6 +129,7 @@ func (m *ModuleTemplate) downloadAndInstallTerragrunt(version string) *dagger.Co
 	// Remove "v" prefix if present
 	version = strings.TrimPrefix(version, "v")
 	terragruntURL := fmt.Sprintf("%s/v%s/terragrunt_linux_amd64", terragruntReleaseURL, version)
+
 	return m.Ctr.
 		WithExec([]string{"wget", "-q", "-O", "/usr/local/bin/terragrunt", terragruntURL}).
 		WithExec([]string{"chmod", "+x", "/usr/local/bin/terragrunt"})
@@ -132,6 +137,7 @@ func (m *ModuleTemplate) downloadAndInstallTerragrunt(version string) *dagger.Co
 
 func (m *ModuleTemplate) downloadAndInstallTerraformInTerragrunt(version string) *dagger.Container {
 	terraformURL := fmt.Sprintf("%s/%s/terraform_%s_linux_amd64.zip", terraformReleaseURLForTerragrunt, version, version)
+
 	return m.Ctr.
 		WithExec([]string{"wget", "-q", terraformURL}).
 		WithExec([]string{"unzip", fmt.Sprintf("terraform_%s_linux_amd64.zip", version)}).
@@ -144,6 +150,7 @@ func (m *ModuleTemplate) verifyTerragruntInstallation() *ModuleTemplate {
 	m.Ctr = m.Ctr.
 		WithExec([]string{"terragrunt", "--version"}).
 		WithExec([]string{"terraform", "version"})
+
 	return m
 }
 
