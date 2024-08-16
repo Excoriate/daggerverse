@@ -22,7 +22,7 @@ import (
 //	  log.Fatalf("Test failed with error: %v", err)
 //	}
 func (m *Tests) TestDaggerWithDaggerCLI(ctx context.Context) error {
-	versions := []string{"v0.12.1", "v0.12.2", "v0.12.3", "v0.12.4"}
+	versions := []string{"v0.12.1", "v0.12.2", "v0.12.3", "v0.12.4", "v0.12.5"}
 
 	for _, version := range versions {
 		if err := m.testDaggerVersion(ctx, version); err != nil {
