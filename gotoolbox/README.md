@@ -1,4 +1,4 @@
-# Module {{.module_name}} for Dagger
+# Module Gotoolbox for Dagger
 
 
 A simple [Dagger](https://dagger.io) _place the description of the module here_
@@ -39,7 +39,7 @@ Through the [Dagger CLI](https://docs.dagger.io/cli/465058/install), or by using
 ├── go.mod
 ├── go.sum
 ├── main.go
-└── tests // Sub module that represent tests of the module's functions 
+└── tests // Sub module that represent tests of the module's functions
     ├── .gitattributes
     ├── .gitignore
     ├── dagger.json
@@ -63,7 +63,7 @@ Through the [Dagger CLI](https://docs.dagger.io/cli/465058/install), or by using
 | Add your feature **here** | **run** | `dagger call <my function>` | ✅      |
 
 
-## Using the {{.module_name}} Module 🚀
+## Using the Gotoolbox Module 🚀
 
 _Place the description of the module here_
 
@@ -75,7 +75,7 @@ List all the functions available in the module:
 
   ```bash
   # enter into the module's directory
-  cd {{.module_name}}
+  cd gotoolbox
 
   # list all the functions available in the module
   dagger develop && dagger functions
@@ -86,18 +86,18 @@ Call a function:
   ```bash
   # call a function
   # dagger call <function-name> [arguments]
-  dagger call github.com/excoriate/daggerverse/{{.module_name}}@version <function-name> [arguments]
+  dagger call github.com/excoriate/daggerverse/gotoolbox@version <function-name> [arguments]
 ```
 
 ---
 
 ## Testing 🧪
 
-This module includes a [testing]({{.module_name_pkg}}/tests) module that aims to test the functionality of the {{.module_name}} module. The tests are written in Go and can be run using the following command:
+This module includes a [testing]({{.module_name_pkg}}/tests) module that aims to test the functionality of the Gotoolbox module. The tests are written in Go and can be run using the following command:
 
 ```bash
 ## Run the tests using the just command
-just test {{.module_name}}
+just test gotoolbox
 ```
 
 ## Developer Experience 🛠️
@@ -108,11 +108,11 @@ If you'd like to contribute, mostly we use [Just](https://just.systems) to autom
 # initialize the pre-commit hooks
 just init
 # run CI or common things locally
-just golint {{.module_name}}
+just golint gotoolbox
 # run the tests
-just test {{.module_name}}
+just test gotoolbox
 # Run the entire CI tasks locally
-just cilocal {{.module_name}}
+just cilocal gotoolbox
 ```
 
 ### Examples (aka Recipes) 🍲
@@ -120,6 +120,6 @@ just cilocal {{.module_name}}
 Additionally, this module brings a new [Daggerverse](https://daggerverse.dev/) functionality that allows to automatically generate the module's documentation using an special (sub) module called [**{{.module_name_pkg}}/examples/sdk**]({{.module_name_pkg}}/examples). This module contains a set of examples hat demonstrate how to use the module's functions.
 
 To generate the documentation
-It's important to notice that each **example** function in order to be rendered in the documentation, it must be preprocessed by module's name, in this case (camelCase) `{{.module_name}}`.
+It's important to notice that each **example** function in order to be rendered in the documentation, it must be preprocessed by module's name, in this case (camelCase) `gotoolbox`.
 
 >NOTE: The `just` command entails the use of the [**Justfile**](https://just.systems) for task automation. If you don't have it, don't worry, you just need [Nix](https://nixos.org) to run the tasks using the `dev-shell` built-in command: `nix develop --impure --extra-experimental-features nix-command --extra-experimental-features flakes`
