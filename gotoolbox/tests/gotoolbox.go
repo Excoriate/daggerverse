@@ -183,3 +183,59 @@ func (m *Tests) TestgotoolboxWithGoTest(ctx context.Context) error {
 
 	return nil
 }
+
+// TestgotoolboxCI is an end-to-end integration test for
+// the Go toolbox in a CI environment.
+//
+// This function sets up the toolbox with a specified Go
+// version and runs a series of Go command-line tools:
+// go fmt, go vet, go test, and go build.
+//
+// ctx: The context for the test execution, to control cancellation and deadlines.
+//
+// Returns an error if any of the Go command executions fail.
+func (m *Tests) TestgotoolboxCI(ctx context.Context) error {
+	// Initialize the Go toolbox with the specified version.
+	targetModDefault := dag.
+		Gotoolbox(dagger.GotoolboxOpts{
+			Version: "1.23.0-alpine3.19",
+		}).WithSource(m.TestDir, dagger.GotoolboxWithSourceOpts{
+		Workdir: "/gotoolbox",
+	})
+
+	// Run Go fmt to format Go source code
+	ciModCfg := targetModDefault.
+		WithGoExec([]string{"fmt", "./..."}).
+		WithGoExec([]string{"vet", "./..."}).
+		WithGoExec([]string{"test", "-v", "./..."}).
+		WithGoExec([]string{"build", "-o", "/tmp/gotoolbox", "./..."})
+
+	// Run Go command-line tools
+	_, ciErr := ciModCfg.
+		Ctr().
+		Stdout(ctx)
+
+	if ciErr != nil {
+		return WrapError(ciErr, "failed to run Go command-line tools with WithGoExec API")
+	}
+
+	binExecOut, binExecErr := ciModCfg.
+		Ctr().
+		WithExec([]string{"ls", "/tmp"}).
+		WithExec([]string{"sh", "-c", "cd /tmp && ./gotoolbox"}).
+		Stdout(ctx)
+
+	if binExecErr != nil {
+		return WrapError(binExecErr, "failed to run ls and inspect the built Go toolbox")
+	}
+
+	if binExecOut == "" {
+		return NewError("expected to have built Go toolbox output (/tmp/gotoolbox), got empty output")
+	}
+
+	if !strings.Contains(binExecOut, "Hello, Dagger") {
+		return NewError("expected to have built Go toolbox output Hello, Dagger!, got " + binExecOut)
+	}
+
+	return nil
+}

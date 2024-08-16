@@ -248,9 +248,6 @@ func (m *Go) Gotoolbox_RunArbitraryCommand(ctx context.Context) (string, error) 
 func (m *Go) Gotoolbox_CreateContainer(ctx context.Context) (*dagger.Container, error) {
 	targetModule := dag.
 		Gotoolbox().
-		BaseAlpine().
-		WithUtilitiesInAlpineContainer(). // Install utilities
-		WithGitInAlpineContainer().       // Install git
 		WithSource(m.TestDir)
 
 	// Get the OS or container information

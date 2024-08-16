@@ -93,6 +93,10 @@ func (m *Tests) TestAll(ctx context.Context) error {
 	polTests.Go(m.TestGoWithGoTestSum)
 
 	// From this point onwards, we're testing the specific functionality of the Gotoolbox module.
+	polTests.Go(m.TestgotoolboxWithGoVersions)
+	polTests.Go(m.TestgotoolboxWithOverridingContainer)
+	polTests.Go(m.TestgotoolboxWithGoTest)
+	polTests.Go(m.TestgotoolboxCI)
 
 	if err := polTests.Wait(); err != nil {
 		return WrapError(err, "there are some failed tests")
