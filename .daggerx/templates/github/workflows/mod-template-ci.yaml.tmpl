@@ -26,7 +26,7 @@ jobs:
         strategy:
             matrix:
                 go: ['1.22']
-                dagversion: [0.12.0, 0.12.1, 0.12.2, 0.12.3, 0.12.4]
+                dagversion: [0.12.0, 0.12.1, 0.12.2, 0.12.3, 0.12.4, 0.12.5]
         name: Lint {{.module_name_pkg}} on ${{ matrix.os }} with Dagger ${{ matrix.dagversion }}
         runs-on: ubuntu-latest
         steps:
@@ -159,7 +159,7 @@ jobs:
         strategy:
             matrix:
                 go: ['1.22']
-                dagversion: [0.12.0, 0.12.1, 0.12.2, 0.12.3, 0.12.4]
+                dagversion: [0.12.0, 0.12.1, 0.12.2, 0.12.3, 0.12.4, 0.12.5]
         needs: [dagger-linter, golangci-lint]
         name: Run Tests 🧪 in {{.module_name_pkg}} on ${{ matrix.os }} with Dagger ${{ matrix.dagversion }}
         runs-on: ubuntu-latest
@@ -201,7 +201,7 @@ jobs:
         strategy:
             matrix:
                 go: ['1.22']
-                dagversion: [0.12.4]
+                dagversion: [0.12.4, 0.12.5]
         needs: [dagger-linter, golangci-lint]
         name: Run recipes 🥗 in {{.module_name_pkg}}/examples/go on ${{ matrix.os }} with Dagger ${{ matrix.dagversion }}
         runs-on: ubuntu-latest
