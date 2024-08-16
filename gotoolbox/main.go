@@ -36,7 +36,8 @@ type Gotoolbox struct {
 //
 // Returns a pointer to a Gotoolbox instance and an error, if any.
 func New(
-	// version is the version of the container image to use.
+	// version is the version of the container image to use. Consider
+	// that this Dagger module uses al alpine-based image.
 	// +optional
 	version string,
 	// ctr is the container to use as a base container.

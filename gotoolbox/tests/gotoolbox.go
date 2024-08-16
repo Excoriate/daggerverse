@@ -17,39 +17,38 @@ import (
 //
 // Returns an error if any Go version setup or verification fails.
 func (m *Tests) TestgotoolboxWithGoVersions(ctx context.Context) error {
-	goVersions := []string{"1.22.3", "1.21.7", "1.20.4"}
-
-	for _, goVersion := range goVersions {
+	goVersions := map[string]string{
+		"1.22.6": "1.22.6-alpine3.19",
+		"1.23.0": "1.23.0-alpine3.19",
+		"1.21.6": "1.21.6-alpine3.19",
+	}
+	for expectedVersion, imageVersion := range goVersions {
 		// Initialize the Go toolbox with the specified version.
 		targetModDefault := dag.
 			Gotoolbox(dagger.GotoolboxOpts{
-				Version: goVersion,
+				Version: imageVersion,
 			})
 
 		// Check if the Go version is set correctly.
 		goVersionOut, goVersionErr := targetModDefault.
 			Ctr().
-			Terminal().
 			WithExec([]string{"go", "version"}).
 			Stdout(ctx)
 
 		if goVersionErr != nil {
-			return WrapErrorf(goVersionErr, "failed to get Go version for %s", goVersion)
+			return WrapErrorf(goVersionErr, "failed to get Go version for %s", expectedVersion)
 		}
 
 		if goVersionOut == "" {
 			return WrapErrorf(goVersionErr, "expected to have Go version "+
-				"output, got empty output for %s", goVersion)
+				"output, got empty output for %s", expectedVersion)
 		}
 
-		expectedVersionContains := "go" + goVersion
-
 		// Verify the output contains the expected Go version.
-		if !strings.Contains(goVersionOut, expectedVersionContains) {
-			return WrapErrorf(goVersionErr, "expected Go version %s, got %s", expectedVersionContains,
+		if !strings.Contains(goVersionOut, expectedVersion) {
+			return WrapErrorf(goVersionErr, "expected Go version %s, got %s", expectedVersion,
 				goVersionOut)
 		}
 	}
-
 	return nil
 }
