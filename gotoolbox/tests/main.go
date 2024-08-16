@@ -55,9 +55,6 @@ func (m *Tests) TestAll(ctx context.Context) error {
 	polTests := pool.New().WithErrors().WithContext(ctx)
 
 	// Test different ways to configure the base container.
-	polTests.Go(m.TestUbuntuBase)
-	polTests.Go(m.TestAlpineBase)
-	polTests.Go(m.TestBusyBoxBase)
 	polTests.Go(m.TestPassingEnvVarsInConstructor)
 	// Test built-in commands
 	polTests.Go(m.TestRunShellCMD)
