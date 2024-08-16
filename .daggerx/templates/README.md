@@ -39,7 +39,7 @@ Through the [Dagger CLI](https://docs.dagger.io/cli/465058/install), or by using
 ├── go.mod
 ├── go.sum
 ├── main.go
-└── tests // Sub module that represent tests of the module's functions 
+└── tests // Sub module that represent tests of the module's functions
     ├── .gitattributes
     ├── .gitignore
     ├── dagger.json
