@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/Excoriate/daggerverse/module-template/tests/internal/dagger"
@@ -620,33 +621,110 @@ func (m *Tests) TestGoWithGCCCompiler(ctx context.Context) error {
 //     indicating what went wrong.
 func (m *Tests) TestGoWithGoTestSum(ctx context.Context) error {
 	// Setting up the Go module container using the default module template.
-	targetModule := dag.ModuleTemplate(
+	baseModule := dag.ModuleTemplate(
 		dagger.ModuleTemplateOpts{
-			Ctr: getGolangAlpineContainer(""),
+			Ctr: getGolangAlpineContainer("1.20.4"),
 		},
 	)
 
-	// Install the GoTestSum tool and its dependency `tparse` in the container.
-	targetModule = targetModule.
-		WithGoTestSum()
-
-	// Execute the `gotestsum --version` command to check if the GoTestSum tool is installed.
-	cmdOut, cmdErr := targetModule.Ctr().
-		WithExec([]string{"gotestsum", "--version"}).
-		Stdout(ctx)
-
-	if cmdErr != nil {
-		return WrapError(cmdErr, "failed to run gotestsum --version command")
+	// Test cases
+	testCases := []struct {
+		name             string
+		goTestSumVersion string
+		tParseVersion    string
+		skipTParse       bool
+	}{
+		{"Default versions", "", "", false},
+		{"Specific GoTestSum version", "v1.10.0", "", false},
+		{"Specific versions for both", "v1.10.0", "v0.11.0", false},
+		{"Skip TParse", "v1.10.0", "", true},
 	}
 
-	// Validate that the GoTestSum tool is installed.
-	if cmdOut == "" {
-		return Errorf("expected to have output when running gotestsum --version, got empty output")
-	}
+	for _, tc := range testCases {
+		// Install GoTestSum and optionally TParse
+		targetModule := baseModule.
+			WithGoTestSum(dagger.ModuleTemplateWithGoTestSumOpts{
+				GoTestSumVersion: tc.goTestSumVersion,
+				TParseVersion:    tc.tParseVersion,
+				SkipTparse:       tc.skipTParse,
+			})
 
-	if !strings.Contains(cmdOut, "gotestsum") {
-		return Errorf("expected to have found gotestsum in the output, got %s", cmdOut)
+		// Check GoTestSum installation
+		gotestsumOut, gotestsumErr := targetModule.Ctr().
+			WithExec([]string{"gotestsum", "--version"}).
+			Stdout(ctx)
+
+		if gotestsumErr != nil {
+			return WrapError(gotestsumErr, fmt.Sprintf("%s: failed to run gotestsum --version command", tc.name))
+		}
+
+		if gotestsumOut == "" {
+			return Errorf("%s: expected to have output when running gotestsum --version, got empty output", tc.name)
+		}
+
+		if !strings.Contains(gotestsumOut, "gotestsum") {
+			return Errorf("%s: expected to have found gotestsum in the output, got %s", tc.name, gotestsumOut)
+		}
+
+		installedVersion := extractVersion(gotestsumOut)
+		fmt.Printf("%s: Installed gotestsum version: %s\n", tc.name, installedVersion)
+
+		if tc.goTestSumVersion != "" && tc.goTestSumVersion != "latest" {
+			if installedVersion == "dev" {
+				fmt.Printf("%s: Warning: gotestsum is installed with 'dev' version\n", tc.name)
+			} else if !strings.HasPrefix(installedVersion, tc.goTestSumVersion) {
+				return Errorf("%s: expected gotestsum version starting with %s, but got %s", tc.name, tc.goTestSumVersion, installedVersion)
+			}
+		}
+
+		// Check TParse installation if not skipped
+		if !tc.skipTParse {
+			tparseOut, tparseErr := targetModule.Ctr().
+				WithExec([]string{"tparse", "--version"}).
+				Stdout(ctx)
+
+			if tparseErr != nil {
+				return WrapError(tparseErr, fmt.Sprintf("%s: failed to run tparse --version command", tc.name))
+			}
+
+			if tparseOut == "" {
+				return Errorf("%s: expected to have output when running tparse --version, got empty output", tc.name)
+			}
+
+			if !strings.Contains(tparseOut, "tparse") {
+				return Errorf("%s: expected to have found tparse in the output, got %s", tc.name, tparseOut)
+			}
+
+			installedTParseVersion := extractVersion(tparseOut)
+			fmt.Printf("%s: Installed tparse version: %s\n", tc.name, installedTParseVersion)
+
+			if tc.tParseVersion != "" && tc.tParseVersion != "latest" {
+				if installedTParseVersion == "dev" {
+					fmt.Printf("%s: Warning: tparse is installed with 'dev' version\n", tc.name)
+				} else if !strings.HasPrefix(installedTParseVersion, tc.tParseVersion) {
+					return Errorf("%s: expected tparse version starting with %s, but got %s", tc.name, tc.tParseVersion, installedTParseVersion)
+				}
+			}
+		} else {
+			// Verify that TParse is not installed when skipped
+			_, tparseErr := targetModule.Ctr().
+				WithExec([]string{"tparse", "--version"}).
+				Stdout(ctx)
+
+			if tparseErr == nil {
+				return Errorf("%s: expected tparse to not be installed, but it was found", tc.name)
+			}
+		}
 	}
 
 	return nil
+}
+
+// Helper function to extract version from output
+func extractVersion(output string) string {
+	parts := strings.Fields(output)
+	if len(parts) >= 2 {
+		return parts[len(parts)-1]
+	}
+	return ""
 }
