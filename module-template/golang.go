@@ -513,7 +513,7 @@ func (m *ModuleTemplate) WithGoTestSum(
 	}
 
 	if tParseVersion == "" {
-		tParseVersion = goTestSumVersion
+		tParseVersion = "latest"
 	}
 
 	pkgs := []string{"gotest.tools/gotestsum@" + goTestSumVersion}
