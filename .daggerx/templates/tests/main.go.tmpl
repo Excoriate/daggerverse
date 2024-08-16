@@ -108,6 +108,8 @@ func (m *Tests) TestAll(ctx context.Context) error {
 	// Test IAC specific functions.
 	polTests.Go(m.TestIACWithTerraformUbuntu)
 	polTests.Go(m.TestIACWithTerraformAlpine)
+	polTests.Go(m.TestIACWithTerragruntUbuntu)
+	polTests.Go(m.TestIACWithTerragruntAlpine)
 	// Test Dagger specific functions.
 	polTests.Go(m.TestDaggerWithDaggerCLI)
 	polTests.Go(m.TestDaggerSetupDaggerInDagger)
