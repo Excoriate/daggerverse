@@ -7,8 +7,6 @@ import (
 const (
 	latestVersion       = "latest"
 	terraformReleaseURL = "https://releases.hashicorp.com/terraform"
-	hashicorpGPGURL     = "https://apt.releases.hashicorp.com/gpg"
-	hashicorpRepoURL    = "https://apt.releases.hashicorp.com"
 )
 
 // resolveTerraformVersion resolves the provided version to "latest" if it's empty.
