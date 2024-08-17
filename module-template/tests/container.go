@@ -7,7 +7,7 @@ import (
 	"github.com/Excoriate/daggerverse/module-template/tests/internal/dagger"
 )
 
-// TestUbuntuBase tests that the target module is based on the Ubuntu 22.04 image.
+// TestContainerWithUbuntuBase tests that the target module is based on the Ubuntu 22.04 image.
 //
 // This function verifies that the target module is configured appropriately to use the base Ubuntu 22.04 image.
 // It runs a command to get the OS version and confirms it matches "Ubuntu 22.04".
@@ -17,7 +17,7 @@ import (
 //
 // Returns:
 //   - error: Returns an error if the Ubuntu image is not used or if the output is not as expected.
-func (m *Tests) TestUbuntuBase(ctx context.Context) error {
+func (m *Tests) TestContainerWithUbuntuBase(ctx context.Context) error {
 	targetModule := dag.
 		ModuleTemplate().
 		BaseUbuntu(dagger.ModuleTemplateBaseUbuntuOpts{Version: "22.04"})
@@ -37,7 +37,7 @@ func (m *Tests) TestUbuntuBase(ctx context.Context) error {
 	return nil
 }
 
-// TestAlpineBase tests that the target module is based on the Alpine Linux v3.17.3 image.
+// TestContainerWithAlpineBase tests that the target module is based on the Alpine Linux v3.17.3 image.
 //
 // This function verifies that the target module is configured appropriately to use the base Alpine Linux v3.17.3 image.
 // It runs a command to get the OS version and confirms it matches "Alpine Linux v3.17.3".
@@ -47,7 +47,7 @@ func (m *Tests) TestUbuntuBase(ctx context.Context) error {
 //
 // Returns:
 //   - error: Returns an error if the Alpine image is not used or if the output is not as expected.
-func (m *Tests) TestAlpineBase(ctx context.Context) error {
+func (m *Tests) TestContainerWithAlpineBase(ctx context.Context) error {
 	targetModule := dag.ModuleTemplate().
 		BaseAlpine(dagger.ModuleTemplateBaseAlpineOpts{Version: "3.17.3"})
 
@@ -64,7 +64,7 @@ func (m *Tests) TestAlpineBase(ctx context.Context) error {
 	return nil
 }
 
-// TestBusyBoxBase tests that the target module is based on the BusyBox v1.35.0 image.
+// TestContainerWithBusyBoxBase tests that the target module is based on the BusyBox v1.35.0 image.
 //
 // This function verifies that the target module is configured appropriately to use the base BusyBox v1.35.0 image.
 // It runs a command to get the OS version and confirms it matches "BusyBox v1.35.0".
@@ -74,7 +74,7 @@ func (m *Tests) TestAlpineBase(ctx context.Context) error {
 //
 // Returns:
 //   - error: Returns an error if the BusyBox image is not used or if the output is not as expected.
-func (m *Tests) TestBusyBoxBase(ctx context.Context) error {
+func (m *Tests) TestContainerWithBusyBoxBase(ctx context.Context) error {
 	targetModule := dag.
 		ModuleTemplate().
 		BaseBusyBox(dagger.ModuleTemplateBaseBusyBoxOpts{Version: "1.35.0"})
@@ -89,6 +89,36 @@ func (m *Tests) TestBusyBoxBase(ctx context.Context) error {
 
 	if !strings.Contains(out, "v1.35.0") {
 		return WrapErrorf(err, "expected BusyBox v1.35.0, got %s", out)
+	}
+
+	return nil
+}
+
+// TestContainerWithWolfiBase tests that the target module is based on the Wolfi image.
+//
+// This function verifies that the target module is configured appropriately to use the base Wolfi image.
+// It runs a command to get the OS version and confirms it matches "Wolfi".
+//
+// Arguments:
+// - ctx (context.Context): The context for the test execution.
+//
+// Returns:
+//   - error: Returns an error if the Wolfi image is not used or if the output is not as expected.
+func (m *Tests) TestContainerWithWolfiBase(ctx context.Context) error {
+	targetModule := dag.
+		ModuleTemplate().
+		BaseWolfi()
+
+	out, err := targetModule.Ctr().
+		WithExec([]string{"cat", "/etc/os-release"}).
+		Stdout(ctx)
+
+	if err != nil {
+		return WrapError(err, "failed to get Wolfi image")
+	}
+
+	if !strings.Contains(out, "Wolfi") {
+		return WrapErrorf(err, "expected Wolfi, got %s", out)
 	}
 
 	return nil
