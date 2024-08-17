@@ -19,6 +19,8 @@ import "github.com/Excoriate/daggerverse/module-template/internal/dagger"
 //
 //	*dagger.Service: The configured service with the specified ports exposed.
 func (m *ModuleTemplate) WithServiceFromContainer(
+	// exposePorts is a list of ports to expose from the service.
+	// +optional
 	exposePorts []int,
 	// protocol is the port protocol to use. Either TCP or UDP. Default is TCP.
 	// +optional
