@@ -104,6 +104,8 @@ func (m *Tests) TestContainerWithBusyBoxBase(ctx context.Context) error {
 //
 // Returns:
 //   - error: Returns an error if the Wolfi image is not used or if the output is not as expected.
+//
+//nolint:cyclop // The test handles multiple commands and environments, requiring a longer function.
 func (m *Tests) TestContainerWithWolfiBase(ctx context.Context) error {
 	targetModule := dag.
 		ModuleTemplate().
@@ -128,12 +130,16 @@ func (m *Tests) TestContainerWithWolfiBase(ctx context.Context) error {
 		})
 
 		// Check if the Wolfi image has the installed packages
-	out, err = targetModuleWithInstalledPkgs.Ctr().
+	osOut, osErr := targetModuleWithInstalledPkgs.Ctr().
 		WithExec([]string{"cat", "/etc/os-release"}).
 		Stdout(ctx)
 
-	if err != nil {
-		return WrapError(err, "failed to get Wolfi image")
+	if osErr != nil {
+		return WrapError(osErr, "failed to get Wolfi image")
+	}
+
+	if !strings.Contains(osOut, "Wolfi") {
+		return Errorf("expected Wolfi, got %s", osOut)
 	}
 
 	// Check if git got installed
