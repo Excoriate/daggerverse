@@ -113,6 +113,22 @@ jobs:
                   echo "✅ Module reloaded successfully"
                   dagger call && dagger functions
 
+            - name: 🛠️ Install golangci-lint
+              run: |
+                  curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s latest
+                  sudo mv ./bin/golangci-lint /usr/local/bin/golangci-lint
+                  golangci-lint --version
+
+            - name: 🧹 Run GolangCI Lint
+              run: |
+                  echo "Running Go (GolangCI)... 🧹"
+                  cd ${{ env.MODULE_NAME }}
+                  golangci-lint run --config=../.golangci.yml --verbose
+                  cd tests
+                  golangci-lint run --config=../../.golangci.yml --verbose
+                  cd ../examples/go
+                  golangci-lint run --config=../../../.golangci.yml --verbose
+
             - name: 🧹 Run GolangCI Lint
               run: |
                   echo "Running Go (GolangCI)... 🧹"
