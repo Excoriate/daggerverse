@@ -650,3 +650,79 @@ func (m *Tests) TestGoWithGoTestSum(ctx context.Context) error {
 
 	return nil
 }
+
+// TestGoWithGoReleaserAndGolangCILint tests the installation and setup
+// of GoReleaser and GoLangCILint using gotoolbox.
+//
+// This function sets up the Go toolbox with a specified Go version, installs
+// GoReleaser and GoLangCILint, and verifies their installation.
+//
+// ctx: The context for the test execution, to control cancellation and deadlines.
+//
+// Returns an error if the installation or verification of GoReleaser or GoLangCILint fails.
+func (m *Tests) TestGoWithGoReleaserAndGolangCILint(ctx context.Context) error {
+	goContainerWithGit := dag.
+		Container().
+		From("golang:1.23-alpine").
+		WithExec([]string{"apk", "add", "--no-cache", "git"})
+
+	// Initialize the Go toolbox with the specified version.
+	targetModDefault := dag.
+		Gotoolbox(dagger.GotoolboxOpts{
+			Ctr: goContainerWithGit,
+		})
+
+	// Set the installation commands for GoReleaser and GoLangCILint.
+	targetModDefault = targetModDefault.
+		WithGoReleaser().
+		WithGoLint("v1.60.1")
+
+	// Execute the container to install the tools.
+	_, ctrErr := targetModDefault.
+		Ctr().
+		Stdout(ctx)
+
+	if ctrErr != nil {
+		return WrapError(ctrErr, "failed to install GoReleaser and GoLangCILint")
+	}
+
+	// Check golangci-lint binary installed in path.
+	golangciPathOut, golangciPathErr := targetModDefault.
+		Ctr().
+		WithExec([]string{"which", "golangci-lint"}).
+		Stdout(ctx)
+
+	if golangciPathErr != nil {
+		return WrapError(golangciPathErr, "failed to get golangci-lint path")
+	}
+
+	if golangciPathOut == "" {
+		return Errorf("expected to have golangci-lint in path /go/bin/golangci-lint, got empty output")
+	}
+
+	if !strings.Contains(golangciPathOut, "/go/bin/golangci-lint") {
+		return Errorf("expected to have golangci-lint "+
+			"in path /go/bin/golangci-lint, got %s", golangciPathOut)
+	}
+
+	// Check goreleaser binary installed in path.
+	goreleaserPathOut, goreleaserPathErr := targetModDefault.
+		Ctr().
+		WithExec([]string{"which", "goreleaser"}).
+		Stdout(ctx)
+
+	if goreleaserPathErr != nil {
+		return WrapError(goreleaserPathErr, "failed to get goreleaser path")
+	}
+
+	if goreleaserPathOut == "" {
+		return Errorf("expected to have goreleaser in path /go/bin/goreleaser, got empty output")
+	}
+
+	if !strings.Contains(goreleaserPathOut, "/go/bin/goreleaser") {
+		return Errorf("expected to have goreleaser "+
+			"in path /go/bin/goreleaser, got %s", goreleaserPathOut)
+	}
+
+	return nil
+}

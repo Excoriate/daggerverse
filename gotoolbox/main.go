@@ -91,7 +91,8 @@ func New(
 //nolint:nolintlint,revive // This is a method that is used to set the base image and version.
 func (m *Gotoolbox) Base(imageURL string) *Gotoolbox {
 	c := dag.Container().
-		From(imageURL)
+		From(imageURL).
+		WithExec([]string{"apk", "add", "--no-cache", "git"})
 
 	m.Ctr = c
 

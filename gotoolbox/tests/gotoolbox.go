@@ -249,6 +249,8 @@ func (m *Tests) TestgotoolboxCI(ctx context.Context) error {
 // ctx: The context for the test execution, to control cancellation and deadlines.
 //
 // Returns an error if the installation or verification of GoReleaser or GoLangCILint fails.
+//
+//nolint:cyclop // The test handles multiple commands and environments, requiring a longer function.
 func (m *Tests) TestgotoolboxWithGoReleaserAndGolangCILint(ctx context.Context) error {
 	// Initialize the Go toolbox with the specified version.
 	targetModDefault := dag.
@@ -256,19 +258,12 @@ func (m *Tests) TestgotoolboxWithGoReleaserAndGolangCILint(ctx context.Context) 
 			Version: "1.23.0-alpine3.19",
 		}).WithSource(m.TestDir, dagger.GotoolboxWithSourceOpts{
 		Workdir: "/gotoolbox",
-	})
+	}).WithGoReleaser().
+		WithGoLint("v1.60.1")
 
-	// Set the installation commands for GoReleaser and GoLangCILint.
-	targetModDefault = targetModDefault.
-		WithGoInstall([]string{
-			"github.com/goreleaser/goreleaser@v2.2.0",
-			"github.com/golangci/golangci-lint/cmd/golangci-lint@v1.60.1",
-		})
-
-	// Execute the container to install the tools.
+		// Execute the container to install the tools.
 	_, ctrErr := targetModDefault.
 		Ctr().
-		Terminal().
 		Stdout(ctx)
 
 	if ctrErr != nil {
@@ -292,6 +287,85 @@ func (m *Tests) TestgotoolboxWithGoReleaserAndGolangCILint(ctx context.Context) 
 	if !strings.Contains(golangciPathOut, "/go/bin/golangci-lint") {
 		return Errorf("expected to have golangci-lint "+
 			"in path /go/bin/golangci-lint, got %s", golangciPathOut)
+	}
+
+	// Run golangci-lint --version
+	golangciVersionOut, golangciVersionErr := targetModDefault.
+		Ctr().
+		WithExec([]string{"golangci-lint", "--version"}).
+		Stdout(ctx)
+
+	if golangciVersionErr != nil {
+		return WrapError(golangciVersionErr, "failed to get golangci-lint version")
+	}
+
+	if golangciVersionOut == "" {
+		return Errorf("expected to have golangci-lint version output, got empty output")
+	}
+
+	// Check goreleaser binary installed in path.
+	goreleaserPathOut, goreleaserPathErr := targetModDefault.
+		Ctr().
+		WithExec([]string{"which", "goreleaser"}).
+		Stdout(ctx)
+
+	if goreleaserPathErr != nil {
+		return WrapError(goreleaserPathErr, "failed to get goreleaser path")
+	}
+
+	if goreleaserPathOut == "" {
+		return Errorf("expected to have goreleaser in path /go/bin/goreleaser, got empty output")
+	}
+
+	if !strings.Contains(goreleaserPathOut, "/go/bin/goreleaser") {
+		return Errorf("expected to have goreleaser "+
+			"in path /go/bin/goreleaser, got %s", goreleaserPathOut)
+	}
+
+	// Run GoReleaser --version
+	goreleaserVersionOut, goreleaserVersionErr := targetModDefault.
+		Ctr().
+		WithExec([]string{"goreleaser", "--version"}).
+		Stdout(ctx)
+
+	if goreleaserVersionErr != nil {
+		return WrapError(goreleaserVersionErr, "failed to get goreleaser version")
+	}
+
+	if goreleaserVersionOut == "" {
+		return Errorf("expected to have goreleaser version output, got empty output")
+	}
+
+	// Run GoReleaser
+	_, goreleaserErr := targetModDefault.
+		Ctr().
+		WithEnvVariable("GITHUB_TOKEN", "dummy-token").
+		WithExec([]string{"git", "init"}).
+		WithExec([]string{"git", "config", "--global", "user.name", "Test User"}).
+		WithExec([]string{"git", "config", "--global", "user.email", "testuser@example.com"}).
+		WithExec([]string{"rm", "-rf", "dist"}).
+		WithExec([]string{"sh", "-c", "echo './dist' >>.gitignore"}).
+		WithExec([]string{"git", "add", "."}).
+		WithExec([]string{"git", "commit", "-m", "Initial commit"}).
+		WithExec([]string{"goreleaser", "build", "--snapshot", "--skip=validate", "--clean"}).
+		Stdout(ctx)
+
+	if goreleaserErr != nil {
+		return WrapError(goreleaserErr, "failed to run goreleaser")
+	}
+
+	// Run golangci-lint
+	golangciOut, golangciErr := targetModDefault.
+		Ctr().
+		WithExec([]string{"golangci-lint", "run", "--config=../.golangci.yml", "--verbose"}).
+		Stdout(ctx)
+
+	if golangciErr != nil {
+		return WrapError(golangciErr, "failed to run golangci-lint")
+	}
+
+	if golangciOut == "" {
+		return Errorf("expected to have golangci-lint output, got empty output")
 	}
 
 	return nil
