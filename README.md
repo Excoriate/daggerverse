@@ -4,6 +4,7 @@
 
 <h1 align="center">Daggerverse Modules 📦</h1>
 ---
+[![🏗️ CI CodeGen Daggy](https://github.com/Excoriate/daggerverse/actions/workflows/ci-daggy-codegen.yml/badge.svg)](https://github.com/Excoriate/daggerverse/actions/workflows/ci-daggy-codegen.yml)
 
 | Module                                         | Status | What it does?                                                                |
 |------------------------------------------------|--------|------------------------------------------------------------------------------|
@@ -16,6 +17,7 @@
 | [Terragrunt](terragrunt/README.md)             | ✅      | A simple [Terragrunt](https://terragrunt.gruntwork.io) module.               |
 
 ---
+
 
 ## Contributions 🤝
 
