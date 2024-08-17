@@ -18,6 +18,7 @@ func (m *Tests) TestServiceSimple(ctx context.Context) error {
 	workdir := filepath.
 		Join(fixtures.MntPrefix, "goolang-service")
 
+		// Configure the goCtr that's going to be later on the GoServer
 	goCtr := dag.Container().
 		From("golang:alpine").
 		WithMountedDirectory(fixtures.MntPrefix, m.TestDir).
@@ -26,22 +27,29 @@ func (m *Tests) TestServiceSimple(ctx context.Context) error {
 		WithExec([]string{"./goolang-service"})
 
 	// Configure the container as a service.
-	goServer := targetModule.
+	goServer, goServerErr := targetModule.
 		WithServiceFromContainer(goCtr, dagger.
 			ModuleTemplateWithServiceFromContainerOpts{
-			ExposePorts: []int{8080},
-		})
+			ExposePorts:     []int{8080},
+			EnableDnsgoogle: true,
+		}).Start(ctx)
 
-		// Initialize the go service in the go server (Dagger service)
+	defer goServer.Stop(ctx)
+
+	if goServerErr != nil {
+		return WrapError(goServerErr, "failed to start the GoServer")
+	}
+
+	// Initialize the go service in the go server (Dagger service)
 	clientCtr := dag.Container().
 		From("alpine:latest").
 		// Install curl
 		WithExec([]string{"apk", "add", "--no-cache", "curl"}).
-		Terminal().
 		WithServiceBinding("go-server", goServer)
 
 		// Hit the service's API endpoint
 	apiOut, apiErr := clientCtr.
+		Terminal().
 		WithExec([]string{"curl", "-s", "http://localhost:8080/products"}).
 		Stdout(ctx)
 

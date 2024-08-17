@@ -49,5 +49,7 @@ func main() {
 	e.GET("/products", fetchProducts)
 	e.GET("/comments", fetchComments)
 
-	e.Logger.Fatal(e.Start(":8080"))
+	// Listen on all network interfaces
+	address := "0.0.0.0:8080"
+	e.Logger.Fatal(e.Start(address))
 }
