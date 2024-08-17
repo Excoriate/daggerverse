@@ -4,7 +4,9 @@
 
 <h1 align="center">Daggerverse Modules 📦</h1>
 ---
-[![🏗️ CI CodeGen Daggy](https://github.com/Excoriate/daggerverse/actions/workflows/ci-daggy-codegen.yml/badge.svg)](https://github.com/Excoriate/daggerverse/actions/workflows/ci-daggy-codegen.yml)
+
+[![🏗️ CI CodeGen Daggy](https://github.com/Excoriate/daggerverse/actions/workflows/ci-daggy-codegen.yml/badge.svg)](https://github.com/Excoriate/daggerverse/actions/workflows/ci-daggy-codegen.yml)[![CI module-template 🧹](https://github.com/Excoriate/daggerverse/actions/workflows/ci-mod-module-template.yaml/badge.svg)](https://github.com/Excoriate/daggerverse/actions/workflows/ci-mod-module-template.yaml)
+
 
 | Module                                         | Status | What it does?                                                                |
 |------------------------------------------------|--------|------------------------------------------------------------------------------|
