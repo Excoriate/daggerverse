@@ -523,3 +523,52 @@ func (m *ModuleTemplate) WithGoTestSum(
 
 	return m.WithGoInstall(pkgs)
 }
+
+// WithGoReleaser installs the GoReleaser tool in the container environment.
+//
+// This method installs `goreleaser` using the specified version. Check
+// https://goreleaser.com/install/
+//
+// Parameters:
+// - version (string): The version of GoReleaser to use, e.g., "v2@latest".
+//
+// Example:
+//
+//	m := &ModuleTemplate{}
+//	m.WithGoReleaser("v2.2.0")  // Install GoReleaser version 2.2.0
+//
+// Returns:
+// - *ModuleTemplate: A pointer to the updated ModuleTemplate instance.
+func (m *ModuleTemplate) WithGoReleaser(
+	// version is the version of GoReleaser to use, e.g., By default, it's set "v2@latest".
+	// +optional
+	version string,
+) *ModuleTemplate {
+	if version == "" {
+		version = "v2@latest"
+	}
+
+	return m.
+		WithGoInstall([]string{"github.com/goreleaser/goreleaser/" + version})
+}
+
+// WithGoLint installs the GoLint tool in the container environment.
+//
+// This method installs `golangci-lint` using the specified version.
+//
+// Parameters:
+// - version (string): The version of GoLint to use, e.g., "v1.60.1".
+//
+// Example:
+//
+//	m := &ModuleTemplate{}
+//	m.WithGoLint("v1.60.1")  // Install GoLint version 1.60.1
+//
+// Returns:
+// - *ModuleTemplate: A pointer to the updated ModuleTemplate instance.
+func (m *ModuleTemplate) WithGoLint(
+	// version is the version of GoLint to use, e.g., "v1.60.1".
+	version string,
+) *ModuleTemplate {
+	return m.WithGoInstall([]string{"github.com/golangci/golangci-lint/cmd/golangci-lint@" + version})
+}
