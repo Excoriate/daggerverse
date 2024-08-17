@@ -118,7 +118,73 @@ func (m *Tests) TestContainerWithWolfiBase(ctx context.Context) error {
 	}
 
 	if !strings.Contains(out, "Wolfi") {
-		return WrapErrorf(err, "expected Wolfi, got %s", out)
+		return Errorf("expected Wolfi, got %s", out)
+	}
+
+	targetModuleWithInstalledPkgs := dag.
+		ModuleTemplate().
+		BaseWolfi(dagger.ModuleTemplateBaseWolfiOpts{
+			Packages: []string{"git", "curl", "wget"},
+		})
+
+		// Check if the Wolfi image has the installed packages
+	out, err = targetModuleWithInstalledPkgs.Ctr().
+		WithExec([]string{"cat", "/etc/os-release"}).
+		Stdout(ctx)
+
+	if err != nil {
+		return WrapError(err, "failed to get Wolfi image")
+	}
+
+	// Check if git got installed
+	gitOut, gitErr := targetModuleWithInstalledPkgs.Ctr().
+		WithExec([]string{"git", "--version"}).
+		Stdout(ctx)
+
+	if gitErr != nil {
+		return WrapError(gitErr, "failed to get git version")
+	}
+
+	if gitOut == "" {
+		return Errorf("expected to have git version output, got empty output")
+	}
+
+	if !strings.Contains(gitOut, "git version") {
+		return Errorf("expected git to be working correctly, got %s", gitOut)
+	}
+
+	// Check if curl got installed
+	curlOut, curlErr := targetModuleWithInstalledPkgs.Ctr().
+		WithExec([]string{"curl", "--version"}).
+		Stdout(ctx)
+
+	if curlErr != nil {
+		return WrapError(curlErr, "failed to get curl version")
+	}
+
+	if curlOut == "" {
+		return Errorf("expected to have curl version output, got empty output")
+	}
+
+	if !strings.Contains(curlOut, "curl") {
+		return Errorf("expected curl to be working correctly, got %s", curlOut)
+	}
+
+	// Check if wget got installed
+	wgetOut, wgetErr := targetModuleWithInstalledPkgs.Ctr().
+		WithExec([]string{"wget", "--version"}).
+		Stdout(ctx)
+
+	if wgetErr != nil {
+		return WrapError(wgetErr, "failed to get wget version")
+	}
+
+	if wgetOut == "" {
+		return Errorf("expected to have wget version output, got empty output")
+	}
+
+	if !strings.Contains(wgetOut, "GNU Wget") {
+		return Errorf("expected wget to be working correctly, got %s", wgetOut)
 	}
 
 	return nil

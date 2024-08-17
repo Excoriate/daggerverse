@@ -103,11 +103,17 @@ func (m *ModuleTemplate) BaseWolfi(
 		Container().
 		From(imageURL)
 
+	// Default apk add command
+	command := []string{"apk", "add", "--no-cache"}
+
+	// Concatenate additional packages to the command
+	if len(packages) > 0 {
+		command = append(command, packages...)
+	}
+
 	// Install default and additional packages
 	m.Ctr = m.Ctr.
-		WithExec([]string{"apk", "add", "--no-cache"}).
-		WithExec(packages)
-
+		WithExec(command)
 	// Apply overlays
 	for _, overlay := range overlays {
 		m.Ctr = m.Ctr.
