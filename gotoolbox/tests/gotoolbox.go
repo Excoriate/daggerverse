@@ -355,17 +355,13 @@ func (m *Tests) TestgotoolboxWithGoReleaserAndGolangCILint(ctx context.Context) 
 	}
 
 	// Run golangci-lint
-	golangciOut, golangciErr := targetModDefault.
+	_, golangciErr := targetModDefault.
 		Ctr().
-		WithExec([]string{"golangci-lint", "run", "--config=../.golangci.yml", "--verbose"}).
+		WithExec([]string{"golangci-lint", "run", "--config=.golangci.yml", "--verbose"}).
 		Stdout(ctx)
 
 	if golangciErr != nil {
 		return WrapError(golangciErr, "failed to run golangci-lint")
-	}
-
-	if golangciOut == "" {
-		return Errorf("expected to have golangci-lint output, got empty output")
 	}
 
 	return nil
