@@ -51,13 +51,19 @@ func (m *Tests) getTestDir() *dagger.Directory {
 // TestAll executes all tests.
 //
 // This is a helper method for tests, in order to execute all tests.
+//
+//nolint:funlen // The test handles multiple commands and environments, requiring a longer function.
 func (m *Tests) TestAll(ctx context.Context) error {
-	polTests := pool.New().WithErrors().WithContext(ctx)
+	polTests := pool.
+		New().
+		WithErrors().
+		WithContext(ctx)
 
 	// Test different ways to configure the base container.
-	polTests.Go(m.TestUbuntuBase)
-	polTests.Go(m.TestAlpineBase)
-	polTests.Go(m.TestBusyBoxBase)
+	polTests.Go(m.TestContainerWithUbuntuBase)
+	polTests.Go(m.TestContainerWithAlpineBase)
+	polTests.Go(m.TestContainerWithBusyBoxBase)
+	polTests.Go(m.TestContainerWithWolfiBase)
 	polTests.Go(m.TestPassingEnvVarsInConstructor)
 	// Test built-in commands
 	polTests.Go(m.TestRunShellCMD)

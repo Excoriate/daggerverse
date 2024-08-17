@@ -1,6 +1,10 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/Excoriate/daggerverse/module-template/internal/dagger"
+)
 
 const (
 	defaultAlpineImage        = "alpine"
@@ -67,4 +71,54 @@ func (m *ModuleTemplate) BaseBusyBox(
 	imageURL := fmt.Sprintf("%s:%s", defaultBusyBoxImage, version)
 
 	return m.Base(imageURL)
+}
+
+// BaseWolfi sets the base image to a Wolfi Linux image and creates the base container.
+//
+// Parameters:
+// - version: The version of the Wolfi image to use. Optional parameter. Defaults to "latest".
+// - packages: Additional packages to install. Optional parameter.
+// - overlays: Overlay images to merge on top of the base. Optional parameter.
+//
+// Returns a pointer to the ModuleTemplate instance.
+func (m *ModuleTemplate) BaseWolfi(
+	// version is the version of the Wolfi image to use, e.g., "latest".
+	// +optional
+	version string,
+	// packages is the list of additional packages to install.
+	// +optional
+	packages []string,
+	// overlays are images to merge on top of the base.
+	// See https://twitter.com/ibuildthecloud/status/1721306361999597884
+	// +optional
+	overlays []*dagger.Container,
+) *ModuleTemplate {
+	if version == "" {
+		version = defaultImageVersionLatest
+	}
+
+	imageURL := fmt.Sprintf("%s:%s", "cgr.dev/chainguard/wolfi-base", version)
+
+	m.Ctr = dag.
+		Container().
+		From(imageURL)
+
+	// Default apk add command
+	command := []string{"apk", "add", "--no-cache"}
+
+	// Concatenate additional packages to the command
+	if len(packages) > 0 {
+		command = append(command, packages...)
+	}
+
+	// Install default and additional packages
+	m.Ctr = m.Ctr.
+		WithExec(command)
+	// Apply overlays
+	for _, overlay := range overlays {
+		m.Ctr = m.Ctr.
+			WithDirectory("/", overlay.Rootfs())
+	}
+
+	return m
 }
