@@ -49,6 +49,7 @@ func (m *Tests) TestCreateService(ctx context.Context) error {
 		}).
 		Start(ctx)
 
+	//nolint:errcheck // We don't care about the error here.
 	defer goServer.Stop(ctx)
 
 	if goServerErr != nil {
