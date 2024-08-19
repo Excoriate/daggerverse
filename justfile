@@ -193,3 +193,11 @@ dag mod *args:
   @echo "Currently in {{mod}} module 📦, path=`pwd`"
   @test -d {{mod}} || (echo "Module not found" && exit 1)
   @cd {{mod}} && dagger {{args}}
+
+# Recipe that call a certain function by a module's name, passing extra arguments optionally
+callfn mod *args:
+  @echo "Calling a function in a certain module..."
+  @echo "Currently in {{mod}} module 📦, path=`pwd`"
+  @test -d {{mod}} || (echo "Module not found" && exit 1)
+  @cd {{mod}} && dagger functions
+  @cd {{mod}} && dagger call {{args}}
