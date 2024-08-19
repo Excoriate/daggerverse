@@ -84,17 +84,25 @@ func New(
 	return dagModule, nil
 }
 
+var requiredPackages = []string{"git", "curl", "unzip"}
+
+func (m *Gotoolbox) installRequiredPackages() {
+	packageList := append([]string{"apk", "add", "--no-cache"}, requiredPackages...)
+	m.Ctr = m.Ctr.WithExec(packageList)
+}
+
 // Base sets the base image and version, and creates the base container.
 //
 // The default image is "alpine/latest" and the default version is "latest".
 //
 //nolint:nolintlint,revive // This is a method that is used to set the base image and version.
 func (m *Gotoolbox) Base(imageURL string) *Gotoolbox {
-	c := dag.Container().
-		From(imageURL).
-		WithExec([]string{"apk", "add", "--no-cache", "git"})
+	ctr := dag.Container().
+		From(imageURL)
 
-	m.Ctr = c
+	m.Ctr = ctr
+
+	m.installRequiredPackages()
 
 	return m
 }
