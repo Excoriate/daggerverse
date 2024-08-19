@@ -367,7 +367,7 @@ func (m *Tests) TestgotoolboxWithGoReleaserAndGolangCILint(ctx context.Context) 
 	return nil
 }
 
-// TestgotoolboxWithGoServer is an end-to-end integration test for running a Go server
+// TestgotoolboxWithGoServerSimple is an end-to-end integration test for running a Go server
 // and testing its API endpoint.
 //
 // This function sets up and starts a Go server using the Gotoolbox,
@@ -384,6 +384,7 @@ func (m *Tests) TestgotoolboxWithGoServer(ctx context.Context) error {
 			dagger.GotoolboxGoServerWithSourceOpts{
 				Workdir: "gotoolbox-service",
 			}).
+		WithExposePort(8080).
 		Init()
 
 	// Initialize the clientCtr container with necessary tools and bind it to the Go server.
@@ -409,17 +410,5 @@ func (m *Tests) TestgotoolboxWithGoServer(ctx context.Context) error {
 		return Errorf("expected to have API response containing 'Product A', got %s", apiOut)
 	}
 
-	//goServerWithData := dag.Gotoolbox().
-	//  NewGoServer().
-	//  WithSource(m.TestDir,
-	//    dagger.GotoolboxGoServerWithSourceOpts{
-	//      Workdir: "gotoolbox-service",
-	//    }).WithServerData(dagger.GotoolboxGoServerWithServerDataOpts{
-	//  Data: map[string]string{
-	//    "PRODUCT_A": "Product A",
-	//    "PRODUCT_B": "Product B",
-	//    "PRODUCT_C": "Product C",
-	//  },
-	//
 	return nil
 }

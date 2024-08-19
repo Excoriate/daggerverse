@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"path/filepath"
+	"runtime"
 
 	"github.com/Excoriate/daggerverse/gotoolbox/internal/dagger"
 	"github.com/Excoriate/daggerx/pkg/containerx"
@@ -25,6 +26,14 @@ type GoServer struct {
 	// Ctr is the container to use as a base container.
 	// +private
 	Ctr *dagger.Container
+
+	// CustomCompilation is a flag to enable custom compilation.
+	// +private
+	CustomCompilation bool
+
+	// CustomRun is a flag to enable custom run.
+	// +private
+	CustomRun bool
 }
 
 func (m *GoServer) setDefaults() *GoServer {
@@ -129,6 +138,27 @@ func (m *GoServer) WithServerData(
 	return m
 }
 
+// WithBinaryName sets the name of the binary to be built for the GoServer.
+//
+// This method allows specifying a custom name for the binary to be built and used
+// within the server container. If the binary name is not explicitly set, the default
+// binary name ("app") will be used.
+//
+// Parameters:
+//
+//	binaryName string: The name of the binary to build.
+//
+// Returns:
+//
+//	*GoServer: An instance of GoServer configured with the specified binary name.
+func (m *GoServer) WithBinaryName(
+	// binaryName is the name of the binary to build.
+	binaryName string,
+) *GoServer {
+	m.ServerBinaryName = binaryName
+	return m
+}
+
 // WithPreBuiltContainer configures the GoServer to use a pre-existing container as its base.
 //
 // This method allows setting an already created container as the base for the GoServer,
@@ -149,27 +179,28 @@ func (m *GoServer) WithPreBuiltContainer(
 	return m
 }
 
-// WithExposePorts sets the port to expose from the service.
+// WithExposePort sets the port to expose from the service.
 //
 // This method allows setting the port to expose from the service.
 //
 // Parameters:
 //
-//	ports []int: A list of ports to expose from the service.
+//	port int: The port to expose from the service.
 //
 // Returns:
 //
 //	*GoServer: An instance of GoServer configured with the provided port.
-func (m *GoServer) WithExposePorts(
+func (m *GoServer) WithExposePort(
 	// ports is a list of ports to expose from the service.
-	ports []int,
+	port int,
+	// skipHealthcheck is a flag to skip the health check when run as a service.
+	// +optional
+	skipHealthcheck bool,
 ) *GoServer {
-	for _, port := range ports {
-		m.Ctr = m.Ctr.WithExposedPort(port, dagger.ContainerWithExposedPortOpts{
-			Protocol:                    "TCP",
-			ExperimentalSkipHealthcheck: false,
-		})
-	}
+	m.Ctr = m.Ctr.WithExposedPort(port, dagger.ContainerWithExposedPortOpts{
+		Protocol:                    "TCP",
+		ExperimentalSkipHealthcheck: skipHealthcheck,
+	})
 
 	return m
 }
@@ -212,13 +243,239 @@ func (m *GoServer) WithSource(
 	return m
 }
 
-// Init sets up a Go service from scratch with the provided container
-// and exposes the specified ports.
+// WithCompileOptions executes a user-defined compilation command within the container.
+//
+// This method allows appending custom arguments to the "go build -o app" command for compiling
+// the Go server. It always defaults to "go build -o app" but allows additional arguments
+// such as verbose output, module mode, and build tags to customize the build process.
 //
 // Parameters:
 //
-//	exposePorts []int: A list of ports to expose from the service (optional).
-//	ctr *dagger.Container: The container to use as a base container, which will be exposed as a service.
+//	extraArgs []string: (optional) Extra arguments to append to the "go build -o app" command.
+//	verbose bool: (optional) Flag to enable verbose output (adds the -v flag to the command).
+//	mod string: (optional) Sets the module download mode (adds the -mod flag to the command).
+//	tags string: (optional) A comma-separated list of build tags to consider satisfied during the build (adds the -tags flag to the command).
+//
+// Returns:
+//
+//	*GoServer: An instance of GoServer configured with the custom compilation command and any additional flags.
+func (m *GoServer) WithCompileOptions(
+	// extraArgs are additional arguments to append to the go build command.
+	// +optional
+	extraArgs []string,
+	// verbose is a flag to enable verbose output.
+	// +optional
+	verbose bool,
+	// mod is the module download mode for the build.
+	// +optional
+	mod string,
+	// tags is a comma-separated list of build tags to consider satisfied during the build.
+	// +optional
+	tags string,
+) *GoServer {
+	// Base command
+	cmd := []string{"go", "build", "-o", m.ServerBinaryName}
+
+	// Add extra arguments if provided
+	if len(extraArgs) > 0 {
+		cmd = append(cmd, extraArgs...)
+	}
+
+	// Add verbose flag if set
+	if verbose {
+		cmd = append(cmd, "-v")
+	}
+
+	// Add mod flag if set
+	if mod != "" {
+		cmd = append(cmd, fmt.Sprintf("-mod=%s", mod))
+	}
+
+	// Add tags flag if set
+	if tags != "" {
+		cmd = append(cmd, fmt.Sprintf("-tags=%s", tags))
+	}
+
+	m.CustomCompilation = true
+	m.Ctr = m.Ctr.WithExec(cmd)
+
+	return m
+}
+
+// WithRunOptions adds extra arguments to the command when running the Go server binary.
+//
+// This method allows additional arguments to be appended when running the server binary.
+// Normally, the server is run as "./binary", but if the binary that represents the Go server
+// receives flags or additional arguments, these should be passed through this function.
+//
+// Parameters:
+//
+//	runCmd []string: A list of additional command-line arguments to pass
+//	when executing the server binary.
+//
+// Returns:
+//
+//	*GoServer: An instance of GoServer configured to run the binary with the specified arguments.
+func (m *GoServer) WithRunOptions(
+	// runCmd is a list of additional command-line arguments to pass when executing the server binary.
+	runCmd []string,
+) *GoServer {
+	// Prepare the base command to run the binary
+	baseCmd := []string{fmt.Sprintf("./%s", m.ServerBinaryName)}
+
+	// Append additional arguments if provided
+	if len(runCmd) > 0 {
+		baseCmd = append(baseCmd, runCmd...)
+	}
+
+	// Execute the command with the additional arguments
+	m.Ctr = m.Ctr.WithExec(baseCmd)
+	m.CustomRun = true
+	return m
+}
+
+// WithGoProxy sets the Go Proxy URL for the service.
+//
+// Parameters:
+//
+//	goproxy string: URL for the Go Proxy. If empty, defaults to "https://proxy.golang.org,direct".
+//
+// Returns:
+//
+//	*GoServer: The GoServer instance for method chaining.
+func (m *GoServer) WithGoProxy(goproxy string) *GoServer {
+	if goproxy == "" {
+		goproxy = "https://proxy.golang.org,direct"
+	}
+	m.Ctr = m.Ctr.WithEnvVariable("GOPROXY", goproxy)
+	return m
+}
+
+// WithDNSResolver sets the DNS resolver for the service.
+//
+// Parameters:
+//
+//	dnsResolver string: DNS resolver used by the service. If empty, defaults to "8.8.8.8 8.8.4.4".
+//
+// Returns:
+//
+//	*GoServer: The GoServer instance for method chaining.
+func (m *GoServer) WithDNSResolver(dnsResolver string) *GoServer {
+	if dnsResolver == "" {
+		dnsResolver = "8.8.8.8 8.8.4.4"
+	}
+	m.Ctr = m.Ctr.WithEnvVariable("DNS_RESOLVER", dnsResolver)
+	return m
+}
+
+// WithGarbageCollectionSettings sets the garbage collection optimization for the Go runtime.
+//
+// Parameters:
+//
+//	gogc string: Garbage collection optimization value. If empty, defaults to "100".
+//
+// Returns:
+//
+//	*GoServer: The GoServer instance for method chaining.
+func (m *GoServer) WithGarbageCollectionSettings(gogc string) *GoServer {
+	if gogc == "" {
+		gogc = "100"
+	}
+	m.Ctr = m.Ctr.WithEnvVariable("GOGC", gogc)
+	return m
+}
+
+// WithGoEnvironment sets the Go environment for the service.
+//
+// Parameters:
+//
+//	goEnv string: The Go environment. If empty, defaults to "production".
+//
+// Returns:
+//
+//	*GoServer: The GoServer instance for method chaining.
+func (m *GoServer) WithGoEnvironment(goEnv string) *GoServer {
+	if goEnv == "" {
+		goEnv = "production"
+	}
+	m.Ctr = m.Ctr.WithEnvVariable("GO_ENV", goEnv)
+	return m
+}
+
+// WithMaxProcs sets the maximum number of CPU cores to use.
+//
+// Parameters:
+//
+//	goMaxProcs int: Maximum number of CPU cores to use. If 0, defaults to the number of available CPU cores.
+//
+// Returns:
+//
+//	*GoServer: The GoServer instance for method chaining.
+func (m *GoServer) WithMaxProcs(goMaxProcs int) *GoServer {
+	if goMaxProcs == 0 {
+		goMaxProcs = runtime.NumCPU()
+	}
+	m.Ctr = m.Ctr.WithEnvVariable("GOMAXPROCS", fmt.Sprintf("%d", goMaxProcs))
+	return m
+}
+
+// WithDebugOptions sets debug options for the Go runtime.
+//
+// Parameters:
+//
+//	goDebug string: Debug options for Go. If empty, defaults to "http2debug=1".
+//
+// Returns:
+//
+//	*GoServer: The GoServer instance for method chaining.
+func (m *GoServer) WithDebugOptions(goDebug string) *GoServer {
+	if goDebug == "" {
+		goDebug = "http2debug=1"
+	}
+	m.Ctr = m.Ctr.WithEnvVariable("GODEBUG", goDebug)
+	return m
+}
+
+// WithRuntimeThreadLock optimizes the number of threads in system calls.
+//
+// Parameters:
+//
+//	runtimeLockOsThread string: Optimizes number of threads in system calls. If empty, defaults to "1".
+//
+// Returns:
+//
+//	*GoServer: The GoServer instance for method chaining.
+func (m *GoServer) WithRuntimeThreadLock(runtimeLockOsThread string) *GoServer {
+	if runtimeLockOsThread == "" {
+		runtimeLockOsThread = "1"
+	}
+	m.Ctr = m.Ctr.WithEnvVariable("RUNTIME_LOCKOSTHREAD", runtimeLockOsThread)
+	return m
+}
+
+// WithHTTPSettings sets HTTP-related settings for the service.
+//
+// Parameters:
+//
+//	maxConns string: Maximum number of concurrent HTTP connections. If empty, defaults to "1000".
+//	keepAlive string: Enables HTTP Keep-Alive. If empty, defaults to "1".
+//
+// Returns:
+//
+//	*GoServer: The GoServer instance for method chaining.
+func (m *GoServer) WithHTTPSettings(maxConns, keepAlive string) *GoServer {
+	if maxConns == "" {
+		maxConns = "1000"
+	}
+	if keepAlive == "" {
+		keepAlive = "1"
+	}
+	m.Ctr = m.Ctr.WithEnvVariable("HTTP_MAX_CONNS", maxConns)
+	m.Ctr = m.Ctr.WithEnvVariable("HTTP_KEEP_ALIVE", keepAlive)
+	return m
+}
+
+// Init sets up a basic Go service with the provided container and exposes the specified ports.
 //
 // Returns:
 //
