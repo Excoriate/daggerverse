@@ -7,7 +7,7 @@ import (
 	"github.com/Excoriate/daggerverse/module-template/tests/internal/dagger"
 )
 
-// TestgotoolboxWithGoServerSimple is an end-to-end integration test for running a Go server
+// TestGoWithGoServerSimple is an end-to-end integration test for running a Go server
 // and testing its API endpoint.
 //
 // This function sets up and starts a Go server using the Gotoolbox,

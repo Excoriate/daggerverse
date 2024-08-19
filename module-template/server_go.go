@@ -67,10 +67,8 @@ func (m *ModuleTemplate) NewGoServer(
 	// Get the default container image URL
 	imageURL, _ := containerx.GetImageURL(&containerx.
 		NewBaseContainerOpts{
-		Image:           defaultContainerImage,
-		Version:         defaultContainerVersion,
-		FallBackVersion: defaultContainerVersion,
-		FallbackImage:   defaultContainerImage,
+		Image:   "golang",
+		Version: "1.23-alpine",
 	})
 
 	// Return a new GoServer instance with configured service name and container
