@@ -5,7 +5,7 @@ import (
 	"runtime"
 	"strconv"
 
-	"github.com/Excoriate/daggerverse/module-template/internal/dagger"
+	"github.com/Excoriate/daggerverse/{{.module_name_pkg}}/internal/dagger"
 
 	"github.com/Excoriate/daggerx/pkg/containerx"
 	"github.com/Excoriate/daggerx/pkg/fixtures"
@@ -70,7 +70,7 @@ func (m *GoServer) getExecBinaryCMD() []string {
 // Returns:
 //
 // *GoServer: An instance of GoServer configured with a container created from the default image and version.
-func (m *ModuleTemplate) NewGoServer(
+func (m *{{.module_name}}) NewGoServer(
 	// ctr is the container to use as a base container. If it's not set, it'll create a new container.
 	// +optional
 	ctr *dagger.Container,
