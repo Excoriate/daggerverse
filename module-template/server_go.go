@@ -474,21 +474,47 @@ func (m *GoServer) WithHTTPSettings(maxConns, keepAlive string) *GoServer {
 	return m
 }
 
-// Init sets up a basic Go service with the provided container and exposes the specified ports.
+// InitService sets up a basic Go service with the provided container and exposes the specified ports.
 //
 // Returns:
 //
 //	*dagger.Service: The configured service with the specified ports exposed.
-func (m *GoServer) Init() *dagger.Service {
+func (m *GoServer) InitService(
+	// ctr is the container to use as a base container.
+	// +optional
+	ctr *dagger.Container,
+) *dagger.Service {
+	if ctr != nil {
+		return ctr.AsService()
+	}
+
+	return m.
+		InitContainer().
+		AsService()
+}
+
+// InitContainer initializes the container with the default build and run commands.
+//
+// This method sets up the container for the Go server. If custom compilation
+// or run commands have not been provided, it defaults to building the server
+// binary using "go build" and running the server binary directly.
+//
+// Returns:
+//
+//	*dagger.Container: The initialized container with the default or custom commands.
+func (m *GoServer) InitContainer() *dagger.Container {
+	// Set default values for the GoServer configuration.
 	m.setDefaults()
 
+	// If custom compilation command is not specified, default to "go build -o <binaryName>".
 	if !m.CustomCompilation {
 		m.Ctr = m.Ctr.WithExec([]string{"go", "build", "-o", m.ServerBinaryName})
 	}
 
+	// If custom run command is not specified, default to running the server binary.
 	if !m.CustomRun {
 		m.Ctr = m.Ctr.WithExec([]string{fmt.Sprintf("./%s", m.ServerBinaryName)})
 	}
 
-	return m.Ctr.AsService()
+	return m.Ctr
 }

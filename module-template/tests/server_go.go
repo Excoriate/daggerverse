@@ -16,26 +16,27 @@ import (
 // ctx: The context for the test execution, to control cancellation and deadlines.
 //
 // Returns an error if starting the server or fetching the API response fails.
-func (m *Tests) TestgotoolboxWithGoServerSimple(ctx context.Context) error {
-	// Create the Go server using the Gotoolbox, specifying the port and source directory.
-	goServer := dag.ModuleTemplate().
-		NewGoServer().
-		WithSource(m.TestDir,
-			dagger.GotoolboxGoServerWithSourceOpts{
-				Workdir: "gotoolbox-service",
-			}).
-		WithExposePort(8080).
-		Init()
+func (m *Tests) TestGoWithGoServerSimple(ctx context.Context) error {
+	// Create the Go server using the ModuleTemplate, specifying the port and source directory.
+	goServer := dag.ModuleTemplate(dagger.ModuleTemplateOpts{
+		Ctr: dag.Container().From("golang:1.23-alpine"),
+	}).NewGoServer()
+
+	// Configure the Go server.
+	goServer = goServer.
+		WithSource(m.TestDir, dagger.ModuleTemplateGoServerWithSourceOpts{
+			Workdir: "golang-server-http",
+		}).WithExposePort(8080)
 
 	// Initialize the clientCtr container with necessary tools and bind it to the Go server.
 	clientCtr := dag.Container().
 		From("alpine:latest").
 		WithExec([]string{"apk", "add", "--no-cache", "curl"}).
-		WithServiceBinding("go-server", goServer)
+		WithServiceBinding("golang-server", goServer.InitService())
 
 	// Make a request to the Go server's API endpoint and capture the response.
 	apiOut, apiErr := clientCtr.
-		WithExec([]string{"curl", "-s", "-v", "go-server:8080/products"}).
+		WithExec([]string{"curl", "-s", "-v", "golang-server:8080/products"}).
 		Stdout(ctx)
 
 	if apiErr != nil {
