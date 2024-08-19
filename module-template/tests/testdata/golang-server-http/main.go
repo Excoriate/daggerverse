@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -40,14 +41,34 @@ func fetchComments(c echo.Context) error {
 	return c.JSON(http.StatusOK, comments)
 }
 
+// echoFlagValue handles the endpoint that returns the flag value
+func echoFlagValue(c echo.Context) error {
+	flagValue := c.Get("flagValue").(string)
+	return c.String(http.StatusOK, flagValue)
+}
+
 func main() {
+	// Define and parse the flag
+	var flagValue string
+	flag.StringVar(&flagValue, "flag", "default_value", "a string flag")
+	flag.Parse()
+
 	e := echo.New()
 
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
+	// Middleware to set flag value in context
+	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			c.Set("flagValue", flagValue)
+			return next(c)
+		}
+	})
+
 	e.GET("/products", fetchProducts)
 	e.GET("/comments", fetchComments)
+	e.GET("/flag", echoFlagValue)
 
 	// Listen on all network interfaces
 	address := "0.0.0.0:8080"

@@ -15,7 +15,14 @@ import (
 const (
 	// defaultBinaryName is the default name of the binary to build and run inside the container.
 	// If no name is provided by the user, this default will be used.
-	defaultGoServerBinaryName = "app"
+	defaultGoServerBinaryName        = "app"
+	defaultGoServerProxy             = "https://proxy.golang.org,direct"
+	defaultGoServerDNSResolver       = "8.8.8.8 8.8.4.4"
+	defaultGoServerGarbageCollection = "100"
+	defaultGoServerEnvironment       = "production"
+	defaultGoServerDebugOptions      = "http2debug=1"
+	defaultGoServerHTTPMaxConns      = "1000"
+	defaultGoServerHTTPKeepAlive     = "1"
 )
 
 // GoServer represents a Go-based server configuration.
@@ -342,9 +349,12 @@ func (m *GoServer) WithRunOptions(
 // Returns:
 //
 //	*GoServer: The GoServer instance for method chaining.
-func (m *GoServer) WithGoProxy(goproxy string) *GoServer {
+func (m *GoServer) WithGoProxy(
+	// goproxy is the Go Proxy URL for the service.
+	// +optional
+	goproxy string) *GoServer {
 	if goproxy == "" {
-		goproxy = "https://proxy.golang.org,direct"
+		goproxy = defaultGoServerProxy
 	}
 	m.Ctr = m.Ctr.WithEnvVariable("GOPROXY", goproxy)
 	return m
@@ -427,11 +437,17 @@ func (m *GoServer) WithMaxProcs(goMaxProcs int) *GoServer {
 // Returns:
 //
 //	*GoServer: The GoServer instance for method chaining.
-func (m *GoServer) WithDebugOptions(goDebug string) *GoServer {
+func (m *GoServer) WithDebugOptions(
+	// goDebug is the debug options for the Go runtime.
+	// +optional
+	goDebug string) *GoServer {
 	if goDebug == "" {
-		goDebug = "http2debug=1"
+		goDebug = defaultGoServerDebugOptions
 	}
-	m.Ctr = m.Ctr.WithEnvVariable("GODEBUG", goDebug)
+
+	m.Ctr = m.Ctr.
+		WithEnvVariable("GODEBUG", goDebug)
+
 	return m
 }
 
