@@ -304,8 +304,13 @@ func (m *GoServer) WithCompileOptions(
 		cmd = append(cmd, fmt.Sprintf("-tags=%s", tags))
 	}
 
-	m.CustomCompilation = true
-	m.Ctr = m.Ctr.WithExec(cmd)
+	// Add any extra arguments
+	if len(extraArgs) > 0 {
+		cmd = append(cmd, extraArgs...)
+	}
+
+	// Store the compilation arguments in the GoServer instance
+	m.CompileArgs = cmd
 
 	return m
 }
@@ -326,19 +331,9 @@ func (m *GoServer) WithCompileOptions(
 //	*GoServer: An instance of GoServer configured to run the binary with the specified arguments.
 func (m *GoServer) WithRunOptions(
 	// runCmd is a list of additional command-line arguments to pass when executing the server binary.
-	runCmd []string,
+	runFlags []string,
 ) *GoServer {
-	// Prepare the base command to run the binary
-	baseCmd := []string{fmt.Sprintf("./%s", m.ServerBinaryName)}
-
-	// Append additional arguments if provided
-	if len(runCmd) > 0 {
-		baseCmd = append(baseCmd, runCmd...)
-	}
-
-	// Execute the command with the additional arguments
-	m.Ctr = m.Ctr.WithExec(baseCmd)
-	m.CustomRun = true
+	m.RunArgs = runFlags
 	return m
 }
 
@@ -371,11 +366,18 @@ func (m *GoServer) WithGoProxy(
 // Returns:
 //
 //	*GoServer: The GoServer instance for method chaining.
-func (m *GoServer) WithDNSResolver(dnsResolver string) *GoServer {
+func (m *GoServer) WithDNSResolver(
+	// dnsResolver is the DNS resolver used by the service.
+	// +optional
+	dnsResolver string) *GoServer {
 	if dnsResolver == "" {
-		dnsResolver = "8.8.8.8 8.8.4.4"
+		dnsResolver = defaultGoServerDNSResolver
 	}
-	m.Ctr = m.Ctr.WithEnvVariable("DNS_RESOLVER", dnsResolver)
+
+	m.Ctr = m.
+		Ctr.
+		WithEnvVariable("DNS_RESOLVER", dnsResolver)
+
 	return m
 }
 
@@ -388,11 +390,18 @@ func (m *GoServer) WithDNSResolver(dnsResolver string) *GoServer {
 // Returns:
 //
 //	*GoServer: The GoServer instance for method chaining.
-func (m *GoServer) WithGarbageCollectionSettings(gogc string) *GoServer {
+func (m *GoServer) WithGarbageCollectionSettings(
+	// gogc is the garbage collection optimization for the Go runtime.
+	// +optional
+	gogc string) *GoServer {
 	if gogc == "" {
-		gogc = "100"
+		gogc = defaultGoServerGarbageCollection
 	}
-	m.Ctr = m.Ctr.WithEnvVariable("GOGC", gogc)
+
+	m.Ctr = m.
+		Ctr.
+		WithEnvVariable("GOGC", gogc)
+
 	return m
 }
 
@@ -405,11 +414,18 @@ func (m *GoServer) WithGarbageCollectionSettings(gogc string) *GoServer {
 // Returns:
 //
 //	*GoServer: The GoServer instance for method chaining.
-func (m *GoServer) WithGoEnvironment(goEnv string) *GoServer {
+func (m *GoServer) WithGoEnvironment(
+	// goEnv is the Go environment.
+	// +optional
+	goEnv string) *GoServer {
 	if goEnv == "" {
-		goEnv = "production"
+		goEnv = defaultGoServerEnvironment
 	}
-	m.Ctr = m.Ctr.WithEnvVariable("GO_ENV", goEnv)
+
+	m.Ctr = m.
+		Ctr.
+		WithEnvVariable("GO_ENV", goEnv)
+
 	return m
 }
 
@@ -422,11 +438,18 @@ func (m *GoServer) WithGoEnvironment(goEnv string) *GoServer {
 // Returns:
 //
 //	*GoServer: The GoServer instance for method chaining.
-func (m *GoServer) WithMaxProcs(goMaxProcs int) *GoServer {
+func (m *GoServer) WithMaxProcs(
+	// goMaxProcs is the maximum number of CPU cores to use.
+	// +optional
+	goMaxProcs int) *GoServer {
 	if goMaxProcs == 0 {
 		goMaxProcs = runtime.NumCPU()
 	}
-	m.Ctr = m.Ctr.WithEnvVariable("GOMAXPROCS", fmt.Sprintf("%d", goMaxProcs))
+
+	m.Ctr = m.
+		Ctr.
+		WithEnvVariable("GOMAXPROCS", fmt.Sprintf("%d", goMaxProcs))
+
 	return m
 }
 
@@ -462,11 +485,18 @@ func (m *GoServer) WithDebugOptions(
 // Returns:
 //
 //	*GoServer: The GoServer instance for method chaining.
-func (m *GoServer) WithRuntimeThreadLock(runtimeLockOsThread string) *GoServer {
+func (m *GoServer) WithRuntimeThreadLock(
+	// runtimeLockOsThread  Optimizes number of threads in system calls.
+	// +optional
+	runtimeLockOsThread string) *GoServer {
 	if runtimeLockOsThread == "" {
 		runtimeLockOsThread = "1"
 	}
-	m.Ctr = m.Ctr.WithEnvVariable("RUNTIME_LOCKOSTHREAD", runtimeLockOsThread)
+
+	m.Ctr = m.
+		Ctr.
+		WithEnvVariable("RUNTIME_LOCKOSTHREAD", runtimeLockOsThread)
+
 	return m
 }
 
@@ -480,15 +510,29 @@ func (m *GoServer) WithRuntimeThreadLock(runtimeLockOsThread string) *GoServer {
 // Returns:
 //
 //	*GoServer: The GoServer instance for method chaining.
-func (m *GoServer) WithHTTPSettings(maxConns, keepAlive string) *GoServer {
+func (m *GoServer) WithHTTPSettings(
+	// maxConns is the maximum number of concurrent HTTP connections.
+	// +optional
+	maxConns string,
+	// keepAlive is the HTTP Keep-Alive setting.
+	// +optional
+	keepAlive string) *GoServer {
 	if maxConns == "" {
-		maxConns = "1000"
+		maxConns = defaultGoServerHTTPMaxConns
 	}
+
 	if keepAlive == "" {
-		keepAlive = "1"
+		keepAlive = defaultGoServerHTTPKeepAlive
 	}
-	m.Ctr = m.Ctr.WithEnvVariable("HTTP_MAX_CONNS", maxConns)
-	m.Ctr = m.Ctr.WithEnvVariable("HTTP_KEEP_ALIVE", keepAlive)
+
+	m.Ctr = m.
+		Ctr.
+		WithEnvVariable("HTTP_MAX_CONNS", maxConns)
+
+	m.Ctr = m.
+		Ctr.
+		WithEnvVariable("HTTP_KEEP_ALIVE", keepAlive)
+
 	return m
 }
 
@@ -521,18 +565,18 @@ func (m *GoServer) InitService(
 //
 //	*dagger.Container: The initialized container with the default or custom commands.
 func (m *GoServer) InitContainer() *dagger.Container {
-	// Set default values for the GoServer configuration.
-	m.setDefaults()
+	goBuildCMD := m.getGoBuildCMD()
+	goExecCMD := m.getExecBinaryCMD()
 
-	// If custom compilation command is not specified, default to "go build -o <binaryName>".
-	if !m.CustomCompilation {
-		m.Ctr = m.Ctr.WithExec([]string{"go", "build", "-o", m.ServerBinaryName})
+	if len(m.CompileArgs) > 0 {
+		goBuildCMD = append(goBuildCMD, m.CompileArgs...)
 	}
 
-	// If custom run command is not specified, default to running the server binary.
-	if !m.CustomRun {
-		m.Ctr = m.Ctr.WithExec([]string{fmt.Sprintf("./%s", m.ServerBinaryName)})
+	if len(m.RunArgs) > 0 {
+		goExecCMD = append(goExecCMD, m.RunArgs...)
 	}
+
+	m.Ctr = m.Ctr.WithExec(goBuildCMD).WithExec(goExecCMD)
 
 	return m.Ctr
 }
