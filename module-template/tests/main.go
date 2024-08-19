@@ -120,6 +120,9 @@ func (m *Tests) TestAll(ctx context.Context) error {
 	// Test Dagger specific functions.
 	polTests.Go(m.TestDaggerWithDaggerCLI)
 	polTests.Go(m.TestDaggerSetupDaggerInDagger)
+	// Test Go server.
+	//polTests.Go(m.TestGoWithGoServerSimple)
+	//polTests.Go(m.TestGoWithGoServerAdvanced)
 
 	// From this point onwards, we're testing the specific functionality of the ModuleTemplate module.
 
