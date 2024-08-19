@@ -100,8 +100,36 @@ func (m *Tests) TestAll(ctx context.Context) error {
 	polTests.Go(m.TestgotoolboxCI)
 	polTests.Go(m.TestgotoolboxWithGoReleaserAndGolangCILint)
 
+	// Test Go servers
+	polTests.Go(m.TestGoServers)
+
 	if err := polTests.Wait(); err != nil {
 		return WrapError(err, "there are some failed tests")
+	}
+
+	return nil
+}
+
+// TestGoServers tests various Go servers.
+//
+// This method sequentially runs different tests to ensure that Go servers are
+// functioning correctly. It calls the simple server test and then the advanced
+// server test, wrapping any errors encountered during the tests.
+//
+// Arguments:
+// - ctx (context.Context): The context for the test execution.
+//
+// Returns:
+//   - error: Returns an error if any of the Go server tests fail.
+func (m *Tests) TestGoServers(ctx context.Context) error {
+	// Test a simple Go server.
+	if err := m.TestGoWithGoServerSimple(ctx); err != nil {
+		return WrapError(err, "TestGoWithGoServerSimple failed")
+	}
+
+	// Test an advanced Go server.
+	if err := m.TestGoWithGoServerAdvanced(ctx); err != nil {
+		return WrapError(err, "TestGoWithGoServerAdvanced failed")
 	}
 
 	return nil

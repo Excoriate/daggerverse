@@ -1,11 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"path/filepath"
 	"runtime"
+	"strconv"
 
 	"github.com/Excoriate/daggerverse/gotoolbox/internal/dagger"
+
 	"github.com/Excoriate/daggerx/pkg/containerx"
 	"github.com/Excoriate/daggerx/pkg/fixtures"
 )
@@ -14,7 +15,14 @@ import (
 const (
 	// defaultBinaryName is the default name of the binary to build and run inside the container.
 	// If no name is provided by the user, this default will be used.
-	defaultGoServerBinaryName = "app"
+	defaultGoServerBinaryName        = "app"
+	defaultGoServerProxy             = "https://proxy.golang.org,direct"
+	defaultGoServerDNSResolver       = "8.8.8.8 8.8.4.4"
+	defaultGoServerGarbageCollection = "100"
+	defaultGoServerEnvironment       = "production"
+	defaultGoServerDebugOptions      = "http2debug=1"
+	defaultGoServerHTTPMaxConns      = "1000"
+	defaultGoServerHTTPKeepAlive     = "1"
 )
 
 // GoServer represents a Go-based server configuration.
@@ -27,21 +35,29 @@ type GoServer struct {
 	// +private
 	Ctr *dagger.Container
 
-	// CustomCompilation is a flag to enable custom compilation.
+	// CompileArgs is the arguments to pass to the go build command.
 	// +private
-	CustomCompilation bool
+	CompileArgs []string
 
-	// CustomRun is a flag to enable custom run.
+	// RunArgs is the arguments to pass to the go run command.
 	// +private
-	CustomRun bool
+	RunArgs []string
 }
 
-func (m *GoServer) setDefaults() *GoServer {
+func (m *GoServer) getBinaryName() string {
 	if m.ServerBinaryName == "" {
 		m.ServerBinaryName = defaultGoServerBinaryName
 	}
 
-	return m
+	return m.ServerBinaryName
+}
+
+func (m *GoServer) getGoBuildCMD() []string {
+	return []string{"go", "build", "-o", m.getBinaryName()}
+}
+
+func (m *GoServer) getExecBinaryCMD() []string {
+	return []string{"./" + m.getBinaryName()}
 }
 
 // NewGoServer initializes and returns a new instance of GoServer with the given service name and port.
@@ -61,15 +77,14 @@ func (m *Gotoolbox) NewGoServer(
 ) *GoServer {
 	if ctr != nil {
 		m.Ctr = ctr
+
 		return &GoServer{Ctr: m.Ctr}
 	}
 	// Get the default container image URL
 	imageURL, _ := containerx.GetImageURL(&containerx.
 		NewBaseContainerOpts{
-		Image:           defaultContainerImage,
-		Version:         defaultContainerVersion,
-		FallBackVersion: defaultContainerVersion,
-		FallbackImage:   defaultContainerImage,
+		Image:   "golang",
+		Version: "1.23-alpine",
 	})
 
 	// Return a new GoServer instance with configured service name and container
@@ -156,6 +171,7 @@ func (m *GoServer) WithBinaryName(
 	binaryName string,
 ) *GoServer {
 	m.ServerBinaryName = binaryName
+
 	return m
 }
 
@@ -176,6 +192,7 @@ func (m *GoServer) WithPreBuiltContainer(
 	ctr *dagger.Container,
 ) *GoServer {
 	m.Ctr = ctr
+
 	return m
 }
 
@@ -254,7 +271,8 @@ func (m *GoServer) WithSource(
 //	extraArgs []string: (optional) Extra arguments to append to the "go build -o app" command.
 //	verbose bool: (optional) Flag to enable verbose output (adds the -v flag to the command).
 //	mod string: (optional) Sets the module download mode (adds the -mod flag to the command).
-//	tags string: (optional) A comma-separated list of build tags to consider satisfied during the build (adds the -tags flag to the command).
+//	tags string: (optional) A comma-separated list of build tags to consider
+//	satisfied during the build (adds the -tags flag to the command).
 //
 // Returns:
 //
@@ -273,14 +291,8 @@ func (m *GoServer) WithCompileOptions(
 	// +optional
 	tags string,
 ) *GoServer {
-	// Base command
-	cmd := []string{"go", "build", "-o", m.ServerBinaryName}
-
-	// Add extra arguments if provided
-	if len(extraArgs) > 0 {
-		cmd = append(cmd, extraArgs...)
-	}
-
+	// Initialize the empty slice to store the compilation arguments
+	var cmd []string
 	// Add verbose flag if set
 	if verbose {
 		cmd = append(cmd, "-v")
@@ -288,16 +300,20 @@ func (m *GoServer) WithCompileOptions(
 
 	// Add mod flag if set
 	if mod != "" {
-		cmd = append(cmd, fmt.Sprintf("-mod=%s", mod))
+		cmd = append(cmd, "-mod="+mod)
 	}
 
 	// Add tags flag if set
 	if tags != "" {
-		cmd = append(cmd, fmt.Sprintf("-tags=%s", tags))
+		cmd = append(cmd, "-tags="+tags)
+	}
+	// Add any extra arguments
+	if len(extraArgs) > 0 {
+		cmd = append(cmd, extraArgs...)
 	}
 
-	m.CustomCompilation = true
-	m.Ctr = m.Ctr.WithExec(cmd)
+	// Store the compilation arguments in the GoServer instance
+	m.CompileArgs = cmd
 
 	return m
 }
@@ -318,19 +334,10 @@ func (m *GoServer) WithCompileOptions(
 //	*GoServer: An instance of GoServer configured to run the binary with the specified arguments.
 func (m *GoServer) WithRunOptions(
 	// runCmd is a list of additional command-line arguments to pass when executing the server binary.
-	runCmd []string,
+	runFlags []string,
 ) *GoServer {
-	// Prepare the base command to run the binary
-	baseCmd := []string{fmt.Sprintf("./%s", m.ServerBinaryName)}
+	m.RunArgs = runFlags
 
-	// Append additional arguments if provided
-	if len(runCmd) > 0 {
-		baseCmd = append(baseCmd, runCmd...)
-	}
-
-	// Execute the command with the additional arguments
-	m.Ctr = m.Ctr.WithExec(baseCmd)
-	m.CustomRun = true
 	return m
 }
 
@@ -343,11 +350,18 @@ func (m *GoServer) WithRunOptions(
 // Returns:
 //
 //	*GoServer: The GoServer instance for method chaining.
-func (m *GoServer) WithGoProxy(goproxy string) *GoServer {
+func (m *GoServer) WithGoProxy(
+	// goproxy is the Go Proxy URL for the service.
+	// +optional
+	goproxy string) *GoServer {
 	if goproxy == "" {
-		goproxy = "https://proxy.golang.org,direct"
+		goproxy = defaultGoServerProxy
 	}
-	m.Ctr = m.Ctr.WithEnvVariable("GOPROXY", goproxy)
+
+	m.Ctr = m.
+		Ctr.
+		WithEnvVariable("GOPROXY", goproxy)
+
 	return m
 }
 
@@ -360,11 +374,18 @@ func (m *GoServer) WithGoProxy(goproxy string) *GoServer {
 // Returns:
 //
 //	*GoServer: The GoServer instance for method chaining.
-func (m *GoServer) WithDNSResolver(dnsResolver string) *GoServer {
+func (m *GoServer) WithDNSResolver(
+	// dnsResolver is the DNS resolver used by the service.
+	// +optional
+	dnsResolver string) *GoServer {
 	if dnsResolver == "" {
-		dnsResolver = "8.8.8.8 8.8.4.4"
+		dnsResolver = defaultGoServerDNSResolver
 	}
-	m.Ctr = m.Ctr.WithEnvVariable("DNS_RESOLVER", dnsResolver)
+
+	m.Ctr = m.
+		Ctr.
+		WithEnvVariable("DNS_RESOLVER", dnsResolver)
+
 	return m
 }
 
@@ -377,11 +398,18 @@ func (m *GoServer) WithDNSResolver(dnsResolver string) *GoServer {
 // Returns:
 //
 //	*GoServer: The GoServer instance for method chaining.
-func (m *GoServer) WithGarbageCollectionSettings(gogc string) *GoServer {
+func (m *GoServer) WithGarbageCollectionSettings(
+	// gogc is the garbage collection optimization for the Go runtime.
+	// +optional
+	gogc string) *GoServer {
 	if gogc == "" {
-		gogc = "100"
+		gogc = defaultGoServerGarbageCollection
 	}
-	m.Ctr = m.Ctr.WithEnvVariable("GOGC", gogc)
+
+	m.Ctr = m.
+		Ctr.
+		WithEnvVariable("GOGC", gogc)
+
 	return m
 }
 
@@ -394,11 +422,18 @@ func (m *GoServer) WithGarbageCollectionSettings(gogc string) *GoServer {
 // Returns:
 //
 //	*GoServer: The GoServer instance for method chaining.
-func (m *GoServer) WithGoEnvironment(goEnv string) *GoServer {
+func (m *GoServer) WithGoEnvironment(
+	// goEnv is the Go environment.
+	// +optional
+	goEnv string) *GoServer {
 	if goEnv == "" {
-		goEnv = "production"
+		goEnv = defaultGoServerEnvironment
 	}
-	m.Ctr = m.Ctr.WithEnvVariable("GO_ENV", goEnv)
+
+	m.Ctr = m.
+		Ctr.
+		WithEnvVariable("GO_ENV", goEnv)
+
 	return m
 }
 
@@ -411,11 +446,18 @@ func (m *GoServer) WithGoEnvironment(goEnv string) *GoServer {
 // Returns:
 //
 //	*GoServer: The GoServer instance for method chaining.
-func (m *GoServer) WithMaxProcs(goMaxProcs int) *GoServer {
+func (m *GoServer) WithMaxProcs(
+	// goMaxProcs is the maximum number of CPU cores to use.
+	// +optional
+	goMaxProcs int) *GoServer {
 	if goMaxProcs == 0 {
 		goMaxProcs = runtime.NumCPU()
 	}
-	m.Ctr = m.Ctr.WithEnvVariable("GOMAXPROCS", fmt.Sprintf("%d", goMaxProcs))
+
+	m.Ctr = m.
+		Ctr.
+		WithEnvVariable("GOMAXPROCS", strconv.Itoa(goMaxProcs))
+
 	return m
 }
 
@@ -428,11 +470,17 @@ func (m *GoServer) WithMaxProcs(goMaxProcs int) *GoServer {
 // Returns:
 //
 //	*GoServer: The GoServer instance for method chaining.
-func (m *GoServer) WithDebugOptions(goDebug string) *GoServer {
+func (m *GoServer) WithDebugOptions(
+	// goDebug is the debug options for the Go runtime.
+	// +optional
+	goDebug string) *GoServer {
 	if goDebug == "" {
-		goDebug = "http2debug=1"
+		goDebug = defaultGoServerDebugOptions
 	}
-	m.Ctr = m.Ctr.WithEnvVariable("GODEBUG", goDebug)
+
+	m.Ctr = m.Ctr.
+		WithEnvVariable("GODEBUG", goDebug)
+
 	return m
 }
 
@@ -445,11 +493,18 @@ func (m *GoServer) WithDebugOptions(goDebug string) *GoServer {
 // Returns:
 //
 //	*GoServer: The GoServer instance for method chaining.
-func (m *GoServer) WithRuntimeThreadLock(runtimeLockOsThread string) *GoServer {
+func (m *GoServer) WithRuntimeThreadLock(
+	// runtimeLockOsThread  Optimizes number of threads in system calls.
+	// +optional
+	runtimeLockOsThread string) *GoServer {
 	if runtimeLockOsThread == "" {
 		runtimeLockOsThread = "1"
 	}
-	m.Ctr = m.Ctr.WithEnvVariable("RUNTIME_LOCKOSTHREAD", runtimeLockOsThread)
+
+	m.Ctr = m.
+		Ctr.
+		WithEnvVariable("RUNTIME_LOCKOSTHREAD", runtimeLockOsThread)
+
 	return m
 }
 
@@ -463,36 +518,73 @@ func (m *GoServer) WithRuntimeThreadLock(runtimeLockOsThread string) *GoServer {
 // Returns:
 //
 //	*GoServer: The GoServer instance for method chaining.
-func (m *GoServer) WithHTTPSettings(maxConns, keepAlive string) *GoServer {
+func (m *GoServer) WithHTTPSettings(
+	// maxConns is the maximum number of concurrent HTTP connections.
+	// +optional
+	maxConns string,
+	// keepAlive is the HTTP Keep-Alive setting.
+	// +optional
+	keepAlive string) *GoServer {
 	if maxConns == "" {
-		maxConns = "1000"
+		maxConns = defaultGoServerHTTPMaxConns
 	}
+
 	if keepAlive == "" {
-		keepAlive = "1"
+		keepAlive = defaultGoServerHTTPKeepAlive
 	}
-	m.Ctr = m.Ctr.WithEnvVariable("HTTP_MAX_CONNS", maxConns)
-	m.Ctr = m.Ctr.WithEnvVariable("HTTP_KEEP_ALIVE", keepAlive)
+
+	m.Ctr = m.
+		Ctr.
+		WithEnvVariable("HTTP_MAX_CONNS", maxConns)
+
+	m.Ctr = m.
+		Ctr.
+		WithEnvVariable("HTTP_KEEP_ALIVE", keepAlive)
+
 	return m
 }
 
-// Init sets up a basic Go service with the provided container and exposes the specified ports.
+// InitService sets up a basic Go service with the provided container and exposes the specified ports.
 //
 // Returns:
 //
 //	*dagger.Service: The configured service with the specified ports exposed.
-func (m *GoServer) Init() *dagger.Service {
-	m.setDefaults()
-
-	envVars := map[string]string{
-		"GOPROXY":      "https://proxy.golang.org,direct",
-		"DNS_RESOLVER": "8.8.8.8 8.8.4.4",
+func (m *GoServer) InitService(
+	// ctr is the container to use as a base container.
+	// +optional
+	ctr *dagger.Container,
+) *dagger.Service {
+	if ctr != nil {
+		return ctr.AsService()
 	}
 
-	for key, value := range envVars {
-		m.Ctr = m.Ctr.WithEnvVariable(key, value)
+	return m.
+		InitContainer().
+		AsService()
+}
+
+// InitContainer initializes the container with the default build and run commands.
+//
+// This method sets up the container for the Go server. If custom compilation
+// or run commands have not been provided, it defaults to building the server
+// binary using "go build" and running the server binary directly.
+//
+// Returns:
+//
+//	*dagger.Container: The initialized container with the default or custom commands.
+func (m *GoServer) InitContainer() *dagger.Container {
+	goBuildCMD := m.getGoBuildCMD()
+	goExecCMD := m.getExecBinaryCMD()
+
+	if len(m.CompileArgs) > 0 {
+		goBuildCMD = append(goBuildCMD, m.CompileArgs...)
 	}
 
-	return m.Ctr.
-		WithExec([]string{"go", "build", "-o", m.ServerBinaryName}).
-		WithExec([]string{fmt.Sprintf("./%s", m.ServerBinaryName)}).AsService()
+	if len(m.RunArgs) > 0 {
+		goExecCMD = append(goExecCMD, m.RunArgs...)
+	}
+
+	m.Ctr = m.Ctr.WithExec(goBuildCMD).WithExec(goExecCMD)
+
+	return m.Ctr
 }
