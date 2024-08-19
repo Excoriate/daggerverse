@@ -35,21 +35,29 @@ type GoServer struct {
 	// +private
 	Ctr *dagger.Container
 
-	// CustomCompilation is a flag to enable custom compilation.
+	// CompileArgs is the arguments to pass to the go build command.
 	// +private
-	CustomCompilation bool
+	CompileArgs []string
 
-	// CustomRun is a flag to enable custom run.
+	// RunArgs is the arguments to pass to the go run command.
 	// +private
-	CustomRun bool
+	RunArgs []string
 }
 
-func (m *GoServer) setDefaults() *GoServer {
+func (m *GoServer) getBinaryName() string {
 	if m.ServerBinaryName == "" {
 		m.ServerBinaryName = defaultGoServerBinaryName
 	}
 
-	return m
+	return m.ServerBinaryName
+}
+
+func (m *GoServer) getGoBuildCMD() []string {
+	return []string{"go", "build", "-o", m.getBinaryName()}
+}
+
+func (m *GoServer) getExecBinaryCMD() []string {
+	return []string{fmt.Sprintf("./%s", m.getBinaryName())}
 }
 
 // NewGoServer initializes and returns a new instance of GoServer with the given service name and port.
