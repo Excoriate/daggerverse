@@ -84,9 +84,9 @@ func New(
 	return dagModule, nil
 }
 
-var requiredPackages = []string{"git", "curl", "unzip"}
-
 func (m *Gotoolbox) installRequiredPackages() {
+	var requiredPackages = []string{"git", "curl", "unzip"}
+
 	packageList := append([]string{"apk", "add", "--no-cache"}, requiredPackages...)
 	m.Ctr = m.Ctr.WithExec(packageList)
 }
