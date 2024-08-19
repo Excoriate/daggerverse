@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"path/filepath"
 	"runtime"
+	"strconv"
 
 	"github.com/Excoriate/daggerverse/module-template/internal/dagger"
 
@@ -190,6 +190,7 @@ func (m *GoServer) WithPreBuiltContainer(
 	ctr *dagger.Container,
 ) *GoServer {
 	m.Ctr = ctr
+
 	return m
 }
 
@@ -268,7 +269,8 @@ func (m *GoServer) WithSource(
 //	extraArgs []string: (optional) Extra arguments to append to the "go build -o app" command.
 //	verbose bool: (optional) Flag to enable verbose output (adds the -v flag to the command).
 //	mod string: (optional) Sets the module download mode (adds the -mod flag to the command).
-//	tags string: (optional) A comma-separated list of build tags to consider satisfied during the build (adds the -tags flag to the command).
+//	tags string: (optional) A comma-separated list of build tags to consider
+//	satisfied during the build (adds the -tags flag to the command).
 //
 // Returns:
 //
@@ -296,14 +298,13 @@ func (m *GoServer) WithCompileOptions(
 
 	// Add mod flag if set
 	if mod != "" {
-		cmd = append(cmd, fmt.Sprintf("-mod=%s", mod))
+		cmd = append(cmd, "-mod="+mod)
 	}
 
 	// Add tags flag if set
 	if tags != "" {
-		cmd = append(cmd, fmt.Sprintf("-tags=%s", tags))
+		cmd = append(cmd, "-tags="+tags)
 	}
-
 	// Add any extra arguments
 	if len(extraArgs) > 0 {
 		cmd = append(cmd, extraArgs...)
@@ -334,6 +335,7 @@ func (m *GoServer) WithRunOptions(
 	runFlags []string,
 ) *GoServer {
 	m.RunArgs = runFlags
+
 	return m
 }
 
@@ -353,7 +355,11 @@ func (m *GoServer) WithGoProxy(
 	if goproxy == "" {
 		goproxy = defaultGoServerProxy
 	}
-	m.Ctr = m.Ctr.WithEnvVariable("GOPROXY", goproxy)
+
+	m.Ctr = m.
+		Ctr.
+		WithEnvVariable("GOPROXY", goproxy)
+
 	return m
 }
 
@@ -448,7 +454,7 @@ func (m *GoServer) WithMaxProcs(
 
 	m.Ctr = m.
 		Ctr.
-		WithEnvVariable("GOMAXPROCS", fmt.Sprintf("%d", goMaxProcs))
+		WithEnvVariable("GOMAXPROCS", strconv.Itoa(goMaxProcs))
 
 	return m
 }

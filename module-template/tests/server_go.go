@@ -7,6 +7,10 @@ import (
 	"github.com/Excoriate/daggerverse/module-template/tests/internal/dagger"
 )
 
+const (
+	testPort = 8080
+)
+
 // TestGoWithGoServerSimple is an end-to-end integration test for running a Go server
 // and testing its API endpoint.
 //
@@ -26,7 +30,7 @@ func (m *Tests) TestGoWithGoServerSimple(ctx context.Context) error {
 	goServer = goServer.
 		WithSource(m.TestDir, dagger.ModuleTemplateGoServerWithSourceOpts{
 			Workdir: "golang-server-http",
-		}).WithExposePort(8080)
+		}).WithExposePort(testPort)
 
 	// Initialize the clientCtr container with necessary tools and bind it to the Go server.
 	clientCtr := dag.Container().
@@ -83,7 +87,7 @@ func (m *Tests) TestGoWithGoServerAdvanced(ctx context.Context) error {
 	})
 
 	// Expose the GoServer on port 8080.
-	goServer = goServer.WithExposePort(8080)
+	goServer = goServer.WithExposePort(testPort)
 
 	// Configure compile options for the GoServer.
 	goServer = goServer.WithCompileOptions(dagger.ModuleTemplateGoServerWithCompileOptionsOpts{
