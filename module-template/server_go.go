@@ -287,14 +287,8 @@ func (m *GoServer) WithCompileOptions(
 	// +optional
 	tags string,
 ) *GoServer {
-	// Base command
-	cmd := []string{"go", "build", "-o", m.ServerBinaryName}
-
-	// Add extra arguments if provided
-	if len(extraArgs) > 0 {
-		cmd = append(cmd, extraArgs...)
-	}
-
+	// Initialize the empty slice to store the compilation arguments
+	var cmd []string
 	// Add verbose flag if set
 	if verbose {
 		cmd = append(cmd, "-v")
