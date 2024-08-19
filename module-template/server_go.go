@@ -57,7 +57,7 @@ func (m *GoServer) getGoBuildCMD() []string {
 }
 
 func (m *GoServer) getExecBinaryCMD() []string {
-	return []string{fmt.Sprintf("./%s", m.getBinaryName())}
+	return []string{"./" + m.getBinaryName()}
 }
 
 // NewGoServer initializes and returns a new instance of GoServer with the given service name and port.
