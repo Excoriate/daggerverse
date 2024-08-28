@@ -47,15 +47,6 @@ func (m *Gotoolbox) RunGo(
 	// installPkgs are the packages to install.
 	// +optional
 	installPkgs []string,
-	// enableGoReleaser is a flag to enable GoReleaser.
-	// +optional
-	enableGoReleaser bool,
-	// enableGolangCILint is a flag to enable GoLint.
-	// +optional
-	enableGolangCILint bool,
-	// enableGoTestSum is a flag to enable GoTestSum.
-	// +optional
-	enableGoTestSum bool,
 	// enableGoGCCCompiler is a flag to enable GoGCCCompiler.
 	// +optional
 	enableGoGCCCompiler bool,
@@ -72,12 +63,7 @@ func (m *Gotoolbox) RunGo(
 			Source()
 	}
 
-	m = m.WithSource(src, testDir).
-		WithGoExec(cmd, "")
-
-	if platform != "" {
-		m = m.WithGoPlatform(platform)
-	}
+	m = m.WithSource(src, testDir)
 
 	if len(envVariables) > 0 {
 		envVars, err := envvars.ToDaggerEnvVarsFromSlice(envVariables)
@@ -110,23 +96,17 @@ func (m *Gotoolbox) RunGo(
 		m = m.WithGoInstall(installPkgs)
 	}
 
-	if enableGoReleaser {
-		m = m.WithGoReleaser("")
-	}
-
-	if enableGolangCILint {
-		m = m.WithGoLint("")
-	}
-
-	if enableGoTestSum {
-		m = m.WithGoTestSum("", "", false)
-	}
-
 	if enableGoGCCCompiler {
 		m = m.WithGoGCCCompiler()
 	}
 
 	ctx := context.Background()
+
+	if platform != "" {
+		m = m.WithGoExec(cmd, platform)
+	} else {
+		m = m.WithGoExec(cmd, "")
+	}
 
 	ctrExecStdOut, ctrExecErr := m.Ctr.
 		Stdout(ctx)

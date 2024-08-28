@@ -476,20 +476,5 @@ func (m *Tests) TestgotoolboxRunGo(ctx context.Context) error {
 		return Errorf("expected to have go mod cache output, got empty output")
 	}
 
-	// Install GoReleaser, and GolangCILint
-	_, goReleaserErr := targetModDefault.RunGo(ctx,
-		cmdTest,
-		dagger.GotoolboxRunGoOpts{
-			Src:                m.TestDir,
-			TestDir:            "gotoolbox",
-			EnableGoReleaser:   true,
-			EnableGolangCilint: true,
-		},
-	)
-
-	if goReleaserErr != nil {
-		return WrapError(goReleaserErr, "failed to install GoReleaser and GolangCILint")
-	}
-
 	return nil
 }
