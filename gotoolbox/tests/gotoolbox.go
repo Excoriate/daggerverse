@@ -366,3 +366,81 @@ func (m *Tests) TestgotoolboxWithGoReleaserAndGolangCILint(ctx context.Context) 
 
 	return nil
 }
+
+// TestgotoolboxRunGo tests the functionality of the RunGo method in the Gotoolbox module.
+// It performs two main checks:
+// 1. Verifies that the Go version can be retrieved correctly.
+// 2. Runs a specific Go test (TestFibonacci) and checks its output.
+//
+// This function uses the Dagger SDK to create and manipulate containers for testing.
+//
+// Parameters:
+//   - ctx: The context for the test execution.
+//
+// Returns:
+//   - error: An error if any part of the test fails, or nil if all checks pass.
+func (m *Tests) TestgotoolboxRunGo(ctx context.Context) error {
+	// Initialize the Go toolbox with the specified version.
+	targetModDefault := dag.
+		Gotoolbox(dagger.GotoolboxOpts{
+			Version: "1.23.0-alpine3.19",
+		}).WithSource(m.TestDir, dagger.GotoolboxWithSourceOpts{
+		Workdir: "gotoolbox",
+	})
+
+	cmdVersion := []string{"version"}
+	outVersion, versionErr := targetModDefault.RunGo(ctx,
+		cmdVersion,
+		dagger.GotoolboxRunGoOpts{})
+
+	if versionErr != nil {
+		return WrapError(versionErr, "failed to run Go version")
+	}
+
+	if !strings.Contains(outVersion, "go version go") {
+		return WrapError(versionErr, "failed to get Go version")
+	}
+
+	cmdTest := []string{"test", "-v", "-run", "TestFibonacci"}
+
+	targetTestMod := dag.Gotoolbox()
+	outTest, testErr := targetTestMod.RunGo(ctx,
+		cmdTest,
+		dagger.GotoolboxRunGoOpts{
+			Src:     m.TestDir,
+			TestDir: "gotoolbox",
+		})
+
+	if testErr != nil {
+		return WrapError(testErr, "failed to run Go test")
+	}
+
+	if outTest == "" {
+		return Errorf("expected to have Go test output, got empty output")
+	}
+
+	if !strings.Contains(outTest, "PASS") {
+		return Errorf("expected to have Go test output PASS, got %s", outTest)
+	}
+
+	// Test RunGo with environment variables and platform
+	envVars := []string{"FOO=bar", "BAZ=qux"}
+	outEnvVars, envVarsErr := targetModDefault.RunGo(ctx,
+		cmdTest,
+		dagger.GotoolboxRunGoOpts{
+			Src:          m.TestDir,
+			TestDir:      "gotoolbox",
+			EnvVariables: envVars,
+		},
+	)
+
+	if envVarsErr != nil {
+		return WrapError(envVarsErr, "failed to run Go with environment variables")
+	}
+
+	if outEnvVars == "" {
+		return Errorf("expected to have Go environment variables output, got empty output")
+	}
+
+	return nil
+}

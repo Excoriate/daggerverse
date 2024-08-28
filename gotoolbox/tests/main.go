@@ -99,6 +99,7 @@ func (m *Tests) TestAll(ctx context.Context) error {
 	polTests.Go(m.TestgotoolboxWithGoTest)
 	polTests.Go(m.TestgotoolboxCI)
 	polTests.Go(m.TestgotoolboxWithGoReleaserAndGolangCILint)
+	polTests.Go(m.TestgotoolboxRunGo)
 
 	// Test Go servers
 	polTests.Go(m.TestGoServers)
