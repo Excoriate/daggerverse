@@ -442,5 +442,54 @@ func (m *Tests) TestgotoolboxRunGo(ctx context.Context) error {
 		return Errorf("expected to have Go environment variables output, got empty output")
 	}
 
+	// Test installing extra packages
+	installPkgs := []string{"github.com/deepmap/oapi-codegen/v2/cmd/oapi-codegen@v2.2.0"}
+	_, installPkgsErr := targetModDefault.RunGo(ctx,
+		cmdTest,
+		dagger.GotoolboxRunGoOpts{
+			Src:         m.TestDir,
+			TestDir:     "gotoolbox",
+			InstallPkgs: installPkgs,
+		},
+	)
+
+	if installPkgsErr != nil {
+		return WrapError(installPkgsErr, "failed to install extra packages")
+	}
+
+	// Test enabling go mod cache, and go build cache.
+	outGoModCache, goModCacheErr := targetModDefault.RunGo(ctx,
+		cmdTest,
+		dagger.GotoolboxRunGoOpts{
+			Src:                m.TestDir,
+			TestDir:            "gotoolbox",
+			EnableGoModCache:   true,
+			EnableGoBuildCache: true,
+		},
+	)
+
+	if goModCacheErr != nil {
+		return WrapError(goModCacheErr, "failed to enable go mod cache")
+	}
+
+	if outGoModCache == "" {
+		return Errorf("expected to have go mod cache output, got empty output")
+	}
+
+	// Install GoReleaser, and GolangCILint
+	_, goReleaserErr := targetModDefault.RunGo(ctx,
+		cmdTest,
+		dagger.GotoolboxRunGoOpts{
+			Src:                m.TestDir,
+			TestDir:            "gotoolbox",
+			EnableGoReleaser:   true,
+			EnableGolangCilint: true,
+		},
+	)
+
+	if goReleaserErr != nil {
+		return WrapError(goReleaserErr, "failed to install GoReleaser and GolangCILint")
+	}
+
 	return nil
 }
