@@ -1,6 +1,0 @@
-{
-  "name": "terragrunt",
-  "sdk": "go",
-  "source": "dagger",
-  "engineVersion": "v0.12.7"
-}
