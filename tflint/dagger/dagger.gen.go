@@ -9,13 +9,14 @@ import (
 	"log/slog"
 	"os"
 
-	"TFLint/internal/dagger"
-	"TFLint/internal/telemetry"
-
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/sdk/resource"
-	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
 	"go.opentelemetry.io/otel/trace"
+
+	"TFLint/internal/dagger"
+	"TFLint/internal/querybuilder"
+	"TFLint/internal/telemetry"
 )
 
 var dag = dagger.Connect()
@@ -33,7 +34,7 @@ func setMarshalContext(ctx context.Context) {
 	dagger.SetMarshalContext(ctx)
 }
 
-type DaggerObject = dagger.DaggerObject
+type DaggerObject = querybuilder.GraphQLMarshaller
 
 type ExecError = dagger.ExecError
 
