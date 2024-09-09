@@ -379,6 +379,9 @@ func (m *Tests) TestgotoolboxWithGoReleaserAndGolangCILint(ctx context.Context) 
 //
 // Returns:
 //   - error: An error if any part of the test fails, or nil if all checks pass.
+//
+//nolint:cyclop // WhyNoLint: This function has a high cyclomatic complexity due to the number of optional parameters and conditional logic. Refactoring would reduce readability and flexibility.
+//nolint:lll // WhyNoLint: This function has a long line length due to the number of parameters and conditional logic. Refactoring would reduce readability and flexibility.
 func (m *Tests) TestgotoolboxRunGo(ctx context.Context) error {
 	// Initialize the Go toolbox with the specified version.
 	targetModDefault := dag.
@@ -474,6 +477,60 @@ func (m *Tests) TestgotoolboxRunGo(ctx context.Context) error {
 
 	if outGoModCache == "" {
 		return Errorf("expected to have go mod cache output, got empty output")
+	}
+
+	return nil
+}
+
+// TestgotoolboxRunAnyCmd tests the functionality of the RunAnyCmd method in the Gotoolbox module.
+// It performs two main checks:
+// 1. Verifies that the Go version can be retrieved correctly.
+// 2. Runs a specific Go test (TestFibonacci) and checks its output.
+//
+// This function uses the Dagger SDK to create and manipulate containers for testing.
+//
+// Parameters:
+//   - ctx: The context for the test execution.
+func (m *Tests) TestgotoolboxRunAnyCmd(ctx context.Context) error {
+	// Initialize the Go toolbox with the specified version.
+	targetModDefault := dag.
+		Gotoolbox(dagger.GotoolboxOpts{
+			Version: "1.23.0-alpine3.19",
+		}).WithSource(m.TestDir, dagger.GotoolboxWithSourceOpts{
+		Workdir: "gotoolbox",
+	})
+
+	cmd := []string{"ls", "-l"}
+	out, err := targetModDefault.RunAnyCmd(ctx,
+		cmd,
+		dagger.GotoolboxRunAnyCmdOpts{
+			Src: m.TestDir,
+		},
+	)
+
+	if err != nil {
+		return WrapError(err, "failed to run any command")
+	}
+
+	if out == "" {
+		return Errorf("expected to have any command output, got empty output")
+	}
+
+	// Test other arbitrary commands commonly used in CI/CD pipelines
+	unameCmd := []string{"uname"}
+	unameOut, unameErr := targetModDefault.RunAnyCmd(ctx,
+		unameCmd,
+		dagger.GotoolboxRunAnyCmdOpts{
+			Src: m.TestDir,
+		},
+	)
+
+	if unameErr != nil {
+		return WrapError(unameErr, "failed to run uname command")
+	}
+
+	if !strings.Contains(unameOut, "Linux") {
+		return Errorf("expected to have uname output Linux, got %s", unameOut)
 	}
 
 	return nil

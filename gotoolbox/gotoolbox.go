@@ -13,6 +13,9 @@ import (
 // src is the optional source directory for the container.
 //
 // It returns the standard output of the executed command or an error if something goes wrong.
+//
+//nolint:cyclop // WhyNoLint: This function has a high cyclomatic complexity due to the number of optional parameters and conditional logic. Refactoring would reduce readability and flexibility.
+//nolint:lll // WhyNoLint: This function has a long line length due to the number of parameters and conditional logic. Refactoring would reduce readability and flexibility.
 func (m *Gotoolbox) RunGoCMD(
 	// cmd is the Go command to run, everything after the 'go' command.
 	cmd []string,
@@ -124,6 +127,9 @@ func (m *Gotoolbox) RunGoCMD(
 // src is the optional source directory for the container.
 //
 // It returns the standard output of the executed command or an error if something goes wrong.
+//
+//nolint:cyclop // WhyNoLint: This function has a high cyclomatic complexity due to the number of optional parameters and conditional logic. Refactoring would reduce readability and flexibility.
+//nolint:lll // WhyNoLint: This function has a long line length due to the number of parameters and conditional logic. Refactoring would reduce readability and flexibility.
 func (m *Gotoolbox) RunAnyCmd(
 	// cmd is the command to run, with the first element being the command and the rest being arguments.
 	cmd []string,
