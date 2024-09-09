@@ -1,71 +1,51 @@
-# Module Gotoolbox for Dagger
+# 🧰 Gotoolbox Module for Dagger
 
+A powerful [Dagger](https://dagger.io) module for Go development and CI/CD workflows.
 
-A simple [Dagger](https://dagger.io) _place the description of the module here_
+## 🛠️ Configuration
 
-## Configuration 🛠️
+Through the [Dagger CLI](https://docs.dagger.io/cli/465058/install) or within your module, you can configure:
 
-Through the [Dagger CLI](https://docs.dagger.io/cli/465058/install), or by using it directly within your module, you can configure the following options:
+* ⚙️ `ctr`: Base container (default: new container created)
+* ⚙️ `version`: Go image version (default: `latest`)
+* ⚙️ `image`: Go image (default: `golang:alpine`)
 
-* ⚙️ `ctr`: The container to use as a base container. If not specified, a new container is created.
-* ⚙️ `version`: The version of the Go image to use. Defaults to `latest`.
-* ⚙️ `image`: The Go image to use. Defaults to `golang:alpine`.
+## 🌟 Features
 
-### Structure 🏗️
-```text
-{{.module_name_pkg}} // main module
-├── .gitattributes
-├── .gitignore
-├── LICENSE
-├── README.md
-├── apis.go
-├── cloud.go
-├── commands.go
-├── common.go
-├── config.go
-├── dagger.json
-├── examples // Sub modules that represent examples of the module's functions with each SDK
-│   └── go
-│       ├── .gitattributes
-│       ├── .gitignore
-│       ├── dagger.json
-│       ├── go.mod
-│       ├── go.sum
-│       ├── main.go
-│       └── testdata
-│           └── common
-│               ├── README.md
-│               └── test-file.yml
-├── go.mod
-├── go.sum
-├── main.go
-└── tests // Sub module that represent tests of the module's functions
-    ├── .gitattributes
-    ├── .gitignore
-    ├── dagger.json
-    ├── go.mod
-    ├── go.sum
-    ├── main.go
-    └── testdata
-        └── common
-            ├── README.md
-            └── test-file.yml
-
-```
->NOTE: This structure comes out of the box if it's generated through **Daggy**. Just run `just create <module-name>` and you'll get the structure.
-
----
-
-## Features 🎨
-
-| Command or functionality  | Command | Example                     | Status |
-|---------------------------|---------|-----------------------------|--------|
-| Add your feature **here** | **run** | `dagger call <my function>` | ✅      |
-
+| Function | Description | Example |
+|----------|-------------|---------|
+| 🐳 `Base` | Set base image and version | `dagger call base --image-url golang:1.22-alpine` |
+| 📦 `WithEnvironmentVariable` | Set environment variable | `dagger call with-environment-variable --name GO_ENV --value production` |
+| 📂 `WithSource` | Mount source directory | `dagger call with-source --src . --workdir /app` |
+| 🔒 `WithSecretAsEnvVar` | Set secret as env var | `dagger call with-secret-as-env-var --name API_KEY --secret mysecret` |
+| 📥 `WithDownloadedFile` | Download and mount file | `dagger call with-downloaded-file --url https://example.com/file.txt` |
+| 🔄 `WithClonedGitRepo` | Clone and mount Git repo | `dagger call with-cloned-git-repo --repo-url https://github.com/user/repo` |
+| 🔄 `WithCacheBuster` | Add cache busting | `dagger call with-cache-buster` |
+| 🛠️ `WithGitInAlpineContainer` | Install Git | `dagger call with-git-in-alpine-container` |
+| 🧰 `WithUtilitiesInAlpineContainer` | Install common utilities | `dagger call with-utilities-in-alpine-container` |
+| 🖥️ `WithGoPlatform` | Set Go platform | `dagger call with-go-platform --platform linux/amd64` |
+| 🔧 `WithGoCgoEnabled` | Enable CGO | `dagger call with-go-cgo-enabled` |
+| 🚫 `WithCgoDisabled` | Disable CGO | `dagger call with-cgo-disabled` |
+| 💾 `WithGoBuildCache` | Configure Go build cache | `dagger call with-go-build-cache` |
+| 📦 `WithGoModCache` | Configure Go mod cache | `dagger call with-go-mod-cache` |
+| 📥 `WithGoInstall` | Install Go packages | `dagger call with-go-install --pkgs github.com/user/pkg@latest` |
+| 🏃 `WithGoExec` | Execute Go command | `dagger call with-go-exec --args build --args ./...` |
+| 🛠️ `WithGoBuild` | Configure Go build | `dagger call with-go-build --pkg ./cmd/app --race` |
+| 🔒 `WithGoPrivate` | Set GOPRIVATE | `dagger call with-go-private --private-host example.com` |
+| 🔧 `WithGoGCCCompiler` | Install GCC compiler | `dagger call with-go-gcc-compiler` |
+| 📊 `WithGoTestSum` | Install GoTestSum | `dagger call with-go-test-sum` |
+| 🚀 `WithGoReleaser` | Install GoReleaser | `dagger call with-go-releaser` |
+| 🔍 `WithGoLint` | Install golangci-lint | `dagger call with-go-lint --version v1.60.1` |
+| 🖥️ `OpenTerminal` | Open interactive terminal | `dagger call open-terminal` |
+| 🐚 `RunShell` | Run shell command | `dagger call run-shell --cmd "echo Hello, World!"` |
+| 🖨️ `PrintEnvVars` | Print environment variables | `dagger call print-env-vars` |
+| 🔍 `InspectEnvVar` | Inspect specific env var | `dagger call inspect-env-var --key GO_VERSION` |
+| 🏃 `RunGoCMD` | Run Go command | `dagger call run-go-cmd --cmd test --cmd ./...` |
+| 🏃 `RunAnyCmd` | Run any command | `dagger call run-any-cmd --cmd go --cmd version` |
 
 ## Using the Gotoolbox Module 🚀
 
-_Place the description of the module here_
+Refer to the examples in the [**{{.module_name_pkg}}/examples**]({{.module_name_pkg}}/examples) module to see how to use the module's functions.
 
 ---
 

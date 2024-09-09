@@ -12,6 +12,7 @@ package main
 
 import (
 	"github.com/Excoriate/daggerverse/gotoolbox/internal/dagger"
+
 	"github.com/Excoriate/daggerx/pkg/containerx"
 	"github.com/Excoriate/daggerx/pkg/envvars"
 )
@@ -28,13 +29,15 @@ type Gotoolbox struct {
 //
 // Parameters:
 // - version: The version of the GoReleaser to use, e.g., "v1.22.0". Optional parameter.
+// - image: The image to use as the base container. Optional parameter.
 // - ctr: The container to use as a base container. Optional parameter.
 // - envVarsFromHost: A list of environment variables to pass from the host to the container in a
 // slice of strings. Optional parameter.
 //
 // Returns a pointer to a Gotoolbox instance and an error, if any.
 func New(
-	// version is the version of the container image to use.
+	// version is the version of the container image to use. Consider
+	// that this Dagger module uses al alpine-based image.
 	// +optional
 	version string,
 	// ctr is the container to use as a base container.
@@ -50,10 +53,6 @@ func New(
 	if ctr != nil {
 		dagModule.Ctr = ctr
 	} else {
-		if version != "" {
-			version += "-alpine3.19"
-		}
-
 		imageURL, err := containerx.GetImageURL(&containerx.NewBaseContainerOpts{
 			Version:         version,
 			FallbackImage:   defaultContainerImage,
@@ -61,7 +60,7 @@ func New(
 		})
 
 		if err != nil {
-			return nil, WrapError(err, "failed to get image URL")
+			return nil, WrapErrorf(err, "failed to get container image URl %s", imageURL)
 		}
 
 		dagModule.Base(imageURL)
@@ -85,16 +84,25 @@ func New(
 	return dagModule, nil
 }
 
+func (m *Gotoolbox) installRequiredPackages() {
+	var requiredPackages = []string{"git", "curl", "unzip"}
+
+	packageList := append([]string{"apk", "add", "--no-cache"}, requiredPackages...)
+	m.Ctr = m.Ctr.WithExec(packageList)
+}
+
 // Base sets the base image and version, and creates the base container.
 //
 // The default image is "alpine/latest" and the default version is "latest".
 //
 //nolint:nolintlint,revive // This is a method that is used to set the base image and version.
 func (m *Gotoolbox) Base(imageURL string) *Gotoolbox {
-	c := dag.Container().From(imageURL)
-	m.Ctr = c
+	ctr := dag.Container().
+		From(imageURL)
 
-	return m.
-		WithGitInAlpineContainer().
-		WithUtilitiesInAlpineContainer()
+	m.Ctr = ctr
+
+	m.installRequiredPackages()
+
+	return m
 }
