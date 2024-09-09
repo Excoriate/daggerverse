@@ -2,7 +2,8 @@
 run:
     tests: false
     modules-download-mode: readonly
-    timeout: 240s
+    timeout: 2m
+    concurrency: 2
 linters-settings:
     gomoddirectives:
         replace-allow-list:
