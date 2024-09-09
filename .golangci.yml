@@ -4,6 +4,12 @@ run:
     modules-download-mode: readonly
     timeout: 240s
 linters-settings:
+    gomoddirectives:
+        replace-allow-list:
+            - go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc
+            - go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp
+            - go.opentelemetry.io/otel/log
+            - go.opentelemetry.io/otel/sdk/log
     depguard:
         rules:
             Rule not allowed packages:
