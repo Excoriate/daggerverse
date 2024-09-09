@@ -15,8 +15,8 @@ import (
 //
 // Example:
 //
-//	getDaggerInstallCMDByVersion("v0.12.1")
-//	=> `cd / && DAGGER_VERSION="v0.12.1" curl -L https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION="v0.12.1" sh`
+//	getDaggerInstallCMDByVersion("v0.12.7")
+//	=> `cd / && DAGGER_VERSION="v0.12.7" curl -L https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION="v0.12.7" sh`
 func getDaggerInstallCMDByVersion(version string) string {
 	return strings.Join([]string{
 		"cd /",
@@ -31,7 +31,7 @@ func getDaggerInstallCMDByVersion(version string) string {
 // WithDaggerCLIAlpine sets up the Dagger CLI entry point for Alpine within the ModuleTemplate.
 //
 // Parameters:
-//   - version: The version of the Dagger Engine to use, e.g., "v0.12.1".
+//   - version: The version of the Dagger Engine to use, e.g., "v0.12.7".
 //
 // This method performs the following steps:
 //  1. Generates a shell command to install the Dagger CLI using the specified version.
@@ -58,7 +58,7 @@ func (m *ModuleTemplate) WithDaggerCLIAlpine(version string) *ModuleTemplate {
 // WithDaggerCLIUbuntu sets up the Dagger CLI entry point for Ubuntu within the ModuleTemplate.
 //
 // Parameters:
-//   - version: The version of the Dagger Engine to use, e.g., "v0.12.1".
+//   - version: The version of the Dagger Engine to use, e.g., "v0.12.7".
 //
 // This method performs the following steps:
 //  1. Updates package lists and installs curl.
@@ -143,7 +143,7 @@ func (m *ModuleTemplate) validateDaggerVersion(dagVersion string) error {
 // container, and sets up the Docker service within the Dagger context.
 //
 // Parameters:
-//   - dagVersion: The version of the Dagger Engine to use, e.g., "v0.12.5".
+//   - dagVersion: The version of the Dagger Engine to use, e.g., "v0.12.7".
 //   - dockerVersion: The version of the Docker Engine to use, e.g., "24.0". This is optional.
 //
 // Returns:
