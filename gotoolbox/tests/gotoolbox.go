@@ -389,9 +389,9 @@ func (m *Tests) TestgotoolboxRunGo(ctx context.Context) error {
 	})
 
 	cmdVersion := []string{"version"}
-	outVersion, versionErr := targetModDefault.RunGo(ctx,
+	outVersion, versionErr := targetModDefault.RunGoCmd(ctx,
 		cmdVersion,
-		dagger.GotoolboxRunGoOpts{})
+		dagger.GotoolboxRunGoCmdOpts{})
 
 	if versionErr != nil {
 		return WrapError(versionErr, "failed to run Go version")
@@ -404,9 +404,9 @@ func (m *Tests) TestgotoolboxRunGo(ctx context.Context) error {
 	cmdTest := []string{"test", "-v", "-run", "TestFibonacci"}
 
 	targetTestMod := dag.Gotoolbox()
-	outTest, testErr := targetTestMod.RunGo(ctx,
+	outTest, testErr := targetTestMod.RunGoCmd(ctx,
 		cmdTest,
-		dagger.GotoolboxRunGoOpts{
+		dagger.GotoolboxRunGoCmdOpts{
 			Src:     m.TestDir,
 			TestDir: "gotoolbox",
 		})
@@ -425,9 +425,9 @@ func (m *Tests) TestgotoolboxRunGo(ctx context.Context) error {
 
 	// Test RunGo with environment variables and platform
 	envVars := []string{"FOO=bar", "BAZ=qux"}
-	outEnvVars, envVarsErr := targetModDefault.RunGo(ctx,
+	outEnvVars, envVarsErr := targetModDefault.RunGoCmd(ctx,
 		cmdTest,
-		dagger.GotoolboxRunGoOpts{
+		dagger.GotoolboxRunGoCmdOpts{
 			Src:          m.TestDir,
 			TestDir:      "gotoolbox",
 			EnvVariables: envVars,
@@ -444,9 +444,9 @@ func (m *Tests) TestgotoolboxRunGo(ctx context.Context) error {
 
 	// Test installing extra packages
 	installPkgs := []string{"github.com/deepmap/oapi-codegen/v2/cmd/oapi-codegen@v2.2.0"}
-	_, installPkgsErr := targetModDefault.RunGo(ctx,
+	_, installPkgsErr := targetModDefault.RunGoCmd(ctx,
 		cmdTest,
-		dagger.GotoolboxRunGoOpts{
+		dagger.GotoolboxRunGoCmdOpts{
 			Src:         m.TestDir,
 			TestDir:     "gotoolbox",
 			InstallPkgs: installPkgs,
@@ -458,9 +458,9 @@ func (m *Tests) TestgotoolboxRunGo(ctx context.Context) error {
 	}
 
 	// Test enabling go mod cache, and go build cache.
-	outGoModCache, goModCacheErr := targetModDefault.RunGo(ctx,
+	outGoModCache, goModCacheErr := targetModDefault.RunGoCmd(ctx,
 		cmdTest,
-		dagger.GotoolboxRunGoOpts{
+		dagger.GotoolboxRunGoCmdOpts{
 			Src:                m.TestDir,
 			TestDir:            "gotoolbox",
 			EnableGoModCache:   true,

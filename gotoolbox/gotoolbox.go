@@ -7,13 +7,13 @@ import (
 	"github.com/Excoriate/daggerx/pkg/envvars"
 )
 
-// RunGo runs a Go command within a given context.
+// RunGoCMD runs a Go command within a given context.
 //
 // cmd is the Go command to run, everything after the 'go' command.
 // src is the optional source directory for the container.
 //
 // It returns the standard output of the executed command or an error if something goes wrong.
-func (m *Gotoolbox) RunGo(
+func (m *Gotoolbox) RunGoCMD(
 	// cmd is the Go command to run, everything after the 'go' command.
 	cmd []string,
 	// src is the optional source directory for the container.
@@ -118,13 +118,13 @@ func (m *Gotoolbox) RunGo(
 	return ctrExecStdOut, nil
 }
 
-// RunCommand runs a command within a given context.
+// RunAnyCmd runs a command within a given context.
 //
 // cmd is the command to run, with the first element being the command and the rest being arguments.
 // src is the optional source directory for the container.
 //
 // It returns the standard output of the executed command or an error if something goes wrong.
-func (m *Gotoolbox) RunCommand(
+func (m *Gotoolbox) RunAnyCmd(
 	// cmd is the command to run, with the first element being the command and the rest being arguments.
 	cmd []string,
 	// src is the optional source directory for the container.
