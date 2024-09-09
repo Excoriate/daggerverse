@@ -71,8 +71,8 @@ fn create_module(module: &str) -> Result<(), Error> {
     initialize_module(&new_module)?;
 
     // Initialize examples and tests
-    initialize_examples(&new_module)?;
     initialize_tests(&new_module)?;
+    initialize_examples(&new_module)?;
 
     // Copy README and LICENSE files
     copy_readme_and_license(&new_module)?;
@@ -312,7 +312,10 @@ fn initialize_module(module_cfg: &NewDaggerModule) -> Result<(), Error> {
     run_command_with_output(&go_mod_edit_command, ".")?;
 
     // Run dagger develop
-    run_command_with_output(&format!("dagger develop -m {}", module_cfg.name), ".")?;
+    // run_command_with_output(&format!("dagger develop -m {}", module_cfg.name), ".")?;
+    // FIXME: Check consistency across other cases. It's required to run dagger develop without arguments, since
+    // it's running in the module's directory.
+    run_command_with_output("dagger develop", ".")?;
 
     // Change back to the root directory
     env::set_current_dir("..")?;
@@ -352,7 +355,8 @@ fn initialize_examples(module_cfg: &NewDaggerModule) -> Result<(), Error> {
 
     // Run dagger install and develop
     run_command_with_output("dagger install ../../", ".")?;
-    run_command_with_output("dagger develop -m go", ".")?;
+    // run_command_with_output("dagger develop -m go", ".")?;
+    run_command_with_output("dagger develop", ".")?;
 
     // Change back to the root directory
     env::set_current_dir("../../..")?;
@@ -406,7 +410,8 @@ fn initialize_tests(module_cfg: &NewDaggerModule) -> Result<(), Error> {
 
     // Run dagger install and develop
     run_command_with_output("dagger install ../", ".")?;
-    run_command_with_output("dagger develop -m tests", ".")?;
+    // run_command_with_output("dagger develop -m tests", ".")?;
+    run_command_with_output("dagger develop", ".")?;
 
     // Change back to the root directory
     env::set_current_dir("../..")?;
