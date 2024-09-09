@@ -49,7 +49,7 @@ func assertNotNil(argName string, value any) {
 	}
 }
 
-type DaggerObject querybuilder.GraphQLMarshaller
+type DaggerObject = querybuilder.GraphQLMarshaller
 
 // getCustomError parses a GraphQL error into a more specific error type.
 func getCustomError(err error) error {
@@ -3151,6 +3151,7 @@ type File struct {
 	query *querybuilder.Selection
 
 	contents *string
+	digest   *string
 	export   *string
 	id       *FileID
 	name     *string
@@ -3178,6 +3179,31 @@ func (r *File) Contents(ctx context.Context) (string, error) {
 		return *r.contents, nil
 	}
 	q := r.query.Select("contents")
+
+	var response string
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
+// FileDigestOpts contains options for File.Digest
+type FileDigestOpts struct {
+	// If true, exclude metadata from the digest.
+	ExcludeMetadata bool
+}
+
+// Return the file's digest. The format of the digest is not guaranteed to be stable between releases of Dagger. It is guaranteed to be stable between invocations of the same Dagger engine.
+func (r *File) Digest(ctx context.Context, opts ...FileDigestOpts) (string, error) {
+	if r.digest != nil {
+		return *r.digest, nil
+	}
+	q := r.query.Select("digest")
+	for i := len(opts) - 1; i >= 0; i-- {
+		// `excludeMetadata` optional argument
+		if !querybuilder.IsZeroValue(opts[i].ExcludeMetadata) {
+			q = q.Arg("excludeMetadata", opts[i].ExcludeMetadata)
+		}
+	}
 
 	var response string
 
@@ -3467,6 +3493,10 @@ type FunctionWithArgOpts struct {
 	Description string
 	// A default value to use for this argument if not explicitly set by the caller, if any
 	DefaultValue JSON
+	// If the argument is a Directory or File type, default to load path from context directory, relative to root directory.
+	DefaultPath string
+	// Patterns to ignore when loading the contextual argument value.
+	Ignore []string
 }
 
 // Returns the function with the provided argument
@@ -3481,6 +3511,14 @@ func (r *Function) WithArg(name string, typeDef *TypeDef, opts ...FunctionWithAr
 		// `defaultValue` optional argument
 		if !querybuilder.IsZeroValue(opts[i].DefaultValue) {
 			q = q.Arg("defaultValue", opts[i].DefaultValue)
+		}
+		// `defaultPath` optional argument
+		if !querybuilder.IsZeroValue(opts[i].DefaultPath) {
+			q = q.Arg("defaultPath", opts[i].DefaultPath)
+		}
+		// `ignore` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Ignore) {
+			q = q.Arg("ignore", opts[i].Ignore)
 		}
 	}
 	q = q.Arg("name", name)
@@ -3507,6 +3545,7 @@ func (r *Function) WithDescription(description string) *Function {
 type FunctionArg struct {
 	query *querybuilder.Selection
 
+	defaultPath  *string
 	defaultValue *JSON
 	description  *string
 	id           *FunctionArgID
@@ -3517,6 +3556,19 @@ func (r *FunctionArg) WithGraphQLQuery(q *querybuilder.Selection) *FunctionArg {
 	return &FunctionArg{
 		query: q,
 	}
+}
+
+// Only applies to arguments of type File or Directory. If the argument is not set, load it from the given path in the context directory
+func (r *FunctionArg) DefaultPath(ctx context.Context) (string, error) {
+	if r.defaultPath != nil {
+		return *r.defaultPath, nil
+	}
+	q := r.query.Select("defaultPath")
+
+	var response string
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
 }
 
 // A default value to use for this argument when not explicitly set by the caller, if any.
@@ -3592,6 +3644,16 @@ func (r *FunctionArg) UnmarshalJSON(bs []byte) error {
 	}
 	*r = *dag.LoadFunctionArgFromID(FunctionArgID(id))
 	return nil
+}
+
+// Only applies to arguments of type Directory. The ignore patterns are applied to the input directory, and matching entries are filtered out, in a cache-efficient manner.
+func (r *FunctionArg) Ignore(ctx context.Context) ([]string, error) {
+	q := r.query.Select("ignore")
+
+	var response []string
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
 }
 
 // The name of the argument in lowerCamelCase format.
@@ -3978,8 +4040,10 @@ func (r *GeneratedCode) WithVCSIgnoredPaths(paths []string) *GeneratedCode {
 type GitModuleSource struct {
 	query *querybuilder.Selection
 
+	cloneRef    *string
 	cloneURL    *string
 	commit      *string
+	htmlRepoURL *string
 	htmlURL     *string
 	id          *GitModuleSourceID
 	root        *string
@@ -3993,7 +4057,22 @@ func (r *GitModuleSource) WithGraphQLQuery(q *querybuilder.Selection) *GitModule
 	}
 }
 
+// The ref to clone the root of the git repo from
+func (r *GitModuleSource) CloneRef(ctx context.Context) (string, error) {
+	if r.cloneRef != nil {
+		return *r.cloneRef, nil
+	}
+	q := r.query.Select("cloneRef")
+
+	var response string
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
 // The URL to clone the root of the git repo from
+//
+// Deprecated: Use CloneRef instead. CloneRef supports both URL-style and SCP-like SSH references
 func (r *GitModuleSource) CloneURL(ctx context.Context) (string, error) {
 	if r.cloneURL != nil {
 		return *r.cloneURL, nil
@@ -4026,6 +4105,19 @@ func (r *GitModuleSource) ContextDirectory() *Directory {
 	return &Directory{
 		query: q,
 	}
+}
+
+// The URL to access the web view of the repository (e.g., GitHub, GitLab, Bitbucket)
+func (r *GitModuleSource) HTMLRepoURL(ctx context.Context) (string, error) {
+	if r.htmlRepoURL != nil {
+		return *r.htmlRepoURL, nil
+	}
+	q := r.query.Select("htmlRepoURL")
+
+	var response string
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
 }
 
 // The URL to the source's git repo in a web browser
@@ -4792,6 +4884,7 @@ type LocalModuleSource struct {
 	query *querybuilder.Selection
 
 	id          *LocalModuleSourceID
+	relHostPath *string
 	rootSubpath *string
 }
 
@@ -4857,6 +4950,19 @@ func (r *LocalModuleSource) UnmarshalJSON(bs []byte) error {
 	}
 	*r = *dag.LoadLocalModuleSourceFromID(LocalModuleSourceID(id))
 	return nil
+}
+
+// The relative path to the module root from the host directory
+func (r *LocalModuleSource) RelHostPath(ctx context.Context) (string, error) {
+	if r.relHostPath != nil {
+		return *r.relHostPath, nil
+	}
+	q := r.query.Select("relHostPath")
+
+	var response string
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
 }
 
 // The path to the root of the module source under the context directory. This directory contains its configuration file. It also contains its source code (possibly as a subdirectory).
@@ -5731,6 +5837,27 @@ func (r *ModuleSource) WithContextDirectory(dir *Directory) *ModuleSource {
 func (r *ModuleSource) WithDependencies(dependencies []*ModuleDependency) *ModuleSource {
 	q := r.query.Select("withDependencies")
 	q = q.Arg("dependencies", dependencies)
+
+	return &ModuleSource{
+		query: q,
+	}
+}
+
+// ModuleSourceWithInitOpts contains options for ModuleSource.WithInit
+type ModuleSourceWithInitOpts struct {
+	// Merge module dependencies into the current project's
+	Merge bool
+}
+
+// Sets module init arguments
+func (r *ModuleSource) WithInit(opts ...ModuleSourceWithInitOpts) *ModuleSource {
+	q := r.query.Select("withInit")
+	for i := len(opts) - 1; i >= 0; i-- {
+		// `merge` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Merge) {
+			q = q.Arg("merge", opts[i].Merge)
+		}
+	}
 
 	return &ModuleSource{
 		query: q,
@@ -6796,6 +6923,8 @@ func (r *Client) ModuleDependency(source *ModuleSource, opts ...ModuleDependency
 type ModuleSourceOpts struct {
 	// If true, enforce that the source is a stable version for source kinds that support versioning.
 	Stable bool
+	// The relative path to the module root from the host directory
+	RelHostPath string
 }
 
 // Create a new module source instance from a source ref string.
@@ -6805,6 +6934,10 @@ func (r *Client) ModuleSource(refString string, opts ...ModuleSourceOpts) *Modul
 		// `stable` optional argument
 		if !querybuilder.IsZeroValue(opts[i].Stable) {
 			q = q.Arg("stable", opts[i].Stable)
+		}
+		// `relHostPath` optional argument
+		if !querybuilder.IsZeroValue(opts[i].RelHostPath) {
+			q = q.Arg("relHostPath", opts[i].RelHostPath)
 		}
 	}
 	q = q.Arg("refString", refString)
@@ -7949,7 +8082,7 @@ func getClientParams() (graphql.Client, *querybuilder.Selection) {
 			r = r.WithContext(fallbackSpanContext(r.Context()))
 
 			// propagate span context via headers (i.e. for Dagger-in-Dagger)
-			otel.GetTextMapPropagator().Inject(r.Context(), propagation.HeaderCarrier(r.Header))
+			telemetry.Propagator.Inject(r.Context(), propagation.HeaderCarrier(r.Header))
 
 			return dialTransport.RoundTrip(r)
 		}),
@@ -7963,7 +8096,7 @@ func fallbackSpanContext(ctx context.Context) context.Context {
 	if trace.SpanContextFromContext(ctx).IsValid() {
 		return ctx
 	}
-	return otel.GetTextMapPropagator().Extract(ctx, telemetry.NewEnvCarrier(true))
+	return telemetry.Propagator.Extract(ctx, telemetry.NewEnvCarrier(true))
 }
 
 // TODO: pollutes namespace, move to non internal package in dagger.io/dagger
