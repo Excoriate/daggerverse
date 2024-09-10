@@ -52,7 +52,11 @@
 /target/
 Cargo.lock
 /.daggerx/daggy/target/
-.aider*
-/internal/telemetry
 
+/internal/telemetry
 .idea
+
+# AI
+.aider*
+AI/**.md
+
