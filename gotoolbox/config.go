@@ -7,8 +7,6 @@
 package main
 
 const (
-	// defaultContainerVersion specifies the default version for the container.
 	defaultContainerVersion = "1.23.0-alpine3.20"
-	// defaultContainerImage specifies the default image for the container.
-	defaultContainerImage = "golang"
+	defaultContainerImage   = "golang"
 )
