@@ -100,6 +100,10 @@ reloadmod mod:
   @echo "Running Dagger development in a given module..."
   @echo "Currently in {{mod}} module 📦, path=`pwd`"
   @test -d {{mod}} || (echo "Module not found" && exit 1)
+  @if ! docker info > /dev/null 2>&1; then \
+    echo "Docker is not running. Please start Docker and try again."; \
+    exit 1; \
+  fi
   @cd {{mod}} && dagger develop
   @echo "Module reloaded successfully ✅"
 
