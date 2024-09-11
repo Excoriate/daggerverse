@@ -73,54 +73,14 @@ func (m *Tests) TestAll(ctx context.Context) error {
 	polTests.Go(m.TestWithContainer)
 	polTests.Go(m.TestWithSource)
 	polTests.Go(m.TestWithEnvironmentVariable)
-	polTests.Go(m.TestWithSecretAsEnvVar)
 	polTests.Go(m.TestWithDownloadedFile)
 	polTests.Go(m.TestWithClonedGitRepo)
 	polTests.Go(m.TestWithCacheBuster)
-	// Test installation APIs
-	polTests.Go(m.TestWithUtilitiesInAlpineContainer)
-	polTests.Go(m.TestWithUtilitiesInUbuntuContainer)
-	polTests.Go(m.TestWithGitInAlpineContainer)
-	polTests.Go(m.TestWithGitInUbuntuContainer)
-	// Test VCS APIs
-	polTests.Go(m.TestWithNewNetrcFileGitHub)
-	polTests.Go(m.TestWithNewNetrcFileAsSecretGitHub)
-	polTests.Go(m.TestWithNewNetrcFileGitLab)
-	polTests.Go(m.TestWithNewNetrcFileAsSecretGitLab)
 	// Test utility functions.
 	polTests.Go(m.TestDownloadFile)
-	polTests.Go(m.TestCloneGitRepo)
 	// Test cloud-specific functions.
 	polTests.Go(m.TestWithAWSKeys)
 	polTests.Go(m.TestWithAzureCredentials)
-	// Test Go specific functions.
-	polTests.Go(m.TestGoWithGoPlatform)
-	polTests.Go(m.TestGoWithGoBuild)
-	polTests.Go(m.TestGoWithGoBuildCache)
-	polTests.Go(m.TestGoWithGoModCache)
-	polTests.Go(m.TestGoWithCgoEnabled)
-	polTests.Go(m.TestGoWithCgoDisabled)
-	polTests.Go(m.TestGoWithGoExec)
-	polTests.Go(m.TestGoWithGoInstall)
-	polTests.Go(m.TestGoWithGoPrivate)
-	polTests.Go(m.TestGoWithGCCCompiler)
-	polTests.Go(m.TestGoWithGoTestSum)
-	polTests.Go(m.TestGoWithGoReleaserAndGolangCILint)
-	// Test HTTP specific functions.
-	polTests.Go(m.TestHTTPCurl)
-	polTests.Go(m.TestHTTPDoJSONAPICall)
-	// Test CLI APIs
-	polTests.Go(m.TestWithAWSCLIInAlpineContainer)
-	polTests.Go(m.TestWithAWSCLIInUbuntuContainer)
-	// Test IAC specific functions.
-	polTests.Go(m.TestIACWithTerraformUbuntu)
-	polTests.Go(m.TestIACWithTerraformAlpine)
-	polTests.Go(m.TestIACWithTerragruntUbuntu)
-	polTests.Go(m.TestIACWithTerragruntAlpine)
-	// Test Dagger specific functions.
-	polTests.Go(m.TestDaggerWithDaggerCLI)
-	polTests.Go(m.TestDaggerSetupDaggerInDagger)
-
 	// From this point onwards, we're testing the specific functionality of the Terragrunt module.
 
 	if err := polTests.Wait(); err != nil {

@@ -36,12 +36,15 @@ type Terragrunt struct {
 //
 // Returns a pointer to a Terragrunt instance and an error, if any.
 func New(
-	// version is the version of the container image to use.
+	// version is the Terragrunt version to use. Default is "0.66.0".
 	// +optional
 	version string,
-	// image is the container image to use.
+	// tvVersion is the Terraform version to use. Default is "1.9.1".
 	// +optional
-	image string,
+	tvVersion string,
+	// openTfVersion is the OpenTofu version to use. Default is "1.8.0".
+	// +optional
+	openTfVersion string,
 	// ctr is the container to use as a base container.
 	// +optional
 	ctr *dagger.Container,
