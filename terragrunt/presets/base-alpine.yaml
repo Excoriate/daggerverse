@@ -1,0 +1,28 @@
+---
+contents:
+  repositories:
+    - https://dl-cdn.alpinelinux.org/alpine/edge/main
+  packages:
+    - alpine-base
+
+cmd: ["/bin/sh", "-l"]
+
+archs:
+  - x86_64
+  - aarch64
+
+environment:
+  PATH: /usr/sbin:/sbin:/usr/bin:/bin
+  TERRAGRUNT_PROVIDER_CACHE_DIR: /root/.terragrunt-cache
+  TERRAGRUNT_PROVIDER_CACHE: 1
+
+labels:
+  org.opencontainers.image.title: "Base Alpine for Terragrunt"
+  org.opencontainers.image.description: "A minimal Alpine base image built with APKO for Terragrunt."
+  org.opencontainers.image.version: "1.0.0"
+  org.opencontainers.image.vendor: "github.com/Excoriate - Alex Torres"
+  org.opencontainers.image.licenses: "Apache-2.0"
+
+sbom:
+  enabled: true
+  format: "spdx-json"
