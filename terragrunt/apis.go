@@ -7,7 +7,6 @@
 package main
 
 import (
-	"context"
 	"path/filepath"
 	"time"
 
@@ -15,8 +14,6 @@ import (
 
 	"github.com/Excoriate/daggerx/pkg/fixtures"
 )
-
-const netRcRootPath = "/root/.netrc"
 
 // WithEnvironmentVariable sets an environment variable in the container.
 //
@@ -79,42 +76,6 @@ func (m *Terragrunt) WithContainer(
 	return m
 }
 
-// WithDockerService sets up the container with the Docker service.
-//
-// It sets up the container with the Docker service.
-// Parameters:
-//   - dockerVersion: The version of the Docker engine to use, e.g., "v20.10.17".
-//     Optional parameter. If not provided, a default version is used.
-func (m *Terragrunt) WithDockerService(
-	dockerVersion string,
-) *dagger.Service {
-	if dockerVersion == "" {
-		dockerVersion = dockerVersionDefault
-	}
-
-	dindImage := getDockerInDockerImage(dockerVersion)
-	dockerPort := 2375
-
-	return dag.Container().
-		From(dindImage).
-		WithMountedCache(
-			"/var/lib/docker",
-			dag.CacheVolume(dockerVersion+"-docker-lib"),
-			dagger.ContainerWithMountedCacheOpts{
-				Sharing: dagger.Private,
-			}).
-		WithExposedPort(dockerPort).
-		WithExec([]string{
-			"dockerd",
-			"--host=tcp://0.0.0.0:2375",
-			"--host=unix:///var/run/docker.sock",
-			"--tls=false",
-		}, dagger.ContainerWithExecOpts{
-			InsecureRootCapabilities: true,
-		}).
-		AsService()
-}
-
 // WithFileMountedInContainer adds a file to the container.
 //
 // Parameters:
@@ -136,30 +97,6 @@ func (m *Terragrunt) WithFileMountedInContainer(
 	}
 
 	m.Ctr = m.Ctr.WithMountedFile(path, file)
-
-	return m
-}
-
-// WithSecretAsEnvVar sets an environment variable in the container using a secret.
-//
-// Parameters:
-//   - name: The name of the environment variable (e.g., "API_KEY").
-//   - secret: The secret containing the value of the environment variable.
-//
-// Returns:
-//   - *Terragrunt: The updated Terragrunt with the environment variable set.
-//
-// Behavior:
-//   - The secret value is expanded according to the current environment variables defined in the container.
-func (m *Terragrunt) WithSecretAsEnvVar(name string, secret *dagger.Secret) *Terragrunt {
-	secretValue, err := secret.Plaintext(context.Background())
-	if err != nil {
-		return nil
-	}
-
-	m.Ctr = m.Ctr.WithEnvVariable(name, secretValue, dagger.ContainerWithEnvVariableOpts{
-		Expand: true,
-	})
 
 	return m
 }

@@ -6,28 +6,16 @@
 // License: Apache-2.0
 package main
 
-import "fmt"
+type DefaultBinaryVersion string
+type ContainerImage string
 
 const (
-	// defaultContainerVersion specifies the default version for the container.
-	defaultContainerVersion = "latest"
-	// defaultContainerImage specifies the default image for the container.
-	defaultContainerImage = "alpine"
-	// dockerVersionDefault specifies the default Docker version.
-	dockerVersionDefault = "24.0"
+	// OpenTofuDefaultVersion specifies the default version for OpenTofu.
+	OpenTofuDefaultVersion DefaultBinaryVersion = "1.0.0"
+	// TerragruntDefaultVersion specifies the default version for Terragrunt.
+	TerragruntDefaultVersion DefaultBinaryVersion = "0.35.0"
+	// TerraformDefaultVersion specifies the default version for Terraform.
+	TerraformDefaultVersion DefaultBinaryVersion = "1.0.11"
+	// TerragruntAlpineDefaultVersion specifies the default version for the Terragrunt Alpine container image.
+	TerragruntAlpineDefaultVersion ContainerImage = "0.35.0-alpine"
 )
-
-// getDockerInDockerImage returns the Docker-in-Docker image with the given version.
-//
-// If the version is not provided, it defaults to dockerVersionDefault.
-//
-// Example:
-//
-//	getDockerInDockerImage("20.10.17") => "docker:20.10.17-dind"
-func getDockerInDockerImage(version string) string {
-	if version == "" {
-		version = dockerVersionDefault
-	}
-
-	return fmt.Sprintf("docker:%s-dind", version)
-}
