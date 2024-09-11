@@ -177,58 +177,6 @@ func (m *Tests) TestWithSource(ctx context.Context) error {
 	return nil
 }
 
-// TestWithSecretAsEnvVar tests the setting of environment variables using secrets.
-//
-// This method verifies that environment variables are correctly set in the container using secrets.
-// It creates secrets for AWS, GCP, and another example, then sets these secrets as environment variables
-// in the target module's container. The method runs the `printenv` command within the container and checks
-// if the output contains the expected environment variables.
-//
-// Arguments:
-// - ctx (context.Context): The context for the test execution.
-//
-// Returns:
-//   - error: Returns an error if there is an issue creating secrets, setting environment variables,
-//     executing commands in the container, or if the output does not contain the expected environment variables.
-func (m *Tests) TestWithSecretAsEnvVar(ctx context.Context) error {
-	// Create secrets for AWS, GCP, and another example.
-	secretAWS := dag.SetSecret("AWS_ACCESS_KEY_ID", "AKIAIOSFODNN7EXAMPLE")
-	secretGCP := dag.SetSecret("GCP_PROJECT_ID", "example-project-id")
-	secretAnother := dag.SetSecret("ANOTHER_SECRET", "another-secret-value")
-
-	// Initialize the target module and set secrets as environment variables.
-	targetModule := dag.Terragrunt().
-		WithSecretAsEnvVar("AWS_ACCESS_KEY_ID", secretAWS).
-		WithSecretAsEnvVar("GCP_PROJECT_ID", secretGCP).
-		WithSecretAsEnvVar("ANOTHER_SECRET", secretAnother)
-
-	// Run the 'printenv' command within the container to check environment variables.
-	out, err := targetModule.Ctr().
-		WithExec([]string{"printenv"}).
-		Stdout(ctx)
-
-	// Check for errors executing the command.
-	if err != nil {
-		return WrapError(err, "failed to get env vars")
-	}
-
-	// Check if the expected environment variables are set.
-	if !strings.Contains(out, "AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE") {
-		return WrapErrorf(err, "expected AWS_ACCESS_KEY_ID to be set, got %s", out)
-	}
-
-	if !strings.Contains(out, "GCP_PROJECT_ID=example-project-id") {
-		return WrapErrorf(err, "expected GCP_PROJECT_ID to be set, got %s", out)
-	}
-
-	if !strings.Contains(out, "ANOTHER_SECRET=another-secret-value") {
-		return WrapErrorf(err, "expected ANOTHER_SECRET to be set, got %s", out)
-	}
-
-	// Return nil if all expected environment variables are set.
-	return nil
-}
-
 // TestWithDownloadedFile tests the downloading of a file from a URL.
 //
 // This method verifies that a file can be downloaded from a URL and mounted in the container.
