@@ -27,9 +27,3 @@ entrypoint:
 environment:
   TZ: UTC
 
-work-dir: /home/terragrunt
-
-paths:
-  - /home/terragrunt
-
-# Terragrunt and Terraform will be installed in the Dagger module, not in the base image

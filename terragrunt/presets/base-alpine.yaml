@@ -2,27 +2,55 @@
 contents:
   repositories:
     - https://dl-cdn.alpinelinux.org/alpine/edge/main
+    - https://dl-cdn.alpinelinux.org/alpine/edge/community
   packages:
     - alpine-base
+    - ca-certificates
+    - bash
+    - curl
+    - git
+    - jq
+    - tzdata
+    - wget
 
-cmd: ["/bin/sh", "-l"]
+cmd: ["/bin/bash", "-l"]
 
 archs:
   - x86_64
   - aarch64
 
 environment:
-  PATH: /usr/sbin:/sbin:/usr/bin:/bin
+  PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
   TERRAGRUNT_PROVIDER_CACHE_DIR: /root/.terragrunt-cache
-  TERRAGRUNT_PROVIDER_CACHE: 1
+  TERRAGRUNT_PROVIDER_CACHE: "1"
+  TZ: UTC
+  LANG: en_US.UTF-8
+  LC_ALL: en_US.UTF-8
+
+accounts:
+  groups:
+    - groupname: terragrunt
+      gid: 1000
+  users:
+    - username: terragrunt
+      uid: 1000
 
 labels:
   org.opencontainers.image.title: "Base Alpine for Terragrunt"
-  org.opencontainers.image.description: "A minimal Alpine base image built with APKO for Terragrunt."
-  org.opencontainers.image.version: "1.0.0"
+  org.opencontainers.image.description: "A minimal Alpine base image built with APKO for Terragrunt, optimized for security and performance."
+  org.opencontainers.image.version: "1.1.0"
   org.opencontainers.image.vendor: "github.com/Excoriate - Alex Torres"
   org.opencontainers.image.licenses: "Apache-2.0"
+  org.opencontainers.image.url: "https://github.com/Excoriate/daggerverse"
+  org.opencontainers.image.source: "https://github.com/Excoriate/daggerverse"
 
 sbom:
   enabled: true
   format: "spdx-json"
+
+seccomp:
+  policy: default
+
+capabilities:
+  drop:
+    - ALL
