@@ -11,11 +11,11 @@ type ContainerImage string
 
 const (
 	// OpenTofuDefaultVersion specifies the default version for OpenTofu.
-	OpenTofuDefaultVersion DefaultBinaryVersion = "1.0.0"
+	OpenTofuDefaultVersion DefaultBinaryVersion = "1.8.2"
 	// TerragruntDefaultVersion specifies the default version for Terragrunt.
-	TerragruntDefaultVersion DefaultBinaryVersion = "0.35.0"
+	TerragruntDefaultVersion DefaultBinaryVersion = "0.67.4"
 	// TerraformDefaultVersion specifies the default version for Terraform.
-	TerraformDefaultVersion DefaultBinaryVersion = "1.0.11"
-	// TerragruntAlpineDefaultVersion specifies the default version for the Terragrunt Alpine container image.
-	TerragruntAlpineDefaultVersion ContainerImage = "0.35.0-alpine"
+	TerraformDefaultVersion DefaultBinaryVersion = "1.9.5"
+	// ApkoDefaultImage specifies the default image for Apko.
+	ApkoDefaultImage = "cgr.dev/chainguard/apko"
 )

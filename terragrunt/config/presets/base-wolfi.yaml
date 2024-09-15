@@ -1,0 +1,47 @@
+contents:
+  repositories:
+    - https://packages.wolfi.dev/os
+  packages:
+    - wolfi-base
+    - ca-certificates
+    - bash
+    - curl
+    - git
+    - unzip
+    - wget
+    - tzdata
+
+accounts:
+  groups:
+    - groupname: terragrunt
+      gid: 1000
+  users:
+    - username: terragrunt
+      uid: 1000
+      gid: 1000
+
+entrypoint:
+  command: /bin/bash
+
+environment:
+  TZ: UTC
+
+annotations:
+  title: "Base Wolfi for Terragrunt"
+  description: "A minimal Wolfi base image built with APKO for Terragrunt, optimized for security and performance."
+  version: "1.1.0"
+  vendor: "github.com/Excoriate - Alex Torres"
+  licenses: "Apache-2.0"
+  url: "https://github.com/Excoriate/daggerverse"
+  source: "https://github.com/Excoriate/daggerverse"
+
+sbom:
+  enabled: true
+  format: "spdx-json"
+
+seccomp:
+  policy: default
+
+capabilities:
+  drop:
+    - ALL
