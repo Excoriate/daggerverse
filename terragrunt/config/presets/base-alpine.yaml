@@ -9,7 +9,6 @@ contents:
     - bash
     - curl
     - git
-    - jq
     - tzdata
     - wget
 
@@ -35,14 +34,14 @@ accounts:
     - username: terragrunt
       uid: 1000
 
-labels:
-  org.opencontainers.image.title: "Base Alpine for Terragrunt"
-  org.opencontainers.image.description: "A minimal Alpine base image built with APKO for Terragrunt, optimized for security and performance."
-  org.opencontainers.image.version: "1.1.0"
-  org.opencontainers.image.vendor: "github.com/Excoriate - Alex Torres"
-  org.opencontainers.image.licenses: "Apache-2.0"
-  org.opencontainers.image.url: "https://github.com/Excoriate/daggerverse"
-  org.opencontainers.image.source: "https://github.com/Excoriate/daggerverse"
+annotations:
+  title: "Base Alpine for Terragrunt"
+  description: "A minimal Alpine base image built with APKO for Terragrunt, optimized for security and performance."
+  version: "1.1.0"
+  vendor: "github.com/Excoriate - Alex Torres"
+  licenses: "Apache-2.0"
+  url: "https://github.com/Excoriate/daggerverse"
+  source: "https://github.com/Excoriate/daggerverse"
 
 sbom:
   enabled: true
