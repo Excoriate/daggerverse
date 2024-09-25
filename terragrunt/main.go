@@ -11,8 +11,10 @@
 package main
 
 import (
-	"github.com/Excoriate/daggerverse/terragrunt/internal/dagger"
+	"fmt"
 
+	"github.com/Excoriate/daggerverse/terragrunt/internal/dagger"
+	"github.com/Excoriate/daggerx/pkg/containerx"
 	"github.com/Excoriate/daggerx/pkg/envvars"
 )
 
@@ -60,25 +62,66 @@ func New(
 	// envVarsFromHost is a list of environment variables to pass from the host to the container in a slice of strings.
 	// +optional
 	envVarsFromHost []string,
-	// enableApko is a flag to enable Apko as a mechanism to build the container image. Default is false.
-	// +optional
-	enableApko bool,
+	// // enableApko is a flag to enable Apko as a mechanism to build the container image. Default is false.
+	// // +optional
+	// enableApko bool,
 ) (*Terragrunt, error) {
 	//nolint:exhaustruct // It's 'okaysh' for now, I'll decide later what's going to be the pattern here.
-	dagModule := &Terragrunt{
-		// Toolkit is a struct that contains the versions of the tools that are going to be used.
-		Toolkit: NewToolkit(
-			WithOpenTofuVersion(openTofuVersion),
-			WithTerraformVersion(tfVersion),
-			WithTerragruntVersion(tgVersion),
-		),
+	m := &Terragrunt{}
+
+	if tgVersion == "" {
+		tgVersion = defaultTerragruntVersion
+	}
+
+	if tfVersion == "" {
+		tfVersion = defaultTerraformVersion
+	}
+
+	if openTofuVersion == "" {
+		openTofuVersion = defaultOpenTofuVersion
 	}
 
 	if ctr != nil {
-		dagModule.Ctr = ctr
+		m.Ctr = ctr
 	} else {
-		if imageURL == "" {
-			dagModule.Base(imageURL)
+		if imageURL != "" {
+			isValid, invalidImageErr := containerx.ValidateImageURL(imageURL)
+			if invalidImageErr != nil {
+				return nil, WrapError(invalidImageErr, "invalid image URL")
+			}
+
+			if !isValid {
+				return nil, Errorf("invalid image URL: %s", imageURL)
+			}
+
+			m.Base(imageURL)
+		} else {
+			apkoCtr, apkCtrErr := m.BaseApko("alpine") // apkoCfg, apkoCfgErr := NewBaseImageApko(WithApkoPreset("base-alpine"))
+			if apkCtrErr != nil {
+				return nil, WrapError(apkCtrErr, "failed to create base image apko")
+			}
+
+			// Install Terragrunt
+			apkoCtr = apkoCtr.
+				WithUser("root").
+				WithExec([]string{"apk", "add", "--no-cache", "curl", "ca-certificates"}).
+				WithExec([]string{
+					"sh", "-c",
+					fmt.Sprintf(
+						"curl -L https://github.com/gruntwork-io/terragrunt/releases/download/v%s/terragrunt_linux_amd64 -o /home/terragrunt/bin/terragrunt && chmod +x /home/terragrunt/bin/terragrunt && chown terragrunt:terragrunt /home/terragrunt/bin/terragrunt",
+						tgVersion,
+					),
+				}).
+				WithUser("terragrunt").
+				WithEnvVariable("PATH", "/home/terragrunt/bin:$PATH").
+				WithExec([]string{"terragrunt", "--version"})
+			// tgInstaller := installerx.NewTerragruntInstaller(tgVersion)
+
+			// for _, cmd := range tgInstaller.GetInstallCommands() {
+			// 	apkoCtr = apkoCtr.WithExec(cmd)
+			// }
+
+			m.Ctr = apkoCtr
 		}
 	}
 
@@ -92,23 +135,9 @@ func New(
 		}
 
 		for _, envVar := range envVars {
-			dagModule.WithEnvironmentVariable(envVar.Name, envVar.Value, false)
+			m.WithEnvironmentVariable(envVar.Name, envVar.Value, false)
 		}
 	}
 
-	return dagModule, nil
-}
-
-// Base sets the base image and version, and creates the base container.
-//
-// The default image is "alpine/latest" and the default version is "latest".
-//
-//nolint:nolintlint,revive // This is a method that is used to set the base image and version.
-func (m *Terragrunt) Base(imageURL string) *Terragrunt {
-	c := dag.Container().
-		From(imageURL)
-
-	m.Ctr = c
-
-	return m
+	return m, nil
 }

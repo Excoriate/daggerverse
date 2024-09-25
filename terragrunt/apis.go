@@ -137,38 +137,6 @@ func (m *Terragrunt) WithDownloadedFile(
 	return m
 }
 
-// WithClonedGitRepo clones a Git repository and mounts it as a directory in the container.
-//
-// This method downloads a Git repository and mounts it as a directory in the container. It supports optional
-// authentication tokens for private repositories and can handle both GitHub and GitLab repositories.
-//
-// Parameters:
-//   - repoURL: The URL of the git repository to clone (e.g., "https://github.com/user/repo").
-//   - token: (Optional) The VCS token to use for authentication. If
-//     not provided, the repository will be cloned without authentication.
-//   - vcs: (Optional) The version control system (VCS) to use for
-//     authentication. Defaults to "github". Supported values are "github" and "gitlab".
-//
-// Returns:
-//   - *Terragrunt: The updated Terragrunt with the cloned repository mounted in the container.
-func (m *Terragrunt) WithClonedGitRepo(
-	repoURL string,
-	// token is the VCS token to use for authentication. Optional parameter.
-	// +optional
-	token string,
-	// vcs is the VCS to use for authentication. Optional parameter.
-	// +optional
-	vcs string,
-) *Terragrunt {
-	// Call the helper function to clone the repository.
-	clonedRepo := m.CloneGitRepo(repoURL, token, vcs)
-
-	// Mount the cloned repository as a directory inside the container.
-	m.Ctr = m.Ctr.WithMountedDirectory(fixtures.MntPrefix, clonedRepo)
-
-	return m
-}
-
 // WithCacheBuster sets a cache-busting environment variable in the container.
 //
 // This method sets an environment variable "CACHE_BUSTER" with a timestamp value in RFC3339Nano format.

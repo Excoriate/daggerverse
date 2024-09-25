@@ -234,34 +234,6 @@ func (m *Tests) TestWithDownloadedFile(ctx context.Context) error {
 	return nil
 }
 
-// TestWithClonedGitRepo tests the WithClonedGitRepo function.
-func (m *Tests) TestWithClonedGitRepo(ctx context.Context) error {
-	targetModule := dag.Terragrunt()
-
-	// This is a public repository, the token isn't required.
-	targetModule = targetModule.
-		WithClonedGitRepo("https://github.com/excoriate/daggerverse",
-			dagger.TerragruntWithClonedGitRepoOpts{})
-
-	out, err := targetModule.Ctr().
-		WithExec([]string{"ls", "-l"}).
-		Stdout(ctx)
-
-	if err != nil {
-		return WrapError(err, "failed to get ls output")
-	}
-
-	if out == "" {
-		return WrapError(err, "expected to have at least one folder, got empty output")
-	}
-
-	if !strings.Contains(out, "total") {
-		return WrapErrorf(err, "expected to have at least one folder, got %s", out)
-	}
-
-	return nil
-}
-
 // TestWithCacheBuster tests the setting of a cache-busting environment variable
 // within the target module's container.
 //

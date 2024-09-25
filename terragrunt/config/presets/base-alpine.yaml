@@ -4,15 +4,31 @@ contents:
     - https://dl-cdn.alpinelinux.org/alpine/edge/main
     - https://dl-cdn.alpinelinux.org/alpine/edge/community
   packages:
-    - alpine-base
-    - ca-certificates
+    - alpine-baselayout
+    - alpine-keys
+    - apk-tools
+    - busybox
+    - ca-certificates-bundle
+    - musl
     - bash
     - curl
+    - wget
+    - unzip
     - git
     - tzdata
-    - wget
 
-cmd: ["/bin/bash", "-l"]
+accounts:
+  groups:
+    - groupname: terragrunt
+      gid: 65532
+  users:
+    - username: terragrunt
+      uid: 65532
+      gid: 65532
+  run-as: terragrunt
+
+# entrypoint:
+#   command: /bin/bash
 
 archs:
   - x86_64
@@ -26,13 +42,23 @@ environment:
   LANG: en_US.UTF-8
   LC_ALL: en_US.UTF-8
 
-accounts:
-  groups:
-    - groupname: terragrunt
-      gid: 1000
-  users:
-    - username: terragrunt
-      uid: 1000
+# Ensure home directory exists and is writable
+paths:
+  - path: /home/terragrunt
+    type: directory
+    uid: 65532
+    gid: 65532
+    permissions: 0o755
+  - path: /home/terragrunt/bin
+    type: directory
+    uid: 65532
+    gid: 65532
+    permissions: 0o755
+  - path: /home/terragrunt/.terragrunt-cache
+    type: directory
+    uid: 65532
+    gid: 65532
+    permissions: 0o755
 
 annotations:
   title: "Base Alpine for Terragrunt"
@@ -42,14 +68,3 @@ annotations:
   licenses: "Apache-2.0"
   url: "https://github.com/Excoriate/daggerverse"
   source: "https://github.com/Excoriate/daggerverse"
-
-sbom:
-  enabled: true
-  format: "spdx-json"
-
-seccomp:
-  policy: default
-
-capabilities:
-  drop:
-    - ALL

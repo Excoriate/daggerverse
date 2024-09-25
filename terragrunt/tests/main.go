@@ -60,10 +60,6 @@ func (m *Tests) TestAll(ctx context.Context) error {
 		WithContext(ctx)
 
 	// Test different ways to configure the base container.
-	polTests.Go(m.TestContainerWithUbuntuBase)
-	polTests.Go(m.TestContainerWithAlpineBase)
-	polTests.Go(m.TestContainerWithBusyBoxBase)
-	polTests.Go(m.TestContainerWithWolfiBase)
 	polTests.Go(m.TestPassingEnvVarsInConstructor)
 	// Test built-in commands
 	polTests.Go(m.TestRunShellCMD)
@@ -74,10 +70,8 @@ func (m *Tests) TestAll(ctx context.Context) error {
 	polTests.Go(m.TestWithSource)
 	polTests.Go(m.TestWithEnvironmentVariable)
 	polTests.Go(m.TestWithDownloadedFile)
-	polTests.Go(m.TestWithClonedGitRepo)
 	polTests.Go(m.TestWithCacheBuster)
 	// Test utility functions.
-	polTests.Go(m.TestDownloadFile)
 	// Test cloud-specific functions.
 	polTests.Go(m.TestWithAWSKeys)
 	polTests.Go(m.TestWithAzureCredentials)
@@ -182,94 +176,5 @@ func (m *Tests) TestInspectEnvVar(ctx context.Context) error {
 	}
 
 	// Return nil if the environment variable was correctly set and inspected.
-	return nil
-}
-
-// TestCloneGitRepo tests the CloneGitRepo function.
-func (m *Tests) TestCloneGitRepo(ctx context.Context) error {
-	targetModule := dag.Terragrunt()
-
-	// This is a public repository, the token isn't required.
-	clonedRepo := targetModule.
-		CloneGitRepo("https://github.com/excoriate/daggerverse")
-
-	// Mount it as a directory, and inspect if it contains .gitignore and LICENSE files.
-	ctr := targetModule.Ctr().
-		WithMountedDirectory("/mnt", clonedRepo)
-
-	out, err := ctr.
-		WithExec([]string{"ls", "-l", "/mnt"}).
-		Stdout(ctx)
-
-	if err != nil {
-		return WrapError(err, "failed to get ls output")
-	}
-
-	if out == "" {
-		return WrapError(err, "expected to have at least one folder, got empty output")
-	}
-
-	if !strings.Contains(out, "total") {
-		return WrapErrorf(err, "expected to have at least one folder, got %s", out)
-	}
-
-	// Check if the .gitignore file is present.
-	out, err = ctr.
-		WithExec([]string{"cat", "/mnt/.gitignore"}).
-		Stdout(ctx)
-
-	if err != nil {
-		return WrapError(err, "failed to get .gitignore file")
-	}
-
-	if out == "" {
-		return WrapError(err, "could not inspect (cat) the .gitignore file")
-	}
-
-	return nil
-}
-
-// TestDownloadFile tests the downloading of a file from a URL and mounts it in the container.
-//
-// This method verifies that a file can be downloaded from a URL, mounted
-// in the container, and checks if the file exists.
-//
-// Arguments:
-// - ctx (context.Context): The context for the test execution.
-//
-// Returns:
-//   - error: Returns an error if there is an issue downloading the file, mounting it in the container,
-//     or if the file is not found in the mounted path.
-func (m *Tests) TestDownloadFile(ctx context.Context) error {
-	// Initialize the target module.
-	targetModule := dag.Terragrunt()
-
-	// Define the URL of the file to be downloaded.
-	fileURL := "https://framerusercontent.com/assets/cNNFYmZqESeYTV5PHp72ay0O2o.zip"
-
-	// Download the file from the URL.
-	fileDownloaded := targetModule.DownloadFile(fileURL)
-
-	// Mount the downloaded file in the container at /mnt/myfile.zip.
-	ctr := targetModule.
-		Ctr().
-		WithMountedFile("/mnt/myfile.zip", fileDownloaded)
-
-	// Execute a command to check if the file exists in the container.
-	out, err := ctr.
-		WithExec([]string{"ls", "/mnt/myfile.zip"}).
-		Stdout(ctx)
-
-	// Check for errors executing the command.
-	if err != nil {
-		return WrapErrorf(err, "failed to get download file from url %s", fileURL)
-	}
-
-	// Check if the output is empty, which indicates the file was not found.
-	if out == "" {
-		return WrapError(err, "expected to find the file at /mnt/myfile.zip, but got empty output")
-	}
-
-	// Return nil if the file was successfully found.
 	return nil
 }

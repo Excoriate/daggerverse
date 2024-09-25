@@ -34,14 +34,3 @@ annotations:
   licenses: "Apache-2.0"
   url: "https://github.com/Excoriate/daggerverse"
   source: "https://github.com/Excoriate/daggerverse"
-
-sbom:
-  enabled: true
-  format: "spdx-json"
-
-seccomp:
-  policy: default
-
-capabilities:
-  drop:
-    - ALL
