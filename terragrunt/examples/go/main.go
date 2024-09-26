@@ -160,46 +160,6 @@ func (m *Go) Terragrunt_OpenTerminal() *dagger.Container {
 		Terminal()
 }
 
-// Terragrunt_CreateNetRcFileForGithub creates and configures a .netrc file for GitHub authentication.
-//
-// This method exemplifies the creation of a .netrc file with credentials for accessing GitHub,
-// and demonstrates how to pass this file as a secret to the Terragrunt module.
-//
-// Parameters:
-//   - ctx: The context for controlling the function's timeout and cancellation.
-//
-// Returns:
-//   - A configured Container with the .netrc file set as a secret, or an error if the process fails.
-//
-// Steps Involved:
-//  1. Define GitHub password as a secret.
-//  2. Configure the Terragrunt module to use the .netrc file with the provided credentials.
-//  3. Run a command inside the container to verify the .netrc file's contents.
-func (m *Go) Terragrunt_CreateNetRcFileForGithub(ctx context.Context) (*dagger.Container, error) {
-	passwordAsSecret := dag.SetSecret("mysecret", "ohboywhatapassword")
-
-	// Configure it for GitHub
-	targetModule := dag.Terragrunt().
-		WithNewNetrcFileAsSecretGitHub("supersecretuser", passwordAsSecret)
-
-	// Check if the .netrc file is created correctly
-	out, err := targetModule.
-		Ctr().
-		WithExec([]string{"cat", "/root/.netrc"}).
-		Stdout(ctx)
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to get netrc file configured for github: %w", err)
-	}
-
-	expectedContent := "machine github.com\nlogin supersecretuser\npassword ohboywhatapassword"
-	if !strings.Contains(out, expectedContent) {
-		return nil, errNetRCFileNotFound
-	}
-
-	return targetModule.Ctr(), nil
-}
-
 // Terragrunt_RunArbitraryCommand runs an arbitrary shell command in the test container.
 //
 // This function demonstrates how to execute a shell command within the container
@@ -230,37 +190,4 @@ func (m *Go) Terragrunt_RunArbitraryCommand(ctx context.Context) (string, error)
 	}
 
 	return out, nil
-}
-
-// Terragrunt_CreateContainer initializes and returns a configured Dagger container.
-//
-// This method exemplifies the setup of a container within the Terragrunt module using the source directory.
-//
-// Parameters:
-//   - ctx: The context for controlling the function's timeout and cancellation.
-//
-// Returns:
-//   - A configured Dagger container if successful, or an error if the process fails.
-//
-// Steps Involved:
-//  1. Configure the Terragrunt module with the source directory.
-//  2. Run a command inside the container to check the OS information.
-func (m *Go) Terragrunt_CreateContainer(ctx context.Context) (*dagger.Container, error) {
-	targetModule := dag.
-		Terragrunt().
-		BaseAlpine().
-		WithUtilitiesInAlpineContainer(). // Install utilities
-		WithGitInAlpineContainer().       // Install git
-		WithSource(m.TestDir)
-
-	// Get the OS or container information
-	_, err := targetModule.
-		Ctr().WithExec([]string{"uname"}).
-		Stdout(ctx)
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to get OS information: %w", err)
-	}
-
-	return targetModule.Ctr(), nil
 }
