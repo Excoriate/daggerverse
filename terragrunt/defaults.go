@@ -6,7 +6,10 @@
 // License: Apache-2.0
 package main
 
+// DefaultBinaryVersion represents the default version for a binary.
 type DefaultBinaryVersion string
+
+// ContainerImage represents a container image.
 type ContainerImage string
 
 const (

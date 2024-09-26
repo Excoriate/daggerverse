@@ -54,12 +54,8 @@ func New(
 	// envVarsFromHost is a list of environment variables to pass from the host to the container in a slice of strings.
 	// +optional
 	envVarsFromHost []string,
-	// // enableApko is a flag to enable Apko as a mechanism to build the container image. Default is false.
-	// // +optional
-	// enableApko bool,
 ) (*Terragrunt, error) {
-	//nolint:exhaustruct // It's 'okaysh' for now, I'll decide later what's going to be the pattern here.
-	m := &Terragrunt{}
+	terragrunt := &Terragrunt{}
 
 	if tgVersion == "" {
 		tgVersion = defaultTerragruntVersion
@@ -73,47 +69,68 @@ func New(
 		openTofuVersion = defaultOpenTofuVersion
 	}
 
-	if ctr != nil {
-		m.Ctr = ctr
-	} else {
-		if imageURL != "" {
-			isValid, invalidImageErr := containerx.ValidateImageURL(imageURL)
-			if invalidImageErr != nil {
-				return nil, WrapError(invalidImageErr, "invalid image URL")
-			}
-
-			if !isValid {
-				return nil, Errorf("invalid image URL: %s", imageURL)
-			}
-
-			m.Base(imageURL)
-		} else {
-			apkoCtr, apkCtrErr := m.BaseApko("alpine") // apkoCfg, apkoCfgErr := NewBaseImageApko(WithApkoPreset("base-alpine"))
-			if apkCtrErr != nil {
-				return nil, WrapError(apkCtrErr, "failed to create base image apko")
-			}
-
-			m.Ctr = apkoCtr
-
-			m.WithTerragruntInstalled(tgVersion).
-				WithTerraformInstalled(tfVersion).
-				WithOpenTofuInstalled(openTofuVersion)
-		}
+	if err := setupContainer(terragrunt, ctr, imageURL, tgVersion, tfVersion, openTofuVersion); err != nil {
+		return nil, err
 	}
 
-	// If environment variables are passed in a string, with a format like "SOMETHING=SOMETHING,SOMETHING=SOMETHING",
-	// they are converted into a map and then into a list of DaggerEnvVars.
-	// Then, each environment variable is added to the container.
 	if len(envVarsFromHost) > 0 {
-		envVars, err := envvars.ToDaggerEnvVarsFromSlice(envVarsFromHost)
-		if err != nil {
-			return nil, WrapError(err, "failed to parse environment variables")
-		}
-
-		for _, envVar := range envVars {
-			m.WithEnvironmentVariable(envVar.Name, envVar.Value, false)
+		if err := addEnvVars(terragrunt, envVarsFromHost); err != nil {
+			return nil, err
 		}
 	}
 
-	return m, nil
+	return terragrunt, nil
+}
+
+func setupContainer(
+	terragrunt *Terragrunt,
+	ctr *dagger.Container,
+	imageURL,
+	tgVersion,
+	tfVersion,
+	openTofuVersion string) error {
+	if ctr != nil {
+		terragrunt.Ctr = ctr
+
+		return nil
+	}
+
+	if imageURL != "" {
+		isValid, invalidImageErr := containerx.ValidateImageURL(imageURL)
+		if invalidImageErr != nil {
+			return WrapError(invalidImageErr, "invalid image URL")
+		}
+
+		if !isValid {
+			return Errorf("invalid image URL: %s", imageURL)
+		}
+
+		terragrunt.Base(imageURL)
+	} else {
+		apkoCtr, apkCtrErr := terragrunt.BaseApko("alpine")
+		if apkCtrErr != nil {
+			return WrapError(apkCtrErr, "failed to create base image apko")
+		}
+
+		terragrunt.Ctr = apkoCtr
+
+		terragrunt.WithTerragruntInstalled(tgVersion).
+			WithTerraformInstalled(tfVersion).
+			WithOpenTofuInstalled(openTofuVersion)
+	}
+
+	return nil
+}
+
+func addEnvVars(terragrunt *Terragrunt, envVarsFromHost []string) error {
+	envVars, err := envvars.ToDaggerEnvVarsFromSlice(envVarsFromHost)
+	if err != nil {
+		return WrapError(err, "failed to parse environment variables")
+	}
+
+	for _, envVar := range envVars {
+		terragrunt.WithEnvironmentVariable(envVar.Name, envVar.Value, false)
+	}
+
+	return nil
 }

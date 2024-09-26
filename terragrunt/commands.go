@@ -6,10 +6,6 @@ import (
 	"github.com/Excoriate/daggerverse/terragrunt/internal/dagger"
 )
 
-const (
-	validKeyPattern = `^[a-zA-Z0-9_]+$`
-)
-
 // OpenTerminal returns a terminal
 //
 // It returns a terminal for the container.
