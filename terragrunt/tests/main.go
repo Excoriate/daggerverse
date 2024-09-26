@@ -51,8 +51,6 @@ func (m *Tests) getTestDir() *dagger.Directory {
 // TestAll executes all tests.
 //
 // This is a helper method for tests, in order to execute all tests.
-//
-//nolint:funlen // The test handles multiple commands and environments, requiring a longer function.
 func (m *Tests) TestAll(ctx context.Context) error {
 	polTests := pool.
 		New().
