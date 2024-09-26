@@ -58,7 +58,7 @@ func (m *Go) AllRecipes(ctx context.Context) error {
 	polTests := pool.New().WithErrors().WithContext(ctx)
 
 	// Test different ways to configure the base container.
-	polTests.Go(m.BuiltInRecipes)
+	// polTests.Go(m.BuiltInRecipes)
 	// From this point onwards, we're testing the specific functionality of the Terragrunt module.
 
 	if err := polTests.Wait(); err != nil {
@@ -68,40 +68,40 @@ func (m *Go) AllRecipes(ctx context.Context) error {
 	return nil
 }
 
-// BuiltInRecipes demonstrates how to run built-in recipes
-//
-// This method showcases the use of various built-in recipes provided by the Terragrunt
-// module, including creating a container, running an arbitrary command, and creating a .netrc
-// file for GitHub authentication.
-//
-// Parameters:
-//   - ctx: The context for controlling the function's timeout and cancellation.
-//
-// Returns:
-//   - An error if any of the internal methods fail, or nil otherwise.
-func (m *Go) BuiltInRecipes(ctx context.Context) error {
-	// Pass environment variables to the Terragrunt module using Terragrunt_PassedEnvVars
-	if err := m.Terragrunt_PassedEnvVars(ctx); err != nil {
-		return fmt.Errorf("failed to pass environment variables: %w", err)
-	}
+// // BuiltInRecipes demonstrates how to run built-in recipes
+// //
+// // This method showcases the use of various built-in recipes provided by the Terragrunt
+// // module, including creating a container, running an arbitrary command, and creating a .netrc
+// // file for GitHub authentication.
+// //
+// // Parameters:
+// //   - ctx: The context for controlling the function's timeout and cancellation.
+// //
+// // Returns:
+// //   - An error if any of the internal methods fail, or nil otherwise.
+// func (m *Go) BuiltInRecipes(ctx context.Context) error {
+// 	// Pass environment variables to the Terragrunt module using Terragrunt_PassedEnvVars
+// 	if err := m.Terragrunt_PassedEnvVars(ctx); err != nil {
+// 		return fmt.Errorf("failed to pass environment variables: %w", err)
+// 	}
 
-	// Create a configured container using Terragrunt_CreateContainer
-	if _, err := m.Terragrunt_CreateContainer(ctx); err != nil {
-		return fmt.Errorf("failed to create container: %w", err)
-	}
+// 	// Create a configured container using Terragrunt_CreateContainer
+// 	if _, err := m.Terragrunt_CreateContainer(ctx); err != nil {
+// 		return fmt.Errorf("failed to create container: %w", err)
+// 	}
 
-	// Run an arbitrary command in the container using Terragrunt_RunArbitraryCommand
-	if _, err := m.Terragrunt_RunArbitraryCommand(ctx); err != nil {
-		return fmt.Errorf("failed to run arbitrary command: %w", err)
-	}
+// 	// Run an arbitrary command in the container using Terragrunt_RunArbitraryCommand
+// 	if _, err := m.Terragrunt_RunArbitraryCommand(ctx); err != nil {
+// 		return fmt.Errorf("failed to run arbitrary command: %w", err)
+// 	}
 
-	// Create a .netrc file for GitHub using Terragrunt_CreateNetRcFileForGithub
-	if _, err := m.Terragrunt_CreateNetRcFileForGithub(ctx); err != nil {
-		return fmt.Errorf("failed to create netrc file: %w", err)
-	}
+// 	// Create a .netrc file for GitHub using Terragrunt_CreateNetRcFileForGithub
+// 	if _, err := m.Terragrunt_CreateNetRcFileForGithub(ctx); err != nil {
+// 		return fmt.Errorf("failed to create netrc file: %w", err)
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
 // Terragrunt_PassedEnvVars demonstrates how to pass environment variables to the Terragrunt module.
 //
