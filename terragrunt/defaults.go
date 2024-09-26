@@ -16,6 +16,4 @@ const (
 	TerragruntDefaultVersion DefaultBinaryVersion = "0.67.4"
 	// TerraformDefaultVersion specifies the default version for Terraform.
 	TerraformDefaultVersion DefaultBinaryVersion = "1.9.5"
-	// ApkoDefaultImage specifies the default image for Apko.
-	ApkoDefaultImage = "cgr.dev/chainguard/apko"
 )

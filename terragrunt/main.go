@@ -22,9 +22,6 @@ import (
 type Terragrunt struct {
 	// Ctr is the container to use as a base container.
 	Ctr *dagger.Container
-	// BaseImage is the base image to use as the base container.
-	// +private
-	BaseImage BaseImageApko
 }
 
 // New creates a new Terragrunt module.
