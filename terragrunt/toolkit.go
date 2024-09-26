@@ -1,90 +1,77 @@
 // Package main provides functionality for managing infrastructure-as-code toolkit versions.
 package main
 
+import "github.com/Excoriate/daggerx/pkg/installerx"
+
 // Default versions for OpenTofu, Terraform, and Terragrunt.
 const (
 	defaultOpenTofuVersion   = "1.8.0"
-	defaultTerraformVersion  = "1.9.1"
+	defaultTerraformVersion  = "1.9.5"
 	defaultTerragruntVersion = "0.67.4"
 )
 
-// ToolkitCfg defines an interface for retrieving version information
-// for OpenTofu, Terraform, and Terragrunt.
-type ToolkitCfg interface {
-	GetOpenTofuVersion() string
-	GetTerraformVersion() string
-	GetTerragruntVersion() string
-}
-
-// Toolkit represents a set of infrastructure-as-code tools with their respective versions.
-type Toolkit struct {
-	OpenTofuVersion   string
-	TerraformVersion  string
-	TerragruntVersion string
-}
-
-// NewToolkit creates a new Toolkit instance with default versions,
-// which can be customized using functional options.
-func NewToolkit(options ...func(*Toolkit)) *Toolkit {
-	toolkit := &Toolkit{
-		OpenTofuVersion:   defaultOpenTofuVersion,
-		TerraformVersion:  defaultTerraformVersion,
-		TerragruntVersion: defaultTerragruntVersion,
+// WithTerragruntInstalled installs the specified version of Terragrunt.
+// If no version is specified, it defaults to the version defined in defaultTerragruntVersion.
+// The function returns a pointer to the updated Terragrunt instance.
+func (m *Terragrunt) WithTerragruntInstalled(
+	// version is the version of Terragrunt to install.
+	// +optional
+	version string,
+) *Terragrunt {
+	if version == "" {
+		version = defaultTerragruntVersion
 	}
 
-	for _, option := range options {
-		option(toolkit)
+	installTgCmd := installerx.GetTerragruntInstallCommand(installerx.TerragruntInstallParams{
+		Version:    version,
+		InstallDir: "/home/terragrunt/bin",
+	})
+
+	m.Ctr = m.Ctr.WithExec([]string{"bash", "-c", installTgCmd})
+
+	return m
+}
+
+// WithTerraformInstalled installs the specified version of Terraform.
+// If no version is specified, it defaults to the version defined in defaultTerraformVersion.
+// The function returns a pointer to the updated Terragrunt instance.
+func (m *Terragrunt) WithTerraformInstalled(
+	// version is the version of Terraform to install.
+	// +optional
+	version string,
+) *Terragrunt {
+	if version == "" {
+		version = defaultTerraformVersion
 	}
-	return toolkit
+
+	installTfCmd := installerx.GetTerraformInstallCommand(installerx.TerraformInstallParams{
+		Version:    version,
+		InstallDir: "/home/terragrunt/bin",
+	})
+
+	m.Ctr = m.Ctr.WithExec([]string{"bash", "-c", installTfCmd})
+
+	return m
 }
 
-// WithOpenTofuVersion returns a function that sets the OpenTofu version.
-// If an empty string is provided, it sets the default version.
-func WithOpenTofuVersion(version string) func(*Toolkit) {
-	return func(t *Toolkit) {
-		if version == "" {
-			t.OpenTofuVersion = defaultOpenTofuVersion
-		} else {
-			t.OpenTofuVersion = version
-		}
+// WithOpenTofuInstalled installs the specified version of OpenTofu.
+// If no version is specified, it defaults to the version defined in defaultOpenTofuVersion.
+// The function returns a pointer to the updated Terragrunt instance.
+func (m *Terragrunt) WithOpenTofuInstalled(
+	// version is the version of OpenTofu to install.
+	// +optional
+	version string,
+) *Terragrunt {
+	if version == "" {
+		version = defaultOpenTofuVersion
 	}
-}
 
-// WithTerraformVersion returns a function that sets the Terraform version.
-// If an empty string is provided, it sets the default version.
-func WithTerraformVersion(version string) func(*Toolkit) {
-	return func(t *Toolkit) {
-		if version == "" {
-			t.TerraformVersion = defaultTerraformVersion
-		} else {
-			t.TerraformVersion = version
-		}
-	}
-}
+	installOpenTofuCmd := installerx.GetOpenTofuInstallCommand(installerx.OpenTofuInstallParams{
+		Version:    version,
+		InstallDir: "/home/terragrunt/bin",
+	})
 
-// WithTerragruntVersion returns a function that sets the Terragrunt version.
-// If an empty string is provided, it sets the default version.
-func WithTerragruntVersion(version string) func(*Toolkit) {
-	return func(t *Toolkit) {
-		if version == "" {
-			t.TerragruntVersion = defaultTerragruntVersion
-		} else {
-			t.TerragruntVersion = version
-		}
-	}
-}
+	m.Ctr = m.Ctr.WithExec([]string{"bash", "-c", installOpenTofuCmd})
 
-// GetOpenTofuVersion returns the OpenTofu version.
-func (t *Toolkit) GetOpenTofuVersion() string {
-	return t.OpenTofuVersion
-}
-
-// GetTerraformVersion returns the Terraform version.
-func (t *Toolkit) GetTerraformVersion() string {
-	return t.TerraformVersion
-}
-
-// GetTerragruntVersion returns the Terragrunt version.
-func (t *Toolkit) GetTerragruntVersion() string {
-	return t.TerragruntVersion
+	return m
 }
