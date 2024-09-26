@@ -11,8 +11,6 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/Excoriate/daggerverse/terragrunt/internal/dagger"
 	"github.com/Excoriate/daggerx/pkg/containerx"
 	"github.com/Excoriate/daggerx/pkg/envvars"
@@ -27,9 +25,6 @@ type Terragrunt struct {
 	// BaseImage is the base image to use as the base container.
 	// +private
 	BaseImage BaseImageApko
-	// Toolkit is a struct that contains the versions of the tools that are going to be used.
-	// +private
-	Toolkit *Toolkit
 }
 
 // New creates a new Terragrunt module.
@@ -101,27 +96,11 @@ func New(
 				return nil, WrapError(apkCtrErr, "failed to create base image apko")
 			}
 
-			// Install Terragrunt
-			apkoCtr = apkoCtr.
-				WithUser("root").
-				WithExec([]string{"apk", "add", "--no-cache", "curl", "ca-certificates"}).
-				WithExec([]string{
-					"sh", "-c",
-					fmt.Sprintf(
-						"curl -L https://github.com/gruntwork-io/terragrunt/releases/download/v%s/terragrunt_linux_amd64 -o /home/terragrunt/bin/terragrunt && chmod +x /home/terragrunt/bin/terragrunt && chown terragrunt:terragrunt /home/terragrunt/bin/terragrunt",
-						tgVersion,
-					),
-				}).
-				WithUser("terragrunt").
-				WithEnvVariable("PATH", "/home/terragrunt/bin:$PATH").
-				WithExec([]string{"terragrunt", "--version"})
-			// tgInstaller := installerx.NewTerragruntInstaller(tgVersion)
-
-			// for _, cmd := range tgInstaller.GetInstallCommands() {
-			// 	apkoCtr = apkoCtr.WithExec(cmd)
-			// }
-
 			m.Ctr = apkoCtr
+
+			m.WithTerragruntInstalled(tgVersion).
+				WithTerraformInstalled(tfVersion).
+				WithOpenTofuInstalled(openTofuVersion)
 		}
 	}
 
