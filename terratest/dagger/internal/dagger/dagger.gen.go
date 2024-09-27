@@ -355,6 +355,7 @@ type Container struct {
 	stderr      *string
 	stdout      *string
 	sync        *ContainerID
+	up          *Void
 	user        *string
 	workdir     *string
 }
@@ -819,36 +820,6 @@ func (r *Container) Mounts(ctx context.Context) ([]string, error) {
 	return response, q.Execute(ctx)
 }
 
-// ContainerPipelineOpts contains options for Container.Pipeline
-type ContainerPipelineOpts struct {
-	// Description of the sub-pipeline.
-	Description string
-	// Labels to apply to the sub-pipeline.
-	Labels []PipelineLabel
-}
-
-// Creates a named sub-pipeline.
-//
-// Deprecated: Explicit pipeline creation is now a no-op
-func (r *Container) Pipeline(name string, opts ...ContainerPipelineOpts) *Container {
-	q := r.query.Select("pipeline")
-	for i := len(opts) - 1; i >= 0; i-- {
-		// `description` optional argument
-		if !querybuilder.IsZeroValue(opts[i].Description) {
-			q = q.Arg("description", opts[i].Description)
-		}
-		// `labels` optional argument
-		if !querybuilder.IsZeroValue(opts[i].Labels) {
-			q = q.Arg("labels", opts[i].Labels)
-		}
-	}
-	q = q.Arg("name", name)
-
-	return &Container{
-		query: q,
-	}
-}
-
 // The platform this container executes and publishes as.
 func (r *Container) Platform(ctx context.Context) (Platform, error) {
 	if r.platform != nil {
@@ -999,6 +970,38 @@ func (r *Container) Terminal(opts ...ContainerTerminalOpts) *Container {
 	}
 }
 
+// ContainerUpOpts contains options for Container.Up
+type ContainerUpOpts struct {
+	// List of frontend/backend port mappings to forward.
+	//
+	// Frontend is the port accepting traffic on the host, backend is the service port.
+	Ports []PortForward
+	// Bind each tunnel port to a random port on the host.
+	Random bool
+}
+
+// Starts a Service and creates a tunnel that forwards traffic from the caller's network to that service.
+//
+// Be sure to set any exposed ports before calling this api.
+func (r *Container) Up(ctx context.Context, opts ...ContainerUpOpts) error {
+	if r.up != nil {
+		return nil
+	}
+	q := r.query.Select("up")
+	for i := len(opts) - 1; i >= 0; i-- {
+		// `ports` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Ports) {
+			q = q.Arg("ports", opts[i].Ports)
+		}
+		// `random` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Random) {
+			q = q.Arg("random", opts[i].Random)
+		}
+	}
+
+	return q.Execute(ctx)
+}
+
 // Retrieves the user to be set for all commands.
 func (r *Container) User(ctx context.Context) (string, error) {
 	if r.user != nil {
@@ -1010,6 +1013,17 @@ func (r *Container) User(ctx context.Context) (string, error) {
 
 	q = q.Bind(&response)
 	return response, q.Execute(ctx)
+}
+
+// Retrieves this container plus the given OCI anotation.
+func (r *Container) WithAnnotation(name string, value string) *Container {
+	q := r.query.Select("withAnnotation")
+	q = q.Arg("name", name)
+	q = q.Arg("value", value)
+
+	return &Container{
+		query: q,
+	}
 }
 
 // Configures default arguments for future commands.
@@ -1139,8 +1153,6 @@ func (r *Container) WithEnvVariable(name string, value string, opts ...Container
 
 // ContainerWithExecOpts contains options for Container.WithExec
 type ContainerWithExecOpts struct {
-	// DEPRECATED: For true this can be removed. For false, use `useEntrypoint` instead.
-	SkipEntrypoint bool
 	// If the container has an entrypoint, prepend it to the args.
 	UseEntrypoint bool
 	// Content to write to the command's standard input before closing (e.g., "Hello world").
@@ -1161,10 +1173,6 @@ type ContainerWithExecOpts struct {
 func (r *Container) WithExec(args []string, opts ...ContainerWithExecOpts) *Container {
 	q := r.query.Select("withExec")
 	for i := len(opts) - 1; i >= 0; i-- {
-		// `skipEntrypoint` optional argument
-		if !querybuilder.IsZeroValue(opts[i].SkipEntrypoint) {
-			q = q.Arg("skipEntrypoint", opts[i].SkipEntrypoint)
-		}
 		// `useEntrypoint` optional argument
 		if !querybuilder.IsZeroValue(opts[i].UseEntrypoint) {
 			q = q.Arg("useEntrypoint", opts[i].UseEntrypoint)
@@ -1603,6 +1611,16 @@ func (r *Container) WithWorkdir(path string) *Container {
 	}
 }
 
+// Retrieves this container minus the given OCI annotation.
+func (r *Container) WithoutAnnotation(name string) *Container {
+	q := r.query.Select("withoutAnnotation")
+	q = q.Arg("name", name)
+
+	return &Container{
+		query: q,
+	}
+}
+
 // Retrieves this container with unset default arguments for future commands.
 func (r *Container) WithoutDefaultArgs() *Container {
 	q := r.query.Select("withoutDefaultArgs")
@@ -1679,6 +1697,16 @@ func (r *Container) WithoutExposedPort(port int, opts ...ContainerWithoutExposed
 func (r *Container) WithoutFile(path string) *Container {
 	q := r.query.Select("withoutFile")
 	q = q.Arg("path", path)
+
+	return &Container{
+		query: q,
+	}
+}
+
+// Retrieves this container with the files at the given paths removed.
+func (r *Container) WithoutFiles(paths []string) *Container {
+	q := r.query.Select("withoutFiles")
+	q = q.Arg("paths", paths)
 
 	return &Container{
 		query: q,
@@ -2673,6 +2701,7 @@ func (r *Dagindag) WithSource(src *Directory) *Dagindag {
 type Directory struct {
 	query *querybuilder.Selection
 
+	digest *string
 	export *string
 	id     *DirectoryID
 	sync   *DirectoryID
@@ -2732,6 +2761,19 @@ func (r *Directory) Diff(other *Directory) *Directory {
 	return &Directory{
 		query: q,
 	}
+}
+
+// Return the directory's digest. The format of the digest is not guaranteed to be stable between releases of Dagger. It is guaranteed to be stable between invocations of the same Dagger engine.
+func (r *Directory) Digest(ctx context.Context) (string, error) {
+	if r.digest != nil {
+		return *r.digest, nil
+	}
+	q := r.query.Select("digest")
+
+	var response string
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
 }
 
 // Retrieves a directory at the given path.
@@ -2907,36 +2949,6 @@ func (r *Directory) UnmarshalJSON(bs []byte) error {
 	}
 	*r = *dag.LoadDirectoryFromID(DirectoryID(id))
 	return nil
-}
-
-// DirectoryPipelineOpts contains options for Directory.Pipeline
-type DirectoryPipelineOpts struct {
-	// Description of the sub-pipeline.
-	Description string
-	// Labels to apply to the sub-pipeline.
-	Labels []PipelineLabel
-}
-
-// Creates a named sub-pipeline.
-//
-// Deprecated: Explicit pipeline creation is now a no-op
-func (r *Directory) Pipeline(name string, opts ...DirectoryPipelineOpts) *Directory {
-	q := r.query.Select("pipeline")
-	for i := len(opts) - 1; i >= 0; i-- {
-		// `description` optional argument
-		if !querybuilder.IsZeroValue(opts[i].Description) {
-			q = q.Arg("description", opts[i].Description)
-		}
-		// `labels` optional argument
-		if !querybuilder.IsZeroValue(opts[i].Labels) {
-			q = q.Arg("labels", opts[i].Labels)
-		}
-	}
-	q = q.Arg("name", name)
-
-	return &Directory{
-		query: q,
-	}
 }
 
 // Force evaluation in the engine.
@@ -3139,6 +3151,16 @@ func (r *Directory) WithoutDirectory(path string) *Directory {
 func (r *Directory) WithoutFile(path string) *Directory {
 	q := r.query.Select("withoutFile")
 	q = q.Arg("path", path)
+
+	return &Directory{
+		query: q,
+	}
+}
+
+// Retrieves this directory with the files at the given paths removed.
+func (r *Directory) WithoutFiles(paths []string) *Directory {
+	q := r.query.Select("withoutFiles")
+	q = q.Arg("paths", paths)
 
 	return &Directory{
 		query: q,
@@ -4458,7 +4480,6 @@ type GitModuleSource struct {
 	query *querybuilder.Selection
 
 	cloneRef    *string
-	cloneURL    *string
 	commit      *string
 	htmlRepoURL *string
 	htmlURL     *string
@@ -4480,21 +4501,6 @@ func (r *GitModuleSource) CloneRef(ctx context.Context) (string, error) {
 		return *r.cloneRef, nil
 	}
 	q := r.query.Select("cloneRef")
-
-	var response string
-
-	q = q.Bind(&response)
-	return response, q.Execute(ctx)
-}
-
-// The URL to clone the root of the git repo from
-//
-// Deprecated: Use CloneRef instead. CloneRef supports both URL-style and SCP-like SSH references
-func (r *GitModuleSource) CloneURL(ctx context.Context) (string, error) {
-	if r.cloneURL != nil {
-		return *r.cloneURL, nil
-	}
-	q := r.query.Select("cloneURL")
 
 	var response string
 
@@ -5887,6 +5893,7 @@ type ModuleSource struct {
 
 	asString                     *string
 	configExists                 *bool
+	digest                       *string
 	id                           *ModuleSourceID
 	kind                         *ModuleSourceKind
 	moduleName                   *string
@@ -6015,6 +6022,19 @@ func (r *ModuleSource) Dependencies(ctx context.Context) ([]ModuleDependency, er
 	}
 
 	return convert(response), nil
+}
+
+// Return the module source's content digest. The format of the digest is not guaranteed to be stable between releases of Dagger. It is guaranteed to be stable between invocations of the same Dagger engine.
+func (r *ModuleSource) Digest(ctx context.Context) (string, error) {
+	if r.digest != nil {
+		return *r.digest, nil
+	}
+	q := r.query.Select("digest")
+
+	var response string
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
 }
 
 // The directory containing the module configuration and source code (source code may be in a subdir).
@@ -6703,15 +6723,6 @@ func (r *Port) Protocol(ctx context.Context) (NetworkProtocol, error) {
 
 	q = q.Bind(&response)
 	return response, q.Execute(ctx)
-}
-
-type WithClientFunc func(r *Client) *Client
-
-// With calls the provided function with current Client.
-//
-// This is useful for reusability and readability by not breaking the calling chain.
-func (r *Client) With(f WithClientFunc) *Client {
-	return f(r)
 }
 
 func (r *Client) WithGraphQLQuery(q *querybuilder.Selection) *Client {
@@ -7421,37 +7432,6 @@ func (r *Client) ModuleSource(refString string, opts ...ModuleSourceOpts) *Modul
 
 	return &ModuleSource{
 		query: q,
-	}
-}
-
-// PipelineOpts contains options for Client.Pipeline
-type PipelineOpts struct {
-	// Description of the sub-pipeline.
-	Description string
-	// Labels to apply to the sub-pipeline.
-	Labels []PipelineLabel
-}
-
-// Creates a named sub-pipeline.
-//
-// Deprecated: Explicit pipeline creation is now a no-op
-func (r *Client) Pipeline(name string, opts ...PipelineOpts) *Client {
-	q := r.query.Select("pipeline")
-	for i := len(opts) - 1; i >= 0; i-- {
-		// `description` optional argument
-		if !querybuilder.IsZeroValue(opts[i].Description) {
-			q = q.Arg("description", opts[i].Description)
-		}
-		// `labels` optional argument
-		if !querybuilder.IsZeroValue(opts[i].Labels) {
-			q = q.Arg("labels", opts[i].Labels)
-		}
-	}
-	q = q.Arg("name", name)
-
-	return &Client{
-		query:  q,
-		client: r.client,
 	}
 }
 
