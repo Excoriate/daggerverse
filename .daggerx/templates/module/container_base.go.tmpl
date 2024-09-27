@@ -11,6 +11,7 @@ const (
 	defaultUbuntuImage        = "ubuntu"
 	defaultBusyBoxImage       = "busybox"
 	defaultImageVersionLatest = "latest"
+	defaultWolfiImage         = "cgr.dev/chainguard/wolfi-base"
 )
 
 // BaseAlpine sets the base image to an Alpine Linux image and creates the base container.
@@ -97,7 +98,7 @@ func (m *{{.module_name}}) BaseWolfi(
 		version = defaultImageVersionLatest
 	}
 
-	imageURL := fmt.Sprintf("%s:%s", "cgr.dev/chainguard/wolfi-base", version)
+	imageURL := fmt.Sprintf("%s:%s", defaultWolfiImage, version)
 
 	m.Ctr = dag.
 		Container().
@@ -114,6 +115,7 @@ func (m *{{.module_name}}) BaseWolfi(
 	// Install default and additional packages
 	m.Ctr = m.Ctr.
 		WithExec(command)
+
 	// Apply overlays
 	for _, overlay := range overlays {
 		m.Ctr = m.Ctr.
