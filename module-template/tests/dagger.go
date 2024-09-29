@@ -7,7 +7,7 @@ import (
 	"github.com/Excoriate/daggerverse/module-template/tests/internal/dagger"
 )
 
-// TestDaggerWithDaggerCLI tests various versions of the Dagger CLI from v0.12.0 to v0.12.4
+// TestDaggerWithDaggerCLI tests various versions of the Dagger CLI from v0.13.0 to v0.13.3
 //
 // This function uses the provided context to run a series of tests that validate the Dagger CLI.
 // It verifies that the CLI version reported matches the expected version for each specific version tested.

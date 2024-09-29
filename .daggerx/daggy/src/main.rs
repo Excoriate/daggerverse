@@ -18,9 +18,13 @@ struct Args {
     /// Module is the name of the dagger module to generate.
     #[arg(short = 'm', long = "module")]
     module: Option<String>,
+
+    /// Module type is the type of the module to generate.
+    #[arg(short = 't', long = "type")]
+    module_type: Option<String>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug, Parser)]
 struct NewDaggerModule {
     path: String,
     name: String,
@@ -28,6 +32,7 @@ struct NewDaggerModule {
     module_test_src_path: String,
     github_actions_workflow_path: String,
     github_actions_workflow: String,
+    module_type: String,
 }
 fn main() -> Result<(), Error> {
     let args: Args = Args::parse();
@@ -532,6 +537,20 @@ fn initialize_tests(module_cfg: &NewDaggerModule) -> Result<(), Error> {
     // run_command_with_output("dagger develop -m tests", ".")?;
     run_command_with_output("dagger develop", ".")?;
 
+    // Handle different module types
+    match module_cfg.module_type.as_str() {
+        "full" => {
+            // Full module initialization logic
+            run_command_with_output("dagger develop", ".")?;
+        }
+        "light" => {
+            // Light module initialization logic
+            println!("Initializing light module type...");
+            // Add any specific logic for light module type here
+        }
+        _ => return Err(Error::new(ErrorKind::InvalidInput, "Invalid module type")),
+    }
+
     // Change back to the root directory
     env::set_current_dir("../..")?;
 
@@ -608,7 +627,7 @@ fn copy_readme_and_license(module_cfg: &NewDaggerModule) -> Result<(), Error> {
 }
 
 // Modified function
-fn get_module_configurations(module: &str) -> Result<NewDaggerModule, Error> {
+fn get_module_configurations(module: &str, module_type: &str) -> Result<NewDaggerModule, Error> {
     let module_path_full = env::current_dir()?.join(module);
     let current_root_dir = env::current_dir()?;
 
@@ -626,6 +645,7 @@ fn get_module_configurations(module: &str) -> Result<NewDaggerModule, Error> {
             .join(format!("ci-mod-{}.yaml", module))
             .to_string_lossy()
             .to_string(),
+        module_type: module_type.to_string(),
     })
 }
 

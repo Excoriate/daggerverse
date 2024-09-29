@@ -12,6 +12,7 @@ import (
 const (
 	// dockerVersionDefault specifies the default Docker version.
 	dockerVersionDefault = "24.0"
+	daggerVersionDefault = "0.13.0"
 )
 
 // getDockerInDockerImage returns the Docker-in-Docker image with the given version.
@@ -143,15 +144,24 @@ func (m *ModuleTemplate) WithDaggerDockerService(version string) *dagger.Service
 		AsService()
 }
 
+// validateDaggerVersion validates the specified Dagger Engine version.
+//
+// This method ensures that the provided Dagger Engine version is greater than or equal to
+// the minimum supported version. If the version is not valid, it returns an error.
+//
+// Parameters:
+//   - dagVersion: The version of the Dagger Engine to validate.
 func (m *ModuleTemplate) validateDaggerVersion(dagVersion string) error {
 	if dagVersion == "" {
 		return WrapError(nil, "empty dagVersion")
 	}
 
-	// If version is lower than 0.12.0, it's not supported.
-	if semver.Compare(dagVersion, "0.12.0") < 0 {
+	minSupportedVersion := daggerVersionDefault
+
+	// If version is lower than 0.13.0, it's not supported.
+	if semver.Compare(dagVersion, minSupportedVersion) < 0 {
 		return Errorf("unsupported dagger version %s, it must be greater "+
-			"than or equal to 0.12.0", dagVersion)
+			"than or equal to %s", dagVersion, minSupportedVersion)
 	}
 
 	return nil
