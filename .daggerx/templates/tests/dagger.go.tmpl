@@ -64,7 +64,7 @@ func (m *Tests) testDaggerVersion(ctx context.Context, version string) error {
 	}
 
 	// Set the Dagger CLI version in Ubuntu
-	targetModuleUbuntu := dag.ModuleTemplate(dagger.ModuleTemplateOpts{
+	targetModuleUbuntu := dag.{{.module_name}}(dagger.{{.module_name}}Opts{
 		Ctr: dag.Container().From("ubuntu:latest"),
 	})
 
