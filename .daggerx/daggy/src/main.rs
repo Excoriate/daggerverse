@@ -40,7 +40,8 @@ fn main() -> Result<(), Error> {
     match args.task.as_str() {
         "create" => {
             if let Some(module) = args.module {
-                create_module(&module)?;
+                let module_type = args.module_type.as_deref().unwrap_or("full");
+                create_module(&module, module_type)?;
             } else {
                 eprintln!("Module name is required for 'create' task");
                 std::process::exit(1);
