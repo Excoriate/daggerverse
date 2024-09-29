@@ -128,12 +128,12 @@ reloadall mod:
   @cd {{mod}} && dagger call && dagger functions
 
 # Recipe to run all the tests in the target module
-test mod: (reloadmod mod) (reloadtest mod)
+test mod *args: (reloadmod mod) (reloadtest mod)
   @echo "Running Dagger module tests..."
   @echo "Currently in {{mod}} module 🧪, path=`pwd`"
   @test -d {{mod}}/tests || (echo "Module not found" && exit 1)
   @cd {{mod}}/tests && dagger functions
-  @cd {{mod}}/tests && dagger call test-all
+  @cd {{mod}}/tests && dagger call test-all {{args}}
 
 # Recipe to run all the examples in the target module
 examplesgo mod: (reloadmod mod)
