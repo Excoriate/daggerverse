@@ -35,7 +35,8 @@ fn main() -> Result<(), Error> {
     match args.task.as_str() {
         "create" => {
             if let Some(module) = args.module {
-                create_module(&module)?;
+                let module_type = args.module_type.as_deref().unwrap_or("full");
+                create_module(&module, module_type)?;
             } else {
                 eprintln!("Module name is required for 'create' task");
                 std::process::exit(1);
@@ -54,14 +55,14 @@ fn main() -> Result<(), Error> {
 }
 
 // Create a new module in the root of the current directory.
-fn create_module(module: &str) -> Result<(), Error> {
+fn create_module(module: &str, module_type: &str) -> Result<(), Error> {
     println!("Creating module 🚀: {}", module);
     dagger_module_exists(module)?;
 
     let git_root = get_git_root()?;
     env::set_current_dir(git_root)?;
 
-    let new_module = get_module_configurations(module)?;
+    let new_module = get_module_configurations(module, module_type)?;
     println!("Module path: {}", new_module.path);
     println!("Module src path: {}", new_module.module_src_path);
     println!("Module test src path: {}", new_module.module_test_src_path);
@@ -412,11 +413,19 @@ fn initialize_module(module_cfg: &NewDaggerModule) -> Result<(), Error> {
     );
     run_command_with_output(&go_mod_edit_command, ".")?;
 
-    // Run dagger develop
-    // run_command_with_output(&format!("dagger develop -m {}", module_cfg.name), ".")?;
-    // FIXME: Check consistency across other cases. It's required to run dagger develop without arguments, since
-    // it's running in the module's directory.
-    run_command_with_output("dagger develop", ".")?;
+    // Handle different module types
+    match module_cfg.module_type.as_str() {
+        "full" => {
+            // Full module initialization logic
+            run_command_with_output("dagger develop", ".")?;
+        }
+        "light" => {
+            // Light module initialization logic
+            println!("Initializing light module type...");
+            // TODO: Add any specific logic for light module type here
+        }
+        _ => return Err(Error::new(ErrorKind::InvalidInput, "Invalid module type")),
+    }
 
     // Change back to the root directory
     env::set_current_dir("..")?;
