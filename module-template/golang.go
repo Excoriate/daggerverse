@@ -210,11 +210,11 @@ func (m *ModuleTemplate) WithGoInstall(
 	// pkgs are the URLs of the packages to install.
 	pkgs []string,
 ) *ModuleTemplate {
-	if len(pkgs) == 0 {
-		// Optionally, handle empty URLs here or return an error
-		// For now, we'll just exit early.
-		return m
-	}
+	// if len(pkgs) == 0 {
+	// 	// Optionally, handle empty URLs here or return an error
+	// 	// For now, we'll just exit early.
+	// 	return m
+	// }
 
 	// Concatenate WithExec arguments based on the package URLs
 	args := []string{"go", "install"}
