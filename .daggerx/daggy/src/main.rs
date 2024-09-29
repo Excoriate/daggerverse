@@ -236,10 +236,15 @@ fn update_dagger_json(module_cfg: &NewDaggerModule) -> Result<(), Error> {
     json_content["exclude"] = json!([
         "../.direnv",
         "../.devenv",
+        "../.vscode",
+        "../.idea",
+        "../.trunk",
         "../go.work",
         "../go.work.sum",
         "tests",
         "examples/go",
+        "examples/python",
+        "examples/node"
     ]);
 
     fs::write(dagger_json_path, serde_json::to_string_pretty(&json_content)?)

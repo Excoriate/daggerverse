@@ -4,10 +4,15 @@
   "exclude": [
     "../.direnv",
     "../.devenv",
+    "../.vscode",
+    "../.idea",
+    "../.trunk",
     "../go.work",
     "../go.work.sum",
     "tests",
-    "examples/go"
+    "examples/go",
+    "examples/python",
+    "examples/node"
   ],
   "source": ".",
   "engineVersion": "v0.13.3"
