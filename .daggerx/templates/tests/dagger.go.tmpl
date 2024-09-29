@@ -112,14 +112,14 @@ func (m *Tests) testDaggerVersion(ctx context.Context, version string) error {
 //nolint:cyclop // The test handles multiple commands and environments, requiring a longer function.
 func (m *Tests) TestDaggerSetupDaggerInDagger(ctx context.Context) error {
 	// Initialize the target module.
-	targetModule := dag.ModuleTemplate()
+	targetModule := dag.{{.module_name}}()
 
 	// Define versions for Dagger and Docker.
 	dagVersion := "v0.13.3"
 	dockerVersion := "24.0"
 
 	// Setup Dagger in Dagger environment.
-	targetModule = targetModule.SetupDaggerInDagger(dagVersion, dagger.ModuleTemplateSetupDaggerInDaggerOpts{
+	targetModule = targetModule.SetupDaggerInDagger(dagVersion, dagger.{{.module_name}}SetupDaggerInDaggerOpts{
 		DockerVersion: dockerVersion,
 	})
 
