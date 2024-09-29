@@ -38,7 +38,7 @@ func (m *Tests) TestDaggerWithDaggerCLI(ctx context.Context) error {
 // version: The version of the Dagger CLI to test.
 // Returns an error if the Dagger CLI version reported does not match the expected version.
 func (m *Tests) testDaggerVersion(ctx context.Context, version string) error {
-	targetModule := dag.ModuleTemplate()
+	targetModule := dag.{{.module_name}}()
 
 	// Set the Dagger CLI version in Alpine
 	targetModule = targetModule.WithDaggerClialpine(version)
