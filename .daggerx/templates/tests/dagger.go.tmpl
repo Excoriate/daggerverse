@@ -38,7 +38,7 @@ func (m *Tests) TestDaggerWithDaggerCLI(ctx context.Context) error {
 // version: The version of the Dagger CLI to test.
 // Returns an error if the Dagger CLI version reported does not match the expected version.
 func (m *Tests) testDaggerVersion(ctx context.Context, version string) error {
-	targetModule := dag.{{.module_name}}()
+	targetModule := dag.ModuleTemplate()
 
 	// Set the Dagger CLI version in Alpine
 	targetModule = targetModule.WithDaggerClialpine(version)
@@ -64,7 +64,7 @@ func (m *Tests) testDaggerVersion(ctx context.Context, version string) error {
 	}
 
 	// Set the Dagger CLI version in Ubuntu
-	targetModuleUbuntu := dag.{{.module_name}}(dagger.{{.module_name}}Opts{
+	targetModuleUbuntu := dag.ModuleTemplate(dagger.ModuleTemplateOpts{
 		Ctr: dag.Container().From("ubuntu:latest"),
 	})
 
@@ -112,14 +112,14 @@ func (m *Tests) testDaggerVersion(ctx context.Context, version string) error {
 //nolint:cyclop // The test handles multiple commands and environments, requiring a longer function.
 func (m *Tests) TestDaggerSetupDaggerInDagger(ctx context.Context) error {
 	// Initialize the target module.
-	targetModule := dag.{{.module_name}}()
+	targetModule := dag.ModuleTemplate()
 
 	// Define versions for Dagger and Docker.
 	dagVersion := "v0.13.3"
 	dockerVersion := "24.0"
 
 	// Setup Dagger in Dagger environment.
-	targetModule = targetModule.SetupDaggerInDagger(dagVersion, dagger.{{.module_name}}SetupDaggerInDaggerOpts{
+	targetModule = targetModule.SetupDaggerInDagger(dagVersion, dagger.ModuleTemplateSetupDaggerInDaggerOpts{
 		DockerVersion: dockerVersion,
 	})
 
