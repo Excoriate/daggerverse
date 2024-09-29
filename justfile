@@ -158,10 +158,14 @@ cilocal mod: (reloadall mod) (golint mod) (test mod) (examplesgo mod) (ci-module
   @echo "Running the whole CI locally... 🚀"
 
 # Recipe to create a new module using Daggy (a rust CLI tool)
-create mod:
-  @echo "Creating a new module..."
+create mod type='full':
+  @echo "Creating a new {{type}} module..."
   @cd .daggerx/daggy && cargo build --release
-  @.daggerx/daggy/target/release/daggy --task=create --module={{mod}}
+  @.daggerx/daggy/target/release/daggy --task=create --module={{mod}} --type={{type}}
+
+# Recipe to create a new light module using Daggy
+createlight mod:
+  @just create {{mod}} light
 
 # This recipe validate if the dagger module has the README.md file and the LICENSE file
 ci-module-docs mod:
