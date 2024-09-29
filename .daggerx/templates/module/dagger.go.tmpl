@@ -114,7 +114,7 @@ func (m *{{.module_name}}) WithDaggerCLIUbuntu(version string) *{{.module_name}}
 //
 // Returns:
 //   - *dagger.Service: A Dagger service configured with Docker.
-func (m *ModuleTemplate) WithDaggerDockerService(version string) *dagger.Service {
+func (m *{{.module_name}}) WithDaggerDockerService(version string) *dagger.Service {
 	if version == "" {
 		version = dockerVersionDefault
 	}
@@ -151,7 +151,7 @@ func (m *ModuleTemplate) WithDaggerDockerService(version string) *dagger.Service
 //
 // Parameters:
 //   - dagVersion: The version of the Dagger Engine to validate.
-func (m *ModuleTemplate) validateDaggerVersion(dagVersion string) error {
+func (m *{{.module_name}}) validateDaggerVersion(dagVersion string) error {
 	if dagVersion == "" {
 		return WrapError(nil, "empty dagVersion")
 	}
@@ -178,12 +178,12 @@ func (m *ModuleTemplate) validateDaggerVersion(dagVersion string) error {
 //   - dockerVersion: The version of the Docker Engine to use, e.g., "24.0". This is optional.
 //
 // Returns:
-//   - *ModuleTemplate: The modified ModuleTemplate instance with Dagger and Docker configured.
+//   - *{{.module_name}}: The modified {{.module_name}} instance with Dagger and Docker configured.
 //   - error: An error if the setup process fails at any step.
-func (m *ModuleTemplate) SetupDaggerInDagger(
+func (m *{{.module_name}}) SetupDaggerInDagger(
 	dagVersion string, // The version of the Dagger Engine to use.
 	dockerVersion string, // The version of the Docker Engine to use. +optional
-) (*ModuleTemplate, error) {
+) (*{{.module_name}}, error) {
 	// Validate the specified Dagger Engine version.
 	if err := m.validateDaggerVersion(dagVersion); err != nil {
 		return nil, WrapErrorf(err, "failed to validate dagger version %s", dagVersion)
