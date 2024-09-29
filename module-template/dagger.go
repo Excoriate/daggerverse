@@ -2,11 +2,32 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/Excoriate/daggerverse/module-template/internal/dagger"
 	"golang.org/x/mod/semver"
 )
+
+const (
+	// dockerVersionDefault specifies the default Docker version.
+	dockerVersionDefault = "24.0"
+)
+
+// getDockerInDockerImage returns the Docker-in-Docker image with the given version.
+//
+// If the version is not provided, it defaults to dockerVersionDefault.
+//
+// Example:
+//
+//	getDockerInDockerImage("20.10.17") => "docker:20.10.17-dind"
+func getDockerInDockerImage(version string) string {
+	if version == "" {
+		version = dockerVersionDefault
+	}
+
+	return fmt.Sprintf("docker:%s-dind", version)
+}
 
 // getDaggerInstallCMDByVersion returns the command to install the Dagger engine.
 //
