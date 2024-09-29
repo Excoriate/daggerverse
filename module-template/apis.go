@@ -9,6 +9,7 @@ package main
 import (
 	"context"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/Excoriate/daggerverse/module-template/internal/dagger"
@@ -244,6 +245,42 @@ func (m *ModuleTemplate) WithCacheBuster() *ModuleTemplate {
 		WithEnvVariable("CACHE_BUSTER", time.
 			Now().
 			Format(time.RFC3339Nano))
+
+	return m
+}
+
+// WithConfigFile mounts a configuration file into the container at the specified path.
+//
+// This method allows you to mount a configuration file into the container at a specified path.
+// If no path is provided, it defaults to a predefined mount prefix from the fixtures package.
+//
+// Args:
+//   - cfgPath (string): The path where the config file will be mounted. If empty, it defaults to fixtures.MntPrefix.
+//     +optional
+//   - cfgFile (*dagger.File): The config file to be mounted.
+//
+// Returns:
+//   - *ModuleTemplate: The updated ModuleTemplate with the config file mounted in the container.
+func (m *ModuleTemplate) WithConfigFile(
+	// cfgPath is the path where the config file will be mounted.
+	// +optional
+	cfgPath string,
+	// setEnvVar is a string that set an environment variable in the container with the config file path.
+	// +optional
+	setEnvVar string,
+	// cfgFile is the config file to be mounted.
+	cfgFile *dagger.File) *ModuleTemplate {
+	if cfgPath == "" {
+		cfgPath = fixtures.MntPrefix
+	}
+
+	m.Ctr = m.Ctr.
+		WithMountedFile(cfgPath, cfgFile)
+
+	if setEnvVar != "" {
+		setEnvVar = strings.ToUpper(setEnvVar)
+		m.Ctr = m.Ctr.WithEnvVariable(setEnvVar, cfgPath)
+	}
 
 	return m
 }

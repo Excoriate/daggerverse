@@ -30,7 +30,12 @@ func (m *ModuleTemplate) OpenTerminal() *dagger.Container {
 // - string: The output of the command.
 // - error: An error if the command fails.
 func (m *ModuleTemplate) RunShell(cmd string) (string, error) {
-	out, err := m.Ctr.WithoutEntrypoint().WithExec([]string{"sh", "-c", cmd}).Stdout(context.Background())
+	out, err := m.
+		Ctr.
+		WithoutEntrypoint().
+		WithExec([]string{"sh", "-c", cmd}).
+		Stdout(context.Background())
+
 	if err != nil {
 		return "", WrapErrorf(err, "failed to run shell command: %s", cmd)
 	}

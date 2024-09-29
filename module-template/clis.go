@@ -1,6 +1,8 @@
 package main
 
-import "github.com/Excoriate/daggerx/pkg/installerx"
+import (
+	"github.com/Excoriate/daggerx/pkg/installerx"
+)
 
 // WithAWSCLIInAlpineContainer installs the AWS CLI in the
 // Alpine-based container.
@@ -40,10 +42,6 @@ func (m *ModuleTemplate) WithAWSCLIInUbuntuContainer(
 		WithExec([]string{"apt-get", "update"}).
 		WithExec([]string{"apt-get", "install", "-y", "unzip", "curl", "sudo"}).
 		WithExec([]string{"sh", "-c", awsCLIInstallation})
-		// WithExec([]string{"curl", "-L", url, "-o", "awscliv2.zip"}).
-		// WithExec([]string{"unzip", "awscliv2.zip"}).
-		// WithExec([]string{"sudo", "./aws/install"}).
-		// WithExec([]string{"rm", "-rf", "awscliv2.zip", "aws"})
 
 	return m
 }
