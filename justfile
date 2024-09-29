@@ -96,7 +96,7 @@ bump-version mod bump='minor':
     echo "Tag has been pushed to the remote repository"
 
 # Recipe to reload Dagger module (Dagger Develop)
-reloadmod mod:
+reloadmod mod *args:
   @echo "Running Dagger development in a given module..."
   @echo "Currently in {{mod}} module 📦, path=`pwd`"
   @test -d {{mod}} || (echo "Module not found" && exit 1)
@@ -104,15 +104,15 @@ reloadmod mod:
     echo "Docker is not running. Please start Docker and try again."; \
     exit 1; \
   fi
-  @cd {{mod}} && dagger develop
+  @cd {{mod}} && dagger develop {{args}}
   @echo "Module reloaded successfully ✅"
 
 # Recipe to reload a Dagger module's tests (Dagger Develop)
-reloadtest mod:
+reloadtest mod *args:
   @echo "Running Dagger development in a given module's tests..."
   @echo "Currently in {{mod}}/tests module 📦, path=`pwd`"
   @test -d {{mod}} || (echo "Module not found" && exit 1)
-  @cd {{mod}}/tests && dagger develop
+  @cd {{mod}}/tests && dagger develop {{args}}
   @echo "Module Tests reloaded successfully ✅"
 
 # Recipe to reload Dagger module and its underlying tests (Dagger Develop & Dagger Call/Functions)
@@ -128,19 +128,19 @@ reloadall mod:
   @cd {{mod}} && dagger call && dagger functions
 
 # Recipe to run all the tests in the target module
-test mod: (reloadmod mod) (reloadtest mod)
+test mod *args: (reloadmod mod) (reloadtest mod)
   @echo "Running Dagger module tests..."
   @echo "Currently in {{mod}} module 🧪, path=`pwd`"
   @test -d {{mod}}/tests || (echo "Module not found" && exit 1)
   @cd {{mod}}/tests && dagger functions
-  @cd {{mod}}/tests && dagger call test-all
+  @cd {{mod}}/tests && dagger call test-all {{args}}
 
 # Recipe to run all the examples in the target module
-examplesgo mod: (reloadmod mod)
+examplesgo mod *args: (reloadmod mod)
   @echo "Running Dagger module examples (Go SDK)..."
   @echo "Currently in {{mod}} module 🧪, path=`pwd`"
   @test -d {{mod}}/examples/go || (echo "Module examples not found" && exit 1)
-  @cd {{mod}}/examples/go && dagger call all-recipes
+  @cd {{mod}}/examples/go && dagger call all-recipes {{args}}
 
 # Recipe to run GolangCI Lint
 golint mod:
