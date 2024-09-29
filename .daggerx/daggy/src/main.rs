@@ -1,39 +1,30 @@
+mod args;
+mod command_utils;
+mod configuration;
+mod dagger_commands;
+mod dagger_json;
+mod git;
+mod naming;
+mod templating;
+mod utils;
+
+use args::Args;
 use clap::Parser;
+use command_utils::{run_command_with_output, run_go_fmt};
+use configuration::{get_module_configurations, NewDaggerModule};
+use dagger_commands::run_dagger_develop;
+use dagger_json::{update_dagger_json, update_examples_dagger_json, update_tests_dagger_json};
+use git::find_git_root;
+use naming::{to_camel_case, to_pascal_case};
 use regex::Regex;
-use serde::Deserialize;
-use serde_json::{json, Value};
 use std::env;
 use std::fs::{self};
-use std::io::{Error, ErrorKind, Write};
+use std::io::{Error, ErrorKind};
 use std::path::Path;
-use std::process::{Command, Output, Stdio};
+use std::process::Command;
+use templating::process_template_content;
+use utils::copy_dir_all;
 
-#[derive(Parser, Debug)]
-#[command(version, about, long_about = None)]
-struct Args {
-    /// Task is the name of the task to run
-    #[arg(short = 't', long = "task")]
-    task: String,
-
-    /// Module is the name of the dagger module to generate.
-    #[arg(short = 'm', long = "module")]
-    module: Option<String>,
-
-    /// Module type is the type of the module to generate.
-    #[arg(short = 't', long = "type")]
-    module_type: Option<String>,
-}
-
-#[derive(Deserialize, Debug, Parser)]
-struct NewDaggerModule {
-    path: String,
-    name: String,
-    module_src_path: String,
-    module_test_src_path: String,
-    github_actions_workflow_path: String,
-    github_actions_workflow: String,
-    module_type: String,
-}
 fn main() -> Result<(), Error> {
     let args: Args = Args::parse();
 
@@ -64,7 +55,7 @@ fn create_module(module: &str, module_type: &str) -> Result<(), Error> {
     println!("Creating module 🚀: {}", module);
     dagger_module_exists(module)?;
 
-    let git_root = get_git_root()?;
+    let git_root = find_git_root()?;
     env::set_current_dir(git_root)?;
 
     let new_module = get_module_configurations(module, module_type)?;
@@ -131,8 +122,6 @@ fn copy_and_process_templates(
     Ok(())
 }
 
-// New function
-// Modified function
 fn copy_dir_recursive(src: &Path, dest: &Path, module_cfg: &NewDaggerModule) -> Result<(), Error> {
     if !dest.exists() {
         fs::create_dir_all(dest)?;
@@ -161,23 +150,6 @@ fn copy_dir_recursive(src: &Path, dest: &Path, module_cfg: &NewDaggerModule) -> 
     }
 
     Ok(())
-}
-
-// New function
-fn process_template_content(content: &str, module_cfg: &NewDaggerModule) -> String {
-    // let pkg_name = module_cfg.name.replace("-", "_");
-    let pkg_name = module_cfg
-        .name
-        .to_string()
-        .to_lowercase()
-        .trim()
-        .replace(" ", "-");
-    let pascal_case_name = to_pascal_case(&module_cfg.name);
-    let lowercase_name = module_cfg.name.to_lowercase();
-
-    let content = content.replace("{{.module_name_pkg}}", &pkg_name);
-    let content = content.replace("{{.module_name}}", &pascal_case_name);
-    content.replace("{{.module_name_lowercase}}", &lowercase_name)
 }
 
 fn develop_modules() -> Result<(), Error> {
@@ -254,139 +226,6 @@ fn develop_modules() -> Result<(), Error> {
             successful_modules
         );
     }
-
-    Ok(())
-}
-
-fn update_dagger_json(module_cfg: &NewDaggerModule) -> Result<(), Error> {
-    let dagger_json_path = format!("{}/dagger.json", module_cfg.path);
-
-    let mut json_content: Value = fs::read_to_string(&dagger_json_path)
-        .map_err(|e| {
-            Error::new(
-                ErrorKind::Other,
-                format!("Failed to read dagger.json: {}", e),
-            )
-        })
-        .and_then(|content| {
-            serde_json::from_str(&content).map_err(|e| {
-                Error::new(
-                    ErrorKind::Other,
-                    format!("Failed to parse dagger.json: {}", e),
-                )
-            })
-        })?;
-
-    json_content["exclude"] = json!([
-        "../.direnv",
-        "../.devenv",
-        "../.vscode",
-        "../.idea",
-        "../.trunk",
-        "../go.work",
-        "../go.work.sum",
-        "tests",
-        "examples/go",
-        "examples/python",
-        "examples/node"
-    ]);
-
-    fs::write(
-        dagger_json_path,
-        serde_json::to_string_pretty(&json_content)?,
-    )
-    .map_err(|e| {
-        Error::new(
-            ErrorKind::Other,
-            format!("Failed to write updated dagger.json: {}", e),
-        )
-    })?;
-
-    Ok(())
-}
-
-// New function
-fn update_tests_dagger_json(module_cfg: &NewDaggerModule) -> Result<(), Error> {
-    let dagger_json_path = format!("{}/tests/dagger.json", module_cfg.path);
-    let mut json_content: Value = fs::read_to_string(&dagger_json_path)
-        .map_err(|e| {
-            Error::new(
-                ErrorKind::Other,
-                format!("Failed to read tests/dagger.json: {}", e),
-            )
-        })
-        .and_then(|content| {
-            serde_json::from_str(&content).map_err(|e| {
-                Error::new(
-                    ErrorKind::Other,
-                    format!("Failed to parse tests/dagger.json: {}", e),
-                )
-            })
-        })?;
-
-    json_content["exclude"] = json!([
-        "../../.direnv",
-        "../../.devenv",
-        "../../.vscode",
-        "../../.idea",
-        "../../.trunk",
-        "../../go.work",
-        "../../go.work.sum"
-    ]);
-
-    fs::write(
-        dagger_json_path,
-        serde_json::to_string_pretty(&json_content)?,
-    )
-    .map_err(|e| {
-        Error::new(
-            ErrorKind::Other,
-            format!("Failed to write updated tests/dagger.json: {}", e),
-        )
-    })?;
-
-    Ok(())
-}
-
-// New function
-fn update_examples_dagger_json(module_cfg: &NewDaggerModule) -> Result<(), Error> {
-    let dagger_json_path = format!("{}/examples/go/dagger.json", module_cfg.path);
-    let mut json_content: Value = fs::read_to_string(&dagger_json_path)
-        .map_err(|e| {
-            Error::new(
-                ErrorKind::Other,
-                format!("Failed to read examples/go/dagger.json: {}", e),
-            )
-        })
-        .and_then(|content| {
-            serde_json::from_str(&content).map_err(|e| {
-                Error::new(
-                    ErrorKind::Other,
-                    format!("Failed to parse examples/go/dagger.json: {}", e),
-                )
-            })
-        })?;
-
-    json_content["exclude"] = json!([
-        "../../../.direnv",
-        "../../../.devenv",
-        "../../../.vscode",
-        "../../../.idea",
-        "../../../.trunk",
-        "../../../go.work",
-        "../../../go.work.sum"
-    ]);
-
-    fs::write(
-        dagger_json_path,
-        serde_json::to_string_pretty(&json_content)?,
-    )
-    .map_err(|e| {
-        Error::new(
-            ErrorKind::Other,
-            format!("Failed to write updated examples/go/dagger.json: {}", e),
-        )
-    })?;
 
     Ok(())
 }
@@ -485,21 +324,6 @@ fn initialize_examples(module_cfg: &NewDaggerModule) -> Result<(), Error> {
     Ok(())
 }
 
-// New helper function to copy directories recursively
-fn copy_dir_all(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> Result<(), Error> {
-    fs::create_dir_all(&dst)?;
-    for entry in fs::read_dir(src)? {
-        let entry = entry?;
-        let ty = entry.file_type()?;
-        if ty.is_dir() {
-            copy_dir_all(entry.path(), dst.as_ref().join(entry.file_name()))?;
-        } else {
-            fs::copy(entry.path(), dst.as_ref().join(entry.file_name()))?;
-        }
-    }
-    Ok(())
-}
-
 // Modified function
 fn initialize_tests(module_cfg: &NewDaggerModule) -> Result<(), Error> {
     let tests_path = format!("{}/tests", module_cfg.path);
@@ -555,18 +379,6 @@ fn initialize_tests(module_cfg: &NewDaggerModule) -> Result<(), Error> {
     env::set_current_dir("../..")?;
 
     Ok(())
-}
-
-fn get_git_root() -> Result<String, Error> {
-    let output = Command::new("git")
-        .args(&["rev-parse", "--show-toplevel"])
-        .output()?;
-
-    if output.status.success() {
-        Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
-    } else {
-        Err(Error::new(ErrorKind::Other, "Not in a git repository"))
-    }
 }
 
 fn copy_and_replace_templates(
@@ -627,29 +439,6 @@ fn copy_readme_and_license(module_cfg: &NewDaggerModule) -> Result<(), Error> {
 }
 
 // Modified function
-fn get_module_configurations(module: &str, module_type: &str) -> Result<NewDaggerModule, Error> {
-    let module_path_full = env::current_dir()?.join(module);
-    let current_root_dir = env::current_dir()?;
-
-    Ok(NewDaggerModule {
-        path: module_path_full.to_string_lossy().to_string(),
-        module_src_path: module_path_full.to_string_lossy().to_string(),
-        module_test_src_path: module_path_full.join("tests").to_string_lossy().to_string(),
-        name: module.to_string(),
-        github_actions_workflow_path: current_root_dir
-            .join(".github/workflows")
-            .to_string_lossy()
-            .to_string(),
-        github_actions_workflow: current_root_dir
-            .join(".github/workflows")
-            .join(format!("ci-mod-{}.yaml", module))
-            .to_string_lossy()
-            .to_string(),
-        module_type: module_type.to_string(),
-    })
-}
-
-// Modified function
 fn generate_github_actions_workflow(module_cfg: &NewDaggerModule) -> Result<(), Error> {
     println!("Generating GitHub Actions workflow 🚀: {}", module_cfg.name);
     fs::create_dir_all(&module_cfg.github_actions_workflow_path)?;
@@ -682,48 +471,6 @@ fn dagger_module_exists(module: &str) -> Result<(), Error> {
     Ok(())
 }
 
-fn find_git_root() -> Result<String, Error> {
-    let output = Command::new("git")
-        .args(&["rev-parse", "--show-toplevel"])
-        .output()?;
-
-    if output.status.success() {
-        Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
-    } else {
-        Err(Error::new(ErrorKind::Other, "Not in a git repository"))
-    }
-}
-fn run_command_with_output(command: &str, target_dir: &str) -> Result<Output, Error> {
-    println!("Running command: {}", command);
-    let target_directory = if target_dir.is_empty() {
-        find_git_root()?
-    } else {
-        target_dir.to_string()
-    };
-
-    println!("Running command in directory: {}", target_directory);
-    let output = Command::new("sh")
-        .arg("-c")
-        .arg(command)
-        .current_dir(target_directory)
-        .stdout(Stdio::inherit())
-        .stderr(Stdio::inherit())
-        .output()?;
-
-    if !output.status.success() {
-        return Err(Error::new(
-            ErrorKind::Other,
-            format!(
-                "Command failed with exit code: {} and with error: {}",
-                output.status,
-                String::from_utf8_lossy(&output.stderr)
-            ),
-        ));
-    }
-
-    Ok(output)
-}
-
 fn replace_module_name(content: &str, module_name: &str) -> String {
     let pascal_case_name = to_pascal_case(module_name);
     let camel_case_name = to_camel_case(module_name);
@@ -735,14 +482,6 @@ fn replace_module_name(content: &str, module_name: &str) -> String {
     let content = re_pascal.replace_all(content, &pascal_case_name);
     let content = re_camel.replace_all(&content, &camel_case_name);
     re_lowercase.replace_all(&content, module_name).to_string()
-}
-
-fn capitalize_module_name(module_name: &str) -> String {
-    let mut chars = module_name.chars();
-    match chars.next() {
-        None => String::new(),
-        Some(first) => first.to_uppercase().collect::<String>() + chars.as_str(),
-    }
 }
 
 fn update_readme_content(module_cfg: &NewDaggerModule) -> Result<(), Error> {
@@ -782,28 +521,6 @@ fn replace_module_name_smart(content: &str, module_name: &str) -> String {
     .to_string()
 }
 
-fn to_camel_case(s: &str) -> String {
-    s.split('-')
-        .enumerate()
-        .map(|(i, part)| {
-            if i == 0 {
-                part.to_lowercase()
-            } else {
-                capitalize_module_name(part)
-            }
-        })
-        .collect()
-}
-
-fn to_pascal_case(s: &str) -> String {
-    s.split('-').map(capitalize_module_name).collect()
-}
-
-fn run_go_fmt(module_path: &str) -> Result<(), Error> {
-    run_command_with_output("go fmt ./...", module_path)?;
-    Ok(())
-}
-
 fn find_dagger_modules() -> Result<Vec<String>, Error> {
     let output = Command::new("find")
         .args(&[".", "-type", "f", "-name", "dagger.json"])
@@ -828,22 +545,4 @@ fn find_dagger_modules() -> Result<Vec<String>, Error> {
         .collect::<Vec<String>>();
 
     Ok(modules)
-}
-
-fn run_dagger_develop(dir: &str) -> Result<(), Error> {
-    let output = Command::new("dagger")
-        .arg("develop")
-        .current_dir(dir)
-        .stdout(Stdio::inherit())
-        .stderr(Stdio::inherit())
-        .output()?;
-
-    if !output.status.success() {
-        return Err(Error::new(
-            ErrorKind::Other,
-            format!("dagger develop failed in directory: {}", dir),
-        ));
-    }
-
-    Ok(())
 }
