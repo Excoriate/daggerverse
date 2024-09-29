@@ -60,9 +60,7 @@ func (m *Tests) TestAll(ctx context.Context) error {
 		WithMaxGoroutines(maxGoroutines).
 		WithErrors().
 		WithFirstError().
-		// WithErrors().
 		WithContext(ctx)
-	// WithCancelOnError()
 
 	// Test different ways to configure the base container.
 	polTests.Go(m.TestContainerWithUbuntuBase)
