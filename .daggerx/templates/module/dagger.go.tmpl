@@ -89,8 +89,8 @@ func (m *{{.module_name}}) WithDaggerCLIAlpine(version string) *{{.module_name}}
 //  4. Sets the DAGGER_VERSION environment variable in the container.
 //
 // Returns:
-//   - *ModuleTemplate: Returns the modified ModuleTemplate instance with the Dagger CLI configured.
-func (m *ModuleTemplate) WithDaggerCLIUbuntu(version string) *ModuleTemplate {
+//   - *{{.module_name}}: Returns the modified {{.module_name}} instance with the Dagger CLI configured.
+func (m *{{.module_name}}) WithDaggerCLIUbuntu(version string) *{{.module_name}} {
 	daggerInstallCommand := getDaggerInstallCMDByVersion(version)
 	installDaggerCLI := []string{"bash", "-c", daggerInstallCommand}
 
