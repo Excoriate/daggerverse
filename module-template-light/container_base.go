@@ -156,104 +156,182 @@ func (m *ModuleTemplateLight) BaseWolfi(
 func (m *ModuleTemplateLight) BaseApko(
 	// presetFilePath is the path to the preset file. Either presetFile or presetFilePath must be provided.
 	presetFilePath string,
+	// presetFile is the preset file to use for the Apko image. Either presetFile or presetFilePath must be provided.
+	presetFile *dagger.File,
 	// cacheDir is the cache directory to use for the Apko image.
 	// +optional
 	cacheDir string,
-	// keyrings is the list of keyrings to use for the Apko image. If they aren't provided, it'll
-	// be omitted completely. E.g.:https://alpinelinux.org/keys/alpine-devel@lists.alpinelinux.org-4a6a0840.rsa.pub
+	// keyrings is the list of keyrings to use for the Apko image. They should be provided as path=url.
+	// E.g.: /etc/apk/keys/alpine-devel@lists.alpinelinux.org-4a6a0840.rsa.pub=https://alpinelinux.org/keys/alpine-devel@lists.alpinelinux.org-4a6a0840.rsa.pub
 	// +optional
-	enableDefaultKeyringAlpine bool,
-	// enableDefaultKeyringWolfi is a flag to enable the default Wolfi keyring.
+	keyrings []string,
+	// buildArch specifies the architecture to build for.
 	// +optional
-	enableDefaultKeyringWolfi bool,
-	// enableArchAarch64 is a flag to enable the aarch64 architecture.
+	buildArch string,
+	// buildContext is the build context directory.
 	// +optional
-	enableArchAarch64 bool,
-	// enableArchX8664 is a flag to enable the x86_64 architecture.
+	buildContext string,
+	// debug enables debug mode for verbose output.
 	// +optional
-	enableArchX8664 bool,
-	// overrideTarballName is the name of the tarball to use for the Apko image. By default, it's "image.tar".
+	debug bool,
+	// noNetwork disables network access during the build.
 	// +optional
-	overrideTarballName string,
+	noNetwork bool,
+	// repositoryAppend is a slice of additional repositories to append.
+	// +optional
+	repositoryAppend []string,
+	// timestamp sets a specific timestamp for reproducible builds.
+	// +optional
+	timestamp string,
+	// tags is a slice of additional tags for the output image.
+	// +optional
+	tags []string,
+	// buildDate sets the build date for the APKO build.
+	// +optional
+	buildDate string,
+	// lockfile sets the lockfile path for the APKO build.
+	// +optional
+	lockfile string,
+	// offline enables offline mode for the APKO build.
+	// +optional
+	offline bool,
+	// packageAppend adds extra packages to the APKO build.
+	// +optional
+	packageAppend []string,
+	// sbom enables or disables SBOM generation.
+	// +optional
+	sbom bool,
+	// sbomFormats sets the SBOM formats for the APKO build.
+	// +optional
+	sbomFormats []string,
+	// sbomPath sets the SBOM output path for the APKO build.
+	// +optional
+	sbomPath string,
+	// vcs enables or disables VCS detection.
+	// +optional
+	vcs bool,
+	// logLevel sets the log level for the APKO build.
+	// +optional
+	logLevel string,
+	// logPolicy sets the log policy for the APKO build.
+	// +optional
+	logPolicy []string,
+	// workdir sets the working directory for the APKO build.
+	// +optional
+	workdir string,
 ) (*ModuleTemplateLight, error) {
-	// Handling the preset file
-	if presetFilePath == "" {
-		return nil, NewError("presetFilePath must be provided")
-	}
+	// Build the command builder with the required parameters.
+	builder := builderx.
+		NewApkoBuilder().
+		WithOutputImage(defaultApkoTarball).
+		WithConfigFile(presetFilePath)
 
-	presetFile := dag.
-		CurrentModule().
-		Source().
-		File(presetFilePath)
-
-	// Creating builder container.
+	// Build the container with the preset file mounted.
 	ctr := dag.
 		Container().
-		From(defaultApkoImage)
-
-	// Creating the APKO command builder (helper)
-	apkoBuilder := builderx.
-		NewApkoBuilder()
-
-	// Mounting the preset file
-	ctr = ctr.
+		From(defaultApkoImage).
 		WithMountedFile(presetFilePath, presetFile)
 
-	// Cache options - opinionated (performance vs. disk usage). Resolve later, or decide...
-	apkoCacheDir := builderx.GetCacheDir("")
 	if cacheDir != "" {
-		apkoCacheDir = cacheDir
+		builder = builder.
+			WithCacheDir(cacheDir)
 	}
 
-	ctr = ctr.
-		WithMountedCache(apkoCacheDir, dag.CacheVolume("apko-cache"))
+	for _, keyring := range keyrings {
+		// Validate them first.
+		// if err := builderx.IsKeyringFormatValid(keyring); err != nil {
+		// 	return nil, WrapErrorf(err, "invalid keyring: %s", keyring)
+		// }
 
-	// Mounting the default Alpine keyring or Wolfi, for convenience.
-	if enableDefaultKeyringAlpine {
-		apkoBuilder = apkoBuilder.
-			WithKeyring(DefaultKeyringCfgAlpine.KeyPath)
-
-		ctr = ctr.
-			WithMountedFile(DefaultKeyringCfgAlpine.KeyPath, dag.HTTP(DefaultKeyringCfgAlpine.KeyURL))
+		builder = builder.WithKeyring(keyring)
 	}
 
-	if enableDefaultKeyringWolfi {
-		apkoBuilder = apkoBuilder.
-			WithKeyring(DefaultKeyringCfgWolfi.KeyPath)
-
-		ctr = ctr.
-			WithMountedFile(DefaultKeyringCfgWolfi.KeyPath, dag.HTTP(DefaultKeyringCfgWolfi.KeyURL))
+	if buildArch != "" {
+		builder = builder.WithArchitecture(buildArch)
 	}
 
-	// Enabling the architectures. These two options are set through flags, so we can
-	// control which architectures we want to build for.
-	if enableArchAarch64 {
-		apkoBuilder = apkoBuilder.
-			WithBuildArch(builderx.ArchAarch64)
+	if buildContext != "" {
+		builder = builder.WithBuildContext(buildContext)
 	}
 
-	if enableArchX8664 {
-		apkoBuilder = apkoBuilder.
-			WithBuildArch(builderx.ArchX8664)
+	if debug {
+		builder = builder.WithDebug()
 	}
 
-	// Overriding the tarball name
-	outputTarResolved := defaultApkoTarball
-	if overrideTarballName != "" {
-		outputTarResolved = overrideTarballName
+	if noNetwork {
+		builder = builder.WithNoNetwork()
 	}
 
-	apkoBuildCmd, apkoBuildCmdErr := apkoBuilder.
-		BuildCommand()
-
-	if apkoBuildCmdErr != nil {
-		return nil, WrapError(apkoBuildCmdErr, "failed to build apko command")
+	for _, repo := range repositoryAppend {
+		builder = builder.WithRepositoryAppend(repo)
 	}
 
-	ctr = ctr.
-		WithExec(apkoBuildCmd)
+	if timestamp != "" {
+		builder = builder.WithTimestamp(timestamp)
+	}
 
-	outputTar := ctr.File(outputTarResolved)
+	for _, tag := range tags {
+		builder = builder.WithTag(tag)
+	}
+
+	// TODO: Add annotations to the APKO build. Currently, can't pass map[string]string
+	// if annotations != nil {
+	// 	builder = builder.WithAnnotations(annotations)
+	// }
+
+	if buildDate != "" {
+		builder = builder.WithBuildDate(buildDate)
+	}
+
+	if lockfile != "" {
+		builder = builder.WithLockfile(lockfile)
+	}
+
+	if offline {
+		builder = builder.WithOffline()
+	}
+
+	for _, pkg := range packageAppend {
+		builder = builder.WithPackageAppend(pkg)
+	}
+
+	if sbom {
+		builder = builder.WithSBOM(sbom)
+	}
+
+	if len(sbomFormats) > 0 {
+		builder = builder.WithSBOMFormats(sbomFormats...)
+	}
+
+	if sbomPath != "" {
+		builder = builder.WithSBOMPath(sbomPath)
+	}
+
+	if vcs {
+		builder = builder.WithVCS(vcs)
+	}
+
+	if logLevel != "" {
+		builder = builder.WithLogLevel(logLevel)
+	}
+
+	for _, policy := range logPolicy {
+		builder = builder.WithLogPolicy(policy)
+	}
+
+	if workdir != "" {
+		builder = builder.WithWorkdir(workdir)
+	}
+
+	cmd, err := builder.BuildCommand()
+	if err != nil {
+		return nil, err
+	}
+
+	// Execute the command using Dagger
+	ctr = ctr.WithExec(cmd)
+
+	outputTar := ctr.File(defaultApkoTarball)
 
 	m.Ctr = dag.
 		Container().

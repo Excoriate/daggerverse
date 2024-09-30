@@ -195,3 +195,57 @@ func (m *Tests) TestContainerWithWolfiBase(ctx context.Context) error {
 
 	return nil
 }
+
+// TestContainerWithApkoBaseAlpine tests that the target module is based on the Apko image.
+//
+// This function verifies that the target module is configured appropriately to use the base Apko image.
+// It runs a command to get the OS version and confirms it matches "Apko".
+//
+// Arguments:
+// - ctx (context.Context): The context for the test execution.
+//
+// Returns:
+//   - error: Returns an error if the Apko image is not used or if the output is not as expected.
+func (m *Tests) TestContainerWithApkoBaseAlpine(ctx context.Context) error {
+	alpinePresetPath := "testdata/apko-presets/base-alpine.yaml"
+	alpinePresetFile := dag.CurrentModule().
+		Source().
+		File(alpinePresetPath)
+
+	scenarioBaseAlpineBasic := dag.
+		ModuleTemplateLight().
+		BaseApko(alpinePresetPath, alpinePresetFile)
+
+	outInspectCtr, outInspectCtrErr := scenarioBaseAlpineBasic.Ctr().
+		WithExec([]string{"sh", "-c", "uname"}).
+		Stdout(ctx)
+
+	if outInspectCtrErr != nil {
+		return WrapError(outInspectCtrErr, "failed to inspect the Alpine container with preset base-alpine.yaml")
+	}
+
+	if !strings.Contains(outInspectCtr, "Linux") {
+		return Errorf("expected Alpine Linux in the Alpine container with preset base-alpine.yaml, got %s",
+			outInspectCtr)
+	}
+
+	// Install additional packages
+	alpineApkoCtr := scenarioBaseAlpineBasic.
+		Ctr().
+		WithUser("root").
+		WithExec([]string{"apk", "add", "--no-cache", "curl"})
+
+	outInspectCtr, outInspectCtrErr = alpineApkoCtr.
+		WithExec([]string{"sh", "-c", "curl --version"}).
+		Stdout(ctx)
+
+	if outInspectCtrErr != nil {
+		return WrapError(outInspectCtrErr, "failed to inspect the Alpine container with preset base-alpine.yaml")
+	}
+
+	if !strings.Contains(outInspectCtr, "curl") {
+		return Errorf("expected curl to be working correctly, got %s", outInspectCtr)
+	}
+
+	return nil
+}
