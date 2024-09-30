@@ -249,3 +249,61 @@ func (m *Tests) TestContainerWithApkoBaseAlpine(ctx context.Context) error {
 
 	return nil
 }
+
+// TestContainerWithApkoBaseWolfi tests that the target module is based on the Apko Wolfi image.
+//
+// This function verifies that the target module is configured appropriately to use the base Wolfi image.
+// It runs a command to get the OS version and confirms it matches "Apko", then installs and verifies "curl".
+//
+// Arguments:
+// - ctx (context.Context): The context for the test execution.
+//
+// Returns:
+//   - error: Returns an error if the Wolfi image is not used, if the output is not as expected,
+//     or if package installation fails.
+func (m *Tests) TestContainerWithApkoBaseWolfi(ctx context.Context) error {
+	wolfiPresetPath := "testdata/apko-presets/base-wolfi.yaml"
+	wolfiPresetFile := dag.CurrentModule().
+		Source().
+		File(wolfiPresetPath)
+
+	scenarioBaseWolfi := dag.
+		ModuleTemplateLight().
+		BaseApko(wolfiPresetPath, wolfiPresetFile)
+
+	outInspectCtr, outInspectCtrErr := scenarioBaseWolfi.Ctr().
+		WithExec([]string{"sh", "-c", "uname"}).
+		Stdout(ctx)
+
+	if outInspectCtrErr != nil {
+		return WrapError(outInspectCtrErr, "failed to inspect the Wolfi container with preset base-wolfi.yaml")
+	}
+
+	if !strings.Contains(outInspectCtr, "Apko") {
+		return Errorf("expected Wolfi base image with Apko, got %s", outInspectCtr)
+	}
+
+	// Install additional packages
+	wolfiCtr := scenarioBaseWolfi.
+		Ctr().
+		WithUser("root").
+		WithExec([]string{"apk", "add", "--no-cache", "curl"})
+
+	outCurl, outCurlErr := wolfiCtr.
+		WithExec([]string{"curl", "--version"}).
+		Stdout(ctx)
+
+	if outCurlErr != nil {
+		return WrapError(outCurlErr, "failed to get curl version")
+	}
+
+	if outCurl == "" {
+		return Errorf("expected to have curl version output, got empty output")
+	}
+
+	if !strings.Contains(outCurl, "curl") {
+		return Errorf("expected curl to be working correctly, got %s", outCurl)
+	}
+
+	return nil
+}
