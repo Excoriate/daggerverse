@@ -150,7 +150,23 @@ func (m *ModuleTemplateLight) BaseWolfi(
 // BaseApko sets the base image to an Apko image and creates the base container.
 //
 // Parameters:
-// - preset: The preset to use for the Apko image. Optional parameter. Defaults to "alpine".
+// - presetFilePath: The path to the preset file. Either presetFile or presetFilePath must be provided.
+// - presetFile: The preset file to use for the Apko image. Either presetFile or presetFilePath must be provided.
+// - cacheDir: The cache directory to use for the Apko image. Optional parameter.
+// - keyrings: The list of keyrings to use for the Apko image. They should be provided as path=url.
+// - buildArch: Specifies the architecture to build for. Optional parameter.
+// - buildContext: The build context directory. Optional parameter.
+// - debug: Enables debug mode for verbose output. Optional parameter.
+// - noNetwork: Disables network access during the build. Optional parameter.
+// - repositoryAppend: A slice of additional repositories to append. Optional parameter.
+// - timestamp: Sets a specific timestamp for reproducible builds. Optional parameter.
+// - tags: A slice of additional tags for the output image. Optional parameter.
+// - buildDate: Sets the build date for the APKO build. Optional parameter.
+// - lockfile: Sets the lockfile path for the APKO build. Optional parameter.
+// - offline: Enables offline mode for the APKO build. Optional parameter.
+// - packageAppend: Adds extra packages to the APKO build. Optional parameter.
+// - sbom: Enables or disables SBOM generation. Optional parameter.
+// - sbomFormats: Sets the SBOM formats for the APKO build. Optional parameter.
 //
 // Returns a pointer to the ModuleTemplateLight instance.
 func (m *ModuleTemplateLight) BaseApko(
