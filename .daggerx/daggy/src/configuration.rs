@@ -16,12 +16,11 @@ pub struct NewDaggerModule {
 
 #[derive(Debug)]
 pub struct TemplateCfg {
-    pub github_actions_workflow_ci: String,
-    pub github_actions_workflow_ci_template: String,
-    pub module_test_template: String,
-    pub module_template: String,
-    pub module_light_template_dir: String,
-    pub module_full_template_dir: String,
+    pub templates_root_path: String,
+    pub module_type_full_path: String,
+    pub module_type_light_path: String,
+    pub github_actions_workflow_ci_template_file: String,
+    pub github_actions_template_path: String,
 }
 
 const GITHUB_ACTIONS_WORKFLOW_DIR: &str = ".github/workflows";
