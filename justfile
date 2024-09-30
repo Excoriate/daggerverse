@@ -209,3 +209,7 @@ callfn mod *args:
   @test -d {{mod}} || (echo "Module not found" && exit 1)
   @cd {{mod}} && dagger functions
   @cd {{mod}} && dagger call {{args}}
+
+daggy-tests:
+  @echo "Running Daggy tests 🧪 ..."
+  @cd .daggerx/daggy && cargo test

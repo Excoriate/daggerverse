@@ -1,8 +1,8 @@
+use crate::configuration::NewDaggerModule;
+use crate::templating::replace_module_name;
 use std::fs;
 use std::io::Error;
 use std::path::Path;
-use crate::configuration::NewDaggerModule;
-use crate::templating::replace_module_name;
 
 pub fn copy_readme_and_license(module_cfg: &NewDaggerModule) -> Result<(), Error> {
     let readme_dest_path = format!("{}/README.md", module_cfg.path);

@@ -11,6 +11,9 @@ mod readme_and_docs;
 mod templating;
 mod utils;
 
+#[cfg(test)]
+mod git_test;
+
 use args::Args;
 use clap::Parser;
 use command_utils::{run_command_with_output, run_go_fmt};
@@ -19,13 +22,12 @@ use dagger_commands::run_dagger_develop;
 use dagger_json::{update_dagger_json, update_examples_dagger_json, update_tests_dagger_json};
 use git::find_git_root;
 use github_actions::generate_github_actions_workflow;
-use naming::to_pascal_case;
 use readme_and_docs::copy_readme_and_license;
 use std::env;
 use std::fs;
 use std::io::{Error, ErrorKind};
 use std::path::Path;
-use templating::{copy_and_process_templates, replace_module_name};
+use templating::copy_and_process_templates;
 use utils::copy_dir_all;
 use dagger_utils::{find_dagger_modules, dagger_module_exists};
 

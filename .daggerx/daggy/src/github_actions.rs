@@ -1,7 +1,7 @@
-use std::fs;
-use std::io::Error;
 use crate::configuration::NewDaggerModule;
 use crate::templating::process_template_content;
+use std::fs;
+use std::io::Error;
 
 pub fn generate_github_actions_workflow(module_cfg: &NewDaggerModule) -> Result<(), Error> {
     println!("Generating GitHub Actions workflow 🚀: {}", module_cfg.name);
