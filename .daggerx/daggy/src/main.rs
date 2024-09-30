@@ -19,8 +19,8 @@ mod git_test;
 use args::Args;
 use clap::Parser;
 use std::io::{Error, ErrorKind};
-use configuration::NewDaggerModule;
-use command_utils::run_go_fmt;
+
+const SUPPORTED_MODULE_TYPES: [&str; 2] = ["full", "light"];
 
 fn main() -> Result<(), Error> {
     let args: Args = Args::parse();
@@ -39,6 +39,10 @@ fn create_module_task(args: &Args) -> Result<(), Error> {
     match &args.module {
         Some(module) => {
             let module_type = args.module_type.as_deref().unwrap_or("full");
+            if !SUPPORTED_MODULE_TYPES.contains(&module_type) {
+                eprintln!("Module's type is not supported or it's not implemented yet");
+                return Err(Error::new(ErrorKind::InvalidInput, "Module's type is not supported or it's not implemented yet"));
+            }
             cmd_create_module::create_module(module, module_type)
         }
         None => {

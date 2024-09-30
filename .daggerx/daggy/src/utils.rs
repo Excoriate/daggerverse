@@ -50,3 +50,18 @@ pub fn copy_dir_recursive(
 
     Ok(())
 }
+
+pub fn calculate_relative_path(base_path: &str, target_path: &str) -> Result<String, Error> {
+    let current_dir = std::env::current_dir()?;
+    let base_path = current_dir.join(base_path).canonicalize()?;
+    let target_path = current_dir.join(target_path).canonicalize()?;
+
+    let relative_path = pathdiff::diff_paths(&target_path, &base_path).ok_or_else(|| {
+        Error::new(
+            std::io::ErrorKind::Other,
+            "Failed to calculate relative path",
+        )
+    })?;
+
+    Ok(relative_path.to_string_lossy().to_string())
+}

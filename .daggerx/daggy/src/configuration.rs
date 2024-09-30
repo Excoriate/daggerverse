@@ -4,6 +4,7 @@ use std::io::Error;
 #[derive(Debug)]
 pub struct NewDaggerModule {
     pub path: String,
+    pub template_path_by_type: String,
     pub name: String,
     pub module_src_path: String,
     pub module_test_src_path: String,
@@ -30,15 +31,21 @@ const GITHUB_ACTIONS_WORKFLOW_CI_TEMPLATE: &str = "mod-template-ci.yaml.tmpl";
 const MODULE_LIGHT_TEMPLATE_DIR: &str = "mod-light";
 const MODULE_FULL_TEMPLATE_DIR: &str = "mod-full";
 
+use std::path::PathBuf;
+
 pub fn get_module_configurations(
     module: &str,
     module_type: &str,
 ) -> Result<NewDaggerModule, Error> {
     let module_path_full = env::current_dir()?.join(module);
     let current_root_dir = env::current_dir()?;
+    let template_path_by_type = current_root_dir
+        .join(TEMPLATE_DIR)
+        .join(format!("mod-{}", module_type));
 
     Ok(NewDaggerModule {
         path: module_path_full.to_string_lossy().to_string(),
+        template_path_by_type: template_path_by_type.to_string_lossy().to_string(),
         module_src_path: module_path_full.to_string_lossy().to_string(),
         module_test_src_path: module_path_full
             .join(MODULE_TESTS_DIR)
@@ -56,35 +63,28 @@ pub fn get_module_configurations(
             .to_string(),
         module_type: module_type.to_string(),
         template_cfg: TemplateCfg {
-            github_actions_workflow_ci: current_root_dir
-                .join(GITHUB_ACTIONS_WORKFLOW_DIR)
-                .join(GITHUB_ACTIONS_WORKFLOW_CI_TEMPLATE)
-                .to_string_lossy()
-                .to_string(),
-            github_actions_workflow_ci_template: current_root_dir
+            templates_root_path: current_root_dir
                 .join(TEMPLATE_DIR)
-                .join(GITHUB_ACTIONS_WORKFLOW_DIR)
-                .join(GITHUB_ACTIONS_WORKFLOW_CI_TEMPLATE)
                 .to_string_lossy()
                 .to_string(),
-            module_test_template: current_root_dir
+            module_type_full_path: current_root_dir
                 .join(TEMPLATE_DIR)
-                .join(GITHUB_ACTIONS_WORKFLOW_CI_TEMPLATE)
+                .join(MODULE_FULL_TEMPLATE_DIR)
                 .to_string_lossy()
                 .to_string(),
-            module_template: current_root_dir
-                .join(TEMPLATE_DIR)
-                .join(GITHUB_ACTIONS_WORKFLOW_CI_TEMPLATE)
-                .to_string_lossy()
-                .to_string(),
-            module_light_template_dir: current_root_dir
+            module_type_light_path: current_root_dir
                 .join(TEMPLATE_DIR)
                 .join(MODULE_LIGHT_TEMPLATE_DIR)
                 .to_string_lossy()
                 .to_string(),
-            module_full_template_dir: current_root_dir
+            github_actions_workflow_ci_template_file: current_root_dir
                 .join(TEMPLATE_DIR)
-                .join(MODULE_FULL_TEMPLATE_DIR)
+                .join(GITHUB_ACTIONS_WORKFLOW_DIR)
+                .join(GITHUB_ACTIONS_WORKFLOW_CI_TEMPLATE)
+                .to_string_lossy()
+                .to_string(),
+            github_actions_template_path: current_root_dir
+                .join(GITHUB_ACTIONS_WORKFLOW_DIR)
                 .to_string_lossy()
                 .to_string(),
         },
