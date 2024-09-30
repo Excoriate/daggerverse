@@ -4,7 +4,11 @@ import (
 	"fmt"
 
 	"github.com/Excoriate/daggerverse/module-template-light/internal/dagger"
+	"github.com/Excoriate/daggerx/pkg/builderx"
 )
+
+// ApkoKeyRingInfo represents the keyring information for Apko.
+type ApkoKeyRingInfo builderx.KeyringInfo
 
 const (
 	defaultAlpineImage        = "alpine"
@@ -12,6 +16,24 @@ const (
 	defaultBusyBoxImage       = "busybox"
 	defaultImageVersionLatest = "latest"
 	defaultWolfiImage         = "cgr.dev/chainguard/wolfi-base"
+	// Apko specifics.
+	defaultApkoImage   = "cgr.dev/chainguard/apko"
+	defaultApkoTarball = "image.tar"
+)
+
+var (
+	// DefaultKeyringCfgAlpine is the default keyring configuration for Alpine.
+	//nolint:gochecknoglobals // DefaultKeyringCfgAlpine is a global variable and is acceptable in this context.
+	DefaultKeyringCfgAlpine = &ApkoKeyRingInfo{
+		KeyURL:  "https://alpinelinux.org/keys/alpine-devel@lists.alpinelinux.org-4a6a0840.rsa.pub",
+		KeyPath: "/etc/apk/keys/alpine-devel@lists.alpinelinux.org-4a6a0840.rsa.pub",
+	}
+	//nolint:gochecknoglobals // DefaultKeyringCfgWolfi is a global variable and is acceptable in this context.
+	// DefaultKeyringCfgWolfi is the default keyring configuration for Wolfi.
+	DefaultKeyringCfgWolfi = &ApkoKeyRingInfo{
+		KeyURL:  "https://packages.wolfi.dev/os/wolfi-signing.rsa.pub",
+		KeyPath: "/etc/apk/keys/wolfi-signing.rsa.pub",
+	}
 )
 
 // BaseAlpine sets the base image to an Alpine Linux image and creates the base container.
@@ -123,4 +145,119 @@ func (m *ModuleTemplateLight) BaseWolfi(
 	}
 
 	return m
+}
+
+// BaseApko sets the base image to an Apko image and creates the base container.
+//
+// Parameters:
+// - preset: The preset to use for the Apko image. Optional parameter. Defaults to "alpine".
+//
+// Returns a pointer to the ModuleTemplateLight instance.
+func (m *ModuleTemplateLight) BaseApko(
+	// presetFilePath is the path to the preset file. Either presetFile or presetFilePath must be provided.
+	presetFilePath string,
+	// cacheDir is the cache directory to use for the Apko image.
+	// +optional
+	cacheDir string,
+	// keyrings is the list of keyrings to use for the Apko image. If they aren't provided, it'll
+	// be omitted completely. E.g.:https://alpinelinux.org/keys/alpine-devel@lists.alpinelinux.org-4a6a0840.rsa.pub
+	// +optional
+	enableDefaultKeyringAlpine bool,
+	// enableDefaultKeyringWolfi is a flag to enable the default Wolfi keyring.
+	// +optional
+	enableDefaultKeyringWolfi bool,
+	// enableArchAarch64 is a flag to enable the aarch64 architecture.
+	// +optional
+	enableArchAarch64 bool,
+	// enableArchX8664 is a flag to enable the x86_64 architecture.
+	// +optional
+	enableArchX8664 bool,
+	// overrideTarballName is the name of the tarball to use for the Apko image. By default, it's "image.tar".
+	// +optional
+	overrideTarballName string,
+) (*ModuleTemplateLight, error) {
+	// Handling the preset file
+	if presetFilePath == "" {
+		return nil, NewError("presetFilePath must be provided")
+	}
+
+	presetFile := dag.
+		CurrentModule().
+		Source().
+		File(presetFilePath)
+
+	// Creating builder container.
+	ctr := dag.
+		Container().
+		From(defaultApkoImage)
+
+	// Creating the APKO command builder (helper)
+	apkoBuilder := builderx.
+		NewApkoBuilder()
+
+	// Mounting the preset file
+	ctr = ctr.
+		WithMountedFile(presetFilePath, presetFile)
+
+	// Cache options - opinionated (performance vs. disk usage). Resolve later, or decide...
+	apkoCacheDir := builderx.GetCacheDir("")
+	if cacheDir != "" {
+		apkoCacheDir = cacheDir
+	}
+
+	ctr = ctr.
+		WithMountedCache(apkoCacheDir, dag.CacheVolume("apko-cache"))
+
+	// Mounting the default Alpine keyring or Wolfi, for convenience.
+	if enableDefaultKeyringAlpine {
+		apkoBuilder = apkoBuilder.
+			WithKeyring(DefaultKeyringCfgAlpine.KeyPath)
+
+		ctr = ctr.
+			WithMountedFile(DefaultKeyringCfgAlpine.KeyPath, dag.HTTP(DefaultKeyringCfgAlpine.KeyURL))
+	}
+
+	if enableDefaultKeyringWolfi {
+		apkoBuilder = apkoBuilder.
+			WithKeyring(DefaultKeyringCfgWolfi.KeyPath)
+
+		ctr = ctr.
+			WithMountedFile(DefaultKeyringCfgWolfi.KeyPath, dag.HTTP(DefaultKeyringCfgWolfi.KeyURL))
+	}
+
+	// Enabling the architectures. These two options are set through flags, so we can
+	// control which architectures we want to build for.
+	if enableArchAarch64 {
+		apkoBuilder = apkoBuilder.
+			WithBuildArch(builderx.ArchAarch64)
+	}
+
+	if enableArchX8664 {
+		apkoBuilder = apkoBuilder.
+			WithBuildArch(builderx.ArchX8664)
+	}
+
+	// Overriding the tarball name
+	outputTarResolved := defaultApkoTarball
+	if overrideTarballName != "" {
+		outputTarResolved = overrideTarballName
+	}
+
+	apkoBuildCmd, apkoBuildCmdErr := apkoBuilder.
+		BuildCommand()
+
+	if apkoBuildCmdErr != nil {
+		return nil, WrapError(apkoBuildCmdErr, "failed to build apko command")
+	}
+
+	ctr = ctr.
+		WithExec(apkoBuildCmd)
+
+	outputTar := ctr.File(outputTarResolved)
+
+	m.Ctr = dag.
+		Container().
+		Import(outputTar)
+
+	return m, nil
 }
