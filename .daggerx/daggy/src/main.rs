@@ -4,7 +4,9 @@ mod configuration;
 mod dagger_commands;
 mod dagger_json;
 mod git;
+mod github_actions;
 mod naming;
+mod readme_and_docs;
 mod templating;
 mod utils;
 
@@ -15,42 +17,44 @@ use configuration::{get_module_configurations, NewDaggerModule};
 use dagger_commands::run_dagger_develop;
 use dagger_json::{update_dagger_json, update_examples_dagger_json, update_tests_dagger_json};
 use git::find_git_root;
-use naming::{to_camel_case, to_pascal_case};
-use regex::Regex;
+use github_actions::generate_github_actions_workflow;
+use naming::to_pascal_case;
+use readme_and_docs::copy_readme_and_license;
 use std::env;
-use std::fs::{self};
+use std::fs;
 use std::io::{Error, ErrorKind};
 use std::path::Path;
 use std::process::Command;
-use templating::process_template_content;
+use templating::{copy_and_process_templates, replace_module_name};
 use utils::copy_dir_all;
+use regex::Regex;
 
 fn main() -> Result<(), Error> {
     let args: Args = Args::parse();
 
     match args.task.as_str() {
-        "create" => {
-            if let Some(module) = args.module {
-                let module_type = args.module_type.as_deref().unwrap_or("full");
-                create_module(&module, module_type)?;
-            } else {
-                eprintln!("Module name is required for 'create' task");
-                std::process::exit(1);
-            }
-        }
-        "develop" => {
-            develop_modules()?;
-        }
+        "create" => create_module_task(&args),
+        "develop" => develop_modules(),
         _ => {
             eprintln!("Unknown task: {}", args.task);
-            std::process::exit(1);
+            Err(Error::new(ErrorKind::InvalidInput, "Unknown task"))
         }
     }
-
-    Ok(())
 }
 
-// Create a new module in the root of the current directory.
+fn create_module_task(args: &Args) -> Result<(), Error> {
+    match &args.module {
+        Some(module) => {
+            let module_type = args.module_type.as_deref().unwrap_or("full");
+            create_module(module, module_type)
+        }
+        None => {
+            eprintln!("Module name is required for 'create' task");
+            Err(Error::new(ErrorKind::InvalidInput, "Module name is required"))
+        }
+    }
+}
+
 fn create_module(module: &str, module_type: &str) -> Result<(), Error> {
     println!("Creating module 🚀: {}", module);
     dagger_module_exists(module)?;
@@ -59,6 +63,22 @@ fn create_module(module: &str, module_type: &str) -> Result<(), Error> {
     env::set_current_dir(git_root)?;
 
     let new_module = get_module_configurations(module, module_type)?;
+    print_module_info(&new_module);
+
+    initialize_module(&new_module)?;
+    initialize_tests(&new_module)?;
+    initialize_examples(&new_module)?;
+    copy_readme_and_license(&new_module)?;
+    generate_github_actions_workflow(&new_module)?;
+
+    format_code(&new_module)?;
+
+    print_success_message(&new_module);
+
+    Ok(())
+}
+
+fn print_module_info(new_module: &NewDaggerModule) {
     println!("Module path: {}", new_module.path);
     println!("Module src path: {}", new_module.module_src_path);
     println!("Module test src path: {}", new_module.module_test_src_path);
@@ -66,91 +86,21 @@ fn create_module(module: &str, module_type: &str) -> Result<(), Error> {
         "GitHub Actions workflow path: {}",
         new_module.github_actions_workflow_path
     );
+}
 
-    // Initialize the new module
-    initialize_module(&new_module)?;
-
-    // Initialize examples and tests
-    initialize_tests(&new_module)?;
-    initialize_examples(&new_module)?;
-
-    // Copy README and LICENSE files
-    copy_readme_and_license(&new_module)?;
-
-    // Update README content
-    update_readme_content(&new_module)?;
-
-    // Generate GitHub Actions workflow
-    generate_github_actions_workflow(&new_module)?;
-
-    // Run go fmt to format the code
+fn format_code(new_module: &NewDaggerModule) -> Result<(), Error> {
     println!("Running go fmt and ensuring the code is formatted correctly 🧹");
     run_go_fmt(&new_module.path)?;
     run_go_fmt(&format!("{}/examples/go", new_module.path))?;
-    run_go_fmt(&new_module.module_test_src_path)?;
+    run_go_fmt(&new_module.module_test_src_path)
+}
 
+fn print_success_message(new_module: &NewDaggerModule) {
     println!("Module \"{}\" initialized successfully 🎉", new_module.name);
     println!("Don't forget to add it to GitHub Actions workflow 'release.yml' when your module is ready for release.");
     println!("It's recommended to run just cilocal <newmodule> to test the module locally before releasing it.");
-
-    Ok(())
 }
 
-fn copy_and_process_templates(
-    module_cfg: &NewDaggerModule,
-    template_dir: &str,
-    dest_dir: &str,
-) -> Result<(), Error> {
-    for entry in fs::read_dir(template_dir)? {
-        let entry = entry?;
-        let path = entry.path();
-
-        if path.is_dir() {
-            let new_dir = format!("{}/{}", dest_dir, entry.file_name().to_string_lossy());
-            fs::create_dir_all(&new_dir)?;
-            copy_and_process_templates(module_cfg, &path.to_string_lossy(), &new_dir)?;
-        } else {
-            let content = fs::read_to_string(&path)?;
-            let new_content = process_template_content(&content, module_cfg);
-
-            let dest_file_name = entry.file_name().to_string_lossy().replace(".tmpl", "");
-            let dest_path = format!("{}/{}", dest_dir, dest_file_name);
-            fs::write(dest_path, new_content)?;
-        }
-    }
-
-    Ok(())
-}
-
-fn copy_dir_recursive(src: &Path, dest: &Path, module_cfg: &NewDaggerModule) -> Result<(), Error> {
-    if !dest.exists() {
-        fs::create_dir_all(dest)?;
-    }
-
-    for entry in fs::read_dir(src)? {
-        let entry = entry?;
-        let file_type = entry.file_type()?;
-        let src_path = entry.path();
-        let mut file_name = entry.file_name().to_string_lossy().to_string();
-
-        // Remove .tmpl extension if present
-        if file_name.ends_with(".tmpl") {
-            file_name = file_name.trim_end_matches(".tmpl").to_string();
-        }
-
-        let dest_path = dest.join(&file_name);
-
-        if file_type.is_dir() {
-            copy_dir_recursive(&src_path, &dest_path, module_cfg)?;
-        } else {
-            let content = fs::read_to_string(&src_path)?;
-            let processed_content = process_template_content(&content, module_cfg);
-            fs::write(dest_path, processed_content)?;
-        }
-    }
-
-    Ok(())
-}
 
 fn develop_modules() -> Result<(), Error> {
     // Ensure we're in a Git repository
@@ -381,76 +331,6 @@ fn initialize_tests(module_cfg: &NewDaggerModule) -> Result<(), Error> {
     Ok(())
 }
 
-fn copy_and_replace_templates(
-    template_dir: &str,
-    destination_dir: &str,
-    module_name: &str,
-) -> Result<(), Error> {
-    for entry in fs::read_dir(template_dir)? {
-        let entry = entry?;
-        let path = entry.path();
-
-        if path.is_dir() {
-            let new_dir = format!(
-                "{}/{}",
-                destination_dir,
-                entry.file_name().to_string_lossy()
-            );
-            fs::create_dir_all(&new_dir)?;
-            copy_and_replace_templates(&path.to_string_lossy(), &new_dir, module_name)?;
-        } else {
-            let content = fs::read_to_string(&path)?;
-            let new_content = if path.extension().map_or(false, |ext| ext == "go") {
-                replace_module_name(&content, &to_pascal_case(&module_name))
-            } else {
-                replace_module_name(&content, module_name)
-            };
-
-            let dest_file_name = entry.file_name().to_string_lossy().replace(".tmpl", "");
-            let dest_path = format!("{}/{}", destination_dir, dest_file_name);
-            fs::write(dest_path, new_content)?;
-        }
-    }
-
-    Ok(())
-}
-
-fn copy_readme_and_license(module_cfg: &NewDaggerModule) -> Result<(), Error> {
-    let readme_dest_path = format!("{}/README.md", module_cfg.path);
-    let license_dest_path = format!("{}/LICENSE", module_cfg.path);
-    println!(
-        "Copying README.md and LICENSE files 📄: {}",
-        module_cfg.name
-    );
-
-    // Ensure the destination directory exists
-    fs::create_dir_all(&module_cfg.path)?;
-
-    // Copy the README.md and LICENSE files from the template directory to the module path
-    fs::copy(".daggerx/templates/README.md", &readme_dest_path)?;
-    fs::copy(".daggerx/templates/LICENSE", &license_dest_path)?;
-
-    // Replace placeholders in README.md if any
-    let readme_content = fs::read_to_string(&readme_dest_path)?;
-    let new_readme_content = readme_content.replace("[@MODULE_NAME]", &module_cfg.name);
-    fs::write(readme_dest_path, new_readme_content)?;
-
-    Ok(())
-}
-
-// Modified function
-fn generate_github_actions_workflow(module_cfg: &NewDaggerModule) -> Result<(), Error> {
-    println!("Generating GitHub Actions workflow 🚀: {}", module_cfg.name);
-    fs::create_dir_all(&module_cfg.github_actions_workflow_path)?;
-    let template_path = ".daggerx/templates/github/workflows/mod-template-ci.yaml.tmpl";
-    let output_path = &module_cfg.github_actions_workflow;
-
-    let template_content = fs::read_to_string(template_path)?;
-    let new_content = process_template_content(&template_content, module_cfg);
-    fs::write(output_path, new_content)?;
-
-    Ok(())
-}
 
 fn dagger_module_exists(module: &str) -> Result<(), Error> {
     if module.is_empty() {
@@ -471,55 +351,6 @@ fn dagger_module_exists(module: &str) -> Result<(), Error> {
     Ok(())
 }
 
-fn replace_module_name(content: &str, module_name: &str) -> String {
-    let pascal_case_name = to_pascal_case(module_name);
-    let camel_case_name = to_camel_case(module_name);
-
-    let re_pascal = Regex::new(r"\{\{\s*\.\s*module_name\s*\}\}").unwrap();
-    let re_camel = Regex::new(r"\{\{\s*\.\s*module_name_camel\s*\}\}").unwrap();
-    let re_lowercase = Regex::new(r"\{\{\s*\.\s*module_name_lowercase\s*\}\}").unwrap();
-
-    let content = re_pascal.replace_all(content, &pascal_case_name);
-    let content = re_camel.replace_all(&content, &camel_case_name);
-    re_lowercase.replace_all(&content, module_name).to_string()
-}
-
-fn update_readme_content(module_cfg: &NewDaggerModule) -> Result<(), Error> {
-    let readme_path = format!("{}/README.md", module_cfg.path);
-    println!("Updating README.md content 📄: {}", module_cfg.name);
-
-    if !Path::new(&readme_path).exists() {
-        return Err(Error::new(
-            ErrorKind::NotFound,
-            format!("README.md file not found in {}", module_cfg.path),
-        ));
-    }
-
-    let readme_content = fs::read_to_string(&readme_path)?;
-    let new_content = replace_module_name_smart(&readme_content, &module_cfg.name);
-    fs::write(&readme_path, new_content)?;
-
-    Ok(())
-}
-
-fn replace_module_name_smart(content: &str, module_name: &str) -> String {
-    let pascal_case_name = to_pascal_case(module_name);
-    let lowercase_name = module_name.to_lowercase();
-
-    let re = Regex::new(r"```[\s\S]*?```|`[^`\n]+`|\{\{\s*\.\s*module_name\s*\}\}").unwrap();
-
-    re.replace_all(content, |caps: &regex::Captures| {
-        let matched = caps.get(0).unwrap().as_str();
-        if matched.starts_with("```") || matched.starts_with("`") {
-            // Inside code blocks, use lowercase with hyphens
-            matched.replace("{{.module_name}}", &lowercase_name)
-        } else {
-            // Outside code blocks, use PascalCase without hyphens
-            matched.replace("{{.module_name}}", &pascal_case_name)
-        }
-    })
-    .to_string()
-}
 
 fn find_dagger_modules() -> Result<Vec<String>, Error> {
     let output = Command::new("find")
