@@ -39,7 +39,7 @@ const DAGGER_JSON_CONTENT: &str = r#"
         "../.vscode",
         "../.idea",
         "../.trunk",
-        "../go.work",   
+        "../go.work",
         "../go.work.sum"
     ]
 }
