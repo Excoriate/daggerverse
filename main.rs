@@ -19,15 +19,13 @@ mod git_test;
 use args::Args;
 use clap::Parser;
 use std::io::{Error, ErrorKind};
-use configuration::NewDaggerModule;
-use command_utils::run_go_fmt;
 
 fn main() -> Result<(), Error> {
     let args: Args = Args::parse();
 
     match args.task.as_str() {
         "create" => create_module_task(&args),
-        "develop" => cmd_develop_modules::develop_modules(),
+        "develop" => cmd_develop_modules::develop_modules_command(),
         _ => {
             eprintln!("Unknown task: {}", args.task);
             Err(Error::new(ErrorKind::InvalidInput, "Unknown task"))
