@@ -162,7 +162,8 @@ func (m *ModuleTemplateLight) BaseApko(
 	// +optional
 	cacheDir string,
 	// keyrings is the list of keyrings to use for the Apko image. They should be provided as path=url.
-	// E.g.: /etc/apk/keys/alpine-devel@lists.alpinelinux.org-4a6a0840.rsa.pub=https://alpinelinux.org/keys/alpine-devel@lists.alpinelinux.org-4a6a0840.rsa.pub
+	// E.g.: /etc/apk/keys/alpine-devel@lists.alpinelinux.org-4a6a0840.rsa.pub=
+	// https://alpinelinux.org/keys/alpine-devel@lists.alpinelinux.org-4a6a0840.rsa.pub
 	// +optional
 	keyrings []string,
 	// buildArch specifies the architecture to build for.
@@ -220,29 +221,63 @@ func (m *ModuleTemplateLight) BaseApko(
 	// +optional
 	workdir string,
 ) (*ModuleTemplateLight, error) {
-	// Build the command builder with the required parameters.
+	builder := m.initializeApkoBuilder(
+		presetFilePath,
+		cacheDir,
+		keyrings,
+		buildArch,
+		buildContext,
+		debug,
+		noNetwork,
+		repositoryAppend,
+		timestamp,
+		tags,
+		buildDate,
+		lockfile,
+		offline,
+		packageAppend,
+		sbom,
+		sbomFormats,
+		sbomPath,
+		vcs,
+		logLevel,
+		logPolicy,
+		workdir,
+	)
+
+	cmd, err := builder.BuildCommand()
+	if err != nil {
+		return nil, fmt.Errorf("failed to build command: %w", err)
+	}
+
+	ctr := dag.Container().From(defaultApkoImage).WithMountedFile(presetFilePath, presetFile).WithExec(cmd)
+	outputTar := ctr.File(defaultApkoTarball)
+
+	m.Ctr = dag.Container().Import(outputTar)
+
+	return m, nil
+}
+
+//nolint:cyclop,gocyclo // Cyclomatic complexity is high, but refactoring is not feasible at the moment.
+func (m *ModuleTemplateLight) initializeApkoBuilder(
+	presetFilePath, cacheDir string,
+	keyrings []string, buildArch, buildContext string,
+	debug, noNetwork bool, repositoryAppend []string,
+	timestamp string, tags []string, buildDate, lockfile string,
+	offline bool, packageAppend []string, sbom bool,
+	sbomFormats []string, sbomPath string, vcs bool,
+	logLevel string, logPolicy []string, workdir string,
+) *builderx.ApkoBuilder {
 	builder := builderx.
 		NewApkoBuilder().
 		WithOutputImage(defaultApkoTarball).
 		WithConfigFile(presetFilePath)
 
-	// Build the container with the preset file mounted.
-	ctr := dag.
-		Container().
-		From(defaultApkoImage).
-		WithMountedFile(presetFilePath, presetFile)
-
 	if cacheDir != "" {
-		builder = builder.
-			WithCacheDir(cacheDir)
+		builder = builder.WithCacheDir(cacheDir)
 	}
 
 	for _, keyring := range keyrings {
-		// Validate them first.
-		// if err := builderx.IsKeyringFormatValid(keyring); err != nil {
-		// 	return nil, WrapErrorf(err, "invalid keyring: %s", keyring)
-		// }
-
 		builder = builder.WithKeyring(keyring)
 	}
 
@@ -273,11 +308,6 @@ func (m *ModuleTemplateLight) BaseApko(
 	for _, tag := range tags {
 		builder = builder.WithTag(tag)
 	}
-
-	// TODO: Add annotations to the APKO build. Currently, can't pass map[string]string
-	// if annotations != nil {
-	// 	builder = builder.WithAnnotations(annotations)
-	// }
 
 	if buildDate != "" {
 		builder = builder.WithBuildDate(buildDate)
@@ -323,19 +353,5 @@ func (m *ModuleTemplateLight) BaseApko(
 		builder = builder.WithWorkdir(workdir)
 	}
 
-	cmd, err := builder.BuildCommand()
-	if err != nil {
-		return nil, err
-	}
-
-	// Execute the command using Dagger
-	ctr = ctr.WithExec(cmd)
-
-	outputTar := ctr.File(defaultApkoTarball)
-
-	m.Ctr = dag.
-		Container().
-		Import(outputTar)
-
-	return m, nil
+	return builder
 }
