@@ -271,25 +271,22 @@ func (m *Tests) TestContainerWithApkoBaseWolfi(ctx context.Context) error {
 		ModuleTemplateLight().
 		BaseApko(wolfiPresetPath, wolfiPresetFile)
 
-	outInspectCtr, outInspectCtrErr := scenarioBaseWolfi.Ctr().
-		WithExec([]string{"sh", "-c", "uname"}).
+	// Check /etc/os-release to verify it's a Wolfi image
+	outOSRelease, err := scenarioBaseWolfi.
+		Ctr().
+		WithExec([]string{"cat", "/etc/os-release"}).
 		Stdout(ctx)
 
-	if outInspectCtrErr != nil {
-		return WrapError(outInspectCtrErr, "failed to inspect the Wolfi container with preset base-wolfi.yaml")
+	if err != nil {
+		return WrapError(err, "failed to read /etc/os-release in the Wolfi container")
 	}
 
-	if !strings.Contains(outInspectCtr, "Apko") {
-		return Errorf("expected Wolfi base image with Apko, got %s", outInspectCtr)
+	if !strings.Contains(outOSRelease, "Wolfi") {
+		return Errorf("expected Wolfi base image, got %s", outOSRelease)
 	}
 
-	// Install additional packages
-	wolfiCtr := scenarioBaseWolfi.
-		Ctr().
-		WithUser("root").
-		WithExec([]string{"apk", "add", "--no-cache", "curl"})
-
-	outCurl, outCurlErr := wolfiCtr.
+	// Test that curl is working
+	outCurl, outCurlErr := scenarioBaseWolfi.Ctr().
 		WithExec([]string{"curl", "--version"}).
 		Stdout(ctx)
 
@@ -303,6 +300,21 @@ func (m *Tests) TestContainerWithApkoBaseWolfi(ctx context.Context) error {
 
 	if !strings.Contains(outCurl, "curl") {
 		return Errorf("expected curl to be working correctly, got %s", outCurl)
+	}
+
+	// Verify that the container is running as the 'terragrunt' user
+	outWhoami, err := scenarioBaseWolfi.Ctr().
+		WithExec([]string{"whoami"}).
+		Stdout(ctx)
+
+	if err != nil {
+		return WrapError(err, "failed to run whoami in the Wolfi container")
+	}
+
+	outWhoami = strings.TrimSpace(outWhoami)
+
+	if outWhoami != "terragrunt" {
+		return Errorf("expected to run as user 'terragrunt', got '%s'", outWhoami)
 	}
 
 	return nil

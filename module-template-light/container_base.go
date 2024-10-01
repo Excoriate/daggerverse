@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/Excoriate/daggerverse/module-template-light/internal/dagger"
 	"github.com/Excoriate/daggerx/pkg/builderx"
@@ -19,6 +20,7 @@ const (
 	// Apko specifics.
 	defaultApkoImage   = "cgr.dev/chainguard/apko"
 	defaultApkoTarball = "image.tar"
+	keyringSplitParts  = 2 // Added constant for magic number
 )
 
 var (

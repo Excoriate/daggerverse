@@ -1,7 +1,8 @@
----
 contents:
   repositories:
     - https://packages.wolfi.dev/os
+  keyring:
+    - https://packages.wolfi.dev/os/wolfi-signing.rsa.pub # Only the URL
   packages:
     - wolfi-base
     - ca-certificates
@@ -9,7 +10,8 @@ contents:
     - curl
 
 archs:
-  - x86_64
+  - amd64
+  - arm64
 
 accounts:
   groups:
@@ -19,6 +21,7 @@ accounts:
     - username: terragrunt
       uid: 1000
       gid: 1000
+  run-as: terragrunt
 
 entrypoint:
   command: /bin/bash
