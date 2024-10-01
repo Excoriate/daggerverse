@@ -195,3 +195,127 @@ func (m *Tests) TestContainerWithWolfiBase(ctx context.Context) error {
 
 	return nil
 }
+
+// TestContainerWithApkoBaseAlpine tests that the target module is based on the Apko image.
+//
+// This function verifies that the target module is configured appropriately to use the base Apko image.
+// It runs a command to get the OS version and confirms it matches "Apko".
+//
+// Arguments:
+// - ctx (context.Context): The context for the test execution.
+//
+// Returns:
+//   - error: Returns an error if the Apko image is not used or if the output is not as expected.
+func (m *Tests) TestContainerWithApkoBaseAlpine(ctx context.Context) error {
+	alpinePresetPath := "testdata/apko-presets/base-alpine.yaml"
+	alpinePresetFile := dag.CurrentModule().
+		Source().
+		File(alpinePresetPath)
+
+	scenarioBaseAlpineBasic := dag.
+		{{.module_name}}().
+		BaseApko(alpinePresetPath, alpinePresetFile)
+
+	outInspectCtr, outInspectCtrErr := scenarioBaseAlpineBasic.Ctr().
+		WithExec([]string{"sh", "-c", "uname"}).
+		Stdout(ctx)
+
+	if outInspectCtrErr != nil {
+		return WrapError(outInspectCtrErr, "failed to inspect the Alpine container with preset base-alpine.yaml")
+	}
+
+	if !strings.Contains(outInspectCtr, "Linux") {
+		return Errorf("expected Alpine Linux in the Alpine container with preset base-alpine.yaml, got %s",
+			outInspectCtr)
+	}
+
+	// Install additional packages
+	alpineApkoCtr := scenarioBaseAlpineBasic.
+		Ctr().
+		WithUser("root").
+		WithExec([]string{"apk", "add", "--no-cache", "curl"})
+
+	outInspectCtr, outInspectCtrErr = alpineApkoCtr.
+		WithExec([]string{"sh", "-c", "curl --version"}).
+		Stdout(ctx)
+
+	if outInspectCtrErr != nil {
+		return WrapError(outInspectCtrErr, "failed to inspect the Alpine container with preset base-alpine.yaml")
+	}
+
+	if !strings.Contains(outInspectCtr, "curl") {
+		return Errorf("expected curl to be working correctly, got %s", outInspectCtr)
+	}
+
+	return nil
+}
+
+// TestContainerWithApkoBaseWolfi tests that the target module is based on the Apko Wolfi image.
+//
+// This function verifies that the target module is configured appropriately to use the base Wolfi image.
+// It runs a command to get the OS version and confirms it matches "Apko", then installs and verifies "curl".
+//
+// Arguments:
+// - ctx (context.Context): The context for the test execution.
+//
+// Returns:
+//   - error: Returns an error if the Wolfi image is not used, if the output is not as expected,
+//     or if package installation fails.
+func (m *Tests) TestContainerWithApkoBaseWolfi(ctx context.Context) error {
+	wolfiPresetPath := "testdata/apko-presets/base-wolfi.yaml"
+	wolfiPresetFile := dag.CurrentModule().
+		Source().
+		File(wolfiPresetPath)
+
+	scenarioBaseWolfi := dag.
+		{{.module_name}}().
+		BaseApko(wolfiPresetPath, wolfiPresetFile)
+
+	// Check /etc/os-release to verify it's a Wolfi image
+	outOSRelease, err := scenarioBaseWolfi.
+		Ctr().
+		WithExec([]string{"cat", "/etc/os-release"}).
+		Stdout(ctx)
+
+	if err != nil {
+		return WrapError(err, "failed to read /etc/os-release in the Wolfi container")
+	}
+
+	if !strings.Contains(outOSRelease, "Wolfi") {
+		return Errorf("expected Wolfi base image, got %s", outOSRelease)
+	}
+
+	// Test that curl is working
+	outCurl, outCurlErr := scenarioBaseWolfi.Ctr().
+		WithExec([]string{"curl", "--version"}).
+		Stdout(ctx)
+
+	if outCurlErr != nil {
+		return WrapError(outCurlErr, "failed to get curl version")
+	}
+
+	if outCurl == "" {
+		return Errorf("expected to have curl version output, got empty output")
+	}
+
+	if !strings.Contains(outCurl, "curl") {
+		return Errorf("expected curl to be working correctly, got %s", outCurl)
+	}
+
+	// Verify that the container is running as the 'terragrunt' user
+	outWhoami, err := scenarioBaseWolfi.Ctr().
+		WithExec([]string{"whoami"}).
+		Stdout(ctx)
+
+	if err != nil {
+		return WrapError(err, "failed to run whoami in the Wolfi container")
+	}
+
+	outWhoami = strings.TrimSpace(outWhoami)
+
+	if outWhoami != "terragrunt" {
+		return Errorf("expected to run as user 'terragrunt', got '%s'", outWhoami)
+	}
+
+	return nil
+}

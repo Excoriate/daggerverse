@@ -68,6 +68,8 @@ func (m *Tests) TestAll(ctx context.Context) error {
 	polTests.Go(m.TestContainerWithBusyBoxBase)
 	polTests.Go(m.TestContainerWithWolfiBase)
 	polTests.Go(m.TestPassingEnvVarsInConstructor)
+	polTests.Go(m.TestContainerWithApkoBaseWolfi)
+	polTests.Go(m.TestContainerWithApkoBaseAlpine)
 	// Test built-in commands
 	polTests.Go(m.TestRunShellCMD)
 	polTests.Go(m.TestPrintEnvVars)

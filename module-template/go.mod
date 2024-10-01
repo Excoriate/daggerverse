@@ -4,7 +4,7 @@ go 1.22.5
 
 require (
 	github.com/99designs/gqlgen v0.17.49
-	github.com/Excoriate/daggerx v0.0.31
+	github.com/Excoriate/daggerx v0.0.32
 	github.com/Khan/genqlient v0.7.0
 	github.com/containerd/containerd v1.7.20
 	github.com/vektah/gqlparser/v2 v2.5.16
