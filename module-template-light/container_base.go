@@ -5,11 +5,11 @@ import (
 	"strings"
 
 	"github.com/Excoriate/daggerverse/module-template-light/internal/dagger"
-	"github.com/Excoriate/daggerx/pkg/builderx"
+	"github.com/Excoriate/daggerx/pkg/apkox"
 )
 
 // ApkoKeyRingInfo represents the keyring information for Apko.
-type ApkoKeyRingInfo builderx.KeyringInfo
+type ApkoKeyRingInfo apkox.KeyringInfo
 
 const (
 	defaultAlpineImage        = "alpine"
@@ -310,8 +310,8 @@ func (m *ModuleTemplateLight) initializeApkoBuilder(
 	offline bool, packageAppend []string, sbom bool,
 	sbomFormats []string, sbomPath string, vcs bool,
 	logLevel string, logPolicy []string, workdir string,
-) *builderx.ApkoBuilder {
-	builder := builderx.
+) *apkox.ApkoBuilder {
+	builder := apkox.
 		NewApkoBuilder().
 		WithOutputImage(defaultApkoTarball).
 		WithConfigFile(presetFilePath)
