@@ -265,13 +265,38 @@ func (m *ModuleTemplateLight) BaseApko(
 
 	cmd, err := builder.BuildCommand()
 	if err != nil {
-		return nil, fmt.Errorf("failed to build command: %w", err)
+		return nil, WrapError(err, "failed to build command")
 	}
 
-	ctr := dag.Container().From(defaultApkoImage).WithMountedFile(presetFilePath, presetFile).WithExec(cmd)
-	outputTar := ctr.File(defaultApkoTarball)
+	apkoCtr := dag.Container().
+		From(defaultApkoImage).
+		WithMountedFile(presetFilePath, presetFile)
 
-	m.Ctr = dag.Container().Import(outputTar)
+	// If key rings are passed, mount them. Separate them first, by =, and take
+	// the first element as the path and the second as the url.
+	for _, keyring := range keyrings {
+		parts := strings.SplitN(keyring, "=", keyringSplitParts)
+		switch len(parts) {
+		case 2:
+			path := parts[0]
+			url := parts[1]
+			apkoCtr = apkoCtr.WithMountedFile(path, dag.HTTP(url))
+		case 1:
+			url := parts[0]
+			apkoCtr = apkoCtr.WithMountedFile(url, dag.HTTP(url))
+		default:
+			return nil, Errorf("invalid keyring format: %s", keyring)
+		}
+	}
+
+	apkoCtr = apkoCtr.WithExec(cmd)
+
+	outputTar := apkoCtr.
+		File(defaultApkoTarball)
+
+	m.Ctr = dag.
+		Container().
+		Import(outputTar)
 
 	return m, nil
 }
