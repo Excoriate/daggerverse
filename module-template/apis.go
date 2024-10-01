@@ -219,7 +219,7 @@ func (m *ModuleTemplate) WithClonedGitRepo(
 	repoURL string,
 	// token is the VCS token to use for authentication. Optional parameter.
 	// +optional
-	token string,
+	token *dagger.Secret,
 	// vcs is the VCS to use for authentication. Optional parameter.
 	// +optional
 	vcs string,
