@@ -22,21 +22,6 @@ const (
 	keyringSplitParts  = 2 // Added constant for magic number
 )
 
-var (
-	// DefaultKeyringCfgAlpine is the default keyring configuration for Alpine.
-	//nolint:gochecknoglobals // DefaultKeyringCfgAlpine is a global variable and is acceptable in this context.
-	DefaultKeyringCfgAlpine = &ApkoKeyRingInfo{
-		KeyURL:  "https://alpinelinux.org/keys/alpine-devel@lists.alpinelinux.org-4a6a0840.rsa.pub",
-		KeyPath: "/etc/apk/keys/alpine-devel@lists.alpinelinux.org-4a6a0840.rsa.pub",
-	}
-	//nolint:gochecknoglobals // DefaultKeyringCfgWolfi is a global variable and is acceptable in this context.
-	// DefaultKeyringCfgWolfi is the default keyring configuration for Wolfi.
-	DefaultKeyringCfgWolfi = &ApkoKeyRingInfo{
-		KeyURL:  "https://packages.wolfi.dev/os/wolfi-signing.rsa.pub",
-		KeyPath: "/etc/apk/keys/wolfi-signing.rsa.pub",
-	}
-)
-
 // BaseAlpine sets the base image to an Alpine Linux image and creates the base container.
 //
 // Parameters:
