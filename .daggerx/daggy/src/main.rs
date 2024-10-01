@@ -38,12 +38,7 @@ fn main() -> Result<(), Error> {
 fn create_module_task(args: &Args) -> Result<(), Error> {
     match &args.module {
         Some(module) => {
-            let module_type = args.module_type.as_deref().unwrap_or("full");
-            if !SUPPORTED_MODULE_TYPES.contains(&module_type) {
-                eprintln!("Module's type is not supported or it's not implemented yet");
-                return Err(Error::new(ErrorKind::InvalidInput, "Module's type is not supported or it's not implemented yet"));
-            }
-            cmd_create_module::create_module(module, module_type)
+            cmd_create_module::create_module(module, &args.module_type)
         }
         None => {
             eprintln!("Module name is required for 'create' task");

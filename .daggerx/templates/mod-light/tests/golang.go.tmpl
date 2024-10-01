@@ -1,0 +1,263 @@
+package main
+
+import (
+	"context"
+	"strings"
+
+	"github.com/Excoriate/daggerverse/{{.module_name_pkg}}/tests/internal/dagger"
+)
+
+// getGolangAlpineContainer returns a container with the Go toolchain installed.
+//
+// This function returns a container with the Go toolchain installed, which is
+// suitable for testing Go related functionality.
+//
+//nolint:unparam // The function is used in multiple tests.
+func getGolangAlpineContainer(version string) *dagger.Container {
+	if version == "" {
+		version = "1.23.0"
+	}
+
+	return dag.Container().
+		From("golang:" + version + "-alpine")
+}
+
+// TestGoWithGoPlatform tests the setting of different Go platforms within the target module's container.
+//
+// This method creates a target module with a Golang Alpine container and sets different Go platforms.
+// It verifies if the Go platform is correctly set by running the `go version` command within the container
+// for each defined platform.
+//
+// Arguments:
+// - ctx (context.Context): The context for the test execution.
+//
+// Returns:
+//   - error: Returns an error if there is an issue setting the Go platform, executing
+//     commands in the container, or if the `go version` output does not match the expected pattern.
+func (m *Tests) TestGoWithGoPlatform(ctx context.Context) error {
+	platforms := map[dagger.Platform]string{
+		"linux/amd64":   "go version go1.20.4 linux/amd64",
+		"linux/arm64":   "go version go1.20.4 linux/arm64",
+		"windows/amd64": "go version go1.20.4 windows/amd64",
+	}
+
+	for platform := range platforms {
+		targetModule := dag.
+			{{.module_name}}(dagger.{{.module_name}}Opts{
+				Ctr: getGolangAlpineContainer(""),
+			}).WithGoPlatform(dagger.{{.module_name}}WithGoPlatformOpts{
+			Platform: platform,
+		})
+
+		// Check if the Go platform is set correctly.
+		out, err := targetModule.Ctr().
+			WithExec([]string{"go", "version"}).
+			Stdout(ctx)
+
+		if out == "" {
+			return WrapErrorf(err, "failed to run go version for platform %s", platform)
+		}
+
+		if err != nil {
+			return WrapErrorf(err, "failed to run go version for platform %s", platform)
+		}
+
+		// Validate the GOOS and GOARCH environment variables.
+		goosOut, goosOutErr := targetModule.Ctr().
+			WithExec([]string{"printenv", "GOOS"}).
+			Stdout(ctx)
+
+		if goosOutErr != nil {
+			return WrapErrorf(goosOutErr, "failed to get GOOS for platform %s", platform)
+		}
+
+		goarchOut, goarchOutErr := targetModule.Ctr().
+			WithExec([]string{"printenv", "GOARCH"}).
+			Stdout(ctx)
+
+		if goarchOutErr != nil {
+			return WrapErrorf(goarchOutErr, "failed to get GOARCH for platform %s", platform)
+		}
+
+		platformStr := string(platform)
+
+		expectedGOOS := strings.Split(platformStr, "/")[0]
+		expectedGOARCH := strings.Split(platformStr, "/")[1]
+
+		if !strings.Contains(goosOut, expectedGOOS) {
+			return WrapErrorf(err, "expected GOOS=%s, got %s for platform %s", expectedGOOS, goosOut, platform)
+		}
+
+		if !strings.Contains(goarchOut, expectedGOARCH) {
+			return WrapErrorf(err, "expected GOARCH=%s, got %s for platform %s", expectedGOARCH, goarchOut, platform)
+		}
+	}
+
+	return nil
+}
+
+// TestGoWithCgoEnabled tests enabling CGO in a Go Alpine container.
+//
+// This function performs the following steps:
+// 1. Sets up the Go Alpine container.
+// 2. Enables the CGO feature in the Go environment.
+// 3. Verifies that the CGO_ENABLED environment variable is set to "1".
+//
+// Parameters:
+// - ctx: The context to control the execution.
+//
+// Returns:
+// - error: If any step fails or produces an unexpected output, an error is returned.
+func (m *Tests) TestGoWithCgoEnabled(ctx context.Context) error {
+	// Setting the Go Alpine container.
+	targetModule := dag.{{.module_name}}(dagger.{{.module_name}}Opts{
+		Ctr: getGolangAlpineContainer(""),
+	})
+
+	// Enable CGO.
+	targetModule = targetModule.
+		WithGoCgoEnabled()
+
+	out, err := targetModule.Ctr().
+		WithExec([]string{"go", "env", "CGO_ENABLED"}).
+		Stdout(ctx)
+
+	if err != nil {
+		return WrapError(err, "failed to get CGO_ENABLED environment variable")
+	}
+
+	if out == "" {
+		return WrapError(err, "expected to have at least one folder, got empty output")
+	}
+
+	if !strings.Contains(out, "1") {
+		return WrapErrorf(err, "expected CGO_ENABLED to be set to 1, got %s", out)
+	}
+
+	return nil
+}
+
+// TestGoWithCgoDisabled tests disabling CGO in a Go Alpine container.
+//
+// This function performs the following steps:
+// 1. Sets up the Go Alpine container.
+// 2. Disables the CGO feature in the Go environment.
+// 3. Verifies that the CGO_ENABLED environment variable is set to "0".
+//
+// Parameters:
+// - ctx: The context to control the execution.
+//
+// Returns:
+// - error: If any step fails or produces an unexpected output, an error is returned.
+func (m *Tests) TestGoWithCgoDisabled(ctx context.Context) error {
+	// Setting the Go Alpine container.
+	targetModule := dag.{{.module_name}}(dagger.{{.module_name}}Opts{
+		Ctr: getGolangAlpineContainer(""),
+	})
+
+	// Disable CGO.
+	targetModule = targetModule.
+		WithCgoDisabled()
+
+	out, err := targetModule.Ctr().
+		WithExec([]string{"go", "env", "CGO_ENABLED"}).
+		Stdout(ctx)
+
+	if err != nil {
+		return WrapError(err, "failed to get CGO_ENABLED environment variable")
+	}
+
+	if out == "" {
+		return WrapError(err, "expected to have at least one folder, got empty output")
+	}
+
+	if !strings.Contains(out, "0") {
+		return WrapErrorf(err, "expected CGO_ENABLED to be set to 0, got %s", out)
+	}
+
+	return nil
+}
+
+// TestGoWithGoBuildCache verifies that the Go build cache (GOCACHE) is set correctly
+// in the provided Alpine container.
+//
+// This function performs the following steps:
+// 1. Sets up the Go Alpine container without specifying a particular Go version.
+// 2. Configures the Go build cache.
+// 3. Executes the `go env GOCACHE` command to retrieve the GOCACHE environment variable.
+// 4. Validates that the GOCACHE environment variable is set to the expected path.
+//
+// Parameters:
+// - ctx: The context to control the execution.
+//
+// Returns:
+// - error: If any of the steps fail, an error is returned indicating what went wrong.
+func (m *Tests) TestGoWithGoBuildCache(ctx context.Context) error {
+	// Setting the Go Alpine container.
+	targetModule := dag.{{.module_name}}(dagger.{{.module_name}}Opts{
+		Ctr: getGolangAlpineContainer(""),
+	})
+
+	// Set the Go build cache.
+	targetModule = targetModule.WithGoBuildCache()
+	out, err := targetModule.Ctr().
+		WithExec([]string{"go", "env", "GOCACHE"}).
+		Stdout(ctx)
+
+	if err != nil {
+		return WrapError(err, "failed to get GOCACHE environment variable")
+	}
+
+	if out == "" {
+		return WrapError(err, "expected to have at least one folder, got empty output")
+	}
+
+	if !strings.Contains(out, "/root/.cache/go-build") {
+		return WrapErrorf(err, "expected GOCACHE to be set to /root/.cache/go-build, got %s", out)
+	}
+
+	return nil
+}
+
+// TestGoWithGoModCache verifies that the Go module cache (GOMODCACHE) is set correctly
+// in the provided Alpine container.
+//
+// This function performs the following steps:
+// 1. Sets up the Go Alpine container without specifying a particular Go version.
+// 2. Configures the Go module cache.
+// 3. Executes the `go env GOMODCACHE` command to retrieve the GOMODCACHE environment variable.
+// 4. Validates that the GOMODCACHE environment variable is set to the expected path.
+//
+// Parameters:
+// - ctx: The context to control the execution.
+//
+// Returns:
+// - error: If any of the steps fail, an error is returned indicating what went wrong.
+func (m *Tests) TestGoWithGoModCache(ctx context.Context) error {
+	// Setting the Go Alpine container.
+	targetModule := dag.{{.module_name}}(dagger.{{.module_name}}Opts{
+		Ctr: getGolangAlpineContainer(""),
+	})
+
+	// Set the Go mod cache.
+	targetModule = targetModule.
+		WithGoModCache()
+
+	out, err := targetModule.Ctr().
+		WithExec([]string{"go", "env", "GOMODCACHE"}).
+		Stdout(ctx)
+
+	if err != nil {
+		return WrapError(err, "failed to get GOMODCACHE environment variable")
+	}
+
+	if out == "" {
+		return WrapError(err, "expected to have at least one folder, got empty output")
+	}
+
+	if !strings.Contains(out, "/go/pkg/mod") {
+		return WrapErrorf(err, "expected GOMODCACHE to be set to /go/pkg/mod, got %s", out)
+	}
+
+	return nil
+}

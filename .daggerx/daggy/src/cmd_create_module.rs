@@ -17,10 +17,10 @@ use crate::utils::{calculate_relative_path, copy_dir_all};
 // Remove this line
 // use std::path::PathBuf;
 
-pub fn create_module(module: &str, module_type: &str) -> Result<(), Error> {
-    println!("Creating module 🚀: {}", module);
+pub fn create_module(module_name: &str, module_type: &str) -> Result<(), Error> {
+    println!("Creating module 🚀: {}", module_name);
     println!("Checking if module already exists 🔍");
-    dagger_module_exists(module)?;
+    dagger_module_exists(module_name)?;
 
     println!("Resolving git root 🔍");
     let git_root = find_git_root()?;
@@ -29,7 +29,7 @@ pub fn create_module(module: &str, module_type: &str) -> Result<(), Error> {
     println!("Git root resolved 🎉: {}", git_root.to_string());
 
     println!("Getting module configurations 🔍");
-    let new_module = get_module_configurations(module, module_type)?;
+    let new_module = get_module_configurations(module_name, module_type)?;
     print_module_info(&new_module);
 
     println!("Module Configuration 📋:");

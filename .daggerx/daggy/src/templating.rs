@@ -4,6 +4,7 @@ use pathdiff::diff_paths;
 use std::fs;
 use std::io::Error;
 use std::path::Path; // Ensure pathdiff is imported
+use walkdir::WalkDir;
 
 pub fn process_template_content(content: &str, module_cfg: &NewDaggerModule) -> String {
     let pkg_name = module_cfg
@@ -135,5 +136,25 @@ pub fn copy_and_process_templates_with_exclusions(
         "Templates copied and processed successfully from {} to {}",
         template_dir, dest_dir
     );
+    Ok(())
+}
+
+pub fn copy_template_files(template_dir: &str, target_dir: &str) -> Result<(), Error> {
+    // Adjust the copying logic to handle both full and light module structures
+    for entry in WalkDir::new(template_dir)
+        .into_iter()
+        .filter_map(|e| e.ok())
+    {
+        let path = entry.path();
+        let relative_path = path.strip_prefix(template_dir).unwrap();
+        let target_path = Path::new(target_dir).join(relative_path);
+
+        if path.is_dir() {
+            fs::create_dir_all(&target_path)?;
+        } else {
+            fs::copy(path, &target_path)?;
+        }
+    }
+
     Ok(())
 }
