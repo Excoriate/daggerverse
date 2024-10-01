@@ -19,7 +19,6 @@ const (
 	// Apko specifics.
 	defaultApkoImage   = "cgr.dev/chainguard/apko"
 	defaultApkoTarball = "image.tar"
-	keyringSplitParts  = 2 // Added constant for magic number
 )
 
 // BaseAlpine sets the base image to an Alpine Linux image and creates the base container.
