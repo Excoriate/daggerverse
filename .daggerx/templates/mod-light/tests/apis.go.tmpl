@@ -28,7 +28,7 @@ func (m *Tests) TestWithContainer(ctx context.Context) error {
 	newContainer = newContainer.
 		WithExec(installCmd)
 
-	targetModule := dag.ModuleTemplateLight()
+	targetModule := dag.{{.module_name}}()
 	targetModule = targetModule.
 		WithContainer(newContainer)
 

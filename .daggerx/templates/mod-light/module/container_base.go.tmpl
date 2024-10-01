@@ -26,12 +26,12 @@ const (
 // Parameters:
 // - version: The version of the Alpine image to use. Optional parameter. Defaults to "latest".
 //
-// Returns a pointer to the ModuleTemplateLight instance.
-func (m *ModuleTemplateLight) BaseAlpine(
+// Returns a pointer to the {{.module_name}} instance.
+func (m *{{.module_name}}) BaseAlpine(
 	// version is the version of the Alpine image to use, e.g., "3.17.3".
 	// +optional
 	version string,
-) *ModuleTemplateLight {
+) *{{.module_name}} {
 	if version == "" {
 		version = defaultImageVersionLatest
 	}

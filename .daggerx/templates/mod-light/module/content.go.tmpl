@@ -22,7 +22,7 @@ import (
 // This method downloads a file from the provided URL. If the destination file
 // name is not specified, it defaults to the basename of the URL. The downloaded
 // file is then returned as a *dagger.File.
-func (m *ModuleTemplateLight) DownloadFile(
+func (m *{{.module_name}}) DownloadFile(
 	// url is the URL of the file to download.
 	url string,
 	// destFileName is the name of the file to download. If not set, it'll default to the basename of the URL.

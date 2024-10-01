@@ -19,8 +19,8 @@ import (
 //   - error: Returns an error if the Ubuntu image is not used or if the output is not as expected.
 func (m *Tests) TestContainerWithUbuntuBase(ctx context.Context) error {
 	targetModule := dag.
-		ModuleTemplateLight().
-		BaseUbuntu(dagger.ModuleTemplateLightBaseUbuntuOpts{Version: "22.04"})
+		{{.module_name}}().
+		BaseUbuntu(dagger.{{.module_name}}BaseUbuntuOpts{Version: "22.04"})
 
 	out, err := targetModule.Ctr().
 		WithExec([]string{"grep", "^ID=ubuntu$", "/etc/os-release"}).

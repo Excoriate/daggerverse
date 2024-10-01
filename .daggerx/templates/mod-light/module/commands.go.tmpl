@@ -13,7 +13,7 @@ import (
 // - None.
 // Returns:
 // - *Terminal: The terminal for the container.
-func (m *ModuleTemplateLight) OpenTerminal() *dagger.Container {
+func (m *{{.module_name}}) OpenTerminal() *dagger.Container {
 	return m.Ctr.Terminal()
 }
 

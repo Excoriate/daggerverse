@@ -43,9 +43,9 @@ func (m *Tests) TestGoWithGoPlatform(ctx context.Context) error {
 
 	for platform := range platforms {
 		targetModule := dag.
-			ModuleTemplateLight(dagger.ModuleTemplateLightOpts{
+			{{.module_name}}(dagger.{{.module_name}}Opts{
 				Ctr: getGolangAlpineContainer(""),
-			}).WithGoPlatform(dagger.ModuleTemplateLightWithGoPlatformOpts{
+			}).WithGoPlatform(dagger.{{.module_name}}WithGoPlatformOpts{
 			Platform: platform,
 		})
 

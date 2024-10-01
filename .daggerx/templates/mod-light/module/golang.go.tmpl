@@ -15,14 +15,14 @@ import (
 // - platform (dagger.Platform): The target platform.
 //
 // Returns:
-// - *ModuleTemplateLight: A pointer to the updated ModuleTemplateLight instance.
-func (m *ModuleTemplateLight) WithGoPlatform(
+// - *{{.module_name}}: A pointer to the updated {{.module_name}} instance.
+func (m *{{.module_name}}) WithGoPlatform(
 	// platform is the target platform specified in the format "[os]/[platform]/[version]".
 	// For example, "darwin/arm64/v7", "windows/amd64", "linux/arm64". If the platform
 	// is not provided, it defaults to "linux/amd64".
 	// +optional
 	platform dagger.Platform,
-) *ModuleTemplateLight {
+) *{{.module_name}} {
 	if platform == "" {
 		platform = "linux/amd64"
 	}
