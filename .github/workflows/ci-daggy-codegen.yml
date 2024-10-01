@@ -7,7 +7,7 @@ on:
             dag_version:
                 description: Dagger version to use
                 required: false
-                default: 0.12.5
+                default: 0.13.3
     schedule:
         - cron: 0 8,20 * * * # Runs at 8:00 AM and 8:00 PM UTC
     push:
