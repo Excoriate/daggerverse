@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"path/filepath"
 
 	"github.com/Excoriate/daggerverse/module-template/internal/dagger"
@@ -96,7 +97,7 @@ func (m *ModuleTemplate) getTokenNameByVcs(vcs string) string {
 // getTokenValueBySecret retrieves the plaintext value of the provided secret.
 // If an error occurs while retrieving the plaintext, it returns an empty string.
 func (m *ModuleTemplate) getTokenValueBySecret(secret *dagger.Secret) string {
-	plainTxtToken, err := secret.Plaintext(nil)
+	plainTxtToken, err := secret.Plaintext(context.TODO())
 	if err != nil {
 		return ""
 	}
