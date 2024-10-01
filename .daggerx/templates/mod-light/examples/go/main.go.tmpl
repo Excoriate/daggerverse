@@ -7,11 +7,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Excoriate/daggerverse/module-template-light/examples/go/internal/dagger"
+	"github.com/Excoriate/daggerverse/{{.module_name_pkg}}/examples/go/internal/dagger"
 	"github.com/sourcegraph/conc/pool"
 )
 
-// Go is a Dagger module that exemplifies the usage of the ModuleTemplateLight module.
+// Go is a Dagger module that exemplifies the usage of the {{.module_name}} module.
 //
 // This module is used to create and manage containers.
 type Go struct {
@@ -53,13 +53,13 @@ func (m *Go) getTestDir() *dagger.Directory {
 // AllRecipes executes all tests.
 //
 // AllRecipes is a helper method for tests, executing the built-in recipes and
-// other specific functionalities of the ModuleTemplateLight module.
+// other specific functionalities of the {{.module_name}} module.
 func (m *Go) AllRecipes(ctx context.Context) error {
 	polTests := pool.New().WithErrors().WithContext(ctx)
 
 	// Test different ways to configure the base container.
 	// polTests.Go(m.BuiltInRecipes)
-	// From this point onwards, we're testing the specific functionality of the ModuleTemplateLight module.
+	// From this point onwards, we're testing the specific functionality of the {{.module_name}} module.
 
 	if err := polTests.Wait(); err != nil {
 		return fmt.Errorf("there are some failed tests: %w", err)
@@ -68,11 +68,11 @@ func (m *Go) AllRecipes(ctx context.Context) error {
 	return nil
 }
 
-// ModuleTemplateLight_PassedEnvVars demonstrates how to pass environment variables to the ModuleTemplateLight module.
+// {{.module_name}}_PassedEnvVars demonstrates how to pass environment variables to the {{.module_name}} module.
 //
-// This method configures a ModuleTemplateLight module to use specific environment variables from the host.
-func (m *Go) ModuleTemplateLight_PassedEnvVars(ctx context.Context) error {
-	targetModule := dag.ModuleTemplateLight(dagger.ModuleTemplateLightOpts{
+// This method configures a {{.module_name}} module to use specific environment variables from the host.
+func (m *Go) {{.module_name}}_PassedEnvVars(ctx context.Context) error {
+	targetModule := dag.{{.module_name}}(dagger.{{.module_name}}Opts{
 		EnvVarsFromHost: []string{"SOMETHING=SOMETHING,SOMETHING=SOMETHING"},
 	})
 
@@ -95,11 +95,11 @@ func (m *Go) ModuleTemplateLight_PassedEnvVars(ctx context.Context) error {
 	return nil
 }
 
-// ModuleTemplateLight_OpenTerminal demonstrates how to open an interactive terminal session
-// within a ModuleTemplateLight module container.
+// {{.module_name}}_OpenTerminal demonstrates how to open an interactive terminal session
+// within a {{.module_name}} module container.
 //
 // This function showcases the initialization and configuration of a
-// ModuleTemplateLight module container using various options like enabling Cgo,
+// {{.module_name}} module container using various options like enabling Cgo,
 // utilizing build cache, and including a GCC compiler.
 //
 // Parameters:
@@ -112,9 +112,9 @@ func (m *Go) ModuleTemplateLight_PassedEnvVars(ctx context.Context) error {
 //
 //	This function can be used to interactively debug or inspect the
 //	container environment during test execution.
-func (m *Go) ModuleTemplateLight_OpenTerminal() *dagger.Container {
-	// Configure the ModuleTemplateLight module container with necessary options
-	targetModule := dag.ModuleTemplateLight()
+func (m *Go) {{.module_name}}_OpenTerminal() *dagger.Container {
+	// Configure the {{.module_name}} module container with necessary options
+	targetModule := dag.{{.module_name}}()
 
 	// Retrieve and discard standard output
 	_, _ = targetModule.Ctr().
@@ -125,10 +125,10 @@ func (m *Go) ModuleTemplateLight_OpenTerminal() *dagger.Container {
 		Terminal()
 }
 
-// ModuleTemplateLight_RunArbitraryCommand runs an arbitrary shell command in the test container.
+// {{.module_name}}_RunArbitraryCommand runs an arbitrary shell command in the test container.
 //
 // This function demonstrates how to execute a shell command within the container
-// using the ModuleTemplateLight module.
+// using the {{.module_name}} module.
 //
 // Parameters:
 //
@@ -137,8 +137,8 @@ func (m *Go) ModuleTemplateLight_OpenTerminal() *dagger.Container {
 // Returns:
 //
 //	A string containing the output of the executed command, or an error if the command fails or if the output is empty.
-func (m *Go) ModuleTemplateLight_RunArbitraryCommand(ctx context.Context) (string, error) {
-	targetModule := dag.ModuleTemplateLight().WithSource(m.TestDir)
+func (m *Go) {{.module_name}}_RunArbitraryCommand(ctx context.Context) (string, error) {
+	targetModule := dag.{{.module_name}}().WithSource(m.TestDir)
 
 	// Execute the 'ls -l' command
 	out, err := targetModule.
@@ -157,9 +157,9 @@ func (m *Go) ModuleTemplateLight_RunArbitraryCommand(ctx context.Context) (strin
 	return out, nil
 }
 
-// ModuleTemplateLight_CreateContainer initializes and returns a configured Dagger container.
+// {{.module_name}}_CreateContainer initializes and returns a configured Dagger container.
 //
-// This method exemplifies the setup of a container within the ModuleTemplateLight module using the source directory.
+// This method exemplifies the setup of a container within the {{.module_name}} module using the source directory.
 //
 // Parameters:
 //   - ctx: The context for controlling the function's timeout and cancellation.
@@ -168,11 +168,11 @@ func (m *Go) ModuleTemplateLight_RunArbitraryCommand(ctx context.Context) (strin
 //   - A configured Dagger container if successful, or an error if the process fails.
 //
 // Steps Involved:
-//  1. Configure the ModuleTemplateLight module with the source directory.
+//  1. Configure the {{.module_name}} module with the source directory.
 //  2. Run a command inside the container to check the OS information.
-func (m *Go) ModuleTemplateLight_CreateContainer(ctx context.Context) (*dagger.Container, error) {
+func (m *Go) {{.module_name}}_CreateContainer(ctx context.Context) (*dagger.Container, error) {
 	targetModule := dag.
-		ModuleTemplateLight().
+		{{.module_name}}().
 		BaseAlpine().
 		WithUtilitiesInAlpineContainer(). // Install utilities
 		WithGitInAlpineContainer().       // Install git

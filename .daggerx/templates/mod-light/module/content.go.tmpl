@@ -4,7 +4,7 @@ import (
 	"context"
 	"path/filepath"
 
-	"github.com/Excoriate/daggerverse/module-template-light/internal/dagger"
+	"github.com/Excoriate/daggerverse/{{.module_name_pkg}}/internal/dagger"
 )
 
 // DownloadFile downloads a file from the specified URL.
@@ -53,7 +53,7 @@ func (m *ModuleTemplateLight) DownloadFile(
 //
 // If a token is provided, it will be securely set using Dagger's
 // secret mechanism and used for authentication during the clone operation.
-func (m *ModuleTemplateLight) CloneGitRepo(
+func (m *{{.module_name}}) CloneGitRepo(
 	// repoURL is the URL of the git repo to clone.
 	repoURL string,
 	// token is the VCS token to use for authentication. Optional parameter.
@@ -86,7 +86,7 @@ func (m *ModuleTemplateLight) CloneGitRepo(
 
 // getTokenNameByVcs returns the appropriate token name based on the VCS type.
 // If the VCS is "gitlab", it returns "GITLAB_TOKEN". Otherwise, it returns "GITHUB_TOKEN".
-func (m *ModuleTemplateLight) getTokenNameByVcs(vcs string) string {
+func (m *{{.module_name}}) getTokenNameByVcs(vcs string) string {
 	if vcs == "gitlab" {
 		return "GITLAB_TOKEN"
 	}
@@ -96,7 +96,7 @@ func (m *ModuleTemplateLight) getTokenNameByVcs(vcs string) string {
 
 // getTokenValueBySecret retrieves the plaintext value of the provided secret.
 // If an error occurs while retrieving the plaintext, it returns an empty string.
-func (m *ModuleTemplateLight) getTokenValueBySecret(secret *dagger.Secret) string {
+func (m *{{.module_name}}) getTokenValueBySecret(secret *dagger.Secret) string {
 	plainTxtToken, err := secret.Plaintext(context.TODO())
 	if err != nil {
 		return ""

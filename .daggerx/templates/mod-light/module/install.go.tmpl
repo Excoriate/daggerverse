@@ -3,7 +3,7 @@ package main
 // WithGitInAlpineContainer installs Git in the golang/alpine container.
 //
 // It installs Git in the golang/alpine container.
-func (m *ModuleTemplateLight) WithGitInAlpineContainer() *ModuleTemplateLight {
+func (m *{{.module_name}}) WithGitInAlpineContainer() *{{.module_name}} {
 	m.Ctr = m.Ctr.
 		WithExec([]string{"apk", "add", "git"})
 
@@ -15,8 +15,8 @@ func (m *ModuleTemplateLight) WithGitInAlpineContainer() *ModuleTemplateLight {
 // This method installs Git in the Ubuntu-based container.
 //
 // Returns:
-//   - *ModuleTemplateLight: The updated ModuleTemplateLight with Git installed in the container.
-func (m *ModuleTemplateLight) WithGitInUbuntuContainer() *ModuleTemplateLight {
+//   - *{{.module_name}}: The updated {{.module_name}} with Git installed in the container.
+func (m *{{.module_name}}) WithGitInUbuntuContainer() *{{.module_name}} {
 	m.Ctr = m.Ctr.
 		WithExec([]string{"apt-get", "update", "-y"}).
 		WithExec([]string{"apt-get", "install", "-y", "git"})
@@ -27,7 +27,7 @@ func (m *ModuleTemplateLight) WithGitInUbuntuContainer() *ModuleTemplateLight {
 // WithUtilitiesInAlpineContainer installs common utilities in the golang/alpine container.
 //
 // It installs utilities such as curl, wget, and others that are commonly used.
-func (m *ModuleTemplateLight) WithUtilitiesInAlpineContainer() *ModuleTemplateLight {
+func (m *{{.module_name}}) WithUtilitiesInAlpineContainer() *{{.module_name}} {
 	m.Ctr = m.Ctr.
 		WithExec([]string{"apk", "update"}).
 		WithExec([]string{"apk", "add", "curl", "wget", "bash", "jq", "vim", "unzip", "yq"})
@@ -41,8 +41,8 @@ func (m *ModuleTemplateLight) WithUtilitiesInAlpineContainer() *ModuleTemplateLi
 // such as curl, wget, bash, jq, and vim in the Ubuntu-based container.
 //
 // Returns:
-//   - *ModuleTemplateLight: The updated ModuleTemplateLight with the utilities installed in the container.
-func (m *ModuleTemplateLight) WithUtilitiesInUbuntuContainer() *ModuleTemplateLight {
+//   - *{{.module_name}}: The updated {{.module_name}} with the utilities installed in the container.
+func (m *{{.module_name}}) WithUtilitiesInUbuntuContainer() *{{.module_name}} {
 	m.Ctr = m.Ctr.
 		WithExec([]string{"apt-get", "update"}).
 		WithExec([]string{"apt-get", "install", "-y", "curl", "wget", "bash", "jq", "vim", "unzip", "yq"})

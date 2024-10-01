@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Excoriate/daggerverse/module-template-light/internal/dagger"
+	"github.com/Excoriate/daggerverse/{{.module_name_pkg}}/internal/dagger"
 
 	"github.com/Excoriate/daggerx/pkg/fixtures"
 )
@@ -33,7 +33,7 @@ func (m *ModuleTemplateLight) WithEnvironmentVariable(
 	// expand is whether to replace `${VAR}` or $VAR in the value according to the current
 	// +optional
 	expand bool,
-) *ModuleTemplateLight {
+) *{{.module_name}} {
 	m.Ctr = m.Ctr.WithEnvVariable(name, value, dagger.ContainerWithEnvVariableOpts{
 		Expand: expand,
 	})
@@ -46,13 +46,13 @@ func (m *ModuleTemplateLight) WithEnvironmentVariable(
 // Parameters:
 // - src: The directory that contains all the source code, including the module directory.
 // - workdir: The working directory within the container. Optional parameter.
-func (m *ModuleTemplateLight) WithSource(
+func (m *{{.module_name}}) WithSource(
 	// src is the directory that contains all the source code, including the module directory.
 	src *dagger.Directory,
 	// workdir is the working directory within the container. If not set it'll default to /mnt
 	// +optional
 	workdir string,
-) *ModuleTemplateLight {
+) *{{.module_name}} {
 	ctr := m.Ctr.WithMountedDirectory(fixtures.MntPrefix, src)
 
 	if workdir != "" {
@@ -70,9 +70,9 @@ func (m *ModuleTemplateLight) WithSource(
 //
 // Parameters:
 // - ctr: The container to run the command in. If passed, it will override the container set in the Dagger instance.
-func (m *ModuleTemplateLight) WithContainer(
+func (m *{{.module_name}}) WithContainer(
 	ctr *dagger.Container,
-) *ModuleTemplateLight {
+) *{{.module_name}} {
 	m.Ctr = ctr
 
 	return m
@@ -84,11 +84,11 @@ func (m *ModuleTemplateLight) WithContainer(
 // - file: The file to add to the container.
 // - dest: The destination path in the container. Optional parameter.
 // - owner: The owner of the file. Optional parameter.
-func (m *ModuleTemplateLight) WithFileMountedInContainer(
+func (m *{{.module_name}}) WithFileMountedInContainer(
 	file *dagger.File,
 	dest string,
 	owner string,
-) *ModuleTemplateLight {
+) *{{.module_name}} {
 	path := filepath.Join(fixtures.MntPrefix, dest)
 	if owner != "" {
 		m.Ctr = m.Ctr.WithMountedFile(path, file, dagger.ContainerWithMountedFileOpts{
@@ -110,11 +110,11 @@ func (m *ModuleTemplateLight) WithFileMountedInContainer(
 //   - secret: The secret containing the value of the environment variable.
 //
 // Returns:
-//   - *ModuleTemplateLight: The updated ModuleTemplateLight with the environment variable set.
+//   - *{{.module_name}}: The updated {{.module_name}} with the environment variable set.
 //
 // Behavior:
 //   - The secret value is expanded according to the current environment variables defined in the container.
-func (m *ModuleTemplateLight) WithSecretAsEnvVar(name string, secret *dagger.Secret) *ModuleTemplateLight {
+func (m *{{.module_name}}) WithSecretAsEnvVar(name string, secret *dagger.Secret) *{{.module_name}} {
 	secretValue, err := secret.Plaintext(context.Background())
 	if err != nil {
 		return nil
@@ -135,14 +135,14 @@ func (m *ModuleTemplateLight) WithSecretAsEnvVar(name string, secret *dagger.Sec
 //     If not provided, it defaults to the predefined mount prefix.
 //
 // Returns:
-//   - *ModuleTemplateLight: The updated ModuleTemplateLight with the downloaded file mounted in the container.
-func (m *ModuleTemplateLight) WithDownloadedFile(
+//   - *{{.module_name}}: The updated {{.module_name}} with the downloaded file mounted in the container.
+func (m *{{.module_name}}) WithDownloadedFile(
 	// url is the URL of the file to download.
 	url string,
 	// destFileName is the name of the file to download. If not set, it'll default to the basename of the URL.
 	// +optional
 	destFileName string,
-) *ModuleTemplateLight {
+) *{{.module_name}} {
 	// Extract the filename from the last part of the URL.
 	fileName := filepath.Base(url)
 	if destFileName != "" {
@@ -176,8 +176,8 @@ func (m *ModuleTemplateLight) WithDownloadedFile(
 //     authentication. Defaults to "github". Supported values are "github" and "gitlab".
 //
 // Returns:
-//   - *ModuleTemplateLight: The updated ModuleTemplateLight with the cloned repository mounted in the container.
-func (m *ModuleTemplateLight) WithClonedGitRepo(
+//   - *{{.module_name}}: The updated {{.module_name}} with the cloned repository mounted in the container.
+func (m *{{.module_name}}) WithClonedGitRepo(
 	repoURL string,
 	// token is the VCS token to use for authentication. Optional parameter.
 	// +optional
@@ -185,7 +185,7 @@ func (m *ModuleTemplateLight) WithClonedGitRepo(
 	// vcs is the VCS to use for authentication. Optional parameter.
 	// +optional
 	vcs string,
-) *ModuleTemplateLight {
+) *{{.module_name}} {
 	// Call the helper function to clone the repository.
 	clonedRepo := m.CloneGitRepo(repoURL, token, vcs)
 
@@ -201,8 +201,8 @@ func (m *ModuleTemplateLight) WithClonedGitRepo(
 // This can be useful for invalidating caches by providing a unique value.
 //
 // Returns:
-//   - *ModuleTemplateLight: The updated ModuleTemplateLight with the cache-busting environment variable set.
-func (m *ModuleTemplateLight) WithCacheBuster() *ModuleTemplateLight {
+//   - *{{.module_name}}: The updated {{.module_name}} with the cache-busting environment variable set.
+func (m *{{.module_name}}) WithCacheBuster() *{{.module_name}} {
 	m.Ctr = m.Ctr.
 		WithEnvVariable("CACHE_BUSTER", time.
 			Now().
@@ -222,8 +222,8 @@ func (m *ModuleTemplateLight) WithCacheBuster() *ModuleTemplateLight {
 //   - cfgFile (*dagger.File): The config file to be mounted.
 //
 // Returns:
-//   - *ModuleTemplateLight: The updated ModuleTemplateLight with the config file mounted in the container.
-func (m *ModuleTemplateLight) WithConfigFile(
+//   - *{{.module_name}}: The updated {{.module_name}} with the config file mounted in the container.
+func (m *{{.module_name}}) WithConfigFile(
 	// cfgPath is the path where the config file will be mounted.
 	// +optional
 	cfgPath string,
@@ -231,7 +231,7 @@ func (m *ModuleTemplateLight) WithConfigFile(
 	// +optional
 	setEnvVar string,
 	// cfgFile is the config file to be mounted.
-	cfgFile *dagger.File) *ModuleTemplateLight {
+	cfgFile *dagger.File) *{{.module_name}} {
 	if cfgPath == "" {
 		cfgPath = fixtures.MntPrefix
 	}

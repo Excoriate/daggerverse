@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/Excoriate/daggerverse/module-template-light/tests/internal/dagger"
+	"github.com/Excoriate/daggerverse/{{.module_name_pkg}}/tests/internal/dagger"
 )
 
 // getGolangAlpineContainer returns a container with the Go toolchain installed.
@@ -110,7 +110,7 @@ func (m *Tests) TestGoWithGoPlatform(ctx context.Context) error {
 // - error: If any step fails or produces an unexpected output, an error is returned.
 func (m *Tests) TestGoWithCgoEnabled(ctx context.Context) error {
 	// Setting the Go Alpine container.
-	targetModule := dag.ModuleTemplateLight(dagger.ModuleTemplateLightOpts{
+	targetModule := dag.{{.module_name}}(dagger.{{.module_name}}Opts{
 		Ctr: getGolangAlpineContainer(""),
 	})
 
@@ -151,7 +151,7 @@ func (m *Tests) TestGoWithCgoEnabled(ctx context.Context) error {
 // - error: If any step fails or produces an unexpected output, an error is returned.
 func (m *Tests) TestGoWithCgoDisabled(ctx context.Context) error {
 	// Setting the Go Alpine container.
-	targetModule := dag.ModuleTemplateLight(dagger.ModuleTemplateLightOpts{
+	targetModule := dag.{{.module_name}}(dagger.{{.module_name}}Opts{
 		Ctr: getGolangAlpineContainer(""),
 	})
 
@@ -194,7 +194,7 @@ func (m *Tests) TestGoWithCgoDisabled(ctx context.Context) error {
 // - error: If any of the steps fail, an error is returned indicating what went wrong.
 func (m *Tests) TestGoWithGoBuildCache(ctx context.Context) error {
 	// Setting the Go Alpine container.
-	targetModule := dag.ModuleTemplateLight(dagger.ModuleTemplateLightOpts{
+	targetModule := dag.{{.module_name}}(dagger.{{.module_name}}Opts{
 		Ctr: getGolangAlpineContainer(""),
 	})
 
@@ -235,7 +235,7 @@ func (m *Tests) TestGoWithGoBuildCache(ctx context.Context) error {
 // - error: If any of the steps fail, an error is returned indicating what went wrong.
 func (m *Tests) TestGoWithGoModCache(ctx context.Context) error {
 	// Setting the Go Alpine container.
-	targetModule := dag.ModuleTemplateLight(dagger.ModuleTemplateLightOpts{
+	targetModule := dag.{{.module_name}}(dagger.{{.module_name}}Opts{
 		Ctr: getGolangAlpineContainer(""),
 	})
 

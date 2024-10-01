@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/Excoriate/daggerverse/module-template-light/internal/dagger"
+	"github.com/Excoriate/daggerverse/{{.module_name_pkg}}/internal/dagger"
 	"github.com/containerd/containerd/platforms"
 )
 
@@ -50,8 +50,8 @@ func (m *ModuleTemplateLight) WithGoPlatform(
 // means it can link against C libraries and send code to the C compiler.
 //
 // Returns:
-// - *ModuleTemplateLight: A pointer to the updated ModuleTemplateLight instance.
-func (m *ModuleTemplateLight) WithGoCgoEnabled() *ModuleTemplateLight {
+// - *{{.module_name}}: A pointer to the updated {{.module_name}} instance.
+func (m *{{.module_name}}) WithGoCgoEnabled() *{{.module_name}} {
 	m.Ctr = m.Ctr.WithEnvVariable("CGO_ENABLED", "1")
 
 	return m
@@ -65,8 +65,8 @@ func (m *ModuleTemplateLight) WithGoCgoEnabled() *ModuleTemplateLight {
 // where C dependencies are not available.
 //
 // Returns:
-// - *ModuleTemplateLight: A pointer to the updated ModuleTemplateLight instance.
-func (m *ModuleTemplateLight) WithCgoDisabled() *ModuleTemplateLight {
+// - *{{.module_name}}: A pointer to the updated {{.module_name}} instance.
+func (m *{{.module_name}}) WithCgoDisabled() *{{.module_name}} {
 	m.Ctr = m.Ctr.WithEnvVariable("CGO_ENABLED", "0")
 
 	return m
@@ -88,8 +88,8 @@ func (m *ModuleTemplateLight) WithCgoDisabled() *ModuleTemplateLight {
 // provided, it defaults to "shared".
 //
 // Returns:
-// - *ModuleTemplateLight: A pointer to the updated ModuleTemplateLight instance.
-func (m *ModuleTemplateLight) WithGoBuildCache(
+// - *{{.module_name}}: A pointer to the updated {{.module_name}} instance.
+func (m *{{.module_name}}) WithGoBuildCache(
 	// cacheRoot is the path to the cache volume's root.
 	// +optional
 	cacheRoot string,
@@ -102,7 +102,7 @@ func (m *ModuleTemplateLight) WithGoBuildCache(
 	// sharing is the Sharing mode of the cache volume.
 	// +optional
 	sharing dagger.CacheSharingMode,
-) *ModuleTemplateLight {
+) *{{.module_name}} {
 	if cacheRoot == "" {
 		cacheRoot = "/root/.cache/go-build"
 	}
@@ -146,8 +146,8 @@ func (m *ModuleTemplateLight) WithGoBuildCache(
 // not provided, it defaults to "shared".
 //
 // Returns:
-// - *ModuleTemplateLight: A pointer to the updated ModuleTemplateLight instance.
-func (m *ModuleTemplateLight) WithGoModCache(
+// - *{{.module_name}}: A pointer to the updated {{.module_name}} instance.
+func (m *{{.module_name}}) WithGoModCache(
 	// cacheRoot is the path to the cache volume's root.
 	// +optional
 	cacheRoot string,
@@ -160,7 +160,7 @@ func (m *ModuleTemplateLight) WithGoModCache(
 	// sharing is the Sharing mode of the cache volume.
 	// +optional
 	sharing dagger.CacheSharingMode,
-) *ModuleTemplateLight {
+) *{{.module_name}} {
 	if cacheRoot == "" {
 		cacheRoot = "/go/pkg/mod"
 	}
@@ -200,16 +200,16 @@ func (m *ModuleTemplateLight) WithGoModCache(
 //
 // Example:
 //
-//	ModuleTemplateLight.WithGoInstall([]string{"github.com/Excoriate/daggerverse@latest",
+//	{{.module_name}}.WithGoInstall([]string{"github.com/Excoriate/daggerverse@latest",
 //
 // "github.com/another/package@v1.0"})
 //
 // Returns:
-// - *ModuleTemplateLight: A pointer to the updated ModuleTemplateLight instance.
-func (m *ModuleTemplateLight) WithGoInstall(
+// - *{{.module_name}}: A pointer to the updated {{.module_name}} instance.
+func (m *{{.module_name}}) WithGoInstall(
 	// pkgs are the URLs of the packages to install.
 	pkgs []string,
-) *ModuleTemplateLight {
+) *{{.module_name}} {
 	if len(pkgs) == 0 {
 		// Optionally, handle empty URLs here or return an error
 		// For now, we'll just exit early.
@@ -240,11 +240,11 @@ func (m *ModuleTemplateLight) WithGoInstall(
 //
 // Example:
 //
-//	ModuleTemplateLight.WithGoExec([]string{"build", "./..."}, "linux/amd64")
+//	{{.module_name}}.WithGoExec([]string{"build", "./..."}, "linux/amd64")
 //
 // Returns:
-// - *ModuleTemplateLight: A pointer to the updated ModuleTemplateLight instance.
-func (m *ModuleTemplateLight) WithGoExec(
+// - *{{.module_name}}: A pointer to the updated {{.module_name}} instance.
+func (m *{{.module_name}}) WithGoExec(
 	// args are the arguments to pass to the Go command.
 	args []string,
 	// platform is the target platform specified in the format "[os]/[platform]/[version]".
@@ -252,7 +252,7 @@ func (m *ModuleTemplateLight) WithGoExec(
 	// is not provided, it defaults to "linux/amd64".
 	// +optional
 	platform dagger.Platform,
-) *ModuleTemplateLight {
+) *{{.module_name}} {
 	if platform == "" {
 		platform = "linux/amd64"
 	}

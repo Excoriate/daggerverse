@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/Excoriate/daggerverse/module-template-light/tests/internal/dagger"
+	"github.com/Excoriate/daggerverse/{{.module_name_pkg}}/tests/internal/dagger"
 )
 
 // TestContainerWithUbuntuBase tests that the target module is based on the Ubuntu 22.04 image.
@@ -48,8 +48,8 @@ func (m *Tests) TestContainerWithUbuntuBase(ctx context.Context) error {
 // Returns:
 //   - error: Returns an error if the Alpine image is not used or if the output is not as expected.
 func (m *Tests) TestContainerWithAlpineBase(ctx context.Context) error {
-	targetModule := dag.ModuleTemplateLight().
-		BaseAlpine(dagger.ModuleTemplateLightBaseAlpineOpts{Version: "3.17.3"})
+	targetModule := dag.{{.module_name}}().
+		BaseAlpine(dagger.{{.module_name}}BaseAlpineOpts{Version: "3.17.3"})
 
 	out, err := targetModule.Ctr().WithExec([]string{"cat", "/etc/os-release"}).Stdout(ctx)
 	if err != nil {
@@ -76,8 +76,8 @@ func (m *Tests) TestContainerWithAlpineBase(ctx context.Context) error {
 //   - error: Returns an error if the BusyBox image is not used or if the output is not as expected.
 func (m *Tests) TestContainerWithBusyBoxBase(ctx context.Context) error {
 	targetModule := dag.
-		ModuleTemplateLight().
-		BaseBusyBox(dagger.ModuleTemplateLightBaseBusyBoxOpts{Version: "1.35.0"})
+		{{.module_name}}().
+		BaseBusyBox(dagger.{{.module_name}}BaseBusyBoxOpts{Version: "1.35.0"})
 
 	out, err := targetModule.Ctr().
 		WithExec([]string{"busybox", "--help"}).
@@ -108,7 +108,7 @@ func (m *Tests) TestContainerWithBusyBoxBase(ctx context.Context) error {
 //nolint:cyclop // The test handles multiple commands and environments, requiring a longer function.
 func (m *Tests) TestContainerWithWolfiBase(ctx context.Context) error {
 	targetModule := dag.
-		ModuleTemplateLight().
+		{{.module_name}}().
 		BaseWolfi()
 
 	out, err := targetModule.Ctr().
@@ -124,8 +124,8 @@ func (m *Tests) TestContainerWithWolfiBase(ctx context.Context) error {
 	}
 
 	targetModuleWithInstalledPkgs := dag.
-		ModuleTemplateLight().
-		BaseWolfi(dagger.ModuleTemplateLightBaseWolfiOpts{
+		{{.module_name}}().
+		BaseWolfi(dagger.{{.module_name}}BaseWolfiOpts{
 			Packages: []string{"git", "curl", "wget"},
 		})
 
@@ -213,7 +213,7 @@ func (m *Tests) TestContainerWithApkoBaseAlpine(ctx context.Context) error {
 		File(alpinePresetPath)
 
 	scenarioBaseAlpineBasic := dag.
-		ModuleTemplateLight().
+		{{.module_name}}().
 		BaseApko(alpinePresetPath, alpinePresetFile)
 
 	outInspectCtr, outInspectCtrErr := scenarioBaseAlpineBasic.Ctr().
@@ -268,7 +268,7 @@ func (m *Tests) TestContainerWithApkoBaseWolfi(ctx context.Context) error {
 		File(wolfiPresetPath)
 
 	scenarioBaseWolfi := dag.
-		ModuleTemplateLight().
+		{{.module_name}}().
 		BaseApko(wolfiPresetPath, wolfiPresetFile)
 
 	// Check /etc/os-release to verify it's a Wolfi image

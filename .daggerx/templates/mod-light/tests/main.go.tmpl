@@ -1,4 +1,4 @@
-// A generated module for test the ModuleTemplateLight functions
+// A generated module for test the {{.module_name}} functions
 //
 // This module has been generated via dagger init and serves as a reference to
 // basic module structure as you get started with Dagger.
@@ -17,7 +17,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/Excoriate/daggerverse/module-template-light/tests/internal/dagger"
+	"github.com/Excoriate/daggerverse/{{.module_name_pkg}}/tests/internal/dagger"
 
 	"github.com/sourcegraph/conc/pool"
 )
@@ -93,7 +93,7 @@ func (m *Tests) TestAll(ctx context.Context) error {
 	polTests.Go(m.TestGoWithCgoEnabled)
 	polTests.Go(m.TestGoWithCgoDisabled)
 
-	// From this point onwards, we're testing the specific functionality of the ModuleTemplateLight module.
+	// From this point onwards, we're testing the specific functionality of the {{.module_name}} module.
 
 	if err := polTests.Wait(); err != nil {
 		return WrapError(err, "there are some failed tests")
@@ -107,7 +107,7 @@ func (m *Tests) TestAll(ctx context.Context) error {
 // Tests if the shell command is executed correctly in the container.
 func (m *Tests) TestRunShellCMD(ctx context.Context) error {
 	targetModule := dag.
-		ModuleTemplateLight()
+		{{.module_name}}()
 
 	out, err := targetModule.
 		RunShell(ctx, "ls -l")
@@ -129,7 +129,7 @@ func (m *Tests) TestRunShellCMD(ctx context.Context) error {
 
 // TestCloneGitRepo tests the CloneGitRepo function.
 func (m *Tests) TestCloneGitRepo(ctx context.Context) error {
-	targetModule := dag.ModuleTemplateLight()
+	targetModule := dag.{{.module_name}}()
 
 	// This is a public repository, the token isn't required.
 	clonedRepo := targetModule.
@@ -184,7 +184,7 @@ func (m *Tests) TestCloneGitRepo(ctx context.Context) error {
 //     or if the file is not found in the mounted path.
 func (m *Tests) TestDownloadFile(ctx context.Context) error {
 	// Initialize the target module.
-	targetModule := dag.ModuleTemplateLight()
+	targetModule := dag.{{.module_name}}()
 
 	// Define the URL of the file to be downloaded.
 	fileURL := "https://framerusercontent.com/assets/cNNFYmZqESeYTV5PHp72ay0O2o.zip"

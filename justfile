@@ -161,7 +161,7 @@ cilocal mod: (reloadall mod) (golint mod) (test mod) (examplesgo mod) (ci-module
 create mod type='full':
   @echo "Creating a new {{type}} module..."
   @cd .daggerx/daggy && cargo build --release
-  @.daggerx/daggy/target/release/daggy --task=create --module={{mod}} --type={{type}}
+  @.daggerx/daggy/target/release/daggy --task=create --module={{mod}} --module-type={{type}}
 
 # Recipe to create a new light module using Daggy
 createlight mod:

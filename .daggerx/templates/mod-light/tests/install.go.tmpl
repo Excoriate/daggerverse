@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/Excoriate/daggerverse/module-template-light/tests/internal/dagger"
+	"github.com/Excoriate/daggerverse/{{.module_name_pkg}}/tests/internal/dagger"
 )
 
 // TestWithUtilitiesInAlpineContainer tests if the Alpine container with utilities is set correctly.
@@ -62,7 +62,7 @@ func (m *Tests) TestWithUtilitiesInUbuntuContainer(ctx context.Context) error {
 
 	// Initialize the target module with the Alpine container and utilities.
 	targetModule := dag.
-		ModuleTemplateLight(dagger.ModuleTemplateLightOpts{
+		{{.module_name}}(dagger.{{.module_name}}Opts{
 			Ctr: ubuntuCtr,
 		})
 
@@ -102,7 +102,7 @@ func (m *Tests) TestWithUtilitiesInUbuntuContainer(ctx context.Context) error {
 //   - error: Returns an error if there is an issue configuring the container,
 //     executing the command, or if the output does not contain the expected Git version information.
 func (m *Tests) TestWithGitInAlpineContainer(ctx context.Context) error {
-	targetModule := dag.ModuleTemplateLight()
+	targetModule := dag.{{.module_name}}()
 
 	// Configure the target module to include Git in an Alpine container
 	targetModule = targetModule.WithGitInAlpineContainer()
@@ -147,7 +147,7 @@ func (m *Tests) TestWithGitInUbuntuContainer(ctx context.Context) error {
 		From("ubuntu:latest")
 
 	// Initialize the target module.
-	targetModule := dag.ModuleTemplateLight(dagger.ModuleTemplateLightOpts{
+	targetModule := dag.{{.module_name}}(dagger.{{.module_name}}Opts{
 		Ctr: ubuntuCtr,
 	})
 

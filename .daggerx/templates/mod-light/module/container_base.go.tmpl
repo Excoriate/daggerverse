@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/Excoriate/daggerverse/module-template-light/internal/dagger"
+	"github.com/Excoriate/daggerverse/{{.module_name_pkg}}/internal/dagger"
 	"github.com/Excoriate/daggerx/pkg/apkox"
 )
 
@@ -46,12 +46,12 @@ func (m *ModuleTemplateLight) BaseAlpine(
 // Parameters:
 // - version: The version of the Ubuntu image to use. Optional parameter. Defaults to "latest".
 //
-// Returns a pointer to the ModuleTemplateLight instance.
-func (m *ModuleTemplateLight) BaseUbuntu(
+// Returns a pointer to the {{.module_name}} instance.
+func (m *{{.module_name}}) BaseUbuntu(
 	// version is the version of the Ubuntu image to use, e.g., "22.04".
 	// +optional
 	version string,
-) *ModuleTemplateLight {
+) *{{.module_name}} {
 	if version == "" {
 		version = defaultImageVersionLatest
 	}
@@ -66,12 +66,12 @@ func (m *ModuleTemplateLight) BaseUbuntu(
 // Parameters:
 // - version: The version of the BusyBox image to use. Optional parameter. Defaults to "latest".
 //
-// Returns a pointer to the ModuleTemplateLight instance.
-func (m *ModuleTemplateLight) BaseBusyBox(
+// Returns a pointer to the {{.module_name}} instance.
+func (m *{{.module_name}}) BaseBusyBox(
 	// version is the version of the BusyBox image to use, e.g., "1.35.0".
 	// +optional
 	version string,
-) *ModuleTemplateLight {
+) *{{.module_name}} {
 	if version == "" {
 		version = defaultImageVersionLatest
 	}
@@ -88,8 +88,8 @@ func (m *ModuleTemplateLight) BaseBusyBox(
 // - packages: Additional packages to install. Optional parameter.
 // - overlays: Overlay images to merge on top of the base. Optional parameter.
 //
-// Returns a pointer to the ModuleTemplateLight instance.
-func (m *ModuleTemplateLight) BaseWolfi(
+// Returns a pointer to the {{.module_name}} instance.
+func (m *{{.module_name}}) BaseWolfi(
 	// version is the version of the Wolfi image to use, e.g., "latest".
 	// +optional
 	version string,
@@ -100,7 +100,7 @@ func (m *ModuleTemplateLight) BaseWolfi(
 	// See https://twitter.com/ibuildthecloud/status/1721306361999597884
 	// +optional
 	overlays []*dagger.Container,
-) *ModuleTemplateLight {
+) *{{.module_name}} {
 	if version == "" {
 		version = defaultImageVersionLatest
 	}
@@ -153,8 +153,8 @@ func (m *ModuleTemplateLight) BaseWolfi(
 // - sbom: Enables or disables SBOM generation. Optional parameter.
 // - sbomFormats: Sets the SBOM formats for the APKO build. Optional parameter.
 //
-// Returns a pointer to the ModuleTemplateLight instance.
-func (m *ModuleTemplateLight) BaseApko(
+// Returns a pointer to the {{.module_name}} instance.
+func (m *{{.module_name}}) BaseApko(
 	// presetFilePath is the path to the preset file. Either presetFile or presetFilePath must be provided.
 	presetFilePath string,
 	// presetFile is the preset file to use for the Apko image. Either presetFile or presetFilePath must be provided.
@@ -221,7 +221,7 @@ func (m *ModuleTemplateLight) BaseApko(
 	// workdir sets the working directory for the APKO build.
 	// +optional
 	workdir string,
-) (*ModuleTemplateLight, error) {
+) (*{{.module_name}}, error) {
 	builder := m.initializeApkoBuilder(
 		presetFilePath,
 		cacheDir,
@@ -283,7 +283,7 @@ func (m *ModuleTemplateLight) BaseApko(
 }
 
 //nolint:cyclop,gocyclo // Cyclomatic complexity is high, but refactoring is not feasible at the moment.
-func (m *ModuleTemplateLight) initializeApkoBuilder(
+func (m *{{.module_name}}) initializeApkoBuilder(
 	presetFilePath, cacheDir string,
 	keyrings []string, buildArch, buildContext string,
 	debug, noNetwork bool, repositoryAppend []string,
