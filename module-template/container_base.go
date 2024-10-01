@@ -13,6 +13,9 @@ const (
 	defaultBusyBoxImage       = "busybox"
 	defaultImageVersionLatest = "latest"
 	defaultWolfiImage         = "cgr.dev/chainguard/wolfi-base"
+	// Apko specifics.
+	defaultApkoImage   = "cgr.dev/chainguard/apko"
+	defaultApkoTarball = "image.tar"
 )
 
 // BaseAlpine sets the base image to an Alpine Linux image and creates the base container.
