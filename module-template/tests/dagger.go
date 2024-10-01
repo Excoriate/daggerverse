@@ -7,7 +7,7 @@ import (
 	"github.com/Excoriate/daggerverse/module-template/tests/internal/dagger"
 )
 
-// TestDaggerWithDaggerCLI tests various versions of the Dagger CLI from v0.12.0 to v0.12.4
+// TestDaggerWithDaggerCLI tests various versions of the Dagger CLI from v0.13.0 to v0.13.3
 //
 // This function uses the provided context to run a series of tests that validate the Dagger CLI.
 // It verifies that the CLI version reported matches the expected version for each specific version tested.
@@ -22,7 +22,7 @@ import (
 //	  log.Fatalf("Test failed with error: %v", err)
 //	}
 func (m *Tests) TestDaggerWithDaggerCLI(ctx context.Context) error {
-	versions := []string{"v0.12.1", "v0.12.2", "v0.12.3", "v0.12.4", "v0.12.5", "v0.12.6", "v0.12.7"}
+	versions := []string{"v0.13.0", "v0.13.1", "v0.13.2", "v0.13.3"}
 
 	for _, version := range versions {
 		if err := m.testDaggerVersion(ctx, version); err != nil {
@@ -115,7 +115,7 @@ func (m *Tests) TestDaggerSetupDaggerInDagger(ctx context.Context) error {
 	targetModule := dag.ModuleTemplate()
 
 	// Define versions for Dagger and Docker.
-	dagVersion := "v0.12.5"
+	dagVersion := "v0.13.3"
 	dockerVersion := "24.0"
 
 	// Setup Dagger in Dagger environment.

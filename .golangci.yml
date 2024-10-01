@@ -67,6 +67,7 @@ linters:
     - gci
     - gofumpt
     - exhaustruct
+    - mnd
   presets:
     - bugs
     - comment

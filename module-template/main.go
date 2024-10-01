@@ -36,10 +36,10 @@ type ModuleTemplate struct {
 //
 // Returns a pointer to a ModuleTemplate instance and an error, if any.
 func New(
-	// version is the version of the container image to use.
+	// version (image tag) to use for the container image.
 	// +optional
 	version string,
-	// image is the container image to use.
+	// image is the imageURL (without the version) that's going to be used for his base container.
 	// +optional
 	image string,
 	// ctr is the container to use as a base container.
@@ -55,15 +55,9 @@ func New(
 	if ctr != nil {
 		dagModule.Ctr = ctr
 	} else {
-		imageURL, err := containerx.GetImageURL(&containerx.NewBaseContainerOpts{
-			Image:           image,
-			Version:         version,
-			FallbackImage:   defaultContainerImage,
-			FallBackVersion: defaultContainerVersion,
-		})
-
-		if err != nil {
-			return nil, WrapErrorf(err, "failed to get container image URl %s", imageURL)
+		imageURL, imageURLErr := dagModule.getImageURL(image, version)
+		if imageURLErr != nil {
+			return nil, WrapError(imageURLErr, "failed to initialize Dagger module")
 		}
 
 		dagModule.Base(imageURL)
@@ -92,8 +86,38 @@ func New(
 //
 //nolint:nolintlint,revive // This is a method that is used to set the base image and version.
 func (m *ModuleTemplate) Base(imageURL string) *ModuleTemplate {
-	c := dag.Container().From(imageURL)
+	c := dag.
+		Container().
+		From(imageURL)
+
 	m.Ctr = c
 
 	return m
+}
+
+// getImageURL gets the image URL and validates it.
+//
+// If the image URL is not valid, it returns an error.
+func (m *ModuleTemplate) getImageURL(image, version string) (string, error) {
+	imageURL, err := containerx.GetImageURL(&containerx.NewBaseContainerOpts{
+		Image:           image,
+		Version:         version,
+		FallbackImage:   defaultContainerImage,
+		FallBackVersion: defaultContainerVersion,
+	})
+
+	if err != nil {
+		return "", WrapErrorf(err, "failed to get image URL from image %s and version %s", image, version)
+	}
+
+	isValid, invalidImageErr := containerx.ValidateImageURL(imageURL)
+	if invalidImageErr != nil {
+		return "", WrapErrorf(invalidImageErr, "failed to validate image URL %s", imageURL)
+	}
+
+	if !isValid {
+		return "", Errorf("the image URL %s is not valid", imageURL)
+	}
+
+	return imageURL, nil
 }

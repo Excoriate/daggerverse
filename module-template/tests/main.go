@@ -54,9 +54,12 @@ func (m *Tests) getTestDir() *dagger.Directory {
 //
 //nolint:funlen // The test handles multiple commands and environments, requiring a longer function.
 func (m *Tests) TestAll(ctx context.Context) error {
+	maxGoroutines := 10
 	polTests := pool.
 		New().
+		WithMaxGoroutines(maxGoroutines).
 		WithErrors().
+		WithFirstError().
 		WithContext(ctx)
 
 	// Test different ways to configure the base container.
@@ -65,6 +68,8 @@ func (m *Tests) TestAll(ctx context.Context) error {
 	polTests.Go(m.TestContainerWithBusyBoxBase)
 	polTests.Go(m.TestContainerWithWolfiBase)
 	polTests.Go(m.TestPassingEnvVarsInConstructor)
+	polTests.Go(m.TestContainerWithApkoBaseWolfi)
+	polTests.Go(m.TestContainerWithApkoBaseAlpine)
 	// Test built-in commands
 	polTests.Go(m.TestRunShellCMD)
 	polTests.Go(m.TestPrintEnvVars)
