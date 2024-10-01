@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/Excoriate/daggerverse/module-template-light/internal/dagger"
 	"github.com/Excoriate/daggerx/pkg/apkox"
@@ -272,24 +271,22 @@ func (m *ModuleTemplateLight) BaseApko(
 		From(defaultApkoImage).
 		WithMountedFile(presetFilePath, presetFile)
 
-	// If key rings are passed, mount them. Separate them first, by =, and take
-	// the first element as the path and the second as the url.
-	for _, keyring := range keyrings {
-		parts := strings.SplitN(keyring, "=", keyringSplitParts)
-		switch len(parts) {
-		case 2:
-			path := parts[0]
-			url := parts[1]
-			apkoCtr = apkoCtr.WithMountedFile(path, dag.HTTP(url))
-		case 1:
-			url := parts[0]
-			apkoCtr = apkoCtr.WithMountedFile(url, dag.HTTP(url))
-		default:
-			return nil, Errorf("invalid keyring format: %s", keyring)
+	// Validate Keyring format if passed.
+	if len(keyrings) > 0 {
+		err := apkox.IsKeyringFormatValid(keyrings, false)
+		if err != nil {
+			return nil, WrapError(err, "invalid keyring format")
+		}
+
+		for _, keyring := range keyrings {
+			path, _ := apkox.ParseKeyring(keyring)
+			apkoCtr = apkoCtr.
+				WithMountedFile(path.Path, dag.HTTP(path.URL))
 		}
 	}
 
-	apkoCtr = apkoCtr.WithExec(cmd)
+	apkoCtr = apkoCtr.
+		WithExec(cmd)
 
 	outputTar := apkoCtr.
 		File(defaultApkoTarball)
