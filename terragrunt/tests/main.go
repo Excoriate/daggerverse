@@ -71,7 +71,11 @@ func (m *Tests) TestAll(ctx context.Context) error {
 	// Test cloud-specific functions.
 	polTests.Go(m.TestWithAWSKeys)
 	polTests.Go(m.TestWithAzureCredentials)
-	// From this point onwards, we're testing the specific functionality of the Terragrunt module.
+	// Specific Terragrunt/Container functionality tests.
+	polTests.Go(m.TestContainerBaseApkoDefault)
+	polTests.Go(m.TestContainerBaseWithPassedImage)
+	polTests.Go(m.TestContainerBaseWithAWSClI)
+	polTests.Go(m.TestContainerBaseApkoWithCustomVersions)
 
 	if err := polTests.Wait(); err != nil {
 		return WrapError(err, "there are some failed tests")
