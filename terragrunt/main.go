@@ -95,7 +95,10 @@ func New(
 			dagModule.
 				WithCachedDirectory("/home/.terraform.d/plugin-cache", false, "TF_PLUGIN_CACHE_DIR").
 				WithCachedDirectory("/home/.terraform.d/plugins", false, "").
-				WithCachedDirectory("/home/terragrunt/.terragrunt-providers-cache", false, "TERRAGRUNT_PROVIDER_CACHE_DIR")
+				WithCachedDirectory("/home/terragrunt/.terragrunt-providers-cache", false, "TERRAGRUNT_PROVIDER_CACHE_DIR").
+				WithTerragruntInstalled(tgVersion).
+				WithTerraformInstalled(tfVersion).
+				WithOpenTofuInstalled(openTofuVersion)
 		}
 	}
 
