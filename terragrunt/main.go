@@ -22,6 +22,9 @@ import (
 type Terragrunt struct {
 	// Ctr is the container to use as a base container.
 	Ctr *dagger.Container
+	// ApkoPackages is a list of packages to install with APKO.
+	// +private
+	ApkoPackages []string
 }
 
 // New creates a new Terragrunt module.
@@ -54,9 +57,66 @@ func New(
 	// envVarsFromHost is a list of environment variables to pass from the host to the container in a slice of strings.
 	// +optional
 	envVarsFromHost []string,
+	// enableAWSCLI is a boolean to enable or disable the installation of the AWS CLI.
+	// +optional
+	enableAWSCLI bool,
+	// awscliVersion is the version of the AWS CLI to install. Ensure the version is listed in the Alpine packages.
+	// +optional
+	awscliVersion string,
+	// extraPackages is a list of extra packages to install with APKO, from the Alpine packages repository.
+	// +optional
+	extraPackages []string,
 ) (*Terragrunt, error) {
-	dagModule := &Terragrunt{}
+	dagModule := &Terragrunt{
+		ApkoPackages: []string{},
+	}
+	// Precedence:
+	// 1. ctr
+	// 2. imageURL
+	// 3. built-in base image
+	if ctr != nil {
+		dagModule.Ctr = ctr
 
+		return dagModule, nil
+	}
+
+	if enableAWSCLI {
+		dagModule.WithAWSCLIPackage(awscliVersion)
+	}
+
+	dagModule.WithExtraPackages(extraPackages...)
+
+	if imageURL != "" {
+		isValid, err := containerx.ValidateImageURL(imageURL)
+		if err != nil {
+			return nil, WrapErrorf(err, "failed to validated image URL: %s", imageURL)
+		}
+
+		if !isValid {
+			return nil, Errorf("the image URL %s is not valid", imageURL)
+		}
+
+		dagModule.Base(imageURL)
+	} else {
+		_, tgCtrErr := dagModule.BaseApko(dagModule.ApkoPackages)
+		if tgCtrErr != nil {
+			return nil, WrapError(tgCtrErr, "failed to create base image apko")
+		}
+
+		dagModule.setDefaultCacheConfiguration()
+		dagModule.installIACTools(tgVersion, tfVersion, openTofuVersion)
+	}
+
+	if len(envVarsFromHost) > 0 {
+		if err := addEnvVars(dagModule, envVarsFromHost); err != nil {
+			return nil, err
+		}
+	}
+
+	return dagModule, nil
+}
+
+func (m *Terragrunt) installIACTools(tgVersion, tfVersion, openTofuVersion string) *Terragrunt {
 	if tgVersion == "" {
 		tgVersion = defaultTerragruntVersion
 	}
@@ -69,86 +129,17 @@ func New(
 		openTofuVersion = defaultOpenTofuVersion
 	}
 
-	// Precedence:
-	// 1. ctr
-	// 2. imageURL
-	// 3. built-in base image
-	if ctr != nil {
-		dagModule.Ctr = ctr
-	} else {
-		if imageURL != "" {
-			isValid, err := containerx.ValidateImageURL(imageURL)
-			if err != nil {
-				return nil, WrapErrorf(err, "failed to validated image URL: %s", imageURL)
-			}
-
-			if !isValid {
-				return nil, Errorf("the image URL %s is not valid", imageURL)
-			}
-			dagModule.Base(imageURL)
-		} else {
-			_, tgCtrErr := dagModule.BaseApko()
-			if tgCtrErr != nil {
-				return nil, WrapError(tgCtrErr, "failed to create base image apko")
-			}
-
-			dagModule.
-				WithCachedDirectory("/home/.terraform.d/plugin-cache", false, "TF_PLUGIN_CACHE_DIR").
-				WithCachedDirectory("/home/.terraform.d/plugins", false, "").
-				WithCachedDirectory("/home/terragrunt/.terragrunt-providers-cache", false, "TERRAGRUNT_PROVIDER_CACHE_DIR").
-				WithTerragruntInstalled(tgVersion).
-				WithTerraformInstalled(tfVersion).
-				WithOpenTofuInstalled(openTofuVersion)
-		}
-	}
-
-	if len(envVarsFromHost) > 0 {
-		if err := addEnvVars(dagModule, envVarsFromHost); err != nil {
-			return nil, err
-		}
-	}
-
-	return dagModule, nil
+	return m.
+		WithTerragruntInstalled(tgVersion).
+		WithTerraformInstalled(tfVersion).
+		WithOpenTofuInstalled(openTofuVersion)
 }
 
-func setupContainer(
-	terragrunt *Terragrunt,
-	ctr *dagger.Container,
-	imageURL,
-	tgVersion,
-	tfVersion,
-	openTofuVersion string) error {
-	if ctr != nil {
-		terragrunt.Ctr = ctr
-
-		return nil
-	}
-
-	if imageURL != "" {
-		isValid, invalidImageErr := containerx.ValidateImageURL(imageURL)
-		if invalidImageErr != nil {
-			return WrapError(invalidImageErr, "invalid image URL")
-		}
-
-		if !isValid {
-			return Errorf("invalid image URL: %s", imageURL)
-		}
-
-		terragrunt.Base(imageURL)
-	} else {
-		apkoCtr, apkCtrErr := terragrunt.BaseApko()
-		if apkCtrErr != nil {
-			return WrapError(apkCtrErr, "failed to create base image apko")
-		}
-
-		terragrunt.Ctr = apkoCtr
-
-		terragrunt.WithTerragruntInstalled(tgVersion).
-			WithTerraformInstalled(tfVersion).
-			WithOpenTofuInstalled(openTofuVersion)
-	}
-
-	return nil
+func (m *Terragrunt) setDefaultCacheConfiguration() *Terragrunt {
+	return m.
+		WithCachedDirectory("/home/.terraform.d/plugin-cache", false, "TF_PLUGIN_CACHE_DIR").
+		WithCachedDirectory("/home/.terraform.d/plugins", false, "").
+		WithCachedDirectory("/home/terragrunt/.terragrunt-providers-cache", false, "TERRAGRUNT_PROVIDER_CACHE_DIR")
 }
 
 func addEnvVars(terragrunt *Terragrunt, envVarsFromHost []string) error {

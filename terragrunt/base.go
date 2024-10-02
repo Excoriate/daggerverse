@@ -48,20 +48,27 @@ func (m *Terragrunt) Base(imageURL string) *Terragrunt {
 // - *dagger.Container: A pointer to the created and configured container.
 // - error: An error object if any step fails, otherwise nil.
 // See: https://github.com/Excoriate/daggerx/tree/main/pkg/builderx
-func (m *Terragrunt) BaseApko() (*dagger.Container, error) {
+func (m *Terragrunt) BaseApko(extraPackages []string) (*dagger.Container, error) {
 	apkoPresetFileToMount := filepath.Join(fixtures.MntPrefix, configPresetAlpinePath)
 	apkoPresetFile := dag.CurrentModule().
 		Source().
 		File(configPresetAlpinePath)
 
-	apkoCacheDir := filepath.Join(fixtures.MntPrefix, "var", "cache", "apko") // APKO Alpine key to mount into the container.
+	// APKO Alpine key to mount into the container.
+	apkoCacheDir := filepath.Join(fixtures.MntPrefix, "var", "cache", "apko")
 
 	// Here, the APKO command is built.
-	apkoBuildCmd, apkoBuildCmdErr := apkox.
+	apkoCmdBuider := apkox.
 		NewApkoBuilder().
 		WithConfigFile(apkoPresetFileToMount). // Path of the preset file mounted into the container.
 		WithOutputImage(apkoOutputTar).
-		WithCacheDir(apkoCacheDir).
+		WithCacheDir(apkoCacheDir)
+
+	for _, pkg := range extraPackages {
+		apkoCmdBuider.WithPackageAppend(pkg)
+	}
+
+	apkoBuildCmd, apkoBuildCmdErr := apkoCmdBuider.
 		BuildCommand()
 
 	if apkoBuildCmdErr != nil {

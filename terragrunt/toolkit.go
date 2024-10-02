@@ -1,7 +1,9 @@
 // Package main provides functionality for managing infrastructure-as-code toolkit versions.
 package main
 
-import "github.com/Excoriate/daggerx/pkg/installerx"
+import (
+	"github.com/Excoriate/daggerx/pkg/installerx"
+)
 
 // Default versions for OpenTofu, Terraform, and Terragrunt.
 const (
@@ -72,6 +74,43 @@ func (m *Terragrunt) WithOpenTofuInstalled(
 	})
 
 	m.Ctr = m.Ctr.WithExec([]string{"bash", "-c", installOpenTofuCmd})
+
+	return m
+}
+
+// WithAWSCLIPackage adds the AWS CLI package to the APKO packages list.
+// If a specific version is provided, it adds the package with the specified version.
+// If no version is provided, it adds the package without specifying a version.
+//
+// Parameters:
+//
+//	version - the version of the AWS CLI package to add. If empty, the package is added without a version.
+//
+// Returns:
+//
+//	A pointer to the updated Terragrunt instance.
+func (m *Terragrunt) WithAWSCLIPackage(version string) *Terragrunt {
+	if version == "" {
+		m.ApkoPackages = append(m.ApkoPackages, "aws-cli")
+	} else {
+		m.ApkoPackages = append(m.ApkoPackages, "aws-cli="+version)
+	}
+
+	return m
+}
+
+// WithExtraPackages adds extra packages to the APKO packages list.
+// This function allows adding multiple packages at once.
+//
+// Parameters:
+//
+//	packages - a variadic parameter representing the list of packages to add.
+//
+// Returns:
+//
+//	A pointer to the updated Terragrunt instance.
+func (m *Terragrunt) WithExtraPackages(packages ...string) *Terragrunt {
+	m.ApkoPackages = append(m.ApkoPackages, packages...)
 
 	return m
 }

@@ -11,8 +11,8 @@ contents:
     - musl
     - curl
     - bash
-    - wget
     - unzip
+    - wget
     - git
     - tzdata
     - openssl
