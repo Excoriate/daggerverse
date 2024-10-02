@@ -8,6 +8,7 @@ package main
 
 import (
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/Excoriate/daggerverse/terragrunt/internal/dagger"
@@ -149,6 +150,45 @@ func (m *Terragrunt) WithCacheBuster() *Terragrunt {
 		WithEnvVariable("CACHE_BUSTER", time.
 			Now().
 			Format(time.RFC3339Nano))
+
+	return m
+}
+
+// WithCachedDirectory mounts a cache volume in the container.
+//
+// Parameters:
+// - path: The path in the container where the cache volume will be mounted.
+// - cacheVolume: The cache volume to mount.
+func (m *Terragrunt) WithCachedDirectory(
+	// path is the path in the container where the cache volume will be mounted.
+	path string,
+	// enablePrefixWithMountPath is whether to enable the prefix with the mount path.
+	// +optional
+	enablePrefixWithMountPath bool,
+	// setEnvVarWithCacheDirValue is the value to set the cache directory in the container.
+	// +optional
+	setEnvVarWithCacheDirValue string,
+) *Terragrunt {
+	// Define the cache volume
+	cacheVolume := dag.CacheVolume(path)
+
+	// Define the path in the container
+	mountPath := path
+	if enablePrefixWithMountPath {
+		mountPath = filepath.Join(fixtures.MntPrefix, path)
+	}
+
+	// Mount the cache volume in the container
+	m.Ctr = m.Ctr.
+		WithMountedCache(mountPath, cacheVolume)
+
+	// Set the environment variable if provided
+	if setEnvVarWithCacheDirValue != "" {
+		envVarName := strings.ToUpper(strings.TrimSpace(setEnvVarWithCacheDirValue))
+		m.Ctr = m.
+			Ctr.
+			WithEnvVariable(envVarName, mountPath)
+	}
 
 	return m
 }

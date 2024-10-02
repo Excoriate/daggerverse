@@ -55,7 +55,7 @@ func New(
 	// +optional
 	envVarsFromHost []string,
 ) (*Terragrunt, error) {
-	terragrunt := &Terragrunt{}
+	dagModule := &Terragrunt{}
 
 	if tgVersion == "" {
 		tgVersion = defaultTerragruntVersion
@@ -69,17 +69,43 @@ func New(
 		openTofuVersion = defaultOpenTofuVersion
 	}
 
-	if err := setupContainer(terragrunt, ctr, imageURL, tgVersion, tfVersion, openTofuVersion); err != nil {
-		return nil, err
+	// Precedence:
+	// 1. ctr
+	// 2. imageURL
+	// 3. built-in base image
+	if ctr != nil {
+		dagModule.Ctr = ctr
+	} else {
+		if imageURL != "" {
+			isValid, err := containerx.ValidateImageURL(imageURL)
+			if err != nil {
+				return nil, WrapErrorf(err, "failed to validated image URL: %s", imageURL)
+			}
+
+			if !isValid {
+				return nil, Errorf("the image URL %s is not valid", imageURL)
+			}
+			dagModule.Base(imageURL)
+		} else {
+			_, tgCtrErr := dagModule.BaseApko()
+			if tgCtrErr != nil {
+				return nil, WrapError(tgCtrErr, "failed to create base image apko")
+			}
+
+			dagModule.
+				WithCachedDirectory("/home/.terraform.d/plugin-cache", false, "TF_PLUGIN_CACHE_DIR").
+				WithCachedDirectory("/home/.terraform.d/plugins", false, "").
+				WithCachedDirectory("/home/terragrunt/.terragrunt-providers-cache", false, "TERRAGRUNT_PROVIDER_CACHE_DIR")
+		}
 	}
 
 	if len(envVarsFromHost) > 0 {
-		if err := addEnvVars(terragrunt, envVarsFromHost); err != nil {
+		if err := addEnvVars(dagModule, envVarsFromHost); err != nil {
 			return nil, err
 		}
 	}
 
-	return terragrunt, nil
+	return dagModule, nil
 }
 
 func setupContainer(
@@ -107,7 +133,7 @@ func setupContainer(
 
 		terragrunt.Base(imageURL)
 	} else {
-		apkoCtr, apkCtrErr := terragrunt.BaseApko("alpine")
+		apkoCtr, apkCtrErr := terragrunt.BaseApko()
 		if apkCtrErr != nil {
 			return WrapError(apkCtrErr, "failed to create base image apko")
 		}

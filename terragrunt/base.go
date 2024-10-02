@@ -1,8 +1,11 @@
 package main
 
 import (
+	"path/filepath"
+
 	"github.com/Excoriate/daggerverse/terragrunt/internal/dagger"
-	"github.com/Excoriate/daggerx/pkg/builderx"
+	"github.com/Excoriate/daggerx/pkg/apkox"
+	"github.com/Excoriate/daggerx/pkg/fixtures"
 )
 
 const (
@@ -45,32 +48,18 @@ func (m *Terragrunt) Base(imageURL string) *Terragrunt {
 // - *dagger.Container: A pointer to the created and configured container.
 // - error: An error object if any step fails, otherwise nil.
 // See: https://github.com/Excoriate/daggerx/tree/main/pkg/builderx
-func (m *Terragrunt) BaseApko(preset string) (*dagger.Container, error) {
-	// Keyring configuration
-	//	1. KeyURL:  "https://alpinelinux.org/keys/alpine-devel@lists.alpinelinux.org-4a6a0840.rsa.pub",
-	//  2. KeyPath: "/etc/apk/keys/alpine-devel@lists.alpinelinux.org-4a6a0840.rsa.pub",
-	keyRingCfg, err := builderx.GetKeyringInfoForPreset(preset)
-	if err != nil {
-		return nil, WrapError(err, "failed to get keyring info for preset")
-	}
-
-	// APKO preset, or configuration file path inside the container.
-	apkoCfgFilePath, _ := builderx.GetApkoConfigOrPreset("", configPresetAlpinePath)
-	apkoCfgFile := dag.CurrentModule().
+func (m *Terragrunt) BaseApko() (*dagger.Container, error) {
+	apkoPresetFileToMount := filepath.Join(fixtures.MntPrefix, configPresetAlpinePath)
+	apkoPresetFile := dag.CurrentModule().
 		Source().
-		File(apkoCfgFilePath)
-	// APKO cache directory.
-	apkoCacheDir := builderx.GetCacheDir("")
-	// APKO Alpine key to mount into the container.
-	keyRingAlpineKey := dag.HTTP(keyRingCfg.KeyURL)
+		File(configPresetAlpinePath)
+
+	apkoCacheDir := filepath.Join(fixtures.MntPrefix, "var", "cache", "apko") // APKO Alpine key to mount into the container.
 
 	// Here, the APKO command is built.
-	apkoBuildCmd, apkoBuildCmdErr := builderx.
+	apkoBuildCmd, apkoBuildCmdErr := apkox.
 		NewApkoBuilder().
-		WithBuildArch(builderx.ArchX8664).
-		WithBuildArch(builderx.ArchAarch64).
-		WithKeyring(keyRingCfg.KeyPath).
-		WithConfigFile(apkoCfgFilePath).
+		WithConfigFile(apkoPresetFileToMount). // Path of the preset file mounted into the container.
 		WithOutputImage(apkoOutputTar).
 		WithCacheDir(apkoCacheDir).
 		BuildCommand()
@@ -79,22 +68,23 @@ func (m *Terragrunt) BaseApko(preset string) (*dagger.Container, error) {
 		return nil, WrapError(apkoBuildCmdErr, "failed to build apko command")
 	}
 
-	// Let's build the basic container.
-	ctr := dag.
+	// Builder container with APKO preset file mounted.
+	builderCtr := dag.
 		Container().
-		From(apkoRepositoryURL)
+		From(apkoRepositoryURL).
+		WithMountedFile(apkoPresetFileToMount, apkoPresetFile).
+		WithMountedCache(apkoCacheDir, dag.CacheVolume("apko-cache")) // Create a cache volume for APKO.
 
-	// Decorate container with APKO-related mounts.
-	ctr = ctr.
-		WithMountedFile(apkoCfgFilePath, apkoCfgFile).
-		WithMountedFile(keyRingCfg.KeyPath, keyRingAlpineKey).
-		WithMountedCache(apkoCacheDir, dag.CacheVolume("apko-cache"))
+	builderCtr = builderCtr.WithExec(apkoBuildCmd)
 
-	ctr = ctr.WithExec(apkoBuildCmd)
+	outputTar := builderCtr.File(apkoOutputTar)
 
-	outputTar := ctr.File(apkoOutputTar)
-
-	return dag.
+	// Terragrunt container with the output tar mounted.
+	tgCtr := dag.
 		Container().
-		Import(outputTar), nil
+		Import(outputTar)
+
+	m.Ctr = tgCtr
+
+	return tgCtr, nil
 }
