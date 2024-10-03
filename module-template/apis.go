@@ -17,8 +17,6 @@ import (
 	"github.com/Excoriate/daggerx/pkg/fixtures"
 )
 
-const netRcRootPath = "/root/.netrc"
-
 // WithEnvironmentVariable sets an environment variable in the container.
 //
 // Parameters:
@@ -78,42 +76,6 @@ func (m *ModuleTemplate) WithContainer(
 	m.Ctr = ctr
 
 	return m
-}
-
-// WithDockerService sets up the container with the Docker service.
-//
-// It sets up the container with the Docker service.
-// Parameters:
-//   - dockerVersion: The version of the Docker engine to use, e.g., "v20.10.17".
-//     Optional parameter. If not provided, a default version is used.
-func (m *ModuleTemplate) WithDockerService(
-	dockerVersion string,
-) *dagger.Service {
-	if dockerVersion == "" {
-		dockerVersion = dockerVersionDefault
-	}
-
-	dindImage := getDockerInDockerImage(dockerVersion)
-	dockerPort := 2375
-
-	return dag.Container().
-		From(dindImage).
-		WithMountedCache(
-			"/var/lib/docker",
-			dag.CacheVolume(dockerVersion+"-docker-lib"),
-			dagger.ContainerWithMountedCacheOpts{
-				Sharing: dagger.Private,
-			}).
-		WithExposedPort(dockerPort).
-		WithExec([]string{
-			"dockerd",
-			"--host=tcp://0.0.0.0:2375",
-			"--host=unix:///var/run/docker.sock",
-			"--tls=false",
-		}, dagger.ContainerWithExecOpts{
-			InsecureRootCapabilities: true,
-		}).
-		AsService()
 }
 
 // WithFileMountedInContainer adds a file to the container.
@@ -201,7 +163,7 @@ func (m *ModuleTemplate) WithDownloadedFile(
 	return m
 }
 
-// WithClonedGitRepo clones a Git repository and mounts it as a directory in the container.
+// WithClonedGitRepoHTTPS clones a Git repository and mounts it as a directory in the container.
 //
 // This method downloads a Git repository and mounts it as a directory in the container. It supports optional
 // authentication tokens for private repositories and can handle both GitHub and GitLab repositories.
@@ -215,7 +177,7 @@ func (m *ModuleTemplate) WithDownloadedFile(
 //
 // Returns:
 //   - *ModuleTemplate: The updated ModuleTemplate with the cloned repository mounted in the container.
-func (m *ModuleTemplate) WithClonedGitRepo(
+func (m *ModuleTemplate) WithClonedGitRepoHTTPS(
 	repoURL string,
 	// token is the VCS token to use for authentication. Optional parameter.
 	// +optional
@@ -223,12 +185,77 @@ func (m *ModuleTemplate) WithClonedGitRepo(
 	// vcs is the VCS to use for authentication. Optional parameter.
 	// +optional
 	vcs string,
+	// authHeader is the authentication header to use for authentication. Optional parameter.
+	// +optional
+	authHeader *dagger.Secret,
+	// returnDir is a string that indicates the directory path of the repository to return.
+	// +optional
+	returnDir string,
+	// branch is the branch to checkout. Optional parameter.
+	// +optional
+	branch string,
+	// keepGitDir is a boolean that indicates if the .git directory should be kept. Optional parameter.
+	// +optional
+	keepGitDir bool,
+	// tag is the tag to checkout. Optional parameter.
+	// +optional
+	tag string,
+	// commit is the commit to checkout. Optional parameter.
+	// +optional
+	commit string,
 ) *ModuleTemplate {
 	// Call the helper function to clone the repository.
-	clonedRepo := m.CloneGitRepo(repoURL, token, vcs)
+	clonedRepo := m.CloneGitRepoHTTPS(repoURL, token, vcs, authHeader, returnDir, branch, keepGitDir, tag, commit)
 
 	// Mount the cloned repository as a directory inside the container.
 	m.Ctr = m.Ctr.WithMountedDirectory(fixtures.MntPrefix, clonedRepo)
+
+	return m
+}
+
+// WithClonedGitRepoSSH clones a git repository using SSH for authentication.
+//
+// Parameters:
+//   - repoURL: The URL of the git repository to clone.
+//   - sshSocket: The SSH socket to use for authentication.
+//   - sshKnownHosts: The known hosts to use for authentication. Optional parameter.
+//   - returnDir: A string that indicates the directory path of the repository to return. Optional parameter.
+//   - branch: The branch to checkout. Optional parameter.
+//   - keepGitDir: A boolean that indicates if the .git directory should be kept. Optional parameter.
+//
+// Returns:
+//   - *ModuleTemplate: The updated ModuleTemplate with the cloned repository mounted in the container.
+func (m *ModuleTemplate) WithClonedGitRepoSSH(
+	// repoURL is the URL of the git repository to clone.
+	repoURL string,
+	// sshAuthSocket is the SSH socket to use for authentication.
+	sshAuthSocket *dagger.Socket,
+	// sshKnownHosts is the known hosts to use for authentication. Optional parameter.
+	// +optional
+	sshKnownHosts string,
+	// returnDir is a string that indicates the directory path of the repository to return. Optional parameter.
+	// +optional
+	returnDir string,
+	// branch is the branch to checkout. Optional parameter.
+	// +optional
+	branch string,
+	// keepGitDir is a boolean that indicates if the .git directory should be kept. Optional parameter.
+	// +optional
+	keepGitDir bool,
+	// tag is the tag to checkout. Optional parameter.
+	// +optional
+	tag string,
+	// commit is the commit to checkout. Optional parameter.
+	// +optional
+	commit string,
+) *ModuleTemplate {
+	// Call the helper function to clone the repository.
+	clonedRepo := m.CloneGitRepoSSH(repoURL, sshAuthSocket, sshKnownHosts, returnDir, branch, keepGitDir, tag, commit)
+
+	// Mount the cloned repository as a directory inside the container.
+	m.Ctr = m.
+		Ctr.
+		WithMountedDirectory(fixtures.MntPrefix, clonedRepo)
 
 	return m
 }
@@ -262,24 +289,26 @@ func (m *ModuleTemplate) WithCacheBuster() *ModuleTemplate {
 // Returns:
 //   - *ModuleTemplate: The updated ModuleTemplate with the config file mounted in the container.
 func (m *ModuleTemplate) WithConfigFile(
-	// cfgPath is the path where the config file will be mounted.
+	// cfgFile is the config file to be mounted.
+	cfgFile *dagger.File,
+	// cfgPathInCtr is the path where the config file will be mounted.
 	// +optional
-	cfgPath string,
+	cfgPathInCtr string,
 	// setEnvVar is a string that set an environment variable in the container with the config file path.
 	// +optional
 	setEnvVar string,
-	// cfgFile is the config file to be mounted.
-	cfgFile *dagger.File) *ModuleTemplate {
-	if cfgPath == "" {
-		cfgPath = fixtures.MntPrefix
+) *ModuleTemplate {
+	if cfgPathInCtr == "" {
+		cfgPathInCtr = fixtures.MntPrefix
 	}
 
 	m.Ctr = m.Ctr.
-		WithMountedFile(cfgPath, cfgFile)
+		WithMountedFile(cfgPathInCtr, cfgFile)
 
 	if setEnvVar != "" {
-		setEnvVar = strings.ToUpper(setEnvVar)
-		m.Ctr = m.Ctr.WithEnvVariable(setEnvVar, cfgPath)
+		setEnvVar = strings.ToUpper(strings.TrimSpace(setEnvVar))
+		setEnvVar = strings.ReplaceAll(setEnvVar, "\\", "")
+		m.Ctr = m.Ctr.WithEnvVariable(setEnvVar, strings.TrimSpace(cfgPathInCtr))
 	}
 
 	return m
@@ -299,6 +328,15 @@ func (m *ModuleTemplate) WithCachedDirectory(
 	// setEnvVarWithCacheDirValue is the value to set the cache directory in the container.
 	// +optional
 	setEnvVarWithCacheDirValue string,
+	// cacheSharingMode is the sharing mode of the cache volume.
+	// +optional
+	cacheSharingMode dagger.CacheSharingMode,
+	// cacheVolumeRootDir is the root directory of the cache volume.
+	// +optional
+	cacheVolumeRootDir *dagger.Directory,
+	// cacheVolumeOwner is the owner of the cache volume.
+	// +optional
+	cacheVolumeOwner string,
 ) *ModuleTemplate {
 	// Define the cache volume
 	cacheVolume := dag.CacheVolume(path)
@@ -309,9 +347,22 @@ func (m *ModuleTemplate) WithCachedDirectory(
 		mountPath = filepath.Join(fixtures.MntPrefix, path)
 	}
 
+	cacheMountOpts := dagger.ContainerWithMountedCacheOpts{}
+	if cacheVolumeRootDir != nil {
+		cacheMountOpts.Source = cacheVolumeRootDir
+	}
+
+	if cacheVolumeOwner != "" {
+		cacheMountOpts.Owner = cacheVolumeOwner
+	}
+
+	if cacheSharingMode != "" {
+		cacheMountOpts.Sharing = cacheSharingMode
+	}
+
 	// Mount the cache volume in the container
 	m.Ctr = m.Ctr.
-		WithMountedCache(mountPath, cacheVolume)
+		WithMountedCache(mountPath, cacheVolume, cacheMountOpts)
 
 	// Set the environment variable if provided
 	if setEnvVarWithCacheDirValue != "" {
@@ -319,6 +370,91 @@ func (m *ModuleTemplate) WithCachedDirectory(
 		m.Ctr = m.
 			Ctr.
 			WithEnvVariable(envVarName, mountPath)
+	}
+
+	return m
+}
+
+// WithUserAsOwnerOfDirs sets the specified user (and optionally group) as the owner
+// of the given directories within the container.
+//
+// This method iterates over the provided list of directories and executes the "chown" command
+// within the container to change the ownership of each directory to the specified user (and optionally group).
+//
+// Parameters:
+//   - user: The user to set as the owner of the directories. This should be a valid user within the container.
+//   - group: The group to set as the owner of the directories. This is an optional parameter.
+//   - dirs: A slice of strings representing the directories to set the owner of. Each directory path should be
+//     specified relative to the container's filesystem.
+//
+// Returns:
+// - *Terragrunt: The updated Terragrunt instance with the ownership of the specified directories changed.
+func (m *ModuleTemplate) WithUserAsOwnerOfDirs(
+	// user is the user to set as the owner of the directories.
+	user string,
+	// dirs is the directories to set the owner of.
+	dirs []string,
+	// group is the group to set as the owner of the directories.
+	// +optional
+	group string,
+	// configureAsRoot is whether to configure the directories as root, and then it'll use the given user.
+	// +optional
+	configureAsRoot bool,
+) *ModuleTemplate {
+	if configureAsRoot {
+		m.Ctr = m.Ctr.WithUser("root")
+	}
+
+	for _, dir := range dirs {
+		if group != "" {
+			m.Ctr = m.Ctr.WithExec([]string{"chown", "-R", user + ":" + group, dir})
+		} else {
+			m.Ctr = m.Ctr.WithExec([]string{"chown", "-R", user, dir})
+		}
+	}
+
+	if configureAsRoot {
+		m.Ctr = m.Ctr.WithUser(user)
+	}
+
+	return m
+}
+
+// WithUserWithPermissionsOnDirs sets the specified permissions on the given directories within the container.
+//
+// This method iterates over the provided list of directories and executes the "chmod" command
+// within the container to change the permissions of each directory to the specified mode.
+//
+// Parameters:
+//   - user: The user to set as the owner of the directories. This should be a valid user within the container.
+//   - mode: The permissions to set on the directories. This should be a valid mode string (e.g., "0777").
+//   - dirs: A slice of strings representing the directories to set the permissions of. Each directory path should be
+//     specified relative to the container's filesystem.
+//   - configureAsRoot: Whether to configure the directories as root, and then it'll use the given mode.
+//
+// Returns:
+// - *Terragrunt: The updated Terragrunt instance with the permissions of the specified directories changed.
+func (m *ModuleTemplate) WithUserWithPermissionsOnDirs(
+	// user is the user to set as the owner of the directories.
+	user string,
+	// mode is the permissions to set on the directories.
+	mode string,
+	// dirs is the directories to set the permissions of.
+	dirs []string,
+	// configureAsRoot is whether to configure the directories as root, and then it'll use the given mode.
+	// +optional
+	configureAsRoot bool,
+) *ModuleTemplate {
+	if configureAsRoot {
+		m.Ctr = m.Ctr.WithUser("root")
+	}
+
+	for _, dir := range dirs {
+		m.Ctr = m.Ctr.WithExec([]string{"chmod", "-R", mode, dir})
+	}
+
+	if configureAsRoot && user != "" {
+		m.Ctr = m.Ctr.WithUser(user)
 	}
 
 	return m

@@ -4,6 +4,7 @@ go 1.23.1
 
 require (
 	github.com/99designs/gqlgen v0.17.54
+	github.com/Excoriate/daggerx v0.0.32
 	github.com/Khan/genqlient v0.7.0
 	github.com/sourcegraph/conc v0.3.0
 	github.com/vektah/gqlparser/v2 v2.5.17

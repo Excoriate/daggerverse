@@ -76,8 +76,11 @@ func (m *Tests) TestAll(ctx context.Context) error {
 	polTests.Go(m.TestWithEnvironmentVariable)
 	polTests.Go(m.TestWithSecretAsEnvVar)
 	polTests.Go(m.TestWithDownloadedFile)
-	polTests.Go(m.TestWithClonedGitRepo)
+	polTests.Go(m.TestWithClonedGitRepoHTTPS)
 	polTests.Go(m.TestWithCacheBuster)
+	polTests.Go(m.TestWithConfigFile)
+	polTests.Go(m.TestWithUserAsOwnerOfDirs)
+	polTests.Go(m.TestWithUserWithPermissionsOnDirs)
 	// Test installation APIs
 	polTests.Go(m.TestWithUtilitiesInAlpineContainer)
 	polTests.Go(m.TestWithUtilitiesInUbuntuContainer)
@@ -133,7 +136,7 @@ func (m *Tests) TestCloneGitRepo(ctx context.Context) error {
 
 	// This is a public repository, the token isn't required.
 	clonedRepo := targetModule.
-		CloneGitRepo("https://github.com/excoriate/daggerverse")
+		CloneGitRepoHTTPS("https://github.com/excoriate/daggerverse")
 
 	// Mount it as a directory, and inspect if it contains .gitignore and LICENSE files.
 	ctr := targetModule.Ctr().

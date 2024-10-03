@@ -7,6 +7,10 @@ import (
 	"github.com/Excoriate/daggerverse/module-template/internal/dagger"
 )
 
+const (
+	netRcRootPath = "/root/.netrc"
+)
+
 // WithNewNetrcFileGitHub creates a new .netrc file with the GitHub credentials.
 //
 // The .netrc file is created in the root directory of the container.
