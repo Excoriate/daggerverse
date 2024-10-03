@@ -103,8 +103,10 @@ func New(
 			return nil, WrapError(tgCtrErr, "failed to create base image apko")
 		}
 
-		dagModule.setDefaultCacheConfiguration()
-		dagModule.installIACTools(tgVersion, tfVersion, openTofuVersion)
+		dagModule.WithTerragruntCacheConfiguration()
+		dagModule.WithTerraformCacheConfiguration()
+		dagModule.WithIACToolsInstalled(tgVersion, tfVersion, openTofuVersion)
+		dagModule.WithTerragruntPermissions()
 	}
 
 	if len(envVarsFromHost) > 0 {
@@ -116,40 +118,16 @@ func New(
 	return dagModule, nil
 }
 
-func (m *Terragrunt) installIACTools(tgVersion, tfVersion, openTofuVersion string) *Terragrunt {
-	if tgVersion == "" {
-		tgVersion = defaultTerragruntVersion
-	}
-
-	if tfVersion == "" {
-		tfVersion = defaultTerraformVersion
-	}
-
-	if openTofuVersion == "" {
-		openTofuVersion = defaultOpenTofuVersion
-	}
-
-	return m.
-		WithTerragruntInstalled(tgVersion).
-		WithTerraformInstalled(tfVersion).
-		WithOpenTofuInstalled(openTofuVersion)
-}
-
-func (m *Terragrunt) setDefaultCacheConfiguration() *Terragrunt {
-	return m.
-		WithCachedDirectory("/home/.terraform.d/plugin-cache", false, "TF_PLUGIN_CACHE_DIR").
-		WithCachedDirectory("/home/.terraform.d/plugins", false, "").
-		WithCachedDirectory("/home/terragrunt/.terragrunt-providers-cache", false, "TERRAGRUNT_PROVIDER_CACHE_DIR")
-}
-
+// addEnvVars adds environment variables from the host to the Terragrunt configuration.
+// It parses the environment variables and adds them to the Terragrunt instance.
 func addEnvVars(terragrunt *Terragrunt, envVarsFromHost []string) error {
-	envVars, err := envvars.ToDaggerEnvVarsFromSlice(envVarsFromHost)
+	envVars, err := envvars.ToDaggerEnvVarsFromSlice(envVarsFromHost) // Parse environment variables from the host
 	if err != nil {
-		return WrapError(err, "failed to parse environment variables")
+		return WrapError(err, "failed to parse environment variables") // Return error if parsing fails
 	}
 
 	for _, envVar := range envVars {
-		terragrunt.WithEnvironmentVariable(envVar.Name, envVar.Value, false)
+		terragrunt.WithEnvironmentVariable(envVar.Name, envVar.Value, false) // Add each environment variable to Terragrunt
 	}
 
 	return nil
