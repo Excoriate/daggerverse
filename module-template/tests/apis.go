@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
+	"path/filepath"
 	"strings"
 
 	"github.com/Excoriate/daggerverse/module-template/tests/internal/dagger"
+	"github.com/Excoriate/daggerx/pkg/fixtures"
 )
 
 // TestWithContainer tests if the container is set correctly.
@@ -286,14 +288,14 @@ func (m *Tests) TestWithDownloadedFile(ctx context.Context) error {
 	return nil
 }
 
-// TestWithClonedGitRepo tests the WithClonedGitRepo function.
-func (m *Tests) TestWithClonedGitRepo(ctx context.Context) error {
+// TestWithClonedGitRepoHTTPS tests the WithClonedGitRepoHTTPS function.
+func (m *Tests) TestWithClonedGitRepoHTTPS(ctx context.Context) error {
 	targetModule := dag.ModuleTemplate()
 
 	// This is a public repository, the token isn't required.
 	targetModule = targetModule.
-		WithClonedGitRepo("https://github.com/excoriate/daggerverse",
-			dagger.ModuleTemplateWithClonedGitRepoOpts{})
+		WithClonedGitRepoHTTPS("https://github.com/excoriate/daggerverse",
+			dagger.ModuleTemplateWithClonedGitRepoHTTPSOpts{})
 
 	out, err := targetModule.Ctr().
 		WithExec([]string{"ls", "-l"}).
@@ -345,6 +347,193 @@ func (m *Tests) TestWithCacheBuster(ctx context.Context) error {
 	// Check if the cache-busting environment variable is set
 	if !strings.Contains(out, "CACHE_BUSTER") {
 		return WrapErrorf(err, "expected CACHE_BUSTER to be set, got %s", out)
+	}
+
+	return nil
+}
+
+// TestWithConfigFile tests the setting of a configuration file within the target module's container.
+//
+// This method mounts a configuration file (`common/test-file.yml`) into the target module's container
+// and verifies if it is correctly mounted by running the `cat` command within the container. It also
+// checks if the environment variable `TEST_CONFIG_PATH` is set to the correct path of the configuration file.
+//
+// Arguments:
+// - ctx (context.Context): The context for the test execution.
+//
+// Returns:
+//   - error: Returns an error if there is an issue mounting the configuration file, executing commands
+//     in the container, or if the configuration file or environment variable is not found in the output.
+func (m *Tests) TestWithConfigFile(ctx context.Context) error {
+	configTestFilePath := "common/test-file.yml"
+	configTestFilePathInCtr := filepath.Join(fixtures.MntPrefix, configTestFilePath)
+
+	file := m.getTestDir().
+		File(configTestFilePath)
+
+	targetModule := dag.
+		ModuleTemplate().
+		WithConfigFile(file, dagger.ModuleTemplateWithConfigFileOpts{
+			CfgPathInCtr: configTestFilePathInCtr,
+			SetEnvVar:    "TEST_CONFIG_PATH",
+		})
+
+	// Inspecting the file mounted into the container.
+	catOut, catOutErr := targetModule.
+		Ctr().
+		WithExec([]string{"cat", configTestFilePathInCtr}).
+		Stdout(ctx)
+
+	if catOutErr != nil {
+		return WrapErrorf(catOutErr, "failed to cat the file %s", configTestFilePathInCtr)
+	}
+
+	if catOut == "" {
+		return WrapError(catOutErr, "expected to have at least one folder, got empty output")
+	}
+
+	if !strings.Contains(catOut, "users") {
+		return WrapErrorf(catOutErr, "expected to have at least one folder, got %s", catOut)
+	}
+
+	// Inspect if the environment variable was set, and it was the expected value.
+	envVarOut, envVarOutErr := targetModule.
+		Ctr().
+		WithExec([]string{"printenv"}).
+		Stdout(ctx)
+
+	if envVarOutErr != nil {
+		return WrapError(envVarOutErr, "failed to get env vars")
+	}
+
+	if !strings.Contains(envVarOut, "TEST_CONFIG_PATH") {
+		return WrapErrorf(envVarOutErr, "expected TEST_CONFIG_PATH to be set, got %s", envVarOut)
+	}
+
+	if !strings.Contains(envVarOut, configTestFilePathInCtr) {
+		return WrapErrorf(envVarOutErr, "expected TEST_CONFIG_PATH to be set, got %s", envVarOut)
+	}
+
+	return nil
+}
+
+// TestWithUserAsOwnerOfDirs tests if the specified user and group own the created directories.
+func (m *Tests) TestWithUserAsOwnerOfDirs(ctx context.Context) error {
+	// Create a new container from the alpine:latest image
+	alpineCtr := dag.
+		Container().
+		From("alpine:latest")
+
+	// Install shadow package, create a group and a user
+	alpineCtr = alpineCtr.
+		WithExec([]string{"apk", "add", "--no-cache", "shadow"}).
+		WithExec([]string{"groupadd", "mygroup"}).
+		WithExec([]string{"useradd", "-G", "mygroup", "me"})
+
+	// List of directories to be created and owned by the user
+	listOfDirsToOwn := []string{
+		"/mnt/test-dir",
+		"/mnt/test-dir-1",
+		"/mnt/test-dir-2",
+		"/mnt/test-dir-3",
+		"/mnt/test-dir-4",
+		"/mnt/test-dir-5",
+	}
+
+	// Create the directories
+	for _, dir := range listOfDirsToOwn {
+		alpineCtr = alpineCtr.
+			WithExec([]string{"mkdir", "-p", dir})
+	}
+
+	// Create a new module with the container
+	targetModule := dag.
+		ModuleTemplate(dagger.ModuleTemplateOpts{
+			Ctr: alpineCtr,
+		})
+
+	// Set ownership of directories to the specified user and group
+	targetModule = targetModule.
+		WithUserAsOwnerOfDirs("me", listOfDirsToOwn,
+			dagger.ModuleTemplateWithUserAsOwnerOfDirsOpts{
+				Group:           "mygroup",
+				ConfigureAsRoot: true,
+			})
+
+	// Verify ownership of the directories
+	out, err := targetModule.Ctr().
+		WithExec(append([]string{"stat", "-c", "%U %G %n"}, listOfDirsToOwn...)).
+		Stdout(ctx)
+
+	if err != nil {
+		return WrapError(err, "failed to get stat output")
+	}
+
+	// Check if the ownership is as expected
+	for _, dir := range listOfDirsToOwn {
+		expected := "me mygroup " + dir
+		if !strings.Contains(out, expected) {
+			return WrapErrorf(err,
+				"expected user owner to be me and group owner to be mygroup for %s, got %s", dir, out)
+		}
+	}
+
+	return nil
+}
+
+// TestWithUserWithPermissionsOnDirs tests if the specified permissions are set on the created directories.
+func (m *Tests) TestWithUserWithPermissionsOnDirs(ctx context.Context) error {
+	// Create a new container from the alpine:latest image
+	alpineCtr := dag.
+		Container().
+		From("alpine:latest")
+
+	// Install shadow package, create a group and a user
+	alpineCtr = alpineCtr.
+		WithExec([]string{"apk", "add", "--no-cache", "shadow"}).
+		WithExec([]string{"groupadd", "mygroup"}).
+		WithExec([]string{"useradd", "-G", "mygroup", "me"})
+
+	// List of directories to be created and owned by the user
+	listOfDirsToOwn := []string{
+		"/mnt/test-dir",
+		"/mnt/test-dir-1",
+		"/mnt/test-dir-2",
+		"/mnt/test-dir-3",
+		"/mnt/test-dir-4",
+		"/mnt/test-dir-5",
+	}
+
+	// Create the directories
+	for _, dir := range listOfDirsToOwn {
+		alpineCtr = alpineCtr.
+			WithExec([]string{"mkdir", "-p", dir})
+	}
+
+	// Create a new module with the container
+	targetModule := dag.
+		ModuleTemplate(dagger.ModuleTemplateOpts{
+			Ctr: alpineCtr,
+		})
+
+	// Set permissions on directories
+	targetModule = targetModule.
+		WithUserWithPermissionsOnDirs("testuser", "0755", listOfDirsToOwn)
+
+	// Verify permissions
+	out, err := targetModule.Ctr().
+		WithExec(append([]string{"stat", "-c", "%a %n"}, listOfDirsToOwn...)).
+		Stdout(ctx)
+
+	if err != nil {
+		return WrapError(err, "failed to get stat output")
+	}
+
+	for _, dir := range listOfDirsToOwn {
+		expected := "755 " + dir
+		if !strings.Contains(out, expected) {
+			return WrapErrorf(err, "expected permissions to be 755 for %s, got %s", dir, out)
+		}
 	}
 
 	return nil
