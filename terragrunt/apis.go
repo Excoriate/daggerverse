@@ -51,9 +51,22 @@ func (m *Terragrunt) WithSource(
 	// workdir is the working directory within the container. If not set it'll default to /mnt
 	// +optional
 	workdir string,
+	// owner is the owner of the directory. If not set it'll default to terragrunt
+	// +optional
+	owner string,
 ) *Terragrunt {
-	ctr := m.Ctr.WithMountedDirectory(fixtures.MntPrefix, src)
+	var ctr *dagger.Container
 
+	// Set the owner if provided, otherwise use default mounting
+	mountOpts := dagger.ContainerWithMountedDirectoryOpts{}
+	if owner != "" {
+		mountOpts.Owner = owner
+		ctr = m.Ctr.WithMountedDirectory(fixtures.MntPrefix, src, mountOpts)
+	} else {
+		ctr = m.Ctr.WithMountedDirectory(fixtures.MntPrefix, src)
+	}
+
+	// Set the working directory if provided, otherwise use default
 	if workdir != "" {
 		ctr = ctr.WithWorkdir(filepath.Join(fixtures.MntPrefix, workdir))
 	} else {
@@ -61,6 +74,91 @@ func (m *Terragrunt) WithSource(
 	}
 
 	m.Ctr = ctr
+
+	return m
+}
+
+// WithUserAsOwnerOfDirs sets the specified user (and optionally group) as the owner of the given directories within the container.
+//
+// This method iterates over the provided list of directories and executes the "chown" command
+// within the container to change the ownership of each directory to the specified user (and optionally group).
+//
+// Parameters:
+//   - user: The user to set as the owner of the directories. This should be a valid user within the container.
+//   - group: The group to set as the owner of the directories. This is an optional parameter.
+//   - dirs: A slice of strings representing the directories to set the owner of. Each directory path should be
+//     specified relative to the container's filesystem.
+//
+// Returns:
+// - *Terragrunt: The updated Terragrunt instance with the ownership of the specified directories changed.
+func (m *Terragrunt) WithUserAsOwnerOfDirs(
+	// user is the user to set as the owner of the directories.
+	user string,
+	// group is the group to set as the owner of the directories.
+	// +optional
+	group string,
+	// dirs is the directories to set the owner of.
+	dirs []string,
+	// configureAsRoot is whether to configure the directories as root, and then it'll use the given user.
+	// +optional
+	configureAsRoot bool,
+) *Terragrunt {
+	if configureAsRoot {
+		m.Ctr = m.Ctr.WithUser("root")
+	}
+
+	for _, dir := range dirs {
+		if group != "" {
+			m.Ctr = m.Ctr.WithExec([]string{"chown", "-R", user + ":" + group, dir})
+		} else {
+			m.Ctr = m.Ctr.WithExec([]string{"chown", "-R", user, dir})
+		}
+	}
+
+	if configureAsRoot {
+		m.Ctr = m.Ctr.WithUser(user)
+	}
+
+	return m
+}
+
+// WithUserWithPermissionsOnDirs sets the specified permissions on the given directories within the container.
+//
+// This method iterates over the provided list of directories and executes the "chmod" command
+// within the container to change the permissions of each directory to the specified mode.
+//
+// Parameters:
+//   - user: The user to set as the owner of the directories. This should be a valid user within the container.
+//   - mode: The permissions to set on the directories. This should be a valid mode string (e.g., "0777").
+//   - dirs: A slice of strings representing the directories to set the permissions of. Each directory path should be
+//     specified relative to the container's filesystem.
+//   - configureAsRoot: Whether to configure the directories as root, and then it'll use the given mode.
+//
+// Returns:
+// - *Terragrunt: The updated Terragrunt instance with the permissions of the specified directories changed.
+func (m *Terragrunt) WithUserWithPermissionsOnDirs(
+	// user is the user to set as the owner of the directories.
+	// +optional
+	user string,
+	// mode is the permissions to set on the directories.
+	mode string,
+	// dirs is the directories to set the permissions of.
+	dirs []string,
+	// configureAsRoot is whether to configure the directories as root, and then it'll use the given mode.
+	// +optional
+	configureAsRoot bool,
+) *Terragrunt {
+	if configureAsRoot {
+		m.Ctr = m.Ctr.WithUser("root")
+	}
+
+	for _, dir := range dirs {
+		m.Ctr = m.Ctr.WithExec([]string{"chmod", "-R", mode, dir})
+	}
+
+	if configureAsRoot && user != "" {
+		m.Ctr = m.Ctr.WithUser(user)
+	}
 
 	return m
 }
@@ -168,6 +266,15 @@ func (m *Terragrunt) WithCachedDirectory(
 	// setEnvVarWithCacheDirValue is the value to set the cache directory in the container.
 	// +optional
 	setEnvVarWithCacheDirValue string,
+	// cacheSharingMode is the sharing mode of the cache volume.
+	// +optional
+	cacheSharingMode dagger.CacheSharingMode,
+	// cacheVolumeRootDir is the root directory of the cache volume.
+	// +optional
+	cacheVolumeRootDir *dagger.Directory,
+	// cacheVolumeOwner is the owner of the cache volume.
+	// +optional
+	cacheVolumeOwner string,
 ) *Terragrunt {
 	// Define the cache volume
 	cacheVolume := dag.CacheVolume(path)
@@ -178,9 +285,22 @@ func (m *Terragrunt) WithCachedDirectory(
 		mountPath = filepath.Join(fixtures.MntPrefix, path)
 	}
 
+	cacheMountOpts := dagger.ContainerWithMountedCacheOpts{}
+	if cacheVolumeRootDir != nil {
+		cacheMountOpts.Source = cacheVolumeRootDir
+	}
+
+	if cacheVolumeOwner != "" {
+		cacheMountOpts.Owner = cacheVolumeOwner
+	}
+
+	if cacheSharingMode != "" {
+		cacheMountOpts.Sharing = cacheSharingMode
+	}
+
 	// Mount the cache volume in the container
 	m.Ctr = m.Ctr.
-		WithMountedCache(mountPath, cacheVolume)
+		WithMountedCache(mountPath, cacheVolume, cacheMountOpts)
 
 	// Set the environment variable if provided
 	if setEnvVarWithCacheDirValue != "" {

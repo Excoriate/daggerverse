@@ -15,6 +15,8 @@ const (
 	apkoOutputTar = "image.tar"
 	// apkoRepositoryURL is the URL of the APKO repository.
 	apkoRepositoryURL = "cgr.dev/chainguard/apko"
+	containerUser     = "terragrunt"
+	containerGroup    = "terragrunt"
 )
 
 // Base sets the base image and version, and creates the base container.
