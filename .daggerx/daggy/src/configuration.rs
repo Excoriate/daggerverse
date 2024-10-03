@@ -1,5 +1,5 @@
 use std::env;
-use std::io::Error;
+use std::io::{Error, ErrorKind};
 
 #[derive(Debug)]
 pub struct NewDaggerModule {
@@ -38,9 +38,23 @@ pub fn get_module_configurations(
 ) -> Result<NewDaggerModule, Error> {
     let module_path_full = env::current_dir()?.join(module);
     let current_root_dir = env::current_dir()?;
-    let template_path_by_type = current_root_dir
-        .join(TEMPLATE_DIR)
-        .join(format!("mod-{}", module_type));
+
+    if module_type != "light" && module_type != "full" {
+        return Err(Error::new(
+            ErrorKind::InvalidInput,
+            "Invalid module type. Please use 'light' or 'full'.",
+        ));
+    }
+
+    let template_path_by_type = if module_type == "light" {
+        current_root_dir
+            .join(TEMPLATE_DIR)
+            .join(MODULE_LIGHT_TEMPLATE_DIR)
+    } else {
+        current_root_dir
+            .join(TEMPLATE_DIR)
+            .join(MODULE_FULL_TEMPLATE_DIR)
+    };
 
     Ok(NewDaggerModule {
         path: module_path_full.to_string_lossy().to_string(),
