@@ -12,6 +12,8 @@ var (
 
 // TgExec executes a given terragrunt command within a dagger container.
 // It returns a pointer to the resulting dagger.Container or an error if the command is invalid or fails to execute.
+//
+//nolint:lll // It's okay, since the ignore pattern is included.
 func (m *Terragrunt) TgExec(
 	// command is the terragrunt command to execute. It's the actual command that comes after 'terragrunt'
 	command string,
