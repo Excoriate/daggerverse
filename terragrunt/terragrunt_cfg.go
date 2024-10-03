@@ -14,7 +14,7 @@ import (
 // - fixtures.MntPrefix
 // Additionally, it sets the permissions to 0777 for the following directories:
 // - /home
-// - fixtures.MntPrefix
+// - fixtures.MntPrefix.
 func (m *Terragrunt) WithTerragruntPermissions() *Terragrunt {
 	return m.WithUserAsOwnerOfDirs(containerUser, containerGroup, []string{
 		"/home/terragrunt",
@@ -43,8 +43,8 @@ func (m *Terragrunt) WithTerragruntCacheConfiguration() *Terragrunt {
 
 // WithTerraformCacheConfiguration configures the cache directories for Terraform.
 // It sets up the following cache directories:
-// - /home/.terraform.d/plugin-cache with the environment variable TF_PLUGIN_CACHE_DIR
-// - /home/.terraform.d/plugins without any specific environment variable
+// - /home/.terraform.d/plugin-cache with the environment variable TF_PLUGIN_CACHE_DIR.
+// - /home/.terraform.d/plugins without any specific environment variable.
 func (m *Terragrunt) WithTerraformCacheConfiguration() *Terragrunt {
 	return m.
 		WithCachedDirectory("/home/.terraform.d/plugin-cache", false, "TF_PLUGIN_CACHE_DIR",

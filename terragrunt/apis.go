@@ -78,7 +78,8 @@ func (m *Terragrunt) WithSource(
 	return m
 }
 
-// WithUserAsOwnerOfDirs sets the specified user (and optionally group) as the owner of the given directories within the container.
+// WithUserAsOwnerOfDirs sets the specified user (and optionally group) as the owner
+// of the given directories within the container.
 //
 // This method iterates over the provided list of directories and executes the "chown" command
 // within the container to change the ownership of each directory to the specified user (and optionally group).
