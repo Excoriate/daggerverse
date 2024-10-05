@@ -95,11 +95,11 @@ func (m *Terragrunt) WithSource(
 func (m *Terragrunt) WithUserAsOwnerOfDirs(
 	// user is the user to set as the owner of the directories.
 	user string,
+	// dirs is the directories to set the owner of.
+	dirs []string,
 	// group is the group to set as the owner of the directories.
 	// +optional
 	group string,
-	// dirs is the directories to set the owner of.
-	dirs []string,
 	// configureAsRoot is whether to configure the directories as root, and then it'll use the given user.
 	// +optional
 	configureAsRoot bool,
@@ -139,7 +139,6 @@ func (m *Terragrunt) WithUserAsOwnerOfDirs(
 // - *Terragrunt: The updated Terragrunt instance with the permissions of the specified directories changed.
 func (m *Terragrunt) WithUserWithPermissionsOnDirs(
 	// user is the user to set as the owner of the directories.
-	// +optional
 	user string,
 	// mode is the permissions to set on the directories.
 	mode string,

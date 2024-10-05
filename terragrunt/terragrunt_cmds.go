@@ -3,12 +3,22 @@ package main
 import (
 	"github.com/Excoriate/daggerverse/terragrunt/internal/dagger"
 	"github.com/Excoriate/daggerx/pkg/cmdx"
+	"github.com/Excoriate/daggerx/pkg/envvars"
 )
 
-// terragruntCmd is the command to execute terragrunt.
-var (
-	terragruntCmd = []string{"terragrunt"}
-)
+type IACCommand interface {
+	TgExecRemote(command string, gitRepoURL string, module string, gitBranch string, gitToken string, gitSSHSocket *dagger.Socket, envVars []string) (*dagger.Container, error)
+	TgExec(command string, source *dagger.Directory, module string, gitSSHSocket *dagger.Socket, envVars []string, tfLogMode string, tgLogMode string, tfToken string) (*dagger.Container, error)
+}
+
+type IACToolTerragrunt struct {
+	// Terragrunt is the terragrunt instance.
+	// +private
+	Terragrunt *Terragrunt
+	// Entrypoint is the entrypoint to use when executing the terragrunt command.
+	// +private
+	Entrypoint string
+}
 
 // TgExec executes a given terragrunt command within a dagger container.
 // It returns a pointer to the resulting dagger.Container or an error if the command is invalid or fails to execute.
@@ -24,18 +34,22 @@ func (m *Terragrunt) TgExec(
 	// module is the module to execute or the terragrunt configuration where the terragrunt.hcl file is located.
 	// +optional
 	module string,
-	// gitRepoURL is the git repository to clone and use as a source directory for this Terragrunt execution.
-	// +optional
-	gitRepoURL string,
-	// gitBranch is the branch to use when cloning the git repository.
-	// +optional
-	gitBranch string,
-	// gitToken is the token to use when cloning the git repository.
-	// +optional
-	gitToken string,
 	// gitSSHSocket is the SSH socket to use when cloning the git repository.
 	// +optional
 	gitSSHSocket *dagger.Socket,
+	// envVars are the environment variables to set in the container in the format of "key=value, key=value".
+	// +optional
+	envVars []string,
+	// tfLogMode is the terraform log mode to use when executing the terragrunt command.
+	// +optional
+	tfLogMode string,
+	// tgLogMode is the terragrunt log mode to use when executing the terragrunt command.
+	// +optional
+	tgLogMode string,
+	// tfToken is the terraform token to use when executing the terragrunt command. It will form
+	// an environment variable called TF_TOKEN_<token>
+	// +optional
+	tfToken string,
 ) (*dagger.Container, error) {
 	if command == "" {
 		return nil, WrapError(nil, "command is required, can't execute empty command")
@@ -56,10 +70,19 @@ func (m *Terragrunt) TgExec(
 
 	m.WithSource(source, module, containerUser)
 
-	return m.
-		Ctr.
-		Terminal().
-		WithExec(append(terragruntCmd, cmdAsSlice...)), nil
+	if envVars != nil {
+		envVarsAsDagger, envVarsErr := envvars.ToDaggerEnvVarsFromSlice(envVars)
+		if envVarsErr != nil {
+			return nil, WrapErrorf(envVarsErr, "failed to convert environment variables to dagger environment variables: %s", envVars)
+		}
+
+		for _, envVar := range envVarsAsDagger {
+			m.Ctr = m.Ctr.WithEnvVariable(envVar.Name, envVar.Value)
+		}
+	}
+
+	return m.Ctr.
+		WithExec(append([]string{"terragrunt"}, cmdAsSlice...)), nil
 }
 
 // isValidTerragruntCommand validates the given command against known terragrunt commands.
