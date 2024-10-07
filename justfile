@@ -214,12 +214,14 @@ callfn mod *args:
   @cd {{mod}} && dagger functions
   @cd {{mod}} && dagger call {{args}}
 
+# Recipe to list functions in a certain module 📄
 listfns mod *args:
   @echo "Listing functions in a certain module..."
   @echo "Currently in {{mod}} module 📦, path=`pwd`"
   @test -d {{mod}} || (echo "Module not found" && exit 1)
   @cd {{mod}} && dagger functions
 
+# Recipe to run Daggy tests 🧪
 daggy-tests:
   @echo "Running Daggy tests 🧪 ..."
   @cd .daggerx/daggy && cargo test
