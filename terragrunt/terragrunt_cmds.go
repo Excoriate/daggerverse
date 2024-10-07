@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+
 	"github.com/Excoriate/daggerverse/terragrunt/internal/dagger"
 	"github.com/Excoriate/daggerx/pkg/cmdx"
 	"github.com/Excoriate/daggerx/pkg/envvars"
@@ -10,13 +12,29 @@ const (
 	terragruntEntrypoint = "terragrunt"
 )
 
+// IACCmd is an interface that represents a command to be executed by any IaC tool.
+type IACCmd interface {
+	// ExecCommand executes a given command within a dagger container.
+	// It returns the output of the command or an error if the command is invalid or fails to execute.
+	ExecCommand(command string, source *dagger.Directory, module string, envVars []string) (string, error)
+	// Exec executes a given command within a dagger container.
+	// It returns a pointer to the resulting dagger.Container or an error if the command is invalid or fails to execute.
+	Exec(command string, source *dagger.Directory, module string, envVars []string) (*dagger.Container, error)
+	// validate checks if the provided command is a recognized IaC tool command.
+	// It returns an error if the command is invalid, otherwise it returns nil.
+	// It expects the command to be a valid IaC tool command.
+	// It returns an error if the command is invalid or empty.
+	validate(command string) error
+	// getEntrypoint returns the entrypoint to use when executing the command.
+	getEntrypoint() string
+}
+
 // TerragruntCmd represents a command to be executed by Terragrunt.
 type TerragruntCmd struct {
-	// This field is private and should not be accessed directly.
+	// Tg is the Terragrunt module.
 	// +private
-	Terragrunt *Terragrunt
+	Tg *Terragrunt
 	// Entrypoint is the entrypoint to use when executing the Terragrunt command.
-	// This field is private and should not be accessed directly.
 	Entrypoint string
 	// Opts contains the options for the Terragrunt command.
 	// +private
@@ -27,14 +45,14 @@ type TerragruntCmd struct {
 }
 
 func (c *TerragruntCmd) getEntrypoint() string {
-	return c.Entrypoint
+	return terragruntEntrypoint
 }
 
 // Validate checks if the provided command is a recognized terragrunt or terraform command.
 // It returns an error if the command is invalid, otherwise it returns nil.
 // It expects the command to be a valid terragrunt command, or a valid terraform command.
 // It returns an error if the command is invalid or empty.
-func (m *TerragruntCmd) Validate(command string) error {
+func (m *TerragruntCmd) validate(command string) error {
 	isNotTgCmdErr := validateTerragruntCommands(command)
 	isNotTfCmdErr := validateMainTerraformCommands(command)
 	isNotTfOtherCmdErr := validateTerraformOtherCommands(command)
@@ -46,11 +64,12 @@ func (m *TerragruntCmd) Validate(command string) error {
 	return nil
 }
 
-// TgExec executes a given terragrunt command within a dagger container.
-// It returns a pointer to the resulting dagger.Container or an error if the command is invalid or fails to execute.
+// Exec executes a given terragrunt command within a dagger container.
+// It returns the output of the command or an error if the command is invalid or fails to execute.
 //
 //nolint:lll // It's okay, since the ignore pattern is included.
-func (c *TerragruntCmd) TgExec(
+func (c *TerragruntCmd) Exec(
+	ctx context.Context,
 	// command is the terragrunt command to execute. It's the actual command that comes after 'terragrunt'
 	command string,
 	// source is the source directory that includes the source code.
@@ -60,6 +79,79 @@ func (c *TerragruntCmd) TgExec(
 	// module is the module to execute or the terragrunt configuration where the terragrunt.hcl file is located.
 	// +optional
 	module string,
+	// envVars is the environment variables to pass to the container.
+	// +optional
+	envVars []string,
+) (*dagger.Container, error) {
+	if err := c.validate(command); err != nil {
+		return nil, WrapErrorf(err, "failed to validate command: %s", command)
+	}
+
+	if source == nil {
+		return nil, WrapError(nil, "source is required, can't execute command without source")
+	}
+
+	// Generate the command as a slice of strings
+	cmdAsSlice, cmdAsSliceErr := cmdx.GenerateDaggerCMDFromStr(command)
+	if cmdAsSliceErr != nil {
+		return nil, WrapErrorf(cmdAsSliceErr, "failed to generate dagger command from string: %s", command)
+	}
+
+	// Mount the source directory, and set 'terragrunt' as the owner of the directory
+	c.Tg.WithSource(source, module, terragruntCtrUser)
+
+	// Set the environment variables
+	if envVars != nil {
+		envVarsAsDagger, envVarsErr := envvars.ToDaggerEnvVarsFromSlice(envVars)
+		if envVarsErr != nil {
+			return nil, WrapErrorf(envVarsErr, "failed to convert environment variables to dagger environment variables: %s", envVars)
+		}
+
+		for _, envVar := range envVarsAsDagger {
+			c.Tg.Ctr = c.Tg.
+				Ctr.
+				WithEnvVariable(envVar.Name, envVar.Value)
+		}
+	}
+
+	return c.Tg.Ctr.
+		WithExec(append([]string{c.getEntrypoint()}, cmdAsSlice...)), nil
+}
+
+// ExecCommand executes a given terragrunt command within a dagger container.
+// It returns the output of the command or an error if the command is invalid or fails to execute.
+//
+func (c *TerragruntCmd) ExecCommand(
+	ctx context.Context,
+	// command is the terragrunt command to execute. It's the actual command that comes after 'terragrunt'
+	command string,
+	// source is the source directory that includes the source code.
+	// +defaultPath="/"
+	// +ignore=[".terragrunt-cache", ".terraform", ".github", ".gitignore", ".git", "vendor", "node_modules", "build", "dist", "log"]
+	source *dagger.Directory,
+	// module is the module to execute or the terragrunt configuration where the terragrunt.hcl file is located.
+	// +optional
+	module string,
+	// envVars is the environment variables to pass to the container.
+	// +optional
+	envVars []string,
+) (string, error) {
+	container, err := c.Exec(ctx, command, source, module, envVars)
+
+	if err != nil {
+		return "", WrapErrorf(err, "failed to execute terragrunt command: %s", command)
+	}
+
+	output, err := container.Stdout(ctx)
+	if err != nil {
+		return "", WrapErrorf(err, "failed to get stdout from terragrunt command: %s", command)
+	}
+
+	return output, nil
+}
+
+// WithTerraformLogOptions sets the terraform log options in the container.
+func (c *TerragruntCmd) WithTerraformLogOptions(
 	// tfLog is the terraform log mode to use when executing the terragrunt command.
 	// +optional
 	tfLog string,
@@ -69,14 +161,18 @@ func (c *TerragruntCmd) TgExec(
 	// tfLogProvider is the terraform log provider mode to use when executing the terragrunt command.
 	// +optional
 	tfLogProvider string,
-	// tgLog is the terragrunt log mode to use when executing the terragrunt command.
-	// +optional
-	tgLog string,
 	// tfLogPath is the path to the terraform log file to use when executing the terragrunt command.
 	// +optional
 	tfLogPath string,
-	// tfToken is the terraform token to use when executing the terragrunt command. It will form
-	// an environment variable called TF_TOKEN_<token>
+) *TerragruntCmd {
+	c.Logs = newTfLogsConfigDagger(c.Tg, tfLog, tfLogCore, tfLogProvider, tfLogPath)
+	c.Logs.WithTerraformLogsSetInContainer()
+	return c
+}
+
+// WithTerragruntLogOptions sets the terragrunt log options in the container.
+func (c *TerragruntCmd) WithTerragruntLogOptions(
+	// tgLogLevel is the terragrunt log level to use when executing the terragrunt command.
 	// +optional
 	tgLogLevel string,
 	// tgLogDisableColor is the flag to disable color in terragrunt logs.
@@ -85,21 +181,19 @@ func (c *TerragruntCmd) TgExec(
 	// tgLogShowAbsPaths is the flag to show absolute paths in terragrunt logs.
 	// +optional
 	tgLogShowAbsPaths bool,
-	// tgLogPath is the path to the terragrunt log file to use when executing the terragrunt command.
-	// +optional
 	// tgLogDisableFormatting is the flag to disable formatting in terragrunt logs.
 	// +optional
 	tgLogDisableFormatting bool,
 	// tgForwardTfStdout is the flag to forward terraform stdout to terragrunt stdout.
 	// +optional
 	tgForwardTfStdout bool,
-	// tfToken is the terraform token to use when executing the terragrunt command. It will form
-	// an environment variable called TF_TOKEN_<token>
-	// +optional
-	tfToken string,
-	// envVars are the environment variables to set in the container in the format of "key=value, key=value".
-	// +optional
-	envVars []string,
+) *TerragruntCmd {
+	c.Logs = newTgLogsConfigDagger(c.Tg, tgLogLevel, tgLogDisableColor, tgLogShowAbsPaths, tgLogDisableFormatting, tgForwardTfStdout)
+	c.Logs.WithTerragruntLogsSetInContainer()
+	return c
+}
+
+func (c *TerragruntCmd) WithTerragruntOptions(
 	// The path to the Terragrunt configuration file.
 	// Corresponds to the TERRAGRUNT_CONFIG environment variable.
 	ConfigPath string,
@@ -232,63 +326,10 @@ func (c *TerragruntCmd) TgExec(
 	// The flag to disable command validation.
 	// Corresponds to the TERRAGRUNT_DISABLE_COMMAND_VALIDATION environment variable.
 	DisableCommandValidation bool,
-) (*dagger.Container, error) {
-	if err := c.Validate(command); err != nil {
-		return nil, WrapErrorf(err, "failed to validate command: %s", command)
-	}
-
-	if source == nil {
-		return nil, WrapError(nil, "source is required, can't execute command without source")
-	}
-
-	// Generate the command as a slice of strings
-	cmdAsSlice, cmdAsSliceErr := cmdx.GenerateDaggerCMDFromStr(command)
-	if cmdAsSliceErr != nil {
-		return nil, WrapErrorf(cmdAsSliceErr, "failed to generate dagger command from string: %s", command)
-	}
-
-	// Mount the source directory, and set 'terragrunt' as the owner of the directory
-	c.Terragrunt.WithSource(source, module, terragruntCtrUser)
-
-	// Set the environment variables
-	if envVars != nil {
-		envVarsAsDagger, envVarsErr := envvars.ToDaggerEnvVarsFromSlice(envVars)
-		if envVarsErr != nil {
-			return nil, WrapErrorf(envVarsErr, "failed to convert environment variables to dagger environment variables: %s", envVars)
-		}
-
-		for _, envVar := range envVarsAsDagger {
-			c.Terragrunt.Ctr = c.Terragrunt.
-				Ctr.
-				WithEnvVariable(envVar.Name, envVar.Value)
-		}
-	}
-
-	// Set the logs configuration
-	newTfLogsConfigDagger(c.Terragrunt, tfLog, tfLogCore, tfLogProvider, tfLogPath)
-	newTgLogsConfigDagger(c.Terragrunt, tgLogLevel, tgLogDisableColor, tgLogShowAbsPaths, tgLogDisableFormatting, tgForwardTfStdout)
-
-	// Set the logs configuration in the actual module's container.
-	c.Logs.WithTerraformLogsSetInContainer()
-	c.Logs.WithTerragruntLogsSetInContainer()
-
-	// Set the terraform token if it is provided, and passes the validation.
-	if tfToken != "" {
-		parsedTfToken, err := parseTerraformToken(tfToken)
-		if err != nil {
-			return nil, WrapErrorf(err, "failed to validate terraform token: %s", tfToken)
-		}
-
-		c.Terragrunt.Ctr = c.
-			Terragrunt.
-			Ctr.
-			WithEnvVariable(parsedTfToken.EnvVarKey, parsedTfToken.EnvVarValue)
-	}
-
-	// Set the terragrunt options
-	newTerragruntOptionsDagger(
-		c.Terragrunt,
-		"terragrunt.hcl", // ConfigPath (default value)
+) *TerragruntCmd {
+	c.Opts = newTerragruntOptionsDagger(
+		c.Tg,
+		ConfigPath,
 		TerraformPath,
 		WorkingDir,
 		LogLevel,
@@ -335,7 +376,19 @@ func (c *TerragruntCmd) TgExec(
 	)
 
 	c.Opts.WithTerragruntOptionsSetInContainer()
+	return c
+}
 
-	return c.Terragrunt.Ctr.
-		WithExec(append([]string{c.getEntrypoint()}, cmdAsSlice...)), nil
+// WithTerraformToken sets the terraform token in the container.
+func (c *TerragruntCmd) WithTerraformToken(
+	// tfToken is the terraform token to use when executing the terragrunt command.
+	tfToken string,
+) (*TerragruntCmd, error) {
+	parsedTfToken, err := parseTerraformToken(tfToken)
+	if err != nil {
+		return nil, WrapErrorf(err, "failed to validate terraform token: %s", tfToken)
+	}
+
+	c.Tg.Ctr = c.Tg.Ctr.WithEnvVariable(parsedTfToken.EnvVarKey, parsedTfToken.EnvVarValue)
+	return c, nil
 }

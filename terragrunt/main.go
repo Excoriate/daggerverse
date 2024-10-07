@@ -25,6 +25,8 @@ type Terragrunt struct {
 	// ApkoPackages is a list of packages to install with APKO.
 	// +private
 	ApkoPackages []string
+	// TgCmd is the Terragrunt command to execute.
+	TgCmd *TerragruntCmd
 }
 
 // New creates a new Terragrunt module.
