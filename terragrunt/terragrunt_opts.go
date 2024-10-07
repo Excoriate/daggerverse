@@ -237,3 +237,14 @@ func newTerragruntOptionsDagger(
 
 	return &TerragruntOptsConfig{TgOpts: daggers, Tg: tg}
 }
+
+func (c *TerragruntOptsConfig) WithTerragruntOptionsSetInContainer() *TerragruntOptsConfig {
+	for _, envVar := range c.TgOpts {
+		c.Tg.Ctr = c.
+			Tg.
+			Ctr.
+			WithEnvVariable(envVar.EnvVarKey, envVar.EnvVarValue)
+	}
+
+	return c
+}

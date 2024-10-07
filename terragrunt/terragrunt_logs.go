@@ -1,6 +1,9 @@
 package main
 
-import "strings"
+import (
+	"strconv"
+	"strings"
+)
 
 // TfLogsConfig holds the configuration for Terraform logs.
 type TfLogsConfig struct {
@@ -42,45 +45,22 @@ func newTfLogsConfigDagger(tg *Terragrunt, tfLog, tfLogCore, tfLogProvider, tfLo
 		return strings.TrimSpace(strings.ReplaceAll(value, "\\", "\\\\"))
 	}
 
-	if tfLog == "" {
-		tfLog = "INFO" // Default value
+	addStringFlag := func(key, value, defaultValue string) {
+		if value == "" {
+			value = defaultValue
+		}
+		cleanedValue := cleanValue(value)
+		daggers = append(daggers, TgConfigSetAsEnvVar{
+			EnvVarKey:      key,
+			EnvVarValue:    cleanedValue,
+			LogOptionValue: cleanedValue,
+		})
 	}
-	cleanedTfLog := cleanValue(tfLog)
-	daggers = append(daggers, TgConfigSetAsEnvVar{
-		EnvVarKey:      "TF_LOG",
-		EnvVarValue:    cleanedTfLog,
-		LogOptionValue: cleanedTfLog,
-	})
 
-	if tfLogCore == "" {
-		tfLogCore = "INFO" // Default value
-	}
-	cleanedTfLogCore := cleanValue(tfLogCore)
-	daggers = append(daggers, TgConfigSetAsEnvVar{
-		EnvVarKey:      "TF_LOG_CORE",
-		EnvVarValue:    cleanedTfLogCore,
-		LogOptionValue: cleanedTfLogCore,
-	})
-
-	if tfLogProvider == "" {
-		tfLogProvider = "INFO" // Default value
-	}
-	cleanedTfLogProvider := cleanValue(tfLogProvider)
-	daggers = append(daggers, TgConfigSetAsEnvVar{
-		EnvVarKey:      "TF_LOG_PROVIDER",
-		EnvVarValue:    cleanedTfLogProvider,
-		LogOptionValue: cleanedTfLogProvider,
-	})
-
-	if tfLogPath == "" {
-		tfLogPath = "/var/log/terraform.log" // Default value
-	}
-	cleanedTfLogPath := cleanValue(tfLogPath)
-	daggers = append(daggers, TgConfigSetAsEnvVar{
-		EnvVarKey:      "TF_LOG_PATH",
-		EnvVarValue:    cleanedTfLogPath,
-		LogOptionValue: cleanedTfLogPath,
-	})
+	addStringFlag("TF_LOG", tfLog, "INFO")
+	addStringFlag("TF_LOG_CORE", tfLogCore, "INFO")
+	addStringFlag("TF_LOG_PROVIDER", tfLogProvider, "INFO")
+	addStringFlag("TF_LOG_PATH", tfLogPath, "/var/log/terraform.log")
 
 	return &LogsConfig{TfLogs: daggers, Tg: tg}
 }
@@ -92,71 +72,31 @@ func newTgLogsConfigDagger(tg *Terragrunt, tgLogLevel string, tgLogDisableColor 
 		return strings.TrimSpace(strings.ReplaceAll(value, "\\", "\\\\"))
 	}
 
-	if tgLogLevel == "" {
-		tgLogLevel = "info" // Default value
-	}
-	cleanedTgLogLevel := cleanValue(tgLogLevel)
-	daggers = append(daggers, TgConfigSetAsEnvVar{
-		EnvVarKey:      "TERRAGRUNT_LOG_LEVEL",
-		EnvVarValue:    cleanedTgLogLevel,
-		LogOptionValue: cleanedTgLogLevel,
-	})
-
-	if tgLogDisableColor {
+	addBoolFlag := func(key string, value bool) {
 		daggers = append(daggers, TgConfigSetAsEnvVar{
-			EnvVarKey:      "TERRAGRUNT_LOG_DISABLE_COLOR",
-			EnvVarValue:    "true",
-			LogOptionValue: true,
-		})
-	} else {
-		daggers = append(daggers, TgConfigSetAsEnvVar{
-			EnvVarKey:      "TERRAGRUNT_LOG_DISABLE_COLOR",
-			EnvVarValue:    "false",
-			LogOptionValue: false,
+			EnvVarKey:      key,
+			EnvVarValue:    strconv.FormatBool(value),
+			LogOptionValue: value,
 		})
 	}
 
-	if tgLogShowAbsPaths {
+	addStringFlag := func(key, value, defaultValue string) {
+		if value == "" {
+			value = defaultValue
+		}
+		cleanedValue := cleanValue(value)
 		daggers = append(daggers, TgConfigSetAsEnvVar{
-			EnvVarKey:      "TERRAGRUNT_LOG_SHOW_ABS_PATHS",
-			EnvVarValue:    "true",
-			LogOptionValue: true,
-		})
-	} else {
-		daggers = append(daggers, TgConfigSetAsEnvVar{
-			EnvVarKey:      "TERRAGRUNT_LOG_SHOW_ABS_PATHS",
-			EnvVarValue:    "false",
-			LogOptionValue: false,
+			EnvVarKey:      key,
+			EnvVarValue:    cleanedValue,
+			LogOptionValue: cleanedValue,
 		})
 	}
 
-	if tgDisableLogFormatting {
-		daggers = append(daggers, TgConfigSetAsEnvVar{
-			EnvVarKey:      "TERRAGRUNT_DISABLE_LOG_FORMATTING",
-			EnvVarValue:    "true",
-			LogOptionValue: true,
-		})
-	} else {
-		daggers = append(daggers, TgConfigSetAsEnvVar{
-			EnvVarKey:      "TERRAGRUNT_DISABLE_LOG_FORMATTING",
-			EnvVarValue:    "false",
-			LogOptionValue: false,
-		})
-	}
-
-	if tgForwardTfStdout {
-		daggers = append(daggers, TgConfigSetAsEnvVar{
-			EnvVarKey:      "TERRAGRUNT_FORWARD_TF_STDOUT",
-			EnvVarValue:    "true",
-			LogOptionValue: true,
-		})
-	} else {
-		daggers = append(daggers, TgConfigSetAsEnvVar{
-			EnvVarKey:      "TERRAGRUNT_FORWARD_TF_STDOUT",
-			EnvVarValue:    "false",
-			LogOptionValue: false,
-		})
-	}
+	addStringFlag("TERRAGRUNT_LOG_LEVEL", tgLogLevel, "info")
+	addBoolFlag("TERRAGRUNT_LOG_DISABLE_COLOR", tgLogDisableColor)
+	addBoolFlag("TERRAGRUNT_LOG_SHOW_ABS_PATHS", tgLogShowAbsPaths)
+	addBoolFlag("TERRAGRUNT_DISABLE_LOG_FORMATTING", tgDisableLogFormatting)
+	addBoolFlag("TERRAGRUNT_FORWARD_TF_STDOUT", tgForwardTfStdout)
 
 	return &LogsConfig{TgLogs: daggers, Tg: tg}
 }
@@ -171,7 +111,10 @@ func (l *LogsConfig) WithTerraformLogsSetInContainer() *Terragrunt {
 
 func (l *LogsConfig) WithTerragruntLogsSetInContainer() *Terragrunt {
 	for _, envVar := range l.TgLogs {
-		l.Tg.Ctr = l.Tg.Ctr.WithEnvVariable(envVar.EnvVarKey, envVar.EnvVarValue)
+		l.Tg.Ctr = l.
+			Tg.
+			Ctr.
+			WithEnvVariable(envVar.EnvVarKey, envVar.EnvVarValue)
 	}
 
 	return l.Tg
