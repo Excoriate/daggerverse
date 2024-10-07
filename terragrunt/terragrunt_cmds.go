@@ -20,7 +20,7 @@ type TerragruntCmd struct {
 	Entrypoint string
 	// Opts contains the options for the Terragrunt command.
 	// +private
-	Opts *TerragruntOptions
+	Opts *TerragruntOptsConfig
 	// Logs contains the configuration for logging.
 	// +private
 	Logs *LogsConfig
@@ -50,7 +50,7 @@ func (m *TerragruntCmd) Validate(command string) error {
 // It returns a pointer to the resulting dagger.Container or an error if the command is invalid or fails to execute.
 //
 //nolint:lll // It's okay, since the ignore pattern is included.
-func (c *TerragruntCmd) Exec(
+func (c *TerragruntCmd) TgExec(
 	// command is the terragrunt command to execute. It's the actual command that comes after 'terragrunt'
 	command string,
 	// source is the source directory that includes the source code.
