@@ -5,6 +5,12 @@ import (
 	"github.com/Excoriate/daggerx/pkg/fixtures"
 )
 
+const (
+	terragruntCacheDir  = "/home/terragrunt/.terragrunt-providers-cache"
+	terraformCacheDir   = "/home/.terraform.d/plugin-cache"
+	terraformPluginsDir = "/home/.terraform.d/plugins"
+)
+
 // WithTerragruntPermissions sets the necessary permissions for the Terragrunt directories.
 // It ensures that the specified user and group own the directories and sets the appropriate permissions.
 // The directories include:
@@ -16,13 +22,13 @@ import (
 // - /home
 // - fixtures.MntPrefix.
 func (m *Terragrunt) WithTerragruntPermissions() *Terragrunt {
-	return m.WithUserAsOwnerOfDirs(containerUser, containerGroup, []string{
+	return m.WithUserAsOwnerOfDirs(terragruntCtrUser, terragruntCtrGroup, []string{
 		"/home/terragrunt",
 		"/home/.terraform.d",
 		"/home",
 		fixtures.MntPrefix,
 	}, true).
-		WithUserWithPermissionsOnDirs(containerUser, "0777", []string{
+		WithUserWithPermissionsOnDirs(terragruntCtrUser, "0777", []string{
 			"/home",
 			fixtures.MntPrefix,
 		}, true)
@@ -33,7 +39,7 @@ func (m *Terragrunt) WithTerragruntPermissions() *Terragrunt {
 // and assigns the environment variable TERRAGRUNT_PROVIDER_CACHE_DIR to this path.
 func (m *Terragrunt) WithTerragruntCacheConfiguration() *Terragrunt {
 	return m.
-		WithCachedDirectory("/home/terragrunt/.terragrunt-providers-cache",
+		WithCachedDirectory(terragruntCacheDir,
 			false, "TERRAGRUNT_PROVIDER_CACHE_DIR",
 			dagger.Shared,
 			nil,
@@ -47,12 +53,12 @@ func (m *Terragrunt) WithTerragruntCacheConfiguration() *Terragrunt {
 // - /home/.terraform.d/plugins without any specific environment variable.
 func (m *Terragrunt) WithTerraformCacheConfiguration() *Terragrunt {
 	return m.
-		WithCachedDirectory("/home/.terraform.d/plugin-cache", false, "TF_PLUGIN_CACHE_DIR",
+		WithCachedDirectory(terraformCacheDir, false, "TF_PLUGIN_CACHE_DIR",
 			dagger.Shared,
 			nil,
 			"terragrunt",
 		).
-		WithCachedDirectory("/home/.terraform.d/plugins", false, "",
+		WithCachedDirectory(terraformPluginsDir, false, "",
 			dagger.Shared,
 			nil,
 			"terragrunt",
