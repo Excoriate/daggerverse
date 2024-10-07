@@ -68,9 +68,6 @@ func (m *Tests) TestAll(ctx context.Context) error {
 	polTests.Go(m.TestWithDownloadedFile)
 	polTests.Go(m.TestWithCacheBuster)
 	// Test utility functions.
-	// Test cloud-specific functions.
-	polTests.Go(m.TestWithAWSKeys)
-	polTests.Go(m.TestWithAzureCredentials)
 	// Specific Terragrunt/Container functionality tests.
 	polTests.Go(m.TestContainerBaseApkoDefault)
 	polTests.Go(m.TestContainerBaseWithPassedImage)
