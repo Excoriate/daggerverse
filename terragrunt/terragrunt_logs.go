@@ -65,7 +65,7 @@ func newTfLogsConfigDagger(tg *Terragrunt, tfLog, tfLogCore, tfLogProvider, tfLo
 	return &LogsConfig{TfLogs: daggers, Tg: tg}
 }
 
-func newTgLogsConfigDagger(tg *Terragrunt, tgLogLevel string, tgLogDisableColor bool, tgLogShowAbsPaths bool, tgDisableLogFormatting bool, tgForwardTfStdout bool) *LogsConfig {
+func newTgLogsConfigDagger(tg *Terragrunt, tgLogLevel string, tgLogDisableColor bool, tgLogShowAbsPaths bool, tgLogDisableFormatting bool, tgForwardTfStdout bool) *LogsConfig {
 	var daggers []TgConfigSetAsEnvVar
 
 	cleanValue := func(value string) string {
@@ -95,7 +95,7 @@ func newTgLogsConfigDagger(tg *Terragrunt, tgLogLevel string, tgLogDisableColor 
 	addStringFlag("TERRAGRUNT_LOG_LEVEL", tgLogLevel, "info")
 	addBoolFlag("TERRAGRUNT_LOG_DISABLE_COLOR", tgLogDisableColor)
 	addBoolFlag("TERRAGRUNT_LOG_SHOW_ABS_PATHS", tgLogShowAbsPaths)
-	addBoolFlag("TERRAGRUNT_DISABLE_LOG_FORMATTING", tgDisableLogFormatting)
+	addBoolFlag("TERRAGRUNT_LOG_DISABLE_FORMATTING", tgLogDisableFormatting)
 	addBoolFlag("TERRAGRUNT_FORWARD_TF_STDOUT", tgForwardTfStdout)
 
 	return &LogsConfig{TgLogs: daggers, Tg: tg}
