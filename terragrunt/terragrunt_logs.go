@@ -38,7 +38,8 @@ type LogsConfig struct {
 }
 
 func newTfLogsConfigDagger(tfLog, tfLogCore, tfLogProvider, tfLogPath string) *LogsConfig {
-	l := &LogsConfig{}
+	lCfg := &LogsConfig{}
+
 	var daggers []TgConfigSetAsEnvVar
 
 	cleanValue := func(value string) string {
@@ -49,6 +50,7 @@ func newTfLogsConfigDagger(tfLog, tfLogCore, tfLogProvider, tfLogPath string) *L
 		if value == "" {
 			value = defaultValue
 		}
+
 		cleanedValue := cleanValue(value)
 		daggers = append(daggers, TgConfigSetAsEnvVar{
 			EnvVarKey:      key,
@@ -62,13 +64,21 @@ func newTfLogsConfigDagger(tfLog, tfLogCore, tfLogProvider, tfLogPath string) *L
 	addStringFlag("TF_LOG_PROVIDER", tfLogProvider, "INFO")
 	addStringFlag("TF_LOG_PATH", tfLogPath, "/var/log/terraform.log")
 
-	l.TfLogs = daggers
+	lCfg.TfLogs = daggers
 
-	return l
+	return lCfg
 }
 
-func newTgLogsConfigDagger(tgLogLevel string, tgLogDisableColor bool, tgLogShowAbsPaths bool, tgLogDisableFormatting bool, tgForwardTfStdout bool) *LogsConfig {
-	l := &LogsConfig{}
+// newTgLogsConfigDagger creates a new LogsConfig for Terragrunt logs with the specified settings.
+func newTgLogsConfigDagger(
+	tgLogLevel string,
+	tgLogDisableColor bool,
+	tgLogShowAbsPaths bool,
+	tgLogDisableFormatting bool,
+	tgForwardTfStdout bool,
+) *LogsConfig {
+	lCfg := &LogsConfig{}
+
 	var daggers []TgConfigSetAsEnvVar
 
 	cleanValue := func(value string) string {
@@ -87,6 +97,7 @@ func newTgLogsConfigDagger(tgLogLevel string, tgLogDisableColor bool, tgLogShowA
 		if value == "" {
 			value = defaultValue
 		}
+
 		cleanedValue := cleanValue(value)
 		daggers = append(daggers, TgConfigSetAsEnvVar{
 			EnvVarKey:      key,
@@ -101,10 +112,20 @@ func newTgLogsConfigDagger(tgLogLevel string, tgLogDisableColor bool, tgLogShowA
 	addBoolFlag("TERRAGRUNT_LOG_DISABLE_FORMATTING", tgLogDisableFormatting)
 	addBoolFlag("TERRAGRUNT_FORWARD_TF_STDOUT", tgForwardTfStdout)
 
-	l.TgLogs = daggers
-	return l
+	lCfg.TgLogs = daggers
+
+	return lCfg
 }
 
+// WithTerraformLogsSetInContainer sets the environment variables for Terraform logs in the specified container.
+// It iterates over the TfLogs slice in the LogsConfig and sets each environment variable in the container.
+// The method returns the modified container with the environment variables set.
+//
+// Parameters:
+// - ctr: A pointer to the dagger.Container in which the environment variables will be set.
+//
+// Returns:
+// - A pointer to the modified dagger.Container with the environment variables set.
 func (l *LogsConfig) WithTerraformLogsSetInContainer(ctr *dagger.Container) *dagger.Container {
 	for _, envVar := range l.TfLogs {
 		ctr = ctr.
@@ -114,6 +135,15 @@ func (l *LogsConfig) WithTerraformLogsSetInContainer(ctr *dagger.Container) *dag
 	return ctr
 }
 
+// WithTerragruntLogsSetInContainer sets the environment variables for Terragrunt logs in the specified container.
+// It iterates over the TgLogs slice in the LogsConfig and sets each environment variable in the container.
+// The method returns the modified container with the environment variables set.
+//
+// Parameters:
+// - ctr: A pointer to the dagger.Container in which the environment variables will be set.
+//
+// Returns:
+// - A pointer to the modified dagger.Container with the environment variables set.
 func (l *LogsConfig) WithTerragruntLogsSetInContainer(ctr *dagger.Container) *dagger.Container {
 	for _, envVar := range l.TgLogs {
 		ctr = ctr.
