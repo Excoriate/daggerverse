@@ -12,7 +12,9 @@ func parseTerraformToken(tfToken string) (*TgConfigSetAsEnvVar, error) {
 
 	tokenParts := strings.SplitN(tfToken, "=", 2)
 	if len(tokenParts) != 2 {
-		return nil, WrapErrorf(nil, "invalid terraform token: %s, expected to be in the format of TF_TOKEN_<token>=value", tfToken)
+		errMsg := "invalid terraform token: %s, expected to be in the format of TF_TOKEN_<token>=value"
+
+		return nil, WrapErrorf(nil, errMsg, tfToken)
 	}
 
 	token := tokenParts[0]
@@ -61,8 +63,11 @@ func validateTerragruntCommands(command string) error {
 }
 
 // validateTerraformLogLevel validates the provided terraform log level.
-// The log level must be one of the valid log levels such as "TRACE", "DEBUG", "INFO", "WARN", "ERROR", or "JSON".
+// The log level must be one of the valid
+// log levels such as "TRACE", "DEBUG", "INFO", "WARN", "ERROR", or "JSON".
 // Returns an error if the log level is invalid or empty.
+//
+//nolint:unused // The log level is not used in the function, but it is validated.
 func validateTerraformLogLevel(logLevel string) error {
 	if logLevel == "" {
 		return WrapError(nil, "log level is required, can't validate empty log level")
@@ -80,8 +85,11 @@ func validateTerraformLogLevel(logLevel string) error {
 }
 
 // validateTerragruntLogLevel validates the provided Terragrunt log level.
-// The log level must be one of the valid log levels such as "stderr", "stdout", "error", "warn", "info", "debug", or "trace".
+// The log level must be one of the valid log
+// levels such as "stderr", "stdout", "error", "warn", "info", "debug", or "trace".
 // Returns an error if the log level is invalid or empty.
+//
+//nolint:unused // The log level is not used in the function, but it is validated.
 func validateTerragruntLogLevel(logLevel string) error {
 	if logLevel == "" {
 		return WrapError(nil, "log level is required, can't validate empty log level")
@@ -118,8 +126,10 @@ func validateMainTerraformCommands(command string) error {
 }
 
 // validateTerraformOtherCommands validates the provided terraform other command.
-// The command must be one of the valid other commands such as "console", "fmt", "force-unlock", "get", "graph", "import",
-// "login", "logout", "metadata", "output", "providers", "refresh", "show", "state", "taint", "untaint", "version", or "workspace".
+// The command must be one of the valid other commands such
+// as "console", "fmt", "force-unlock", "get", "graph", "import",
+// "login", "logout", "metadata", "output", "providers", "refresh", "show", "state",
+// "taint", "untaint", "version", or "workspace".
 // Returns an error if the command is invalid or empty.
 func validateTerraformOtherCommands(command string) error {
 	if command == "" {
