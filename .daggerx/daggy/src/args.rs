@@ -14,4 +14,8 @@ pub struct Args {
     /// Module type is the type of the module to generate.
     #[clap(long, default_value = "full")]
     pub module_type: String,
+
+    /// Dry run is a flag to run the task (sync, inspect) without making any changes.
+    #[clap(long)]
+    pub dry_run: bool,
 }
