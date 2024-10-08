@@ -11,6 +11,8 @@
 package main
 
 import (
+	"strings"
+
 	"github.com/Excoriate/daggerverse/terragrunt/internal/dagger"
 	"github.com/Excoriate/daggerx/pkg/containerx"
 	"github.com/Excoriate/daggerx/pkg/envvars"
@@ -26,7 +28,8 @@ type Terragrunt struct {
 	// +private
 	ApkoPackages []string
 	// TgCmd is the Terragrunt command to execute.
-	TgCmd *TerragruntCmd
+	// +private
+	Tg *TerragruntCmd
 }
 
 // New creates a new Terragrunt module.
@@ -71,6 +74,11 @@ func New(
 ) (*Terragrunt, error) {
 	dagModule := &Terragrunt{
 		ApkoPackages: []string{},
+		// The command configuration, for Terragrunt.
+		Tg: &TerragruntCmd{
+			Logs: &LogsConfig{},
+			Opts: &TerragruntOptsConfig{},
+		},
 	}
 	// Precedence:
 	// 1. ctr
@@ -105,6 +113,8 @@ func New(
 			return nil, WrapError(tgCtrErr, "failed to create base image apko")
 		}
 
+		handleToolVersions(&tgVersion, &tfVersion, &openTofuVersion)
+
 		dagModule.WithTerragruntCacheConfiguration()
 		dagModule.WithTerraformCacheConfiguration()
 		dagModule.WithIACToolsInstalled(tgVersion, tfVersion, openTofuVersion)
@@ -133,4 +143,13 @@ func addEnvVars(terragrunt *Terragrunt, envVarsFromHost []string) error {
 	}
 
 	return nil
+}
+
+// handleToolVersions handles the tool versions.
+// It removes the 'v' prefix from the tool versions if it exists.
+// FIXME: This is something that'll be fixed in the daggerx package.
+func handleToolVersions(tgVersion, tfVersion, openTofuVersion *string) {
+	if strings.HasPrefix(*tgVersion, "v") {
+		*tgVersion = strings.TrimPrefix(*tgVersion, "v")
+	}
 }
