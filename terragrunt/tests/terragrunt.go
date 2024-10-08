@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"strings"
 
 	"github.com/Excoriate/daggerverse/terragrunt/tests/internal/dagger"
 )
@@ -11,39 +10,28 @@ import (
 // It executes the version commands for each tool and checks their outputs to ensure they contain the expected version strings.
 // If any of the commands fail or the outputs do not contain the expected strings, an error is returned.
 func (m *Tests) TestTerragruntContainerIsUp(ctx context.Context) error {
-	tgSourceData := m.getTestDir().Directory("terragrunt")
+	tgTestDir := m.
+		getTestDir("").
+		Directory("terragrunt")
+
 	tgCtr := dag.
 		Terragrunt().
-		WithSource(tgSourceData).
+		WithSource(tgTestDir).
 		Ctr()
 
-	tgCtrOut, tgCtrErr := tgCtr.
-		WithExec([]string{"ls", "-la"}).
-		WithExec([]string{"pwd"}).
-		WithExec([]string{"ls", "-la", "/home/terragrunt"}).
-		WithExec([]string{"ls", "-la", "/home/.terraform.d"}).
-		WithExec([]string{"ls", "-la", "/home"}).
-		WithExec([]string{"ls", "-la", "/mnt"}).
-		Stdout(ctx)
-
-	if tgCtrErr != nil {
-		return WrapErrorf(tgCtrErr, "failed to get terragrunt container")
+	if err := m.utilTheseFoldersExistsInContainer(ctx, tgCtr,
+		[]string{"/home/terragrunt",
+			"/home/.terraform.d",
+			"/home"}); err != nil {
+		return WrapErrorf(err, "failed to validate folders in terragrunt container")
 	}
 
-	if tgCtrOut == "" {
-		return Errorf("terragrunt container output is empty")
+	if err := m.utilTheseFilesExistsInContainer(ctx, tgCtr, []string{"terragrunt.hcl"}, true); err != nil {
+		return WrapErrorf(err, "failed to validate terragrunt.hcl file in terragrunt container")
 	}
 
-	tgCtrOut, tgCtrErr = tgCtr.
-		WithExec([]string{"cat", "/mnt/terragrunt.hcl"}).
-		Stdout(ctx)
-
-	if tgCtrErr != nil {
-		return WrapErrorf(tgCtrErr, "failed to get terragrunt terragrunt.hcl file")
-	}
-
-	if tgCtrOut == "" {
-		return Errorf("terragrunt terragrunt.hcl file is empty")
+	if err := m.utilFileShouldContainContent(ctx, tgCtr, "terragrunt.hcl", "terraform {"); err != nil {
+		return WrapErrorf(err, "failed to validate terragrunt.hcl file content in terragrunt container")
 	}
 
 	return nil
@@ -57,43 +45,124 @@ func (m *Tests) TestTerragruntBinariesAreInstalled(ctx context.Context) error {
 		Terragrunt().
 		Ctr()
 
-	if err := validateVersion(ctx, tgCtr, "terragrunt", "terragrunt version"); err != nil {
+	if err := m.utilValidateVersion(ctx, tgCtr, "terragrunt", "terragrunt version", ""); err != nil {
 		return err
 	}
 
-	if err := validateVersion(ctx, tgCtr, "terraform", "Terraform v"); err != nil {
+	if err := m.utilValidateVersion(ctx, tgCtr, "terraform", "Terraform v", ""); err != nil {
 		return err
 	}
 
-	if err := validateVersion(ctx, tgCtr, "opentofu", "OpenTofu v"); err != nil {
+	if err := m.utilValidateVersion(ctx, tgCtr, "opentofu", "OpenTofu v", ""); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-// validateVersion executes the version command for a given tool and checks the output to ensure it contains the expected version string.
-// If the command fails or the output does not contain the expected string, an error is returned.
-func validateVersion(
-	ctx context.Context,
-	tgCtr *dagger.Container,
-	tool string,
-	expectedVersion string,
-) error {
-	versionOut, versionOutErr := tgCtr.
-		WithExec([]string{tool, "--version"}).
+// TestTerragruntExecInitSimpleCommand tests the execution of the 'terragrunt init' command with a simple configuration.
+// It sets up the necessary environment variables, initializes the Terragrunt module, and executes the 'init' command.
+// The function then validates the output of the command and checks if the environment variables are correctly set in the container.
+// If any step fails, an error is returned.
+func (m *Tests) TestTerragruntExecInitSimpleCommand(ctx context.Context) error {
+	testEnvVars := []string{
+		"AWS_ACCESS_KEY_ID=test",
+		"AWS_SECRET_ACCESS_KEY=test",
+		"AWS_SESSION_TOKEN=test",
+	}
+
+	// Initialize the Terragrunt module
+	tgModule := dag.
+		Terragrunt(dagger.TerragruntOpts{
+			EnvVarsFromHost: testEnvVars,
+		}).
+		WithTerragruntPermissions()
+
+	// Execute the init command, but don't run it in a container
+	tgCtrConfigured := tgModule.
+		Exec("init", dagger.TerragruntExecOpts{
+			Source: m.getTestDir("").
+				Directory("terragrunt"),
+		})
+
+	// Evaluate the terragrunt init command.
+	tgInitCmdOut, tgInitCmdErr := tgCtrConfigured.
 		Stdout(ctx)
 
-	if versionOutErr != nil {
-		return WrapErrorf(versionOutErr, "failed to get %s version output", tool)
+	if tgInitCmdErr != nil {
+		return WrapErrorf(tgInitCmdErr, "failed to get terragrunt init command output")
 	}
 
-	if versionOut == "" {
-		return Errorf("%s version output is empty", tool)
+	if tgInitCmdOut == "" {
+		return Errorf("terragrunt init command output is empty")
 	}
 
-	if !strings.Contains(versionOut, expectedVersion) {
-		return Errorf("%s version is expected to contain '%s', but it doesn't", tool, expectedVersion)
+	// Check the environment variables set in the container
+	for _, envVar := range testEnvVars {
+		if err := m.utilValidateIfEnvVarIsSetInContainer(ctx, tgCtrConfigured, envVar); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// TestTerragruntExecVersionCommand tests the execution of the 'terragrunt version' command with a specific configuration.
+// It sets up the necessary environment variables, initializes the Terragrunt module with advanced options, and executes the 'version' command.
+// The function then validates the output of the command, checks if the expected version is present, and verifies if the environment variables are correctly set in the container.
+// If any step fails, an error is returned.
+func (m *Tests) TestTerragruntExecVersionCommand(ctx context.Context) error {
+	testEnvVars := []string{
+		"OTHER_ENV_VAR=test",
+	}
+
+	// Initialize the Terragrunt module with some advance options.
+	tgModule := dag.
+		Terragrunt(dagger.TerragruntOpts{
+			EnvVarsFromHost: testEnvVars,
+			EnableAwscli:    true,
+			TgVersion:       "v0.52.1",
+		}).
+		WithTerragruntPermissions().
+		WithTerragruntLogOptions(dagger.TerragruntWithTerragruntLogOptionsOpts{
+			TgLogLevel:        "debug",
+			TgLogDisableColor: true,
+		})
+
+	// Execute the init command, but don't run it in a container
+	tgCtrConfigured := tgModule.
+		Exec("version", dagger.TerragruntExecOpts{
+			Source: m.
+				getTestDir("").
+				Directory("terragrunt"),
+		})
+
+	// Evaluate the terragrunt version command.
+	tgVersionCmdOut, tgVersionCmdErr := tgCtrConfigured.
+		Stdout(ctx)
+
+	if tgVersionCmdErr != nil {
+		return WrapErrorf(tgVersionCmdErr, "failed to get terragrunt version command output")
+	}
+
+	if tgVersionCmdOut == "" {
+		return Errorf("terragrunt version command output is empty")
+	}
+
+	// Expected environment variables due to configuration that's passed.
+	expectedEnvVars := []string{
+		"OTHER_ENV_VAR=test",
+		"TERRAGRUNT_LOG_DISABLE_FORMATTING=false",
+		"TERRAGRUNT_LOG_DISABLE_COLOR=true",
+		"TERRAGRUNT_LOG_SHOW_ABS_PATHS=false",
+		"TERRAGRUNT_LOG_LEVEL=debug",
+		"TERRAGRUNT_PROVIDER_CACHE=1",
+	}
+
+	for _, envVar := range expectedEnvVars {
+		if err := m.utilValidateIfEnvVarIsSetInContainer(ctx, tgCtrConfigured, envVar); err != nil {
+			return WrapErrorf(err, "failed to validate environment variables in terragrunt container")
+		}
 	}
 
 	return nil

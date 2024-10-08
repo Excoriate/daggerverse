@@ -35,17 +35,9 @@ type Tests struct {
 func New() *Tests {
 	t := &Tests{}
 
-	t.TestDir = t.getTestDir()
+	t.TestDir = t.getTestDir("")
 
 	return t
-}
-
-// getTestDir returns the test directory.
-//
-// This is a helper method for tests, in order to get the test directory which
-// is located in the same directory as the test file, and normally named as "testdata".
-func (m *Tests) getTestDir() *dagger.Directory {
-	return dag.CurrentModule().Source().Directory("./testdata")
 }
 
 // TestAll executes all tests.
@@ -73,6 +65,10 @@ func (m *Tests) TestAll(ctx context.Context) error {
 	polTests.Go(m.TestContainerBaseWithPassedImage)
 	polTests.Go(m.TestContainerBaseWithAWSClI)
 	polTests.Go(m.TestContainerBaseApkoWithCustomVersions)
+	polTests.Go(m.TestTerragruntContainerIsUp)
+	polTests.Go(m.TestTerragruntBinariesAreInstalled)
+	polTests.Go(m.TestTerragruntExecInitSimpleCommand)
+	polTests.Go(m.TestTerragruntExecVersionCommand)
 
 	if err := polTests.Wait(); err != nil {
 		return WrapError(err, "there are some failed tests")

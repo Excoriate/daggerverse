@@ -3,6 +3,8 @@ package main
 import (
 	"strconv"
 	"strings"
+
+	"github.com/Excoriate/daggerverse/terragrunt/internal/dagger"
 )
 
 // TfLogsConfig holds the configuration for Terraform logs.
@@ -33,12 +35,10 @@ type LogsConfig struct {
 	TfLogs []TgConfigSetAsEnvVar
 	// TgLogs holds the configuration for Terragrunt logs.
 	TgLogs []TgConfigSetAsEnvVar
-	// Tg holds the Terragrunt configuration.
-	// +private
-	Tg *Terragrunt
 }
 
-func newTfLogsConfigDagger(tg *Terragrunt, tfLog, tfLogCore, tfLogProvider, tfLogPath string) *LogsConfig {
+func newTfLogsConfigDagger(tfLog, tfLogCore, tfLogProvider, tfLogPath string) *LogsConfig {
+	l := &LogsConfig{}
 	var daggers []TgConfigSetAsEnvVar
 
 	cleanValue := func(value string) string {
@@ -62,10 +62,13 @@ func newTfLogsConfigDagger(tg *Terragrunt, tfLog, tfLogCore, tfLogProvider, tfLo
 	addStringFlag("TF_LOG_PROVIDER", tfLogProvider, "INFO")
 	addStringFlag("TF_LOG_PATH", tfLogPath, "/var/log/terraform.log")
 
-	return &LogsConfig{TfLogs: daggers, Tg: tg}
+	l.TfLogs = daggers
+
+	return l
 }
 
-func newTgLogsConfigDagger(tg *Terragrunt, tgLogLevel string, tgLogDisableColor bool, tgLogShowAbsPaths bool, tgLogDisableFormatting bool, tgForwardTfStdout bool) *LogsConfig {
+func newTgLogsConfigDagger(tgLogLevel string, tgLogDisableColor bool, tgLogShowAbsPaths bool, tgLogDisableFormatting bool, tgForwardTfStdout bool) *LogsConfig {
+	l := &LogsConfig{}
 	var daggers []TgConfigSetAsEnvVar
 
 	cleanValue := func(value string) string {
@@ -98,24 +101,24 @@ func newTgLogsConfigDagger(tg *Terragrunt, tgLogLevel string, tgLogDisableColor 
 	addBoolFlag("TERRAGRUNT_LOG_DISABLE_FORMATTING", tgLogDisableFormatting)
 	addBoolFlag("TERRAGRUNT_FORWARD_TF_STDOUT", tgForwardTfStdout)
 
-	return &LogsConfig{TgLogs: daggers, Tg: tg}
+	l.TgLogs = daggers
+	return l
 }
 
-func (l *LogsConfig) WithTerraformLogsSetInContainer() *Terragrunt {
+func (l *LogsConfig) WithTerraformLogsSetInContainer(ctr *dagger.Container) *dagger.Container {
 	for _, envVar := range l.TfLogs {
-		l.Tg.Ctr = l.Tg.Ctr.WithEnvVariable(envVar.EnvVarKey, envVar.EnvVarValue)
-	}
-
-	return l.Tg
-}
-
-func (l *LogsConfig) WithTerragruntLogsSetInContainer() *Terragrunt {
-	for _, envVar := range l.TgLogs {
-		l.Tg.Ctr = l.
-			Tg.
-			Ctr.
+		ctr = ctr.
 			WithEnvVariable(envVar.EnvVarKey, envVar.EnvVarValue)
 	}
 
-	return l.Tg
+	return ctr
+}
+
+func (l *LogsConfig) WithTerragruntLogsSetInContainer(ctr *dagger.Container) *dagger.Container {
+	for _, envVar := range l.TgLogs {
+		ctr = ctr.
+			WithEnvVariable(envVar.EnvVarKey, envVar.EnvVarValue)
+	}
+
+	return ctr
 }

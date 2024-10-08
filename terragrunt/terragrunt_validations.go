@@ -50,10 +50,11 @@ func validateTerragruntCommands(command string) error {
 		"run-all": true, "terragrunt-info": true, "validate-inputs": true, "graph-dependencies": true,
 		"hclfmt": true, "hclvalidate": true, "aws-provider-patch": true, "render-json": true,
 		"output-module-groups": true, "scaffold": true, "catalog": true, "graph": true,
+		"version": true,
 	}
 
 	if !validCommands[command] {
-		return WrapErrorf(nil, "invalid terragrunt command: %s", command)
+		return WrapErrorf(nil, "this terragrunt command is not supported, check gruntwork's documentation: %s", command)
 	}
 
 	return nil
