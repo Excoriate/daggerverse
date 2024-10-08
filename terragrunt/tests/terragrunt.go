@@ -6,8 +6,10 @@ import (
 	"github.com/Excoriate/daggerverse/terragrunt/tests/internal/dagger"
 )
 
-// TestTerragruntContainerIsUp checks if the Terragrunt container is up and running by verifying the versions of Terragrunt, Terraform, and OpenTofu.
-// It executes the version commands for each tool and checks their outputs to ensure they contain the expected version strings.
+// TestTerragruntContainerIsUp checks if the Terragrunt container is up and running by verifying the versions of
+// Terragrunt, Terraform, and OpenTofu.
+// It executes the version commands for each tool and checks their outputs to ensure they contain the expected
+// version strings.
 // If any of the commands fail or the outputs do not contain the expected strings, an error is returned.
 func (m *Tests) TestTerragruntContainerIsUp(ctx context.Context) error {
 	tgTestDir := m.
@@ -37,7 +39,8 @@ func (m *Tests) TestTerragruntContainerIsUp(ctx context.Context) error {
 	return nil
 }
 
-// TestTerragruntBinariesAreInstalled checks if the Terragrunt, Terraform, and OpenTofu binaries are installed and their versions are correct.
+// TestTerragruntBinariesAreInstalled checks if the Terragrunt, Terraform, and OpenTofu binaries are installed and
+// their versions are correct.
 // It executes the version command for each tool and verifies that the output contains the expected version string.
 // If any of the commands fail or the outputs do not contain the expected strings, an error is returned.
 func (m *Tests) TestTerragruntBinariesAreInstalled(ctx context.Context) error {
@@ -60,9 +63,12 @@ func (m *Tests) TestTerragruntBinariesAreInstalled(ctx context.Context) error {
 	return nil
 }
 
-// TestTerragruntExecInitSimpleCommand tests the execution of the 'terragrunt init' command with a simple configuration.
-// It sets up the necessary environment variables, initializes the Terragrunt module, and executes the 'init' command.
-// The function then validates the output of the command and checks if the environment variables are correctly set in the container.
+// TestTerragruntExecInitSimpleCommand tests the execution of the 'terragrunt init' command with a simple
+// configuration.
+// It sets up the necessary environment variables, initializes the Terragrunt module, and executes the 'init'
+// command.
+// The function then validates the output of the command and checks if the environment variables are correctly set
+// in the container.
 // If any step fails, an error is returned.
 func (m *Tests) TestTerragruntExecInitSimpleCommand(ctx context.Context) error {
 	testEnvVars := []string{
@@ -107,9 +113,12 @@ func (m *Tests) TestTerragruntExecInitSimpleCommand(ctx context.Context) error {
 	return nil
 }
 
-// TestTerragruntExecVersionCommand tests the execution of the 'terragrunt version' command with a specific configuration.
-// It sets up the necessary environment variables, initializes the Terragrunt module with advanced options, and executes the 'version' command.
-// The function then validates the output of the command, checks if the expected version is present, and verifies if the environment variables are correctly set in the container.
+// TestTerragruntExecVersionCommand tests the execution of the 'terragrunt version' command with a specific
+// configuration.
+// It sets up the necessary environment variables, initializes the Terragrunt module with advanced options, and
+// executes the 'version' command.
+// The function then validates the output of the command, checks if the expected version is present, and verifies
+// if the environment variables are correctly set in the container.
 // If any step fails, an error is returned.
 func (m *Tests) TestTerragruntExecVersionCommand(ctx context.Context) error {
 	testEnvVars := []string{

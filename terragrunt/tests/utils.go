@@ -15,6 +15,8 @@ const (
 //
 // This is a helper method for tests, in order to get the test directory which
 // is located in the same directory as the test file, and normally named as "testdata".
+//
+//nolint:unparam // It's ok to have testDir as an empty string, as it will be replaced by the default value.
 func (m *Tests) getTestDir(testDir string) *dagger.Directory {
 	if testDir == "" {
 		testDir = defaultTestDir
@@ -26,8 +28,10 @@ func (m *Tests) getTestDir(testDir string) *dagger.Directory {
 		Directory(testDir)
 }
 
-// utilValidateVersion executes the version command for a given tool and checks the output to ensure it contains the expected version string.
-// If the command fails or the output does not contain the expected string, an error is returned.
+// utilValidateVersion executes the version command for a given tool and checks
+// the output to ensure it contains
+// the expected version string. If the command fails or the output does not contain
+// the expected string, an error is returned.
 func (m *Tests) utilValidateVersion(
 	ctx context.Context,
 	ctr *dagger.Container,
@@ -88,6 +92,8 @@ func (m *Tests) utilValidateIfEnvVarIsSetInContainer(
 // utilValidateEnvVarValueInContainer checks if a specific environment variable in the container has the expected value.
 // It executes the "printenv <variable>" command in the container and compares the output to the expected value.
 // If the command fails, the output is empty, or the value does not match the expected value, an error is returned.
+//
+//nolint:unused // This function is currently unused but may be used in the future.
 func (m *Tests) utilValidateEnvVarValueInContainer(
 	ctx context.Context,
 	ctr *dagger.Container,
@@ -107,7 +113,8 @@ func (m *Tests) utilValidateEnvVarValueInContainer(
 	}
 
 	if strings.TrimSpace(variableOut) != expectedValue {
-		return Errorf("environment variable '%s' value is expected to be '%s', but it is '%s'", variable, expectedValue, strings.TrimSpace(variableOut))
+		return Errorf("environment variable '%s' value is expected to be '%s', but it is '%s'",
+			variable, expectedValue, strings.TrimSpace(variableOut))
 	}
 
 	return nil
@@ -206,7 +213,8 @@ func (m *Tests) utilFileShouldContainContent(
 	}
 
 	if !strings.Contains(fileOut, content) {
-		return Errorf("file '%s' content is expected to contain '%s', but its current content is '%s'", file, content, fileOut)
+		return Errorf("file '%s' content is expected to contain '%s', but its current content is '%s'",
+			file, content, fileOut)
 	}
 
 	return nil
@@ -215,6 +223,8 @@ func (m *Tests) utilFileShouldContainContent(
 // utilCommandIsSuccessfulAndOutputContains executes the specified command in the container
 // and checks if the output contains the expected content.
 // If the command fails, the output is empty, or the expected content is not found in the output, an error is returned.
+//
+//nolint:unused // This function is currently unused but may be used in the future.
 func (m *Tests) utilCommandIsSuccessfulAndOutputContains(
 	ctx context.Context,
 	ctr *dagger.Container,
