@@ -12,6 +12,7 @@ mod templating;
 mod utils;
 mod cmd_create_module;
 mod cmd_develop_modules;
+mod sync_inspect;
 
 #[cfg(test)]
 mod git_test;
@@ -20,12 +21,16 @@ use args::Args;
 use clap::Parser;
 use std::io::{Error, ErrorKind};
 
+const SUPPORTED_MODULE_TYPES: [&str; 2] = ["full", "light"];
+
 fn main() -> Result<(), Error> {
     let args: Args = Args::parse();
 
     match args.task.as_str() {
         "create" => create_module_task(&args),
-        "develop" => cmd_develop_modules::develop_modules_command(),
+        "sync" => sync_inspect::sync_modules_task(&args),
+        "inspect" => sync_inspect::inspect_modules_task(&args),
+        "develop" => cmd_develop_modules::develop_modules(),
         _ => {
             eprintln!("Unknown task: {}", args.task);
             Err(Error::new(ErrorKind::InvalidInput, "Unknown task"))
@@ -36,8 +41,7 @@ fn main() -> Result<(), Error> {
 fn create_module_task(args: &Args) -> Result<(), Error> {
     match &args.module {
         Some(module) => {
-            let module_type = args.module_type.as_deref().unwrap_or("full");
-            cmd_create_module::create_module(module, module_type)
+            cmd_create_module::create_module(module, &args.module_type)
         }
         None => {
             eprintln!("Module name is required for 'create' task");
