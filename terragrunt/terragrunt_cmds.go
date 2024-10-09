@@ -211,184 +211,183 @@ func (m *Terragrunt) WithTerragruntLogOptions(
 //nolint:funlen // It's okay, it's not complex, just long due to Dagger's limitations.
 func (m *Terragrunt) WithTerragruntOptions(
 	// configPath is the path to the terragrunt configuration file.
-	// corresponds to the terragrunt_config environment variable.
+	// corresponds to the TERRAGRUNT_CONFIG environment variable.
 	// +optional
 	configPath string,
 	// terraformPath is the path to the terraform binary.
-	// corresponds to the terragrunt_tfpath environment variable.
+	// corresponds to the TERRAGRUNT_TFPATH environment variable.
 	// +optional
 	terraformPath string,
 	// workingDir is the working directory for terragrunt.
-	// corresponds to the terragrunt_working_dir environment variable.
+	// corresponds to the TERRAGRUNT_WORKING_DIR environment variable.
 	// +optional
 	workingDir string,
 	// logLevel is the log level for terragrunt.
-	// corresponds to the terragrunt_log_level environment variable.
+	// corresponds to the TERRAGRUNT_LOG_LEVEL environment variable.
 	// +optional
 	logLevel string,
 	// iamRole is the iam role to assume before running terragrunt.
-	// corresponds to the terragrunt_iam_role environment variable.
+	// corresponds to the TERRAGRUNT_IAM_ROLE environment variable.
 	// +optional
 	iamRole string,
 	// iamRoleSessionName is the iam role session name to use when assuming the iam role.
-	// corresponds to the terragrunt_iam_role_session_name environment variable.
+	// corresponds to the TERRAGRUNT_IAM_ROLE_SESSION_NAME environment variable.
 	// +optional
 	iamRoleSessionName string,
 	// iamRoleDuration is the iam role duration to use when assuming the iam role.
-	// corresponds to the terragrunt_iam_role_duration environment variable.
+	// corresponds to the TERRAGRUNT_IAM_ROLE_DURATION environment variable.
 	// +optional
 	iamRoleDuration string,
 	// iamRoleExternalID is the iam role external id to use when assuming the iam role.
-	// corresponds to the terragrunt_iam_role_external_id environment variable.
+	// corresponds to the TERRAGRUNT_IAM_ROLE_EXTERNAL_ID environment variable.
 	// +optional
 	iamRoleExternalID string,
 	// iamRolePolicy is the iam role policy to use when assuming the iam role.
-	// corresponds to the terragrunt_iam_role_policy environment variable.
+	// corresponds to the TERRAGRUNT_IAM_ROLE_POLICY environment variable.
 	// +optional
 	iamRolePolicy string,
 	// iamRolePolicyArns is the iam role policy arns to use when assuming the iam role.
-	// corresponds to the terragrunt_iam_role_policy_arns environment variable.
+	// corresponds to the TERRAGRUNT_IAM_ROLE_POLICY_ARNS environment variable.
 	// +optional
 	iamRolePolicyArns string,
 	// iamRoleTags is the iam role tags to use when assuming the iam role.
-	// corresponds to the terragrunt_iam_role_tags environment variable.
+	// corresponds to the TERRAGRUNT_IAM_ROLE_TAGS environment variable.
 	// +optional
 	iamRoleTags string,
 	// iamRoleTransitiveTagKeys is the iam role transitive tag keys to use when assuming the iam role.
-	// corresponds to the terragrunt_iam_role_transitive_tag_keys environment variable.
+	// corresponds to the TERRAGRUNT_IAM_ROLE_TRANSITIVE_TAG_KEYS environment variable.
 	// +optional
 	iamRoleTransitiveTagKeys string,
 	// iamRoleSourceIdentity is the iam role source identity to use when assuming the iam role.
-	// corresponds to the terragrunt_iam_role_source_identity environment variable.
+	// corresponds to the TERRAGRUNT_IAM_ROLE_SOURCE_IDENTITY environment variable.
 	// +optional
 	iamRoleSourceIdentity string,
 	// downloadDir is the directory to download terragrunt dependencies.
-	// corresponds to the terragrunt_download_dir environment variable.
+	// corresponds to the TERRAGRUNT_DOWNLOAD_DIR environment variable.
 	// +optional
 	downloadDir string,
 	// source is the source url for terragrunt.
-	// corresponds to the terragrunt_source environment variable.
+	// corresponds to the TERRAGRUNT_SOURCE environment variable.
 	// +optional
 	source string,
 	// sourceMap is the source map for terragrunt.
-	// corresponds to the terragrunt_source_map environment variable.
+	// corresponds to the TERRAGRUNT_SOURCE_MAP environment variable.
 	// +optional
 	sourceMap string,
 	// sourceUpdate is the flag to update the source before running terragrunt.
-	// corresponds to the terragrunt_source_update environment variable.
+	// corresponds to the TERRAGRUNT_SOURCE_UPDATE environment variable.
 	// +optional
 	sourceUpdate bool,
 	// ignoreDependencyErrors is the flag to ignore dependency errors.
-	// corresponds to the terragrunt_ignore_dependency_errors environment variable.
+	// corresponds to the TERRAGRUNT_IGNORE_DEPENDENCY_ERRORS environment variable.
 	// +optional
 	ignoreDependencyErrors bool,
 	// ignoreExternalDependencies is the flag to ignore external dependencies.
-	// corresponds to the terragrunt_ignore_external_dependencies environment variable.
+	// corresponds to the TERRAGRUNT_IGNORE_EXTERNAL_DEPENDENCIES environment variable.
 	// +optional
 	ignoreExternalDependencies bool,
 	// includeExternalDependencies is the flag to include external dependencies.
-	// corresponds to the terragrunt_include_external_dependencies environment variable.
+	// corresponds to the TERRAGRUNT_INCLUDE_EXTERNAL_DEPENDENCIES environment variable.
 	// +optional
 	includeExternalDependencies bool,
 	// parallelism is the parallelism level for terragrunt.
-	// corresponds to the terragrunt_parallelism environment variable.
+	// corresponds to the TERRAGRUNT_PARALLELISM environment variable.
 	// +optional
 	parallelism int,
 	// debug is the flag to enable debug mode.
-	// corresponds to the terragrunt_debug environment variable.
+	// corresponds to the TERRAGRUNT_DEBUG environment variable.
 	// +optional
 	debug bool,
 	// noColor is the flag to disable color in logs.
-	// corresponds to the terragrunt_no_color environment variable.
+	// corresponds to the TERRAGRUNT_NO_COLOR environment variable.
 	// +optional
 	noColor bool,
 	// check is the flag to check the configuration.
-	// corresponds to the terragrunt_check environment variable.
+	// corresponds to the TERRAGRUNT_CHECK environment variable.
 	// +optional
 	check bool,
 	// diff is the flag to enable diff mode.
-	// corresponds to the terragrunt_diff environment variable.
+	// corresponds to the TERRAGRUNT_DIFF environment variable.
 	// +optional
 	diff bool,
 	// hclfmtFile is the file for hcl formatting.
-	// corresponds to the terragrunt_hclfmt_file environment variable.
+	// corresponds to the TERRAGRUNT_HCLFMT_FILE environment variable.
 	// +optional
 	hclfmtFile string,
 	// hclValidateJSON is the flag to validate hcl in json format.
-	// corresponds to the terragrunt_hclvalidate_json environment variable.
+	// corresponds to the TERRAGRUNT_HCLVALIDATE_JSON environment variable.
 	// +optional
 	hclValidateJSON bool,
 	// hclValidateShowConfigPath is the flag to show the config path in hcl validation.
-	// corresponds to the terragrunt_hclvalidate_show_config_path environment variable.
+	// corresponds to the TERRAGRUNT_HCLVALIDATE_SHOW_CONFIG_PATH environment variable.
 	// +optional
 	hclValidateShowConfigPath bool,
 	// overrideAttr is the attribute to override.
-	// corresponds to the terragrunt_override_attr environment variable.
+	// corresponds to the TERRAGRUNT_OVERRIDE_ATTR environment variable.
 	// +optional
 	overrideAttr string,
 	// jsonOutDir is the directory for json output.
-	// corresponds to the terragrunt_json_out_dir environment variable.
+	// corresponds to the TERRAGRUNT_JSON_OUT_DIR environment variable.
 	// +optional
 	jsonOutDir string,
 	// disableLogFormatting is the flag to disable log formatting.
-	// corresponds to the terragrunt_disable_log_formatting environment variable.
+	// corresponds to the TERRAGRUNT_DISABLE_LOG_FORMATTING environment variable.
 	// +optional
 	disableLogFormatting bool,
 	// forwardTfStdout is the flag to forward terraform stdout.
-	// corresponds to the terragrunt_forward_tf_stdout environment variable.
+	// corresponds to the TERRAGRUNT_FORWARD_TF_STDOUT environment variable.
 	// +optional
 	forwardTfStdout bool,
 	// noAutoInit is the flag to disable auto init.
-	// corresponds to the terragrunt_no_auto_init environment variable.
+	// corresponds to the TERRAGRUNT_NO_AUTO_INIT environment variable.
 	// +optional
 	noAutoInit bool,
 	// noAutoRetry is the flag to disable auto retry.
-	// corresponds to the terragrunt_no_auto_retry environment variable.
+	// corresponds to the TERRAGRUNT_NO_AUTO_RETRY environment variable.
 	// +optional
 	noAutoRetry bool,
 	// nonInteractive is the flag to disable interactive mode.
-	// corresponds to the terragrunt_non_interactive environment variable.
+	// corresponds to the TERRAGRUNT_NON_INTERACTIVE environment variable.
 	// +optional
 	nonInteractive bool,
 	// excludeDir is the flag to exclude directories.
-	// corresponds to the terragrunt_exclude_dir environment variable.
+	// corresponds to the TERRAGRUNT_EXCLUDE_DIR environment variable.
 	// +optional
 	excludeDir string,
 	// includeDir is the flag to include directories.
-	// corresponds to the terragrunt_include_dir environment variable.
+	// corresponds to the TERRAGRUNT_INCLUDE_DIR environment variable.
 	// +optional
 	includeDir string,
 	// strictInclude is the flag to enable strict include.
-	// corresponds to the terragrunt_strict_include environment variable.
+	// corresponds to the TERRAGRUNT_STRICT_INCLUDE environment variable.
 	// +optional
 	strictInclude bool,
 	// strictValidate is the flag to enable strict validate.
-	// corresponds to the terragrunt_strict_validate environment variable.
+	// corresponds to the TERRAGRUNT_STRICT_VALIDATE environment variable.
 	// +optional
 	strictValidate bool,
 	// ignoreDependencyOrder is the flag to ignore dependency order.
-	// corresponds to the terragrunt_ignore_dependency_order environment variable.
+	// corresponds to the TERRAGRUNT_IGNORE_DEPENDENCY_ORDER environment variable.
 	// +optional
 	ignoreDependencyOrder bool,
 	// usePartialParseConfigCache is the flag to use partial parse config cache.
-	// corresponds to the terragrunt_use_partial_parse_config_cache environment variable.
+	// corresponds to the TERRAGRUNT_USE_PARTIAL_PARSE_CONFIG_CACHE environment variable.
 	// +optional
 	usePartialParseConfigCache bool,
 	// failOnStateBucketCreation is the flag to fail on state bucket creation.
-	// corresponds to the terragrunt_fail_on_state_bucket_creation environment variable.
+	// corresponds to the TERRAGRUNT_FAIL_ON_STATE_BUCKET_CREATION environment variable.
 	// +optional
 	failOnStateBucketCreation bool,
 	// disableBucketUpdate is the flag to disable bucket update.
-	// corresponds to the terragrunt_disable_bucket_update environment variable.
+	// corresponds to the TERRAGRUNT_DISABLE_BUCKET_UPDATE environment variable.
 	// +optional
 	disableBucketUpdate bool,
 	// disableCommandValidation is the flag to disable command validation.
-	// corresponds to the terragrunt_disable_command_validation environment variable.
+	// corresponds to the TERRAGRUNT_DISABLE_COMMAND_VALIDATION environment variable.
 	// +optional
 	disableCommandValidation bool,
 ) *Terragrunt {
-	m.Tg.Opts = newTerragruntOptionsDagger(
-		m,
+	tgOpts := newTerragruntOptionsDagger(
 		configPath,
 		terraformPath,
 		workingDir,
@@ -435,7 +434,7 @@ func (m *Terragrunt) WithTerragruntOptions(
 		disableCommandValidation,
 	)
 
-	m.Tg.Opts.WithTerragruntOptionsSetInContainer()
+	m.Ctr = tgOpts.WithTerragruntOptionsSetInContainer(m.Ctr)
 
 	return m
 }
@@ -452,17 +451,33 @@ func (m *Terragrunt) WithTerragruntOptions(
 // - *Terragrunt: A pointer to the updated Terragrunt instance.
 // - error: An error if the terraform token validation fails.
 func (m *Terragrunt) WithTerraformToken(
-	// tfToken is the terraform token to use when executing the terragrunt command.
-	tfToken string,
+	// ctx is the context to use when executing the terragrunt command.
+	ctx context.Context,
+	// tfToken is the value of the terraform token to use when executing the terragrunt command.
+	tfToken *dagger.Secret,
 ) (*Terragrunt, error) {
-	// Parse and validate the terraform token.
-	parsedTfToken, err := parseTerraformToken(tfToken)
+	tfTokenName, err := tfToken.Name(ctx)
 	if err != nil {
-		return nil, WrapErrorf(err, "failed to validate terraform token: %s", tfToken)
+		return nil, WrapError(err, "failed to get the name of the terraform token passed as a secret")
+	}
+
+	if err := isTerraformTokenNameValid(tfTokenName); err != nil {
+		return nil, WrapError(err, "failed to validate terraform token")
+	}
+
+	tfTokenValueAsTxt, err := tfToken.Plaintext(ctx)
+	if err != nil {
+		return nil, WrapError(err, "failed to get the value of the terraform token passed as a secret")
+	}
+
+	if tfTokenValueAsTxt == "" {
+		return nil, WrapError(nil, "terraform token value is empty")
 	}
 
 	// Set the parsed terraform token as an environment variable in the container.
-	m.Ctr = m.Ctr.WithEnvVariable(parsedTfToken.EnvVarKey, parsedTfToken.EnvVarValue)
+	m.Ctr = m.
+		Ctr.
+		WithSecretVariable(tfTokenName, tfToken)
 
 	return m, nil
 }

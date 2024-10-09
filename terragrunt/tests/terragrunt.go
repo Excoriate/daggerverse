@@ -193,14 +193,16 @@ func (m *Tests) TestTerragruntExecPlanCommand(ctx context.Context) error {
 		"TF_VAR_test=test",
 	}
 
+	tfTokenAsSecret := dag.SetSecret("TF_TOKEN_gitlab", "mysupertoken")
+
 	// Initialize the Terragrunt module with some advance options.
 	tgModule := dag.
 		Terragrunt(dagger.TerragruntOpts{
 			EnvVarsFromHost: testEnvVars,
-			EnableAwscli:    true,
-			TfVersion:       "1.9.0",
+			TgVersion:       "v0.52.1",
 		}).
 		WithTerragruntPermissions().
+		WithTerraformToken(tfTokenAsSecret).
 		WithTerragruntLogOptions(dagger.TerragruntWithTerragruntLogOptionsOpts{
 			TgLogLevel:             "debug",
 			TgLogDisableColor:      true,
@@ -208,11 +210,11 @@ func (m *Tests) TestTerragruntExecPlanCommand(ctx context.Context) error {
 			TgLogDisableFormatting: true,
 		}).
 		WithTerraformLogOptions(dagger.TerragruntWithTerraformLogOptionsOpts{
-			TfLog: "debug",
-		}).
-		// WithTerragruntOptions(dagger.WithTerra)
+			TfLog:     "debug",
+			TfLogPath: "/mnt/tflogs", // it's a directory that the terragrunt user owns.
+		})
 
-	// Execute the init command, but don't run it in a container
+	// Container configured with all the options.
 	tgCtrConfigured := tgModule.
 		Exec("plan", dagger.TerragruntExecOpts{
 			Source: m.
@@ -220,8 +222,23 @@ func (m *Tests) TestTerragruntExecPlanCommand(ctx context.Context) error {
 				Directory("terragrunt"),
 		})
 
-	// Run basic checks on the container.
-	tgCtrConfigured.
+	tgPlanCmdOut, tgPlanCmdErr := tgCtrConfigured.
+		Stdout(ctx)
+
+	if tgPlanCmdErr != nil {
+		return WrapErrorf(tgPlanCmdErr, "failed to get terragrunt plan command output")
+	}
+
+	if tgPlanCmdOut == "" {
+		return Errorf("terragrunt plan command output is empty")
+	}
+
+	// Check env vars
+	for _, envVar := range testEnvVars {
+		if err := m.utilValidateIfEnvVarIsSetInContainer(ctx, tgCtrConfigured, envVar); err != nil {
+			return WrapErrorf(err, "failed to validate environment variables in terragrunt container")
+		}
+	}
 
 	return nil
 }
