@@ -3,13 +3,12 @@ package main
 import (
 	"strconv"
 	"strings"
+
+	"github.com/Excoriate/daggerverse/terragrunt/internal/dagger"
 )
 
 // TerragruntOptsConfig holds the configuration and options for Terragrunt.
 type TerragruntOptsConfig struct {
-	// Tg holds the Terragrunt configuration.
-	// +private
-	Tg *Terragrunt
 	// TgOpts holds the Terragrunt options.
 	// +private
 	TgOpts []TgConfigSetAsEnvVar
@@ -20,7 +19,6 @@ type TerragruntOptsConfig struct {
 //
 //nolint:funlen // It's okay, it's not complex, just long due to Dagger's limitations.
 func newTerragruntOptionsDagger(
-	tgModule *Terragrunt,
 	// The path to the Terragrunt configuration file.
 	// Corresponds to the TERRAGRUNT_CONFIG environment variable.
 	configPath string,
@@ -242,27 +240,30 @@ func newTerragruntOptionsDagger(
 	addBoolFlag("TERRAGRUNT_DISABLE_BUCKET_UPDATE", disableBucketUpdate)
 	addBoolFlag("TERRAGRUNT_DISABLE_COMMAND_VALIDATION", disableCommandValidation)
 
-	return &TerragruntOptsConfig{TgOpts: daggers, Tg: tgModule}
+	return &TerragruntOptsConfig{TgOpts: daggers}
 }
 
-// WithTerragruntOptionsSetInContainer sets the environment variables for the Terragrunt container
-// based on the options specified in the TerragruntOptsConfig. It iterates over the TgOpts slice,
-// which contains the environment variable key-value pairs, and sets each environment variable
-// in the Terragrunt container using the WithEnvVariable method.
+// WithTerragruntOptionsSetInContainer sets the environment variables for the Terragrunt container.
 //
-// This method returns the updated TerragruntOptsConfig with the environment variables set in the container.
+// This method iterates over the TgOpts slice in the TerragruntOptsConfig, which contains the environment
+// variable key-value pairs, and sets each environment variable in the Terragrunt container using the
+// WithEnvVariable method.
+//
+// Parameters:
+// - ctr: A pointer to the dagger.Container in which the environment variables will be set.
+//
+// Returns:
+// - A pointer to the modified dagger.Container with the environment variables set.
 //
 // Example usage:
 //
 //	config := &TerragruntOptsConfig{...}
-//	updatedConfig := config.WithTerragruntOptionsSetInContainer()
-func (c *TerragruntOptsConfig) WithTerragruntOptionsSetInContainer() *TerragruntOptsConfig {
+//	updatedConfig := config.WithTerragruntOptionsSetInContainer(ctr)
+func (c *TerragruntOptsConfig) WithTerragruntOptionsSetInContainer(ctr *dagger.Container) *dagger.Container {
 	for _, envVar := range c.TgOpts {
-		c.Tg.Ctr = c.
-			Tg.
-			Ctr.
+		ctr = ctr.
 			WithEnvVariable(envVar.EnvVarKey, envVar.EnvVarValue)
 	}
 
-	return c
+	return ctr
 }

@@ -2,42 +2,23 @@ package main
 
 import "strings"
 
-// parseTerraformToken parses the provided terraform token and returns a valid TgConfigSetAsEnvVar.
-// The token must be in the format of TF_TOKEN_<token>=value and the value must not be empty.
-// Returns an error if the token is invalid or empty.
-func parseTerraformToken(tfToken string) (*TgConfigSetAsEnvVar, error) {
-	if tfToken == "" {
-		return nil, WrapError(nil, "terraform token is required, can't execute command without terraform token")
+// isTerraformTokenNameValid checks if the provided token name is a valid Terraform token name.
+// A valid Terraform token name must start with the prefix "TF_TOKEN_".
+//
+// Parameters:
+// - tokenName: The name of the token to validate.
+//
+// Returns:
+// - bool: True if the token name is valid, false otherwise.
+func isTerraformTokenNameValid(tokenName string) error {
+	tfTokenPrefix := "TF_TOKEN_"
+
+	if !strings.HasPrefix(tokenName, tfTokenPrefix) {
+		return WrapErrorf(nil, "invalid terraform token name: %s, should start with %s",
+			tokenName, tfTokenPrefix)
 	}
 
-	tokenParts := strings.SplitN(tfToken, "=", 2)
-	if len(tokenParts) != 2 {
-		errMsg := "invalid terraform token: %s, expected to be in the format of TF_TOKEN_<token>=value"
-
-		return nil, WrapErrorf(nil, errMsg, tfToken)
-	}
-
-	token := tokenParts[0]
-	value := tokenParts[1]
-
-	if !strings.HasPrefix(token, "TF_TOKEN_") {
-		return nil, WrapErrorf(nil, "invalid terraform token: %s, expected to start with TF_TOKEN_", tfToken)
-	}
-
-	// Validate the value is not empty
-	if value == "" {
-		return nil, WrapErrorf(nil, "invalid terraform token: %s, value is empty", tfToken)
-	}
-
-	cleanToken := strings.TrimSpace(token)
-	cleanValue := strings.TrimSpace(value)
-	escapedValue := strings.ReplaceAll(cleanValue, "\\", "\\\\")
-
-	return &TgConfigSetAsEnvVar{
-		EnvVarKey:      cleanToken,
-		EnvVarValue:    escapedValue,
-		LogOptionValue: escapedValue,
-	}, nil
+	return nil
 }
 
 // validateTerragruntCommands validates the provided Terragrunt command.

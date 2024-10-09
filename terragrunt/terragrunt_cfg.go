@@ -26,10 +26,12 @@ func (m *Terragrunt) WithTerragruntPermissions() *Terragrunt {
 		"/home/terragrunt",
 		"/home/.terraform.d",
 		"/home",
+		"/var/log",
 		fixtures.MntPrefix,
 	}, true).
 		WithUserWithPermissionsOnDirs(terragruntCtrUser, "0777", []string{
 			"/home",
+			"/var/log",
 			fixtures.MntPrefix,
 		}, true)
 }
