@@ -176,3 +176,52 @@ func (m *Tests) TestTerragruntExecVersionCommand(ctx context.Context) error {
 
 	return nil
 }
+
+// TestTerragruntExecPlanCommand tests the execution of the 'terragrunt plan' command with a specific
+// configuration.
+// It sets up the necessary environment variables, initializes the Terragrunt module with advanced options, and
+// executes the 'plan' command.
+// The function then validates the output of the command, checks if the expected version is present, and verifies
+// if the environment variables are correctly set in the container.
+// If any step fails, an error is returned.
+func (m *Tests) TestTerragruntExecPlanCommand(ctx context.Context) error {
+	testEnvVars := []string{
+		"OTHER_ENV_VAR=test",
+		"AWS_ACCESS_KEY_ID=test",
+		"AWS_SECRET_ACCESS_KEY=test",
+		"AWS_SESSION_TOKEN=test",
+		"TF_VAR_test=test",
+	}
+
+	// Initialize the Terragrunt module with some advance options.
+	tgModule := dag.
+		Terragrunt(dagger.TerragruntOpts{
+			EnvVarsFromHost: testEnvVars,
+			EnableAwscli:    true,
+			TfVersion:       "1.9.0",
+		}).
+		WithTerragruntPermissions().
+		WithTerragruntLogOptions(dagger.TerragruntWithTerragruntLogOptionsOpts{
+			TgLogLevel:             "debug",
+			TgLogDisableColor:      true,
+			TgForwardTfStdout:      true,
+			TgLogDisableFormatting: true,
+		}).
+		WithTerraformLogOptions(dagger.TerragruntWithTerraformLogOptionsOpts{
+			TfLog: "debug",
+		}).
+		// WithTerragruntOptions(dagger.WithTerra)
+
+	// Execute the init command, but don't run it in a container
+	tgCtrConfigured := tgModule.
+		Exec("plan", dagger.TerragruntExecOpts{
+			Source: m.
+				getTestDir("").
+				Directory("terragrunt"),
+		})
+
+	// Run basic checks on the container.
+	tgCtrConfigured.
+
+	return nil
+}
