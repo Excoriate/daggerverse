@@ -83,13 +83,13 @@ bump-version mod bump='minor':
     # Calculate the new version
     new_version="v$(semver bump {{bump}} "v$current_version")"
 
-    echo "Current version: v$current_version"
-    echo "New version: $new_version"
+    echo "🔢 Current version: v$current_version"
+    echo "🆕 New version: $new_version"
 
     read -p "Proceed with version bump? (y/N) " -n 1 -r
     echo
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        echo "Aborting"
+        echo "❌ Aborting"
         exit 1
     fi
 
