@@ -218,10 +218,11 @@ calltests mod *args: (reloadtest mod)
   #!/usr/bin/env sh
   set -e
   echo "🚀 Running Dagger call tests..."
-  echo "🧪 Currently in {{mod}} module, path=`pwd`"
+  echo "🧪 Currently in {{mod}} module, path=`pwd`/{{mod}}"
   test -d {{mod}}/tests || (echo "❌ Module not found" && exit 1)
   cd {{mod}}/tests && dagger functions
   cd {{mod}}/tests && dagger call {{args}}
+
 # Recipe to run dagger develop in all modules 🔄
 develop-all:
   #!/usr/bin/env sh
