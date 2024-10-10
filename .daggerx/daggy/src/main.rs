@@ -37,12 +37,12 @@ fn main() -> Result<(), Error> {
     }
 }
 
-fn sync_modules_task(args: &Args) -> Result<(), Error> {
+fn sync_modules_task() -> Result<(), Error> {
     println!("Syncing modules...");
     Ok(())
 }
 
-fn inspect_modules_task(args: &Args) -> Result<(), Error> {
+fn inspect_modules_task() -> Result<(), Error> {
     println!("Inspecting modules...");
     Ok(())
 }
