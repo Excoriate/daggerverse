@@ -38,6 +38,8 @@ precommit:
 
 # Recipe to run Dagger module 📦
 dc mod *args:
+  #!/usr/bin/env sh
+  set -e
   @echo "Running Dagger module..."
   @echo "Currently in {{mod}} module 📦, path=`pwd`"
   @test -d {{mod}} || (echo "Module not found" && exit 1)
@@ -45,6 +47,8 @@ dc mod *args:
 
 # Recipe to run Dagger module tests 🧪
 dct mod *args:
+  #!/usr/bin/env sh
+  set -e
   @echo "Running Dagger module tests..."
   @echo "Currently in {{mod}} module 🧪, path=`pwd`"
   @test -d {{mod}}/tests || (echo "Module not found" && exit 1)
@@ -52,6 +56,8 @@ dct mod *args:
 
 # Recipe to run Dagger module examples 📄
 dce mod *args:
+  #!/usr/bin/env sh
+  set -e
   @echo "Running Dagger module examples ... 📄"
   @echo "Currently in {{mod}} module 🧪, path=`pwd`"
   @test -d {{mod}}/examples/go || (echo "Module examples not found" && exit 1)
@@ -97,6 +103,8 @@ bump-version mod bump='minor':
 
 # Recipe to reload Dagger module (Dagger Develop) 🔄
 reloadmod mod *args:
+  #!/usr/bin/env sh
+  set -e
   @echo "Running Dagger development in a given module..."
   @echo "Currently in {{mod}} module 📦, path=`pwd`"
   @test -d {{mod}} || (echo "Module not found" && exit 1)
@@ -117,18 +125,22 @@ reloadtest mod *args:
 
 # Recipe to reload Dagger module and its underlying tests (Dagger Develop & Dagger Call/Functions) 🔄
 reloadall mod *args:
-  @echo "Reloading Dagger module and also the tests..."
-  @echo "Currently in {{mod}} module 🔄, path=`pwd`"
-  @test -d {{mod}} || (echo "Module not found" && exit 1)
-  @cd {{mod}} && dagger develop {{args}}
-  @cd {{mod}}/tests && dagger develop {{args}}
-  @cd {{mod}}/examples/go && dagger develop {{args}}
-  @echo "Module reloaded successfully 🚀"
-  @echo "Inspecting the module... 🕵️"
-  @cd {{mod}} && dagger call && dagger functions
+  #!/usr/bin/env sh
+  set -e
+  echo "Reloading Dagger module and also the tests..."
+  echo "Currently in {{mod}} module 🔄, path=`pwd`"
+  test -d {{mod}} || (echo "Module not found" && exit 1)
+  cd {{mod}} && dagger develop {{args}}
+  cd tests && dagger develop {{args}}
+  cd ../examples/go && dagger develop {{args}}
+  echo "Module reloaded successfully 🚀"
+  echo "Inspecting the module... 🕵️"
+  cd .. && dagger call && dagger functions
 
 # Recipe to run all the tests in the target module 🧪
 test mod *args: (reloadmod mod) (reloadtest mod)
+  #!/usr/bin/env sh
+  set -e
   @echo "Running Dagger module tests..."
   @echo "Currently in {{mod}} module 🧪, path=`pwd`"
   @test -d {{mod}}/tests || (echo "Module not found" && exit 1)
@@ -137,6 +149,8 @@ test mod *args: (reloadmod mod) (reloadtest mod)
 
 # Recipe to run all the examples in the target module 📄
 examplesgo mod *args: (reloadmod mod)
+  #!/usr/bin/env sh
+  set -e
   @echo "Running Dagger module examples (Go SDK)..."
   @echo "Currently in {{mod}} module 🧪, path=`pwd`"
   @test -d {{mod}}/examples/go || (echo "Module examples not found" && exit 1)
@@ -144,6 +158,8 @@ examplesgo mod *args: (reloadmod mod)
 
 # Recipe to run GolangCI Lint 🧹
 golint mod *args:
+  #!/usr/bin/env sh
+  set -e
   @echo "Running Go (GolangCI)... 🧹 "
   @test -d {{mod}} || (echo "Module not found" && exit 1)
   @echo "Currently in {{mod}} module 📦, path=`pwd`/{{mod}}"
@@ -159,6 +175,8 @@ cilocal mod: (reloadall mod) (golint mod) (test mod) (examplesgo mod) (ci-module
 
 # Recipe to create a new module using Daggy (a rust CLI tool) 🛠️
 create mod with-ci='false' type='full':
+  #!/usr/bin/env sh
+  set -e
   @echo "Creating a new {{type}} module of type {{type}}..."
   @cd .daggerx/daggy && cargo build --release
   @.daggerx/daggy/target/release/daggy --task=create --module={{mod}} --module-type={{type}}
@@ -166,6 +184,8 @@ create mod with-ci='false' type='full':
 
 # Recipe to create a new light module using Daggy 🛠️
 createlight mod with-ci='false' type='light':
+  #!/usr/bin/env sh
+  set -e
   @echo "Creating a new {{type}} module of type {{type}}..."
   @cd .daggerx/daggy && cargo build --release
   @.daggerx/daggy/target/release/daggy --task=create --module={{mod}} --module-type={{type}}
@@ -173,6 +193,8 @@ createlight mod with-ci='false' type='light':
 
 # Recipe to validate if the dagger module has the README.md file and the LICENSE file 📄
 ci-module-docs mod:
+  #!/usr/bin/env sh
+  set -e
   @echo "Validating the module documentation..."
   @test -f {{mod}}/README.md || (echo "README.md file not found" && exit 1)
   @test -f {{mod}}/LICENSE || (echo "LICENSE file not found" && exit 1)
@@ -180,6 +202,8 @@ ci-module-docs mod:
 
 # Recipe for dagger call 📞
 call mod *args:
+  #!/usr/bin/env sh
+  set -e
   @echo "Running Dagger call..."
   @echo "Currently in {{mod}} module 📦, path=`pwd`"
   @test -d {{mod}} || (echo "Module not found" && exit 1)
@@ -187,20 +211,26 @@ call mod *args:
 
 # Recipe for dagger call tests in a certain module 🧪
 calltests mod *args: (reloadtest mod)
+  #!/usr/bin/env sh
+  set -e
   @echo "Running Dagger call tests..."
   @echo "Currently in {{mod}} module 🧪, path=`pwd`"
   @test -d {{mod}}/tests || (echo "Module not found" && exit 1)
-  @cd {{mod}}/tests && dagger functions {{args}}
+  @cd {{mod}}/tests && dagger functions
   @cd {{mod}}/tests && dagger call {{args}}
 
 # Recipe to run dagger develop in all modules 🔄
 develop-all:
+  #!/usr/bin/env sh
+  set -e
   @echo "Developing all Dagger modules..."
   @cd .daggerx/daggy && cargo build --release
   @.daggerx/daggy/target/release/daggy --task=develop
 
 # Recipe that wraps the dagger CLI in a certain module 📦
 dag mod *args:
+  #!/usr/bin/env sh
+  set -e
   @echo "Running Dagger CLI in a certain module..."
   @echo "Currently in {{mod}} module 📦, path=`pwd`"
   @test -d {{mod}} || (echo "Module not found" && exit 1)
@@ -208,6 +238,8 @@ dag mod *args:
 
 # Recipe to call a certain function by a module's name, passing extra arguments optionally 📞
 callfn mod *args:
+  #!/usr/bin/env sh
+  set -e
   @echo "Calling a function in a certain module..."
   @echo "Currently in {{mod}} module 📦, path=`pwd`"
   @test -d {{mod}} || (echo "Module not found" && exit 1)
@@ -216,6 +248,8 @@ callfn mod *args:
 
 # Recipe to list functions in a certain module 📄
 listfns mod *args:
+  #!/usr/bin/env sh
+  set -e
   @echo "Listing functions in a certain module..."
   @echo "Currently in {{mod}} module 📦, path=`pwd`"
   @test -d {{mod}} || (echo "Module not found" && exit 1)
@@ -223,5 +257,7 @@ listfns mod *args:
 
 # Recipe to run Daggy tests 🧪
 daggy-tests:
+  #!/usr/bin/env sh
+  set -e
   @echo "Running Daggy tests 🧪 ..."
   @cd .daggerx/daggy && cargo test
