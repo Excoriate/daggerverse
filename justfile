@@ -112,11 +112,14 @@ reloadmod mod *args:
     echo "Docker is not running. Please start Docker and try again."; \
     exit 1; \
   fi
+  # @cd {{mod}} && dagger develop {{args}}
   @cd {{mod}} && dagger develop {{args}}
   @echo "Module reloaded successfully ✅"
 
 # Recipe to reload a Dagger module's tests (Dagger Develop) 🔄
 reloadtest mod *args:
+  #!/usr/bin/env sh
+  set -e
   @echo "Running Dagger development in a given module's tests..."
   @echo "Currently in {{mod}}/tests module 📦, path=`pwd`"
   @test -d {{mod}} || (echo "Module not found" && exit 1)
@@ -158,8 +161,6 @@ examplesgo mod *args: (reloadmod mod)
 
 # Recipe to run GolangCI Lint 🧹
 golint mod *args:
-  #!/usr/bin/env sh
-  set -e
   @echo "Running Go (GolangCI)... 🧹 "
   @test -d {{mod}} || (echo "Module not found" && exit 1)
   @echo "Currently in {{mod}} module 📦, path=`pwd`/{{mod}}"
@@ -184,8 +185,6 @@ create mod with-ci='false' type='full':
 
 # Recipe to create a new light module using Daggy 🛠️
 createlight mod with-ci='false' type='light':
-  #!/usr/bin/env sh
-  set -e
   @echo "Creating a new {{type}} module of type {{type}}..."
   @cd .daggerx/daggy && cargo build --release
   @.daggerx/daggy/target/release/daggy --task=create --module={{mod}} --module-type={{type}}
