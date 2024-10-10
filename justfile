@@ -116,13 +116,13 @@ reloadtest mod *args:
   @echo "Module Tests reloaded successfully ✅"
 
 # Recipe to reload Dagger module and its underlying tests (Dagger Develop & Dagger Call/Functions) 🔄
-reloadall mod:
+reloadall mod *args:
   @echo "Reloading Dagger module and also the tests..."
   @echo "Currently in {{mod}} module 🔄, path=`pwd`"
   @test -d {{mod}} || (echo "Module not found" && exit 1)
-  @cd {{mod}} && dagger develop --sdk=go
-  @cd {{mod}}/tests && dagger develop --sdk=go
-  @cd {{mod}}/examples/go && dagger develop --sdk=go
+  @cd {{mod}} && dagger develop {{args}}
+  @cd {{mod}}/tests && dagger develop {{args}}
+  @cd {{mod}}/examples/go && dagger develop {{args}}
   @echo "Module reloaded successfully 🚀"
   @echo "Inspecting the module... 🕵️"
   @cd {{mod}} && dagger call && dagger functions
@@ -143,15 +143,15 @@ examplesgo mod *args: (reloadmod mod)
   @cd {{mod}}/examples/go && dagger call all-recipes {{args}}
 
 # Recipe to run GolangCI Lint 🧹
-golint mod:
+golint mod *args:
   @echo "Running Go (GolangCI)... 🧹 "
   @test -d {{mod}} || (echo "Module not found" && exit 1)
   @echo "Currently in {{mod}} module 📦, path=`pwd`/{{mod}}"
-  @cd ./{{mod}} && nix-shell -p golangci-lint --run "golangci-lint run --config ../.golangci.yml"
+  @cd ./{{mod}} && nix-shell -p golangci-lint --run "golangci-lint run --config ../.golangci.yml {{args}}"
   @echo "Checking now the tests 🧪 project ..."
-  @cd ./{{mod}}/tests && nix-shell -p golangci-lint --run "golangci-lint run --config ../../.golangci.yml"
+  @cd ./{{mod}}/tests && nix-shell -p golangci-lint --run "golangci-lint run --config ../../.golangci.yml {{args}}"
   @echo "Checking now the examples 📄 project ..."
-  @cd ./{{mod}}/examples/go && nix-shell -p golangci-lint --run "golangci-lint run --config ../../../.golangci.yml"
+  @cd ./{{mod}}/examples/go && nix-shell -p golangci-lint --run "golangci-lint run --config ../../../.golangci.yml {{args}}"
 
 # Recipe to run the whole CI locally 🚀
 cilocal mod: (reloadall mod) (golint mod) (test mod) (examplesgo mod) (ci-module-docs mod)
@@ -190,7 +190,7 @@ calltests mod *args: (reloadtest mod)
   @echo "Running Dagger call tests..."
   @echo "Currently in {{mod}} module 🧪, path=`pwd`"
   @test -d {{mod}}/tests || (echo "Module not found" && exit 1)
-  @cd {{mod}}/tests && dagger functions
+  @cd {{mod}}/tests && dagger functions {{args}}
   @cd {{mod}}/tests && dagger call {{args}}
 
 # Recipe to run dagger develop in all modules 🔄
