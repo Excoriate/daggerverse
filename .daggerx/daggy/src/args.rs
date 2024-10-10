@@ -1,17 +1,26 @@
 use clap::Parser;
 
 #[derive(Parser, Debug)]
-#[clap(author, version, about, long_about = None)]
+#[command(author, version, about, long_about = None)]
+/// Command line arguments for the application.
 pub struct Args {
-    /// Task is the name of the task to run
-    #[clap(short, long)]
+    /// The task to perform (e.g., "create", "sync", "inspect", "develop").
+    #[arg(short, long)]
     pub task: String,
 
-    /// Module is the name of the dagger module to generate.
-    #[clap(short, long)]
+    /// The name of the module to operate on. Optional.
+    #[arg(short, long)]
     pub module: Option<String>,
 
-    /// Module type is the type of the module to generate.
-    #[clap(long, default_value = "full")]
-    pub module_type: String,
+    /// The type of the module (e.g., "full", "light"). Optional.
+    #[arg(short, long)]
+    pub module_type: Option<String>,
+
+    /// Flag to indicate a dry run. Optional.
+    #[arg(short, long)]
+    pub dry_run: Option<bool>,
+
+    /// The type of inspection to perform (default is "all").
+    #[arg(long, default_value = "all")]
+    pub inspect_type: String,
 }
