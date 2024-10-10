@@ -260,4 +260,5 @@ listfns mod *args:
 # Recipe to run Daggy tests 🧪
 daggy-tests:
   @echo "Running Daggy tests 🧪 ..."
+  @cd .daggerx/daggy && cargo build --release
   @cd .daggerx/daggy && cargo test
