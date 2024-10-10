@@ -120,9 +120,9 @@ reloadall mod:
   @echo "Reloading Dagger module and also the tests..."
   @echo "Currently in {{mod}} module 🔄, path=`pwd`"
   @test -d {{mod}} || (echo "Module not found" && exit 1)
-  @cd {{mod}} && dagger develop
-  @cd {{mod}}/tests && dagger develop
-  @cd {{mod}}/examples/go && dagger develop
+  @cd {{mod}} && dagger develop --sdk=go
+  @cd {{mod}}/tests && dagger develop --sdk=go
+  @cd {{mod}}/examples/go && dagger develop --sdk=go
   @echo "Module reloaded successfully 🚀"
   @echo "Inspecting the module... 🕵️"
   @cd {{mod}} && dagger call && dagger functions
