@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod git_test;
+
 mod args;
 mod command_utils;
 mod configuration;
@@ -12,9 +15,6 @@ mod templating;
 mod utils;
 mod cmd_create_module;
 mod cmd_develop_modules;
-
-#[cfg(test)]
-mod git_test;
 
 use args::Args;
 use clap::Parser;
@@ -38,7 +38,7 @@ fn main() -> Result<(), Error> {
 fn create_module_task(args: &Args) -> Result<(), Error> {
     match &args.module {
         Some(module) => {
-            cmd_create_module::create_module(module, &args.module_type)
+            cmd_create_module::create_module(module, args.module_type.as_deref().unwrap_or("full"))
         }
         None => {
             eprintln!("Module name is required for 'create' task");
