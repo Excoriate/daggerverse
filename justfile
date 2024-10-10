@@ -256,7 +256,5 @@ listfns mod *args:
 
 # Recipe to run Daggy tests 🧪
 daggy-tests:
-  #!/usr/bin/env sh
-  set -e
   @echo "Running Daggy tests 🧪 ..."
   @cd .daggerx/daggy && cargo test
