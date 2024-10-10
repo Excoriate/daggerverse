@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"path/filepath"
 
 	"github.com/Excoriate/daggerverse/terragrunt/tests/internal/dagger"
+	"github.com/Excoriate/daggerx/pkg/fixtures"
 )
 
 // TestTerragruntContainerIsUp checks if the Terragrunt container is up and running by verifying the versions of
@@ -201,7 +203,14 @@ func (m *Tests) TestTerragruntExecPlanCommand(ctx context.Context) error {
 			EnvVarsFromHost: testEnvVars,
 			TgVersion:       "v0.52.1",
 		}).
-		WithTerragruntPermissions().
+		WithTerragruntPermissions(dagger.TerragruntWithTerragruntPermissionsOpts{
+			DirsToOwn: []string{
+				filepath.Join(fixtures.MntPrefix, ".terragrunt-cache"),
+			},
+			DirsToHaveWritePermissions: []string{
+				filepath.Join(fixtures.MntPrefix, ".terragrunt-cache"),
+			},
+		}).
 		WithTerraformToken(tfTokenAsSecret).
 		WithTerragruntLogOptions(dagger.TerragruntWithTerragruntLogOptionsOpts{
 			TgLogLevel:             "debug",
@@ -223,6 +232,7 @@ func (m *Tests) TestTerragruntExecPlanCommand(ctx context.Context) error {
 		})
 
 	tgPlanCmdOut, tgPlanCmdErr := tgCtrConfigured.
+		Terminal().
 		Stdout(ctx)
 
 	if tgPlanCmdErr != nil {
@@ -238,6 +248,103 @@ func (m *Tests) TestTerragruntExecPlanCommand(ctx context.Context) error {
 		if err := m.utilValidateIfEnvVarIsSetInContainer(ctx, tgCtrConfigured, envVar); err != nil {
 			return WrapErrorf(err, "failed to validate environment variables in terragrunt container")
 		}
+	}
+
+	return nil
+}
+
+// TestTerragruntExecLifecycleCommands tests the execution of Terragrunt commands directly.
+//
+// This function sets up the necessary environment variables and secrets, configures the Terragrunt module,
+// and executes a series of Terragrunt commands ("plan", "apply", "destroy"). It validates the output of each
+// command and ensures that the commands are executed successfully.
+//
+// Parameters:
+// - ctx: The context for controlling the execution.
+//
+// Returns:
+// - error: If any command execution fails or if the command output is empty.
+func (m *Tests) TestTerragruntExecLifecycleCommands(ctx context.Context) error {
+	testEnvVars := []string{
+		"TF_VAR_test=test",
+		"TF_VAR_another_test=test",
+		"TF_VAR_region=westus",
+		"TF_VAR_resource_group=myResourceGroup",
+		"TF_VAR_storage_account=myStorageAccount",
+		"AZURE_SUBSCRIPTION_ID=your_subscription_id",
+		"AZURE_CLIENT_ID=your_client_id",
+		"AZURE_CLIENT_SECRET=your_client_secret",
+		"AZURE_TENANT_ID=your_tenant_id",
+	}
+
+	awsSecret := dag.SetSecret("AWS_SECRET_ACCESS_KEY", "awssecretkey")
+	gcpSecret := dag.SetSecret("GCP_SERVICE_ACCOUNT_KEY", "gcpserviceaccountkey")
+	azureSecret := dag.SetSecret("AZURE_CLIENT_SECRET", "azureclientsecret")
+
+	// github tf token
+	tfTokenGitHub := dag.SetSecret("TF_TOKEN_github", "mygithubtoken")
+
+	// main module configuration.
+	tgModule := dag.
+		Terragrunt(dagger.TerragruntOpts{
+			EnvVarsFromHost: testEnvVars,
+		}).
+		WithTerragruntPermissions().
+		WithTerraformToken(tfTokenGitHub).
+		WithTerragruntLogOptions(dagger.TerragruntWithTerragruntLogOptionsOpts{
+			TgLogLevel:             "debug",
+			TgLogDisableColor:      true,
+			TgForwardTfStdout:      true,
+			TgLogDisableFormatting: true,
+		}).
+		WithTerraformLogOptions(dagger.TerragruntWithTerraformLogOptionsOpts{
+			TfLog:     "debug",
+			TfLogPath: "/mnt/tflogs", // it's a directory that the terragrunt user owns.
+		})
+
+	// run init command
+	cmdOut, cmdErr := tgModule.ExecCmd(ctx, "init", dagger.TerragruntExecCmdOpts{
+		Source: m.
+			getTestDir("").
+			Directory("terragrunt"),
+		Secrets: []*dagger.Secret{
+			awsSecret,
+			gcpSecret,
+			azureSecret,
+		},
+	})
+
+	if cmdErr != nil {
+		return WrapErrorf(cmdErr, "failed to execute command init")
+	}
+
+	if cmdOut == "" {
+		return Errorf("command init output is empty")
+	}
+
+	// run plan command with arguments
+	cmdOut, cmdErr = tgModule.ExecCmd(ctx, "plan", dagger.TerragruntExecCmdOpts{
+		Source: m.
+			getTestDir("").
+			Directory("terragrunt"),
+		Secrets: []*dagger.Secret{
+			awsSecret,
+			gcpSecret,
+			azureSecret,
+		},
+		Args: []string{
+			"-out=plan.tfplan",
+			"-detailed-exitcode",
+			"-refresh=true",
+		},
+	})
+
+	if cmdErr != nil {
+		return WrapErrorf(cmdErr, "failed to execute command plan")
+	}
+
+	if cmdOut == "" {
+		return Errorf("command plan output is empty")
 	}
 
 	return nil

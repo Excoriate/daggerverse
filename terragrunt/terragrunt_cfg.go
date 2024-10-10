@@ -11,29 +11,64 @@ const (
 	terraformPluginsDir = "/home/.terraform.d/plugins"
 )
 
-// WithTerragruntPermissions sets the necessary permissions for the Terragrunt directories.
-// It ensures that the specified user and group own the directories and sets the appropriate permissions.
-// The directories include:
-// - /home/terragrunt
-// - /home/.terraform.d
-// - /home
-// - fixtures.MntPrefix
-// Additionally, it sets the permissions to 0777 for the following directories:
-// - /home
-// - fixtures.MntPrefix.
-func (m *Terragrunt) WithTerragruntPermissions() *Terragrunt {
-	return m.WithUserAsOwnerOfDirs(terragruntCtrUser, terragruntCtrGroup, []string{
+var (
+	//nolint:gochecknoglobals // This is a global variable that is used to set the default permissions.
+	terragruntPermissionsOnDirsDefault = []string{
 		"/home/terragrunt",
 		"/home/.terraform.d",
 		"/home",
 		"/var/log",
 		fixtures.MntPrefix,
-	}, true).
-		WithUserWithPermissionsOnDirs(terragruntCtrUser, "0777", []string{
-			"/home",
-			"/var/log",
-			fixtures.MntPrefix,
-		}, true)
+	}
+)
+
+// WithTerragruntPermissionsOnDirsDefault sets the default permissions for the Terragrunt directories.
+// It ensures that the specified user and group own the directories and sets the appropriate permissions.
+// The default directories include:
+// - /home/terragrunt
+// - /home/.terraform.d
+// - /home
+// - /var/log
+// - fixtures.MntPrefix
+// Additionally, it sets the permissions to 0777 for the following directories:
+// - /home
+// - /var/log
+// - fixtures.MntPrefix
+//
+// Returns:
+// - *Terragrunt: Updated instance with the default permissions set.
+func (m *Terragrunt) WithTerragruntPermissionsOnDirsDefault() *Terragrunt {
+	return m.
+		WithUserAsOwnerOfDirs(terragruntCtrUser, terragruntCtrGroup, terragruntPermissionsOnDirsDefault, true).
+		WithUserWithPermissionsOnDirs(terragruntCtrUser, "0777", terragruntPermissionsOnDirsDefault, true)
+}
+
+// WithTerragruntPermissionsOnDirs sets the necessary permissions for the Terragrunt directories.
+// It ensures that the specified user and group own the directories and sets the appropriate permissions.
+// The default directories include:
+// - /home/terragrunt
+// - /home/.terraform.d
+// - /home
+// - /var/log
+// - fixtures.MntPrefix
+// Additionally, it sets the permissions to 0777 for the following directories:
+// - /home
+// - /var/log
+// - fixtures.MntPrefix
+// If dirsToOwn and dirsToHaveWritePermissions are provided, they will be appended to the respective default lists.
+func (m *Terragrunt) WithTerragruntPermissionsOnDirs(
+	// dirsToOwn are the directories to set the permissions to 0777.
+	// +optional
+	dirsToOwn []string,
+	// dirsToHaveWritePermissions are the directories to have write permissions.
+	// +optional
+	dirsToHaveWritePermissions []string,
+) *Terragrunt {
+	dirsToOwn = append(terragruntPermissionsOnDirsDefault, dirsToOwn...)
+	dirsToHaveWritePermissions = append(dirsToHaveWritePermissions, dirsToHaveWritePermissions...)
+
+	return m.WithUserAsOwnerOfDirs(terragruntCtrUser, terragruntCtrGroup, dirsToOwn, true).
+		WithUserWithPermissionsOnDirs(terragruntCtrUser, "0777", dirsToHaveWritePermissions, true)
 }
 
 // WithTerragruntCacheConfiguration configures the cache directory for Terragrunt.

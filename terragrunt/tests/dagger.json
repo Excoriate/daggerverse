@@ -4,15 +4,18 @@
   "exclude": [
     "../../.direnv",
     "../../.devenv",
+    "../../.vscode",
+    "../../.idea",
+    "../../.trunk",
     "../../go.work",
     "../../go.work.sum"
   ],
   "dependencies": [
     {
-      "name": "terragrunt",
+      "name": "parentmodule",
       "source": ".."
     }
   ],
   "source": ".",
-  "engineVersion": "v0.13.3"
+  "engineVersion": "v0.13.4"
 }

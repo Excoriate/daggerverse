@@ -16,12 +16,23 @@ const (
 type Cmd interface {
 	// Exec executes a given command within a dagger container.
 	// It returns a pointer to the resulting dagger.Container or an error if the command is invalid or fails to execute.
-	Exec(command string, source *dagger.Directory, module string, envVars []string) (*dagger.Container, error)
+	Exec(
+		ctx context.Context,
+		command string,
+		args []string,
+		autoApprove bool,
+		source *dagger.Directory,
+		module string,
+		envVars []string,
+		secrets []*dagger.Secret,
+	) (*dagger.Container, error)
 	// validate checks if the provided command is a recognized IaC tool command.
 	// It returns an error if the command is invalid, otherwise it returns nil.
 	// It expects the command to be a valid IaC tool command.
 	// It returns an error if the command is invalid or empty.
-	validate(command string) error
+	validate(
+		command string,
+	) error
 	// getEntrypoint returns the entrypoint to use when executing the command.
 	getEntrypoint() string
 }
@@ -65,10 +76,20 @@ func (c *TerragruntCmd) validate(command string) error {
 // Exec executes a given command within a dagger container.
 // It returns the output of the command or an error if the command is invalid or fails to execute.
 //
-//nolint:lll // It's okay, since the ignore pattern is included.
+//nolint:lll,cyclop // It's okay, since the ignore pattern is included
 func (m *Terragrunt) Exec(
+	// ctx is the context to use when executing the command.
+	// +optional
+	//nolint:contextcheck // It's okay, since the ignore pattern is included.
+	ctx context.Context,
 	// command is the terragrunt command to execute. It's the actual command that comes after 'terragrunt'
 	command string,
+	// args are the arguments to pass to the command.
+	// +optional
+	args []string,
+	// autoApprove is the flag to auto approve the command.
+	// +optional
+	autoApprove bool,
 	// source is the source directory that includes the source code.
 	// +defaultPath="/"
 	// +ignore=[".terragrunt-cache", ".terraform", ".github", ".gitignore", ".git", "vendor", "node_modules", "build", "dist", "log"]
@@ -79,7 +100,14 @@ func (m *Terragrunt) Exec(
 	// envVars is the environment variables to pass to the container.
 	// +optional
 	envVars []string,
+	// secrets is the secrets to pass to the container.
+	// +optional
+	secrets []*dagger.Secret,
 ) (*dagger.Container, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
 	if err := m.Tg.validate(command); err != nil {
 		return nil, WrapErrorf(err, "failed to validate command: %s", command)
 	}
@@ -92,6 +120,16 @@ func (m *Terragrunt) Exec(
 	cmdAsSlice, cmdAsSliceErr := cmdx.GenerateDaggerCMDFromStr(command)
 	if cmdAsSliceErr != nil {
 		return nil, WrapErrorf(cmdAsSliceErr, "failed to generate dagger command from string: %s", command)
+	}
+
+	// Append optional arguments to the command
+	if args != nil {
+		cmdAsSlice = append(cmdAsSlice, args...)
+	}
+
+	// Handle auto-approve for apply and destroy commands
+	if autoApprove && (command == "apply" || command == "destroy") {
+		cmdAsSlice = append(cmdAsSlice, "--auto-approve")
 	}
 
 	// Mount the source directory, and set 'terragrunt' as the owner of the directory
@@ -111,6 +149,14 @@ func (m *Terragrunt) Exec(
 		}
 	}
 
+	// if secrets are passed.
+	for _, secret := range secrets {
+		secretName, _ := secret.Name(ctx)
+		m.Ctr = m.
+			Ctr.
+			WithSecretVariable(secretName, secret)
+	}
+
 	return m.Ctr.
 		WithExec(append([]string{m.Tg.getEntrypoint()}, cmdAsSlice...)), nil
 }
@@ -118,11 +164,19 @@ func (m *Terragrunt) Exec(
 // ExecCmd executes a given command within a dagger container.
 // It returns the output of the command or an error if the command is invalid or fails to execute.
 //
-//nolint:lll // It's okay, since the ignore pattern is included.
+//nolint:lll,contextcheck // It's okay, since the ignore pattern is included.
 func (m *Terragrunt) ExecCmd(
+	// ctx is the context to use when executing the command.
+	// +optional
 	ctx context.Context,
 	// command is the terragrunt command to execute. It's the actual command that comes after 'terragrunt'
 	command string,
+	// args are the arguments to pass to the command.
+	// +optional
+	args []string,
+	// autoApprove is the flag to auto approve the command.
+	// +optional
+	autoApprove bool,
 	// source is the source directory that includes the source code.
 	// +defaultPath="/"
 	// +ignore=[".terragrunt-cache", ".terraform", ".github", ".gitignore", ".git", "vendor", "node_modules", "build", "dist", "log"]
@@ -133,15 +187,18 @@ func (m *Terragrunt) ExecCmd(
 	// envVars is the environment variables to pass to the container.
 	// +optional
 	envVars []string,
+	// secrets is the secrets to pass to the container.
+	// +optional
+	secrets []*dagger.Secret,
 ) (string, error) {
-	container, err := m.Exec(command, source, module, envVars)
+	container, err := m.Exec(ctx, command, args, autoApprove, source, module, envVars, secrets)
 
 	if err != nil {
 		return "", WrapErrorf(err, "failed to execute terragrunt command: %s", command)
 	}
 
 	output, err := container.
-		Stdout(ctx)
+		Stdout(context.Background())
 
 	if err != nil {
 		return "", WrapErrorf(err, "failed to get stdout from terragrunt command: %s", command)

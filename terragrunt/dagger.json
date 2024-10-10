@@ -10,5 +10,5 @@
     "examples/go"
   ],
   "source": ".",
-  "engineVersion": "v0.13.3"
+  "engineVersion": "v0.13.4"
 }

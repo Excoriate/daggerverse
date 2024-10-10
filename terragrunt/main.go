@@ -119,7 +119,7 @@ func New(
 			handleToolVersions(tgVersion),
 			handleToolVersions(tfVersion),
 			handleToolVersions(openTofuVersion))
-		dagModule.WithTerragruntPermissions()
+		dagModule.WithTerragruntPermissionsOnDirsDefault()
 	}
 
 	if len(envVarsFromHost) > 0 {

@@ -70,43 +70,7 @@ bump-version mod bump='minor':
     echo "✅ Version bumped to $new_version and tag $new_tag created"
     echo "🚀 Tag has been pushed to the remote repository"
 
-# Recipe to reload Dagger module (Dagger Develop) 🔄
-reloadmod mod *args:
-  #!/usr/bin/env sh
-  set -e
-  echo "🚀 Running Dagger development in a given module..."
-  echo "📦 Currently in {{mod}} module, path=`pwd`"
-  test -d {{mod}} || (echo "❌ Module not found" && exit 1)
-  if ! docker info > /dev/null 2>&1; then
-    echo "❌ Docker is not running. Please start Docker and try again."
-    exit 1
-  fi
-  cd {{mod}} && dagger develop {{args}}
-  echo "✅ Module reloaded successfully"
 
-# Recipe to reload a Dagger module's tests (Dagger Develop) 🔄
-reloadtest mod *args:
-  #!/usr/bin/env sh
-  set -e
-  echo "🚀 Running Dagger development in a given module's tests..."
-  echo "📦 Currently in {{mod}}/tests module, path=`pwd`"
-  test -d {{mod}} || (echo "❌ Module not found" && exit 1)
-  cd {{mod}}/tests && dagger develop {{args}}
-  echo "✅ Module Tests reloaded successfully"
-
-# Recipe to reload Dagger module and its underlying tests (Dagger Develop & Dagger Call/Functions) 🔄
-reloadall mod *args:
-  #!/usr/bin/env sh
-  set -e
-  echo "🔄 Reloading Dagger module and also the tests..."
-  echo "📦 Currently in {{mod}} module, path=`pwd`"
-  test -d {{mod}} || (echo "❌ Module not found" && exit 1)
-  cd {{mod}} && dagger develop {{args}}
-  cd tests && dagger develop {{args}}
-  cd ../examples/go && dagger develop {{args}}
-  echo "🚀 Module reloaded successfully"
-  echo "🕵️ Inspecting the module..."
-  cd .. && dagger call && dagger functions
 
 # Recipe to run all the tests in the target module 🧪
 test mod *args: (reloadmod mod) (reloadtest mod)
@@ -145,24 +109,6 @@ cilocal mod: (reloadall mod) (golint mod) (test mod) (examplesgo mod) (ci-module
   #!/usr/bin/env sh
   set -e
   echo "🚀 Running the whole CI locally... 🚀"
-
-# Recipe to create a new module using Daggy (a rust CLI tool) 🛠️
-create mod with-ci='false' type='full':
-  #!/usr/bin/env sh
-  set -e
-  echo "🚀 Creating a new {{type}} module of type {{type}}..."
-  cd .daggerx/daggy && cargo build --release
-  .daggerx/daggy/target/release/daggy --task=create --module={{mod}} --module-type={{type}}
-  if [ "{{with-ci}}" = "true" ]; then just cilocal {{mod}}; fi
-
-# Recipe to create a new light module using Daggy 🛠️
-createlight mod with-ci='false' type='light':
-  #!/usr/bin/env sh
-  set -e
-  echo "🚀 Creating a new {{type}} module of type {{type}}..."
-  cd .daggerx/daggy && cargo build --release
-  .daggerx/daggy/target/release/daggy --task=create --module={{mod}} --module-type={{type}}
-  if [ "{{with-ci}}" = "true" ]; then just cilocal {{mod}}; fi
 
 # Recipe to validate if the dagger module has the README.md file and the LICENSE file 📄
 ci-module-docs mod:

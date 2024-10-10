@@ -1,18 +1,3 @@
 {
-  "name": "go",
-  "sdk": "go",
-  "exclude": [
-    "../../../.direnv",
-    "../../../.devenv",
-    "../../../go.work",
-    "../../../go.work.sum"
-  ],
-  "dependencies": [
-    {
-      "name": "terragrunt",
-      "source": "../.."
-    }
-  ],
-  "source": ".",
-  "engineVersion": "v0.13.3"
+  "engineVersion": "v0.13.4"
 }
