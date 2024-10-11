@@ -78,9 +78,9 @@ func (m *ModuleTemplate) CloneGitRepoHTTPS(
 	// branch is the branch to checkout. Optional parameter.
 	// +optional
 	branch string,
-	// keepGitDir is a boolean that indicates if the .git directory should be kept. Optional parameter.
+	// discardGitDir is a boolean that indicates if the .git directory should be discarded. Optional parameter.
 	// +optional
-	keepGitDir bool,
+	discardGitDir bool,
 	// tag is the tag to checkout. Optional parameter.
 	// +optional
 	tag string,
@@ -95,8 +95,9 @@ func (m *ModuleTemplate) CloneGitRepoHTTPS(
 
 	gitCloneOpts := dagger.GitOpts{}
 
-	if keepGitDir {
-		gitCloneOpts.KeepGitDir = keepGitDir
+	// If discardGitDir is true, set KeepGitDir to false. This changed with 0.13.4
+	if discardGitDir {
+		gitCloneOpts.KeepGitDir = false
 	}
 
 	// Initialize the Git clone request.
