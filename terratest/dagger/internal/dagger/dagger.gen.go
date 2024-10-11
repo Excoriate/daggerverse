@@ -131,15 +131,6 @@ type ContainerID string
 // The `CurrentModuleID` scalar type represents an identifier for an object of type CurrentModule.
 type CurrentModuleID string
 
-// The `DaggerEngineCacheEntryID` scalar type represents an identifier for an object of type DaggerEngineCacheEntry.
-type DaggerEngineCacheEntryID string
-
-// The `DaggerEngineCacheEntrySetID` scalar type represents an identifier for an object of type DaggerEngineCacheEntrySet.
-type DaggerEngineCacheEntrySetID string
-
-// The `DaggerEngineCacheID` scalar type represents an identifier for an object of type DaggerEngineCache.
-type DaggerEngineCacheID string
-
 // The `DagindagID` scalar type represents an identifier for an object of type Dagindag.
 type DagindagID string
 
@@ -479,11 +470,23 @@ func (r *Container) DefaultArgs(ctx context.Context) ([]string, error) {
 	return response, q.Execute(ctx)
 }
 
+// ContainerDirectoryOpts contains options for Container.Directory
+type ContainerDirectoryOpts struct {
+	// Replace "${VAR}" or "$VAR" in the value of path according to the current environment variables defined in the container (e.g. "/$VAR/foo").
+	Expand bool
+}
+
 // Retrieves a directory at the given path.
 //
 // Mounts are included.
-func (r *Container) Directory(path string) *Directory {
+func (r *Container) Directory(path string, opts ...ContainerDirectoryOpts) *Directory {
 	q := r.query.Select("directory")
+	for i := len(opts) - 1; i >= 0; i-- {
+		// `expand` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Expand) {
+			q = q.Arg("expand", opts[i].Expand)
+		}
+	}
 	q = q.Arg("path", path)
 
 	return &Directory{
@@ -589,6 +592,8 @@ type ContainerExportOpts struct {
 	//
 	// Defaults to OCI, which is largely compatible with most recent container runtimes, but Docker may be needed for older runtimes without OCI support.
 	MediaTypes ImageMediaTypes
+	// Replace "${VAR}" or "$VAR" in the value of path according to the current environment variables defined in the container (e.g. "/$VAR/foo").
+	Expand bool
 }
 
 // Writes the container as an OCI tarball to the destination file path on the host.
@@ -611,6 +616,10 @@ func (r *Container) Export(ctx context.Context, path string, opts ...ContainerEx
 		// `mediaTypes` optional argument
 		if !querybuilder.IsZeroValue(opts[i].MediaTypes) {
 			q = q.Arg("mediaTypes", opts[i].MediaTypes)
+		}
+		// `expand` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Expand) {
+			q = q.Arg("expand", opts[i].Expand)
 		}
 	}
 	q = q.Arg("path", path)
@@ -656,11 +665,23 @@ func (r *Container) ExposedPorts(ctx context.Context) ([]Port, error) {
 	return convert(response), nil
 }
 
+// ContainerFileOpts contains options for Container.File
+type ContainerFileOpts struct {
+	// Replace "${VAR}" or "$VAR" in the value of path according to the current environment variables defined in the container (e.g. "/$VAR/foo.txt").
+	Expand bool
+}
+
 // Retrieves a file at the given path.
 //
 // Mounts are included.
-func (r *Container) File(path string) *File {
+func (r *Container) File(path string, opts ...ContainerFileOpts) *File {
 	q := r.query.Select("file")
+	for i := len(opts) - 1; i >= 0; i-- {
+		// `expand` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Expand) {
+			q = q.Arg("expand", opts[i].Expand)
+		}
+	}
 	q = q.Arg("path", path)
 
 	return &File{
@@ -1078,6 +1099,8 @@ type ContainerWithDirectoryOpts struct {
 	//
 	// If the group is omitted, it defaults to the same as the user.
 	Owner string
+	// Replace "${VAR}" or "$VAR" in the value of path according to the current environment variables defined in the container (e.g. "/$VAR/foo").
+	Expand bool
 }
 
 // Retrieves this container plus a directory written at the given path.
@@ -1096,6 +1119,10 @@ func (r *Container) WithDirectory(path string, directory *Directory, opts ...Con
 		// `owner` optional argument
 		if !querybuilder.IsZeroValue(opts[i].Owner) {
 			q = q.Arg("owner", opts[i].Owner)
+		}
+		// `expand` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Expand) {
+			q = q.Arg("expand", opts[i].Expand)
 		}
 	}
 	q = q.Arg("path", path)
@@ -1130,7 +1157,7 @@ func (r *Container) WithEntrypoint(args []string, opts ...ContainerWithEntrypoin
 
 // ContainerWithEnvVariableOpts contains options for Container.WithEnvVariable
 type ContainerWithEnvVariableOpts struct {
-	// Replace `${VAR}` or `$VAR` in the value according to the current environment variables defined in the container (e.g., "/opt/bin:$PATH").
+	// Replace "${VAR}" or "$VAR" in the value according to the current environment variables defined in the container (e.g. "/opt/bin:$PATH").
 	Expand bool
 }
 
@@ -1167,6 +1194,12 @@ type ContainerWithExecOpts struct {
 	ExperimentalPrivilegedNesting bool
 	// Execute the command with all root capabilities. This is similar to running a command with "sudo" or executing "docker run" with the "--privileged" flag. Containerization does not provide any security guarantees when using this option. It should only be used when absolutely necessary and only with trusted commands.
 	InsecureRootCapabilities bool
+	// Replace "${VAR}" or "$VAR" in the args according to the current environment variables defined in the container (e.g. "/$VAR/foo").
+	Expand bool
+	// If set, skip the automatic init process injected into containers by default.
+	//
+	// This should only be used if the user requires that their exec process be the pid 1 process in the container. Otherwise it may result in unexpected behavior.
+	NoInit bool
 }
 
 // Retrieves this container after executing the specified command inside it.
@@ -1196,6 +1229,14 @@ func (r *Container) WithExec(args []string, opts ...ContainerWithExecOpts) *Cont
 		// `insecureRootCapabilities` optional argument
 		if !querybuilder.IsZeroValue(opts[i].InsecureRootCapabilities) {
 			q = q.Arg("insecureRootCapabilities", opts[i].InsecureRootCapabilities)
+		}
+		// `expand` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Expand) {
+			q = q.Arg("expand", opts[i].Expand)
+		}
+		// `noInit` optional argument
+		if !querybuilder.IsZeroValue(opts[i].NoInit) {
+			q = q.Arg("noInit", opts[i].NoInit)
 		}
 	}
 	q = q.Arg("args", args)
@@ -1255,6 +1296,8 @@ type ContainerWithFileOpts struct {
 	//
 	// If the group is omitted, it defaults to the same as the user.
 	Owner string
+	// Replace "${VAR}" or "$VAR" in the value of path according to the current environment variables defined in the container (e.g. "/$VAR/foo.txt").
+	Expand bool
 }
 
 // Retrieves this container plus the contents of the given file copied to the given path.
@@ -1269,6 +1312,10 @@ func (r *Container) WithFile(path string, source *File, opts ...ContainerWithFil
 		// `owner` optional argument
 		if !querybuilder.IsZeroValue(opts[i].Owner) {
 			q = q.Arg("owner", opts[i].Owner)
+		}
+		// `expand` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Expand) {
+			q = q.Arg("expand", opts[i].Expand)
 		}
 	}
 	q = q.Arg("path", path)
@@ -1289,6 +1336,8 @@ type ContainerWithFilesOpts struct {
 	//
 	// If the group is omitted, it defaults to the same as the user.
 	Owner string
+	// Replace "${VAR}" or "$VAR" in the value of path according to the current environment variables defined in the container (e.g. "/$VAR/foo.txt").
+	Expand bool
 }
 
 // Retrieves this container plus the contents of the given files copied to the given path.
@@ -1302,6 +1351,10 @@ func (r *Container) WithFiles(path string, sources []*File, opts ...ContainerWit
 		// `owner` optional argument
 		if !querybuilder.IsZeroValue(opts[i].Owner) {
 			q = q.Arg("owner", opts[i].Owner)
+		}
+		// `expand` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Expand) {
+			q = q.Arg("expand", opts[i].Expand)
 		}
 	}
 	q = q.Arg("path", path)
@@ -1346,6 +1399,8 @@ type ContainerWithMountedCacheOpts struct {
 	//
 	// If the group is omitted, it defaults to the same as the user.
 	Owner string
+	// Replace "${VAR}" or "$VAR" in the value of path according to the current environment variables defined in the container (e.g. "/$VAR/foo").
+	Expand bool
 }
 
 // Retrieves this container plus a cache volume mounted at the given path.
@@ -1365,6 +1420,10 @@ func (r *Container) WithMountedCache(path string, cache *CacheVolume, opts ...Co
 		if !querybuilder.IsZeroValue(opts[i].Owner) {
 			q = q.Arg("owner", opts[i].Owner)
 		}
+		// `expand` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Expand) {
+			q = q.Arg("expand", opts[i].Expand)
+		}
 	}
 	q = q.Arg("path", path)
 	q = q.Arg("cache", cache)
@@ -1382,6 +1441,8 @@ type ContainerWithMountedDirectoryOpts struct {
 	//
 	// If the group is omitted, it defaults to the same as the user.
 	Owner string
+	// Replace "${VAR}" or "$VAR" in the value of path according to the current environment variables defined in the container (e.g. "/$VAR/foo").
+	Expand bool
 }
 
 // Retrieves this container plus a directory mounted at the given path.
@@ -1392,6 +1453,10 @@ func (r *Container) WithMountedDirectory(path string, source *Directory, opts ..
 		// `owner` optional argument
 		if !querybuilder.IsZeroValue(opts[i].Owner) {
 			q = q.Arg("owner", opts[i].Owner)
+		}
+		// `expand` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Expand) {
+			q = q.Arg("expand", opts[i].Expand)
 		}
 	}
 	q = q.Arg("path", path)
@@ -1410,6 +1475,8 @@ type ContainerWithMountedFileOpts struct {
 	//
 	// If the group is omitted, it defaults to the same as the user.
 	Owner string
+	// Replace "${VAR}" or "$VAR" in the value of path according to the current environment variables defined in the container (e.g. "/$VAR/foo.txt").
+	Expand bool
 }
 
 // Retrieves this container plus a file mounted at the given path.
@@ -1420,6 +1487,10 @@ func (r *Container) WithMountedFile(path string, source *File, opts ...Container
 		// `owner` optional argument
 		if !querybuilder.IsZeroValue(opts[i].Owner) {
 			q = q.Arg("owner", opts[i].Owner)
+		}
+		// `expand` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Expand) {
+			q = q.Arg("expand", opts[i].Expand)
 		}
 	}
 	q = q.Arg("path", path)
@@ -1442,6 +1513,8 @@ type ContainerWithMountedSecretOpts struct {
 	//
 	// This option requires an owner to be set to be active.
 	Mode int
+	// Replace "${VAR}" or "$VAR" in the value of path according to the current environment variables defined in the container (e.g. "/$VAR/foo").
+	Expand bool
 }
 
 // Retrieves this container plus a secret mounted into a file at the given path.
@@ -1457,6 +1530,10 @@ func (r *Container) WithMountedSecret(path string, source *Secret, opts ...Conta
 		if !querybuilder.IsZeroValue(opts[i].Mode) {
 			q = q.Arg("mode", opts[i].Mode)
 		}
+		// `expand` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Expand) {
+			q = q.Arg("expand", opts[i].Expand)
+		}
 	}
 	q = q.Arg("path", path)
 	q = q.Arg("source", source)
@@ -1466,9 +1543,27 @@ func (r *Container) WithMountedSecret(path string, source *Secret, opts ...Conta
 	}
 }
 
+// ContainerWithMountedTempOpts contains options for Container.WithMountedTemp
+type ContainerWithMountedTempOpts struct {
+	// Size of the temporary directory in bytes.
+	Size int
+	// Replace "${VAR}" or "$VAR" in the value of path according to the current environment variables defined in the container (e.g. "/$VAR/foo").
+	Expand bool
+}
+
 // Retrieves this container plus a temporary directory mounted at the given path. Any writes will be ephemeral to a single withExec call; they will not be persisted to subsequent withExecs.
-func (r *Container) WithMountedTemp(path string) *Container {
+func (r *Container) WithMountedTemp(path string, opts ...ContainerWithMountedTempOpts) *Container {
 	q := r.query.Select("withMountedTemp")
+	for i := len(opts) - 1; i >= 0; i-- {
+		// `size` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Size) {
+			q = q.Arg("size", opts[i].Size)
+		}
+		// `expand` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Expand) {
+			q = q.Arg("expand", opts[i].Expand)
+		}
+	}
 	q = q.Arg("path", path)
 
 	return &Container{
@@ -1486,6 +1581,8 @@ type ContainerWithNewFileOpts struct {
 	//
 	// If the group is omitted, it defaults to the same as the user.
 	Owner string
+	// Replace "${VAR}" or "$VAR" in the value of path according to the current environment variables defined in the container (e.g. "/$VAR/foo.txt").
+	Expand bool
 }
 
 // Retrieves this container plus a new file written at the given path.
@@ -1499,6 +1596,10 @@ func (r *Container) WithNewFile(path string, contents string, opts ...ContainerW
 		// `owner` optional argument
 		if !querybuilder.IsZeroValue(opts[i].Owner) {
 			q = q.Arg("owner", opts[i].Owner)
+		}
+		// `expand` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Expand) {
+			q = q.Arg("expand", opts[i].Expand)
 		}
 	}
 	q = q.Arg("path", path)
@@ -1571,6 +1672,8 @@ type ContainerWithUnixSocketOpts struct {
 	//
 	// If the group is omitted, it defaults to the same as the user.
 	Owner string
+	// Replace "${VAR}" or "$VAR" in the value of path according to the current environment variables defined in the container (e.g. "/$VAR/foo").
+	Expand bool
 }
 
 // Retrieves this container plus a socket forwarded to the given Unix socket path.
@@ -1581,6 +1684,10 @@ func (r *Container) WithUnixSocket(path string, source *Socket, opts ...Containe
 		// `owner` optional argument
 		if !querybuilder.IsZeroValue(opts[i].Owner) {
 			q = q.Arg("owner", opts[i].Owner)
+		}
+		// `expand` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Expand) {
+			q = q.Arg("expand", opts[i].Expand)
 		}
 	}
 	q = q.Arg("path", path)
@@ -1601,9 +1708,21 @@ func (r *Container) WithUser(name string) *Container {
 	}
 }
 
+// ContainerWithWorkdirOpts contains options for Container.WithWorkdir
+type ContainerWithWorkdirOpts struct {
+	// Replace "${VAR}" or "$VAR" in the value of path according to the current environment variables defined in the container (e.g. "/$VAR/foo").
+	Expand bool
+}
+
 // Retrieves this container with a different working directory.
-func (r *Container) WithWorkdir(path string) *Container {
+func (r *Container) WithWorkdir(path string, opts ...ContainerWithWorkdirOpts) *Container {
 	q := r.query.Select("withWorkdir")
+	for i := len(opts) - 1; i >= 0; i-- {
+		// `expand` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Expand) {
+			q = q.Arg("expand", opts[i].Expand)
+		}
+	}
 	q = q.Arg("path", path)
 
 	return &Container{
@@ -1630,9 +1749,21 @@ func (r *Container) WithoutDefaultArgs() *Container {
 	}
 }
 
+// ContainerWithoutDirectoryOpts contains options for Container.WithoutDirectory
+type ContainerWithoutDirectoryOpts struct {
+	// Replace "${VAR}" or "$VAR" in the value of path according to the current environment variables defined in the container (e.g. "/$VAR/foo").
+	Expand bool
+}
+
 // Retrieves this container with the directory at the given path removed.
-func (r *Container) WithoutDirectory(path string) *Container {
+func (r *Container) WithoutDirectory(path string, opts ...ContainerWithoutDirectoryOpts) *Container {
 	q := r.query.Select("withoutDirectory")
+	for i := len(opts) - 1; i >= 0; i-- {
+		// `expand` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Expand) {
+			q = q.Arg("expand", opts[i].Expand)
+		}
+	}
 	q = q.Arg("path", path)
 
 	return &Container{
@@ -1693,9 +1824,21 @@ func (r *Container) WithoutExposedPort(port int, opts ...ContainerWithoutExposed
 	}
 }
 
+// ContainerWithoutFileOpts contains options for Container.WithoutFile
+type ContainerWithoutFileOpts struct {
+	// Replace "${VAR}" or "$VAR" in the value of path according to the current environment variables defined in the container (e.g. "/$VAR/foo.txt").
+	Expand bool
+}
+
 // Retrieves this container with the file at the given path removed.
-func (r *Container) WithoutFile(path string) *Container {
+func (r *Container) WithoutFile(path string, opts ...ContainerWithoutFileOpts) *Container {
 	q := r.query.Select("withoutFile")
+	for i := len(opts) - 1; i >= 0; i-- {
+		// `expand` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Expand) {
+			q = q.Arg("expand", opts[i].Expand)
+		}
+	}
 	q = q.Arg("path", path)
 
 	return &Container{
@@ -1703,9 +1846,21 @@ func (r *Container) WithoutFile(path string) *Container {
 	}
 }
 
+// ContainerWithoutFilesOpts contains options for Container.WithoutFiles
+type ContainerWithoutFilesOpts struct {
+	// Replace "${VAR}" or "$VAR" in the value of paths according to the current environment variables defined in the container (e.g. "/$VAR/foo.txt").
+	Expand bool
+}
+
 // Retrieves this container with the files at the given paths removed.
-func (r *Container) WithoutFiles(paths []string) *Container {
+func (r *Container) WithoutFiles(paths []string, opts ...ContainerWithoutFilesOpts) *Container {
 	q := r.query.Select("withoutFiles")
+	for i := len(opts) - 1; i >= 0; i-- {
+		// `expand` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Expand) {
+			q = q.Arg("expand", opts[i].Expand)
+		}
+	}
 	q = q.Arg("paths", paths)
 
 	return &Container{
@@ -1734,9 +1889,21 @@ func (r *Container) WithoutLabel(name string) *Container {
 	}
 }
 
+// ContainerWithoutMountOpts contains options for Container.WithoutMount
+type ContainerWithoutMountOpts struct {
+	// Replace "${VAR}" or "$VAR" in the value of path according to the current environment variables defined in the container (e.g. "/$VAR/foo").
+	Expand bool
+}
+
 // Retrieves this container after unmounting everything at the given path.
-func (r *Container) WithoutMount(path string) *Container {
+func (r *Container) WithoutMount(path string, opts ...ContainerWithoutMountOpts) *Container {
 	q := r.query.Select("withoutMount")
+	for i := len(opts) - 1; i >= 0; i-- {
+		// `expand` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Expand) {
+			q = q.Arg("expand", opts[i].Expand)
+		}
+	}
 	q = q.Arg("path", path)
 
 	return &Container{
@@ -1764,9 +1931,21 @@ func (r *Container) WithoutSecretVariable(name string) *Container {
 	}
 }
 
+// ContainerWithoutUnixSocketOpts contains options for Container.WithoutUnixSocket
+type ContainerWithoutUnixSocketOpts struct {
+	// Replace "${VAR}" or "$VAR" in the value of path according to the current environment variables defined in the container (e.g. "/$VAR/foo").
+	Expand bool
+}
+
 // Retrieves this container with a previously added Unix socket removed.
-func (r *Container) WithoutUnixSocket(path string) *Container {
+func (r *Container) WithoutUnixSocket(path string, opts ...ContainerWithoutUnixSocketOpts) *Container {
 	q := r.query.Select("withoutUnixSocket")
+	for i := len(opts) - 1; i >= 0; i-- {
+		// `expand` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Expand) {
+			q = q.Arg("expand", opts[i].Expand)
+		}
+	}
 	q = q.Arg("path", path)
 
 	return &Container{
@@ -1930,357 +2109,6 @@ func (r *CurrentModule) WorkdirFile(path string) *File {
 	return &File{
 		query: q,
 	}
-}
-
-// A cache storage for the Dagger engine
-type DaggerEngineCache struct {
-	query *querybuilder.Selection
-
-	id        *DaggerEngineCacheID
-	keepBytes *int
-	prune     *Void
-}
-
-func (r *DaggerEngineCache) WithGraphQLQuery(q *querybuilder.Selection) *DaggerEngineCache {
-	return &DaggerEngineCache{
-		query: q,
-	}
-}
-
-// The current set of entries in the cache
-func (r *DaggerEngineCache) EntrySet() *DaggerEngineCacheEntrySet {
-	q := r.query.Select("entrySet")
-
-	return &DaggerEngineCacheEntrySet{
-		query: q,
-	}
-}
-
-// A unique identifier for this DaggerEngineCache.
-func (r *DaggerEngineCache) ID(ctx context.Context) (DaggerEngineCacheID, error) {
-	if r.id != nil {
-		return *r.id, nil
-	}
-	q := r.query.Select("id")
-
-	var response DaggerEngineCacheID
-
-	q = q.Bind(&response)
-	return response, q.Execute(ctx)
-}
-
-// XXX_GraphQLType is an internal function. It returns the native GraphQL type name
-func (r *DaggerEngineCache) XXX_GraphQLType() string {
-	return "DaggerEngineCache"
-}
-
-// XXX_GraphQLIDType is an internal function. It returns the native GraphQL type name for the ID of this object
-func (r *DaggerEngineCache) XXX_GraphQLIDType() string {
-	return "DaggerEngineCacheID"
-}
-
-// XXX_GraphQLID is an internal function. It returns the underlying type ID
-func (r *DaggerEngineCache) XXX_GraphQLID(ctx context.Context) (string, error) {
-	id, err := r.ID(ctx)
-	if err != nil {
-		return "", err
-	}
-	return string(id), nil
-}
-
-func (r *DaggerEngineCache) MarshalJSON() ([]byte, error) {
-	id, err := r.ID(marshalCtx)
-	if err != nil {
-		return nil, err
-	}
-	return json.Marshal(id)
-}
-func (r *DaggerEngineCache) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = *dag.LoadDaggerEngineCacheFromID(DaggerEngineCacheID(id))
-	return nil
-}
-
-// The maximum bytes to keep in the cache without pruning, after which automatic pruning may kick in.
-func (r *DaggerEngineCache) KeepBytes(ctx context.Context) (int, error) {
-	if r.keepBytes != nil {
-		return *r.keepBytes, nil
-	}
-	q := r.query.Select("keepBytes")
-
-	var response int
-
-	q = q.Bind(&response)
-	return response, q.Execute(ctx)
-}
-
-// Prune the cache of releaseable entries
-func (r *DaggerEngineCache) Prune(ctx context.Context) error {
-	if r.prune != nil {
-		return nil
-	}
-	q := r.query.Select("prune")
-
-	return q.Execute(ctx)
-}
-
-// An individual cache entry in a cache entry set
-type DaggerEngineCacheEntry struct {
-	query *querybuilder.Selection
-
-	activelyUsed              *bool
-	createdTimeUnixNano       *int
-	description               *string
-	diskSpaceBytes            *int
-	id                        *DaggerEngineCacheEntryID
-	mostRecentUseTimeUnixNano *int
-}
-
-func (r *DaggerEngineCacheEntry) WithGraphQLQuery(q *querybuilder.Selection) *DaggerEngineCacheEntry {
-	return &DaggerEngineCacheEntry{
-		query: q,
-	}
-}
-
-// Whether the cache entry is actively being used.
-func (r *DaggerEngineCacheEntry) ActivelyUsed(ctx context.Context) (bool, error) {
-	if r.activelyUsed != nil {
-		return *r.activelyUsed, nil
-	}
-	q := r.query.Select("activelyUsed")
-
-	var response bool
-
-	q = q.Bind(&response)
-	return response, q.Execute(ctx)
-}
-
-// The time the cache entry was created, in Unix nanoseconds.
-func (r *DaggerEngineCacheEntry) CreatedTimeUnixNano(ctx context.Context) (int, error) {
-	if r.createdTimeUnixNano != nil {
-		return *r.createdTimeUnixNano, nil
-	}
-	q := r.query.Select("createdTimeUnixNano")
-
-	var response int
-
-	q = q.Bind(&response)
-	return response, q.Execute(ctx)
-}
-
-// The description of the cache entry.
-func (r *DaggerEngineCacheEntry) Description(ctx context.Context) (string, error) {
-	if r.description != nil {
-		return *r.description, nil
-	}
-	q := r.query.Select("description")
-
-	var response string
-
-	q = q.Bind(&response)
-	return response, q.Execute(ctx)
-}
-
-// The disk space used by the cache entry.
-func (r *DaggerEngineCacheEntry) DiskSpaceBytes(ctx context.Context) (int, error) {
-	if r.diskSpaceBytes != nil {
-		return *r.diskSpaceBytes, nil
-	}
-	q := r.query.Select("diskSpaceBytes")
-
-	var response int
-
-	q = q.Bind(&response)
-	return response, q.Execute(ctx)
-}
-
-// A unique identifier for this DaggerEngineCacheEntry.
-func (r *DaggerEngineCacheEntry) ID(ctx context.Context) (DaggerEngineCacheEntryID, error) {
-	if r.id != nil {
-		return *r.id, nil
-	}
-	q := r.query.Select("id")
-
-	var response DaggerEngineCacheEntryID
-
-	q = q.Bind(&response)
-	return response, q.Execute(ctx)
-}
-
-// XXX_GraphQLType is an internal function. It returns the native GraphQL type name
-func (r *DaggerEngineCacheEntry) XXX_GraphQLType() string {
-	return "DaggerEngineCacheEntry"
-}
-
-// XXX_GraphQLIDType is an internal function. It returns the native GraphQL type name for the ID of this object
-func (r *DaggerEngineCacheEntry) XXX_GraphQLIDType() string {
-	return "DaggerEngineCacheEntryID"
-}
-
-// XXX_GraphQLID is an internal function. It returns the underlying type ID
-func (r *DaggerEngineCacheEntry) XXX_GraphQLID(ctx context.Context) (string, error) {
-	id, err := r.ID(ctx)
-	if err != nil {
-		return "", err
-	}
-	return string(id), nil
-}
-
-func (r *DaggerEngineCacheEntry) MarshalJSON() ([]byte, error) {
-	id, err := r.ID(marshalCtx)
-	if err != nil {
-		return nil, err
-	}
-	return json.Marshal(id)
-}
-func (r *DaggerEngineCacheEntry) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = *dag.LoadDaggerEngineCacheEntryFromID(DaggerEngineCacheEntryID(id))
-	return nil
-}
-
-// The most recent time the cache entry was used, in Unix nanoseconds.
-func (r *DaggerEngineCacheEntry) MostRecentUseTimeUnixNano(ctx context.Context) (int, error) {
-	if r.mostRecentUseTimeUnixNano != nil {
-		return *r.mostRecentUseTimeUnixNano, nil
-	}
-	q := r.query.Select("mostRecentUseTimeUnixNano")
-
-	var response int
-
-	q = q.Bind(&response)
-	return response, q.Execute(ctx)
-}
-
-// A set of cache entries returned by a query to a cache
-type DaggerEngineCacheEntrySet struct {
-	query *querybuilder.Selection
-
-	diskSpaceBytes *int
-	entryCount     *int
-	id             *DaggerEngineCacheEntrySetID
-}
-
-func (r *DaggerEngineCacheEntrySet) WithGraphQLQuery(q *querybuilder.Selection) *DaggerEngineCacheEntrySet {
-	return &DaggerEngineCacheEntrySet{
-		query: q,
-	}
-}
-
-// The total disk space used by the cache entries in this set.
-func (r *DaggerEngineCacheEntrySet) DiskSpaceBytes(ctx context.Context) (int, error) {
-	if r.diskSpaceBytes != nil {
-		return *r.diskSpaceBytes, nil
-	}
-	q := r.query.Select("diskSpaceBytes")
-
-	var response int
-
-	q = q.Bind(&response)
-	return response, q.Execute(ctx)
-}
-
-// The list of individual cache entries in the set
-func (r *DaggerEngineCacheEntrySet) Entries(ctx context.Context) ([]DaggerEngineCacheEntry, error) {
-	q := r.query.Select("entries")
-
-	q = q.Select("id")
-
-	type entries struct {
-		Id DaggerEngineCacheEntryID
-	}
-
-	convert := func(fields []entries) []DaggerEngineCacheEntry {
-		out := []DaggerEngineCacheEntry{}
-
-		for i := range fields {
-			val := DaggerEngineCacheEntry{id: &fields[i].Id}
-			val.query = q.Root().Select("loadDaggerEngineCacheEntryFromID").Arg("id", fields[i].Id)
-			out = append(out, val)
-		}
-
-		return out
-	}
-	var response []entries
-
-	q = q.Bind(&response)
-
-	err := q.Execute(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return convert(response), nil
-}
-
-// The number of cache entries in this set.
-func (r *DaggerEngineCacheEntrySet) EntryCount(ctx context.Context) (int, error) {
-	if r.entryCount != nil {
-		return *r.entryCount, nil
-	}
-	q := r.query.Select("entryCount")
-
-	var response int
-
-	q = q.Bind(&response)
-	return response, q.Execute(ctx)
-}
-
-// A unique identifier for this DaggerEngineCacheEntrySet.
-func (r *DaggerEngineCacheEntrySet) ID(ctx context.Context) (DaggerEngineCacheEntrySetID, error) {
-	if r.id != nil {
-		return *r.id, nil
-	}
-	q := r.query.Select("id")
-
-	var response DaggerEngineCacheEntrySetID
-
-	q = q.Bind(&response)
-	return response, q.Execute(ctx)
-}
-
-// XXX_GraphQLType is an internal function. It returns the native GraphQL type name
-func (r *DaggerEngineCacheEntrySet) XXX_GraphQLType() string {
-	return "DaggerEngineCacheEntrySet"
-}
-
-// XXX_GraphQLIDType is an internal function. It returns the native GraphQL type name for the ID of this object
-func (r *DaggerEngineCacheEntrySet) XXX_GraphQLIDType() string {
-	return "DaggerEngineCacheEntrySetID"
-}
-
-// XXX_GraphQLID is an internal function. It returns the underlying type ID
-func (r *DaggerEngineCacheEntrySet) XXX_GraphQLID(ctx context.Context) (string, error) {
-	id, err := r.ID(ctx)
-	if err != nil {
-		return "", err
-	}
-	return string(id), nil
-}
-
-func (r *DaggerEngineCacheEntrySet) MarshalJSON() ([]byte, error) {
-	id, err := r.ID(marshalCtx)
-	if err != nil {
-		return nil, err
-	}
-	return json.Marshal(id)
-}
-func (r *DaggerEngineCacheEntrySet) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = *dag.LoadDaggerEngineCacheEntrySetFromID(DaggerEngineCacheEntrySetID(id))
-	return nil
 }
 
 type Dagindag struct {
@@ -4720,9 +4548,21 @@ func (r *GitRef) UnmarshalJSON(bs []byte) error {
 	return nil
 }
 
+// GitRefTreeOpts contains options for GitRef.Tree
+type GitRefTreeOpts struct {
+	// Set to true to discard .git directory.
+	DiscardGitDir bool
+}
+
 // The filesystem tree at this ref.
-func (r *GitRef) Tree() *Directory {
+func (r *GitRef) Tree(opts ...GitRefTreeOpts) *Directory {
 	q := r.query.Select("tree")
+	for i := len(opts) - 1; i >= 0; i-- {
+		// `discardGitDir` optional argument
+		if !querybuilder.IsZeroValue(opts[i].DiscardGitDir) {
+			q = q.Arg("discardGitDir", opts[i].DiscardGitDir)
+		}
+	}
 
 	return &Directory{
 		query: q,
@@ -6163,6 +6003,8 @@ func (r *ModuleSource) ResolveDependency(dep *ModuleSource) *ModuleSource {
 type ModuleSourceResolveDirectoryFromCallerOpts struct {
 	// If set, the name of the view to apply to the path.
 	ViewName string
+	// Patterns to ignore when loading the directory.
+	Ignore []string
 }
 
 // Load a directory from the caller optionally with a given view applied.
@@ -6172,6 +6014,10 @@ func (r *ModuleSource) ResolveDirectoryFromCaller(path string, opts ...ModuleSou
 		// `viewName` optional argument
 		if !querybuilder.IsZeroValue(opts[i].ViewName) {
 			q = q.Arg("viewName", opts[i].ViewName)
+		}
+		// `ignore` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Ignore) {
+			q = q.Arg("ignore", opts[i].Ignore)
 		}
 	}
 	q = q.Arg("path", path)
@@ -6935,7 +6781,7 @@ func (r *Client) GeneratedCode(code *Directory) *GeneratedCode {
 
 // GitOpts contains options for Client.Git
 type GitOpts struct {
-	// Set to true to keep .git directory.
+	// DEPRECATED: Set to true to keep .git directory.
 	KeepGitDir bool
 	// A service which must be started before the repo is fetched.
 	ExperimentalServiceHost *Service
@@ -7021,36 +6867,6 @@ func (r *Client) LoadCurrentModuleFromID(id CurrentModuleID) *CurrentModule {
 	q = q.Arg("id", id)
 
 	return &CurrentModule{
-		query: q,
-	}
-}
-
-// Load a DaggerEngineCacheEntry from its ID.
-func (r *Client) LoadDaggerEngineCacheEntryFromID(id DaggerEngineCacheEntryID) *DaggerEngineCacheEntry {
-	q := r.query.Select("loadDaggerEngineCacheEntryFromID")
-	q = q.Arg("id", id)
-
-	return &DaggerEngineCacheEntry{
-		query: q,
-	}
-}
-
-// Load a DaggerEngineCacheEntrySet from its ID.
-func (r *Client) LoadDaggerEngineCacheEntrySetFromID(id DaggerEngineCacheEntrySetID) *DaggerEngineCacheEntrySet {
-	q := r.query.Select("loadDaggerEngineCacheEntrySetFromID")
-	q = q.Arg("id", id)
-
-	return &DaggerEngineCacheEntrySet{
-		query: q,
-	}
-}
-
-// Load a DaggerEngineCache from its ID.
-func (r *Client) LoadDaggerEngineCacheFromID(id DaggerEngineCacheID) *DaggerEngineCache {
-	q := r.query.Select("loadDaggerEngineCacheFromID")
-	q = q.Arg("id", id)
-
-	return &DaggerEngineCache{
 		query: q,
 	}
 }
@@ -7693,6 +7509,14 @@ type Service struct {
 	stop     *ServiceID
 	up       *Void
 }
+type WithServiceFunc func(r *Service) *Service
+
+// With calls the provided function with current Service.
+//
+// This is useful for reusability and readability by not breaking the calling chain.
+func (r *Service) With(f WithServiceFunc) *Service {
+	return f(r)
+}
 
 func (r *Service) WithGraphQLQuery(q *querybuilder.Selection) *Service {
 	return &Service{
@@ -7898,6 +7722,16 @@ func (r *Service) Up(ctx context.Context, opts ...ServiceUpOpts) error {
 	}
 
 	return q.Execute(ctx)
+}
+
+// Configures a hostname which can be used by clients within the session to reach this container.
+func (r *Service) WithHostname(hostname string) *Service {
+	q := r.query.Select("withHostname")
+	q = q.Arg("hostname", hostname)
+
+	return &Service{
+		query: q,
+	}
 }
 
 // A Unix or TCP/IP socket that can be mounted into a container.

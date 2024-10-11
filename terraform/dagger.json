@@ -2,5 +2,5 @@
   "name": "terraform",
   "sdk": "go",
   "source": "dagger",
-  "engineVersion": "v0.13.4"
+  "engineVersion": "v0.13.5"
 }
