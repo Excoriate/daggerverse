@@ -194,9 +194,9 @@ func (m *ModuleTemplateLight) WithClonedGitRepoHTTPS(
 	// branch is the branch to checkout. Optional parameter.
 	// +optional
 	branch string,
-	// keepGitDir is a boolean that indicates if the .git directory should be kept. Optional parameter.
+	// discardGitDir is a boolean that indicates if the .git directory should be discarded. Optional parameter.
 	// +optional
-	keepGitDir bool,
+	discardGitDir bool,
 	// tag is the tag to checkout. Optional parameter.
 	// +optional
 	tag string,
@@ -205,7 +205,17 @@ func (m *ModuleTemplateLight) WithClonedGitRepoHTTPS(
 	commit string,
 ) *ModuleTemplateLight {
 	// Call the helper function to clone the repository.
-	clonedRepo := m.CloneGitRepoHTTPS(repoURL, token, vcs, authHeader, returnDir, branch, keepGitDir, tag, commit)
+	clonedRepo := m.CloneGitRepoHTTPS(
+		repoURL,
+		token,
+		vcs,
+		authHeader,
+		returnDir,
+		branch,
+		discardGitDir,
+		tag,
+		commit,
+	)
 
 	// Mount the cloned repository as a directory inside the container.
 	m.Ctr = m.Ctr.WithMountedDirectory(fixtures.MntPrefix, clonedRepo)
