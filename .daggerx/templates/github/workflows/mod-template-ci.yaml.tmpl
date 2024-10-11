@@ -21,6 +21,9 @@ defaults:
     run:
         working-directory: {{.module_name_pkg}}
 
+env:
+    DAGGER_VERSION_EXAMPLES_GO: 0.13.5
+
 jobs:
     dagger-linter:
         strategy:
@@ -155,7 +158,7 @@ jobs:
                 ls -ltrah
                 golangci-lint run --config=../../../.golangci.yml --verbose
 
-    module-test:
+    {{.module_name_pkg}}-test:
         strategy:
             matrix:
                 go: ['1.22']
@@ -201,7 +204,7 @@ jobs:
         strategy:
             matrix:
                 go: ['1.22']
-                dagversion: [0.13.3]
+                dagversion: [0.13.5]
         needs: [dagger-linter, golangci-lint]
         name: Run recipes 🥗 in {{.module_name_pkg}}/examples/go on ${{ matrix.os }} with Dagger ${{ matrix.dagversion }}
         runs-on: ubuntu-latest
@@ -209,23 +212,23 @@ jobs:
             - uses: actions/checkout@v4
             - uses: actions/setup-go@v5
               with:
-                  go-version: ${{ matrix.go }}
-            - name: Dagger Develop on Module Examples 📄 with Dagger ${{ matrix.dagversion }}
+                  go-version: '1.22'
+            - name: Dagger Develop on Module Examples 📄
               uses: dagger/dagger-for-github@v6
               with:
                   verb: develop
                   module: {{.module_name_pkg}}/examples/go
-                  version: ${{ matrix.dagversion }}
+                  version: ${{ env.DAGGER_VERSION_EXAMPLES_GO }}
                   cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-            - name: Running Recipes all recipes 💣 in {{.module_name_pkg}}/examples/go on ${{ matrix.os }} with Dagger ${{ matrix.dagversion }}
+            - name: Running Recipes all recipes 💣 in {{.module_name_pkg}}/examples/go
               uses: dagger/dagger-for-github@v6
               with:
                   verb: call
                   args: all-recipes
                   module: {{.module_name_pkg}}/examples/go
-                  version: ${{ matrix.dagversion }}
+                  version: ${{ env.DAGGER_VERSION_EXAMPLES_GO }}
                   cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
