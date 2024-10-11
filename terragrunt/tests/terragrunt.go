@@ -2,10 +2,8 @@ package main
 
 import (
 	"context"
-	"path/filepath"
 
 	"github.com/Excoriate/daggerverse/terragrunt/tests/internal/dagger"
-	"github.com/Excoriate/daggerx/pkg/fixtures"
 )
 
 // TestTerragruntContainerIsUp checks if the Terragrunt container is up and running by verifying the versions of
@@ -23,18 +21,18 @@ func (m *Tests) TestTerragruntContainerIsUp(ctx context.Context) error {
 		WithSource(tgTestDir).
 		Ctr()
 
-	if err := m.utilTheseFoldersExistsInContainer(ctx, tgCtr,
+	if err := m.assertTheseFoldersExistsInContainer(ctx, tgCtr,
 		[]string{"/home/terragrunt",
 			"/home/.terraform.d",
 			"/home"}); err != nil {
 		return WrapErrorf(err, "failed to validate folders in terragrunt container")
 	}
 
-	if err := m.utilTheseFilesExistsInContainer(ctx, tgCtr, []string{"terragrunt.hcl"}, true); err != nil {
+	if err := m.assertTheseFilesExistsInContainer(ctx, tgCtr, []string{"terragrunt.hcl"}); err != nil {
 		return WrapErrorf(err, "failed to validate terragrunt.hcl file in terragrunt container")
 	}
 
-	if err := m.utilFileShouldContainContent(ctx, tgCtr, "terragrunt.hcl", "terraform {"); err != nil {
+	if err := m.assertFileContentShouldContain(ctx, tgCtr, "terragrunt.hcl", "terraform {"); err != nil {
 		return WrapErrorf(err, "failed to validate terragrunt.hcl file content in terragrunt container")
 	}
 
@@ -50,15 +48,15 @@ func (m *Tests) TestTerragruntBinariesAreInstalled(ctx context.Context) error {
 		Terragrunt().
 		Ctr()
 
-	if err := m.utilValidateVersion(ctx, tgCtr, "terragrunt", "terragrunt version", ""); err != nil {
+	if err := m.assertVersionOfBinaryInContainer(ctx, tgCtr, "terragrunt", "terragrunt version", ""); err != nil {
 		return err
 	}
 
-	if err := m.utilValidateVersion(ctx, tgCtr, "terraform", "Terraform v", ""); err != nil {
+	if err := m.assertVersionOfBinaryInContainer(ctx, tgCtr, "terraform", "Terraform v", ""); err != nil {
 		return err
 	}
 
-	if err := m.utilValidateVersion(ctx, tgCtr, "opentofu", "OpenTofu v", ""); err != nil {
+	if err := m.assertVersionOfBinaryInContainer(ctx, tgCtr, "opentofu", "OpenTofu v", ""); err != nil {
 		return err
 	}
 
@@ -84,7 +82,7 @@ func (m *Tests) TestTerragruntExecInitSimpleCommand(ctx context.Context) error {
 		Terragrunt(dagger.TerragruntOpts{
 			EnvVarsFromHost: testEnvVars,
 		}).
-		WithTerragruntPermissions()
+		WithTerragruntPermissionsOnDirsDefault()
 
 	// Execute the init command, but don't run it in a container
 	tgCtrConfigured := tgModule.
@@ -107,7 +105,7 @@ func (m *Tests) TestTerragruntExecInitSimpleCommand(ctx context.Context) error {
 
 	// Check the environment variables set in the container
 	for _, envVar := range testEnvVars {
-		if err := m.utilValidateIfEnvVarIsSetInContainer(ctx, tgCtrConfigured, envVar); err != nil {
+		if err := m.assertEnvVarIsSetInContainer(ctx, tgCtrConfigured, envVar); err != nil {
 			return err
 		}
 	}
@@ -134,7 +132,7 @@ func (m *Tests) TestTerragruntExecVersionCommand(ctx context.Context) error {
 			EnableAwscli:    true,
 			TgVersion:       "v0.52.1",
 		}).
-		WithTerragruntPermissions().
+		WithTerragruntPermissionsOnDirsDefault().
 		WithTerragruntLogOptions(dagger.TerragruntWithTerragruntLogOptionsOpts{
 			TgLogLevel:        "debug",
 			TgLogDisableColor: true,
@@ -171,7 +169,7 @@ func (m *Tests) TestTerragruntExecVersionCommand(ctx context.Context) error {
 	}
 
 	for _, envVar := range expectedEnvVars {
-		if err := m.utilValidateIfEnvVarIsSetInContainer(ctx, tgCtrConfigured, envVar); err != nil {
+		if err := m.assertEnvVarIsSetInContainer(ctx, tgCtrConfigured, envVar); err != nil {
 			return WrapErrorf(err, "failed to validate environment variables in terragrunt container")
 		}
 	}
@@ -203,14 +201,6 @@ func (m *Tests) TestTerragruntExecPlanCommand(ctx context.Context) error {
 			EnvVarsFromHost: testEnvVars,
 			TgVersion:       "v0.52.1",
 		}).
-		WithTerragruntPermissions(dagger.TerragruntWithTerragruntPermissionsOpts{
-			DirsToOwn: []string{
-				filepath.Join(fixtures.MntPrefix, ".terragrunt-cache"),
-			},
-			DirsToHaveWritePermissions: []string{
-				filepath.Join(fixtures.MntPrefix, ".terragrunt-cache"),
-			},
-		}).
 		WithTerraformToken(tfTokenAsSecret).
 		WithTerragruntLogOptions(dagger.TerragruntWithTerragruntLogOptionsOpts{
 			TgLogLevel:             "debug",
@@ -232,7 +222,6 @@ func (m *Tests) TestTerragruntExecPlanCommand(ctx context.Context) error {
 		})
 
 	tgPlanCmdOut, tgPlanCmdErr := tgCtrConfigured.
-		Terminal().
 		Stdout(ctx)
 
 	if tgPlanCmdErr != nil {
@@ -245,7 +234,7 @@ func (m *Tests) TestTerragruntExecPlanCommand(ctx context.Context) error {
 
 	// Check env vars
 	for _, envVar := range testEnvVars {
-		if err := m.utilValidateIfEnvVarIsSetInContainer(ctx, tgCtrConfigured, envVar); err != nil {
+		if err := m.assertEnvVarIsSetInContainer(ctx, tgCtrConfigured, envVar); err != nil {
 			return WrapErrorf(err, "failed to validate environment variables in terragrunt container")
 		}
 	}
@@ -289,7 +278,7 @@ func (m *Tests) TestTerragruntExecLifecycleCommands(ctx context.Context) error {
 		Terragrunt(dagger.TerragruntOpts{
 			EnvVarsFromHost: testEnvVars,
 		}).
-		WithTerragruntPermissions().
+		WithTerragruntPermissionsOnDirsDefault().
 		WithTerraformToken(tfTokenGitHub).
 		WithTerragruntLogOptions(dagger.TerragruntWithTerragruntLogOptionsOpts{
 			TgLogLevel:             "debug",
@@ -303,7 +292,7 @@ func (m *Tests) TestTerragruntExecLifecycleCommands(ctx context.Context) error {
 		})
 
 	// run init command
-	cmdOut, cmdErr := tgModule.ExecCmd(ctx, "init", dagger.TerragruntExecCmdOpts{
+	cmdInitOut, cmdInitErr := tgModule.ExecCmd(ctx, "init", dagger.TerragruntExecCmdOpts{
 		Source: m.
 			getTestDir("").
 			Directory("terragrunt"),
@@ -314,16 +303,16 @@ func (m *Tests) TestTerragruntExecLifecycleCommands(ctx context.Context) error {
 		},
 	})
 
-	if cmdErr != nil {
-		return WrapErrorf(cmdErr, "failed to execute command init")
+	if cmdInitErr != nil {
+		return WrapErrorf(cmdInitErr, "failed to execute command init")
 	}
 
-	if cmdOut == "" {
+	if cmdInitOut == "" {
 		return Errorf("command init output is empty")
 	}
 
 	// run plan command with arguments
-	cmdOut, cmdErr = tgModule.ExecCmd(ctx, "plan", dagger.TerragruntExecCmdOpts{
+	cmdPlanOut, cmdPlanErr := tgModule.ExecCmd(ctx, "plan", dagger.TerragruntExecCmdOpts{
 		Source: m.
 			getTestDir("").
 			Directory("terragrunt"),
@@ -334,17 +323,50 @@ func (m *Tests) TestTerragruntExecLifecycleCommands(ctx context.Context) error {
 		},
 		Args: []string{
 			"-out=plan.tfplan",
-			"-detailed-exitcode",
 			"-refresh=true",
 		},
 	})
 
-	if cmdErr != nil {
-		return WrapErrorf(cmdErr, "failed to execute command plan")
+	if cmdPlanErr != nil {
+		return WrapErrorf(cmdPlanErr, "failed to execute command plan")
 	}
 
-	if cmdOut == "" {
+	if cmdPlanOut == "" {
 		return Errorf("command plan output is empty")
+	}
+
+	// run apply command with the auto-approve flag as an argument
+	cmdApplyOut, cmdApplyErr := tgModule.ExecCmd(ctx, "apply", dagger.TerragruntExecCmdOpts{
+		Source: m.
+			getTestDir("").
+			Directory("terragrunt"),
+		Args: []string{
+			"-auto-approve",
+		},
+	})
+
+	if cmdApplyErr != nil {
+		return WrapErrorf(cmdApplyErr, "failed to execute command apply")
+	}
+
+	if cmdApplyOut == "" {
+		return Errorf("command apply output is empty")
+	}
+
+	// run destroy command with the auto-approve built-in option.
+	cmdDestroyOut, cmdDestroyErr := tgModule.ExecCmd(ctx, "destroy", dagger.TerragruntExecCmdOpts{
+		Source: m.
+			getTestDir("").
+			Directory("terragrunt"),
+		AutoApprove: true,
+	})
+
+	if cmdDestroyErr != nil {
+		return WrapErrorf(cmdDestroyErr, "failed to execute command destroy")
+	}
+
+	if cmdDestroyOut == "" {
+		return Errorf("command destroy output is empty")
 	}
 
 	return nil

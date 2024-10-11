@@ -9,17 +9,11 @@ const (
 	terragruntCacheDir  = "/home/terragrunt/.terragrunt-providers-cache"
 	terraformCacheDir   = "/home/.terraform.d/plugin-cache"
 	terraformPluginsDir = "/home/.terraform.d/plugins"
-)
-
-var (
-	//nolint:gochecknoglobals // This is a global variable that is used to set the default permissions.
-	terragruntPermissionsOnDirsDefault = []string{
-		"/home/terragrunt",
-		"/home/.terraform.d",
-		"/home",
-		"/var/log",
-		fixtures.MntPrefix,
-	}
+	terragruntHomeDir   = "/home/terragrunt"
+	terraformDir        = "/home/.terraform.d"
+	homeDir             = "/home"
+	varLogDir           = "/var/log"
+	mntPrefixDefault    = fixtures.MntPrefix
 )
 
 // WithTerragruntPermissionsOnDirsDefault sets the default permissions for the Terragrunt directories.
@@ -38,9 +32,17 @@ var (
 // Returns:
 // - *Terragrunt: Updated instance with the default permissions set.
 func (m *Terragrunt) WithTerragruntPermissionsOnDirsDefault() *Terragrunt {
+	defaultDirs := []string{
+		terragruntHomeDir,
+		terraformDir,
+		homeDir,
+		varLogDir,
+		mntPrefixDefault,
+	}
+
 	return m.
-		WithUserAsOwnerOfDirs(terragruntCtrUser, terragruntCtrGroup, terragruntPermissionsOnDirsDefault, true).
-		WithUserWithPermissionsOnDirs(terragruntCtrUser, "0777", terragruntPermissionsOnDirsDefault, true)
+		WithUserAsOwnerOfDirs(terragruntCtrUser, terragruntCtrGroup, defaultDirs, true).
+		WithUserWithPermissionsOnDirs(terragruntCtrUser, "0777", defaultDirs, true)
 }
 
 // WithTerragruntPermissionsOnDirs sets the necessary permissions for the Terragrunt directories.
@@ -64,8 +66,16 @@ func (m *Terragrunt) WithTerragruntPermissionsOnDirs(
 	// +optional
 	dirsToHaveWritePermissions []string,
 ) *Terragrunt {
-	dirsToOwn = append(terragruntPermissionsOnDirsDefault, dirsToOwn...)
-	dirsToHaveWritePermissions = append(dirsToHaveWritePermissions, dirsToHaveWritePermissions...)
+	defaultDirs := []string{
+		terragruntHomeDir,
+		terraformDir,
+		homeDir,
+		varLogDir,
+		mntPrefixDefault,
+	}
+
+	dirsToOwn = append(defaultDirs, dirsToOwn...)
+	dirsToHaveWritePermissions = append(defaultDirs, dirsToHaveWritePermissions...)
 
 	return m.WithUserAsOwnerOfDirs(terragruntCtrUser, terragruntCtrGroup, dirsToOwn, true).
 		WithUserWithPermissionsOnDirs(terragruntCtrUser, "0777", dirsToHaveWritePermissions, true)
