@@ -8,11 +8,7 @@
     "../.idea",
     "../.trunk",
     "../go.work",
-    "../go.work.sum",
-    "tests",
-    "examples/go",
-    "examples/python",
-    "examples/node"
+    "../go.work.sum"
   ],
   "source": ".",
   "engineVersion": "v0.13.5"
