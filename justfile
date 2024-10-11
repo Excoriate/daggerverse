@@ -18,7 +18,7 @@ dev:
   @nix develop --impure --extra-experimental-features nix-command --extra-experimental-features flakes
 
 # Recipe to clean Go cache, Go modules cache, and Nix/DevEnv/DirEnv cache 🧹
-clean-cache:
+clean-nix-cache:
   @echo "Cleaning Go cache 🧹 ..."
   @go clean -cache
   @echo "Cleaning Go modules cache 🧹 ..."
