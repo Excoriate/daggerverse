@@ -22,7 +22,7 @@ defaults:
         working-directory: terragrunt
 
 env:
-  DAGGER_VERSION_EXAMPLES_GO: 0.13.5
+    DAGGER_VERSION_EXAMPLES_GO: 0.13.5
 
 jobs:
     dagger-linter:

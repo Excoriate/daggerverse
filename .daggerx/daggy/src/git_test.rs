@@ -8,7 +8,7 @@ mod tests {
     fn test_find_git_root() {
         // Start from the current executable's directory and search upwards
         let mut current_dir = env::current_exe().unwrap().parent().unwrap().to_path_buf();
-        
+
         while current_dir.parent().is_some() {
             if let Ok(git_root) = git::find_git_root_from_path(&current_dir) {
                 // We found a git root
@@ -19,7 +19,7 @@ mod tests {
             // Move up one directory
             current_dir = current_dir.parent().unwrap().to_path_buf();
         }
-        
+
         panic!("No Git repository found in any parent directory");
     }
 
