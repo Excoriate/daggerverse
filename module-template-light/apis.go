@@ -249,9 +249,9 @@ func (m *ModuleTemplateLight) WithClonedGitRepoSSH(
 	// branch is the branch to checkout. Optional parameter.
 	// +optional
 	branch string,
-	// keepGitDir is a boolean that indicates if the .git directory should be kept. Optional parameter.
+	// discardGitDir is a boolean that indicates if the .git directory should be discarded. Optional parameter.
 	// +optional
-	keepGitDir bool,
+	discardGitDir bool,
 	// tag is the tag to checkout. Optional parameter.
 	// +optional
 	tag string,
@@ -260,7 +260,16 @@ func (m *ModuleTemplateLight) WithClonedGitRepoSSH(
 	commit string,
 ) *ModuleTemplateLight {
 	// Call the helper function to clone the repository.
-	clonedRepo := m.CloneGitRepoSSH(repoURL, sshAuthSocket, sshKnownHosts, returnDir, branch, keepGitDir, tag, commit)
+	clonedRepo := m.CloneGitRepoSSH(
+		repoURL,
+		sshAuthSocket,
+		sshKnownHosts,
+		returnDir,
+		branch,
+		discardGitDir,
+		tag,
+		commit,
+	)
 
 	// Mount the cloned repository as a directory inside the container.
 	m.Ctr = m.
