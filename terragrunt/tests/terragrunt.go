@@ -335,5 +335,39 @@ func (m *Tests) TestTerragruntExecLifecycleCommands(ctx context.Context) error {
 		return Errorf("command plan output is empty")
 	}
 
+	// run apply command with the auto-approve flag as an argument
+	cmdApplyOut, cmdApplyErr := tgModule.ExecCmd(ctx, "apply", dagger.TerragruntExecCmdOpts{
+		Source: m.
+			getTestDir("").
+			Directory("terragrunt"),
+		Args: []string{
+			"-auto-approve",
+		},
+	})
+
+	if cmdApplyErr != nil {
+		return WrapErrorf(cmdApplyErr, "failed to execute command apply")
+	}
+
+	if cmdApplyOut == "" {
+		return Errorf("command apply output is empty")
+	}
+
+	// run destroy command with the auto-approve built-in option.
+	cmdDestroyOut, cmdDestroyErr := tgModule.ExecCmd(ctx, "destroy", dagger.TerragruntExecCmdOpts{
+		Source: m.
+			getTestDir("").
+			Directory("terragrunt"),
+		AutoApprove: true,
+	})
+
+	if cmdDestroyErr != nil {
+		return WrapErrorf(cmdDestroyErr, "failed to execute command destroy")
+	}
+
+	if cmdDestroyOut == "" {
+		return Errorf("command destroy output is empty")
+	}
+
 	return nil
 }
