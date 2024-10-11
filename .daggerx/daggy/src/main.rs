@@ -27,12 +27,24 @@ fn main() -> Result<(), Error> {
 
     match args.task.as_str() {
         "create" => create_module_task(&args),
+        "sync" => sync_modules_task(),
+        "inspect" => inspect_modules_task(),
         "develop" => cmd_develop_modules::develop_modules(),
         _ => {
             eprintln!("Unknown task: {}", args.task);
             Err(Error::new(ErrorKind::InvalidInput, "Unknown task"))
         }
     }
+}
+
+fn sync_modules_task() -> Result<(), Error> {
+    println!("Syncing modules...");
+    Ok(())
+}
+
+fn inspect_modules_task() -> Result<(), Error> {
+    println!("Inspecting modules...");
+    Ok(())
 }
 
 fn create_module_task(args: &Args) -> Result<(), Error> {
