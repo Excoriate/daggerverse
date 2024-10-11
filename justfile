@@ -181,7 +181,7 @@ ci-module-docs mod:
 # --------------------------------------------------
 
 # Recipe to call an specific function from the examples/go project in a certain module 📞
-callfnrecipego mod *args: (check-dagger-pre-requisites mod) (reloadexamples mod)
+callfnexample mod *args: (check-dagger-pre-requisites mod) (reloadexamples mod)
   @echo "🔧 Calling a function in the 📄 examples/go module [{{mod}}/examples/go]..."
   @echo "📦 Currently in [{{mod}}/examples/go] module, path=`pwd`"
   @cd {{mod}}/examples/go && dagger call {{args}}
