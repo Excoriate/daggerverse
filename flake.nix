@@ -35,7 +35,7 @@
             };
 
             packages = with pkgs; [
-#              dagger
+              # dagger
               golangci-lint
               just
               git

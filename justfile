@@ -70,108 +70,60 @@ bump-version mod bump='minor':
     echo "✅ Version bumped to $new_version and tag $new_tag created"
     echo "🚀 Tag has been pushed to the remote repository"
 
-# Recipe to reload Dagger module (Dagger Develop) 🔄
-reloadmod mod *args:
-  #!/usr/bin/env sh
-  set -e
-  echo "🚀 Running Dagger development in a given module..."
-  echo "📦 Currently in {{mod}} module, path=`pwd`"
-  test -d {{mod}} || (echo "❌ Module not found" && exit 1)
-  if ! docker info > /dev/null 2>&1; then
-    echo "❌ Docker is not running. Please start Docker and try again."
-    exit 1
-  fi
-  cd {{mod}} && dagger develop {{args}}
-  echo "✅ Module reloaded successfully"
-
-# Recipe to reload a Dagger module's tests (Dagger Develop) 🔄
-reloadtest mod *args:
-  #!/usr/bin/env sh
-  set -e
-  echo "🚀 Running Dagger development in a given module's tests..."
-  echo "📦 Currently in {{mod}}/tests module, path=`pwd`"
-  test -d {{mod}} || (echo "❌ Module not found" && exit 1)
-  cd {{mod}}/tests && dagger develop {{args}}
-  echo "✅ Module Tests reloaded successfully"
-
-# Recipe to reload Dagger module and its underlying tests (Dagger Develop & Dagger Call/Functions) 🔄
-reloadall mod *args:
-  #!/usr/bin/env sh
-  set -e
-  echo "🔄 Reloading Dagger module and also the tests..."
-  echo "📦 Currently in {{mod}} module, path=`pwd`"
-  test -d {{mod}} || (echo "❌ Module not found" && exit 1)
-  cd {{mod}} && dagger develop {{args}}
-  cd tests && dagger develop {{args}}
-  cd ../examples/go && dagger develop {{args}}
-  echo "🚀 Module reloaded successfully"
-  echo "🕵️ Inspecting the module..."
-  cd .. && dagger call && dagger functions
+# --------------------------------------------------
+# Section: Recipes for running tests, examples, and linting
+# ------------------------------------------------------------------------------
+# This section contains recipes for running tests, examples, and linting in a certain module.
+# cleaning caches, and initializing the project.
+# --------------------------------------------------
 
 # Recipe to run all the tests in the target module 🧪
 test mod *args: (reloadmod mod) (reloadtest mod)
-  #!/usr/bin/env sh
-  set -e
-  echo "🚀 Running Dagger module tests..."
-  echo "📦 Currently in {{mod}} module 🧪, path=`pwd`"
-  test -d {{mod}}/tests || (echo "❌ Module not found" && exit 1)
-  cd {{mod}}/tests && dagger functions
-  cd {{mod}}/tests && dagger call test-all {{args}}
+  @echo "🚀 Running Dagger module tests in module [{{mod}}]..."
+  @echo "📦 Currently in {{mod}} module 🧪, path=`pwd`/{{mod}}/tests"
+  @cd {{mod}}/tests && dagger functions
+  @cd {{mod}}/tests && dagger call test-all {{args}}
 
 # Recipe to run all the examples in the target module 📄
-examplesgo mod *args: (reloadmod mod)
-  #!/usr/bin/env sh
-  set -e
-  echo "🚀 Running Dagger module examples (Go SDK)..."
-  echo "📦 Currently in {{mod}} module 🧪, path=`pwd`"
-  test -d {{mod}}/examples/go || (echo "❌ Module examples not found" && exit 1)
-  cd {{mod}}/examples/go && dagger call all-recipes {{args}}
+examplesgo mod *args: (reloadmod mod) (reloadexamples mod)
+  @echo "🚀 Running Dagger module examples (Go SDK)..."
+  @echo "📦 Currently in {{mod}} module examples/go 📄, path=`pwd`/{{mod}}/examples/go"
+  @cd {{mod}}/examples/go && dagger call all-recipes {{args}}
 
-# Recipe to run GolangCI Lint 🧹
-golint mod *args:
-  #!/usr/bin/env sh
-  set -e
-  echo "Running Go (GolangCI)... 🧹 "
-  test -d {{mod}} || (echo "❌ Module not found" && exit 1)
-  echo "📦 Currently in {{mod}} module, path=`pwd`/{{mod}}"
-  cd ./{{mod}} && nix-shell -p golangci-lint --run "golangci-lint run --config ../.golangci.yml {{args}}"
-  echo "🧪 Checking now the tests project ..."
-  cd ./{{mod}}/tests && nix-shell -p golangci-lint --run "golangci-lint run --config ../../.golangci.yml {{args}}"
-  echo "📄 Checking now the examples project ..."
-  cd ./{{mod}}/examples/go && nix-shell -p golangci-lint --run "golangci-lint run --config ../../../.golangci.yml {{args}}"
+# Recipe to run GolangCI Lint in top-level module🧹
+lintmod mod *args: (reloadmod mod)
+  @echo "Running Go (GolangCI)... 🧹 in module [{{mod}}] 📦"
+  @echo "📦 Currently in {{mod}} module, path=`pwd`/{{mod}}"
+  @cd ./{{mod}} && nix-shell -p golangci-lint --run "golangci-lint run --config ../.golangci.yml {{args}}"
+  @echo "📄 Checking now the examples project ..."
+  @cd ./{{mod}}/examples/go && nix-shell -p golangci-lint --run "golangci-lint run --config ../../../.golangci.yml {{args}}"
+
+# Recipe to run GolangCI Lint in tests module 🧹
+linttests mod *args: (reloadtest mod)
+  @echo "Running Go (GolangCI)... 🧹 in module [{{mod}}/tests] 🧪"
+  @echo "📦 Currently in {{mod}}/tests module, path=`pwd`/{{mod}}/tests"
+  @cd ./{{mod}}/tests && nix-shell -p golangci-lint --run "golangci-lint run --config ../../.golangci.yml {{args}}"
+
+# Recipe to run GolangCI Lint in examples/go module 🧹
+lintexamples mod *args: (reloadexamples mod)
+  @echo "Running Go (GolangCI)... 🧹 in module [{{mod}}/examples/go] 📄"
+  @echo "📦 Currently in {{mod}}/examples/go module, path=`pwd`"
+  @cd ./{{mod}}/examples/go && nix-shell -p golangci-lint --run "golangci-lint run --config ../../../.golangci.yml {{args}}"
+
+# Recipe to run GolangCI Lint in all modules 🧹
+lintall mod: (lintmod mod) (linttests mod) (lintexamples mod)
+  @echo "✅ All Go (GolangCI) lint checks passed ✅"
 
 # Recipe to run the whole CI locally 🚀
-cilocal mod: (reloadall mod) (golint mod) (test mod) (examplesgo mod) (ci-module-docs mod)
-  #!/usr/bin/env sh
-  set -e
-  echo "🚀 Running the whole CI locally... 🚀"
-
-# Recipe to create a new module using Daggy (a rust CLI tool) 🛠️
-create mod with-ci='false' type='full':
-  #!/usr/bin/env sh
-  set -e
-  echo "🚀 Creating a new {{type}} module of type {{type}}..."
-  cd .daggerx/daggy && cargo build --release
-  .daggerx/daggy/target/release/daggy --task=create --module={{mod}} --module-type={{type}}
-  if [ "{{with-ci}}" = "true" ]; then just cilocal {{mod}}; fi
-
-# Recipe to create a new light module using Daggy 🛠️
-createlight mod with-ci='false' type='light':
-  #!/usr/bin/env sh
-  set -e
-  echo "🚀 Creating a new {{type}} module of type {{type}}..."
-  cd .daggerx/daggy && cargo build --release
-  .daggerx/daggy/target/release/daggy --task=create --module={{mod}} --module-type={{type}}
-  if [ "{{with-ci}}" = "true" ]; then just cilocal {{mod}}; fi
+ci mod: (reloadall mod) (lintall mod) (test mod) (examplesgo mod) (ci-mod-docs mod)
+  @echo "🎉 All checks passed! 🎉"
 
 # Recipe to validate if the dagger module has the README.md file and the LICENSE file 📄
-ci-module-docs mod:
-  #!/usr/bin/env sh
-  set -e
-  echo "🔍 Validating the module documentation..."
-  test -f {{mod}}/README.md || (echo "❌ README.md file not found" && exit 1)
-  test -f {{mod}}/LICENSE || (echo "❌ LICENSE file not found" && exit 1)
-  echo "✅ Module documentation is valid"
+ci-mod-docs mod:
+  @echo "🔍 Validating the module documentation..."
+  @test -f {{mod}}/README.md || (echo "❌ README.md file not found" && exit 1)
+  @test -f {{mod}}/LICENSE || (echo "❌ LICENSE file not found" && exit 1)
+  @echo "✅ Module documentation is valid"
 
 # --------------------------------------------------
 # Section: Dagger Functions
