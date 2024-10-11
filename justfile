@@ -222,7 +222,13 @@ listfns mod *args: (check-dagger-pre-requisites mod) (reloadmod mod)
 listfnstest mod *args: (check-dagger-pre-requisites mod) (reloadtest mod)
   @echo "📄 Retrieving available functions for the module..."
   @echo "📦 Currently in [{{mod}}/tests] module, path=`pwd`/{{mod}}/tests"
-  @cd {{mod}}/tests && dagger functions
+  @cd {{mod}}/tests && dagger functions {{args}}
+
+# Recipe to list functions in a examples/go 📄 module
+listfnsexamples mod *args: (check-dagger-pre-requisites mod) (reloadexamples mod)
+  @echo "📄 Retrieving available functions for the module..."
+  @echo "📦 Currently in [{{mod}}/examples/go] module, path=`pwd`"
+  @cd {{mod}}/examples/go && dagger functions {{args}}
 
 # --------------------------------------------------
 # Section: Dagger Maintenance
