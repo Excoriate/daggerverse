@@ -26,20 +26,8 @@ clean-nix-cache:
   @echo "Cleaning Nix/DevEnv/DirEnv cache 🧹 ..."
   @nix-collect-garbage -d
 
-# Recipe to initialize the project 🚀
-init:
-  @echo "Initializing the project 🚀 ..."
-  @nix-shell -p pre-commit --run "pre-commit install --hook-type pre-commit"
-  @echo "Pre-commit hook installed ✅"
-  @nix-shell -p pre-commit --run "pre-commit install --hook-type pre-push"
-  @echo "Pre-push hook installed ✅"
-  @nix-shell -p pre-commit --run "pre-commit install --hook-type commit-msg"
-  @echo "Commit-msg hook installed ✅"
-  @nix-shell -p pre-commit --run "pre-commit autoupdate"
-  @echo "Pre-commit hooks updated to the latest version 🔄"
-
 # Recipe to run pre-commit hooks 🔍
-pc:
+run-hooks:
   @echo "Running pre-commit hooks 🔍 ..."
   @nix-shell -p pre-commit --run "pre-commit run --all-files"
   @echo "Pre-commit hooks passed ✅"
