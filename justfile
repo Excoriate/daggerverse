@@ -4,13 +4,21 @@ export NOTHANKS := "1"
 default:
   @just --list
 
-# Recipe to run your development environment commands 🧰
+# --------------------------------------------------
+# Section: Nix Development Environment
+# --------------------------------------------------
+# This section contains recipes for setting up and managing
+# the Nix development environment, including entering the environment,
+# cleaning caches, and initializing the project.
+# --------------------------------------------------
+
+# Recipe to enter the Nix development environment 🧰
 dev:
   @echo "Entering Nix development environment 🧰 ..."
   @nix develop --impure --extra-experimental-features nix-command --extra-experimental-features flakes
 
 # Recipe to clean Go cache, Go modules cache, and Nix/DevEnv/DirEnv cache 🧹
-clean-cache:
+clean-nix-cache:
   @echo "Cleaning Go cache 🧹 ..."
   @go clean -cache
   @echo "Cleaning Go modules cache 🧹 ..."
@@ -18,50 +26,11 @@ clean-cache:
   @echo "Cleaning Nix/DevEnv/DirEnv cache 🧹 ..."
   @nix-collect-garbage -d
 
-# Recipe to initialize the project 🚀
-init:
-  @echo "Initializing the project 🚀 ..."
-  @nix-shell -p pre-commit --run "pre-commit install --hook-type pre-commit"
-  @echo "Pre-commit hook installed ✅"
-  @nix-shell -p pre-commit --run "pre-commit install --hook-type pre-push"
-  @echo "Pre-push hook installed ✅"
-  @nix-shell -p pre-commit --run "pre-commit install --hook-type commit-msg"
-  @echo "Commit-msg hook installed ✅"
-  @nix-shell -p pre-commit --run "pre-commit autoupdate"
-  @echo "Pre-commit hooks updated to the latest version 🔄"
-
 # Recipe to run pre-commit hooks 🔍
-precommit:
+run-hooks:
   @echo "Running pre-commit hooks 🔍 ..."
   @nix-shell -p pre-commit --run "pre-commit run --all-files"
   @echo "Pre-commit hooks passed ✅"
-
-# Recipe to run Dagger module 📦
-dc mod *args:
-  #!/usr/bin/env sh
-  set -e
-  echo "🚀 Running Dagger module..."
-  echo "📦 Currently in {{mod}} module, path=`pwd`"
-  test -d {{mod}} || (echo "❌ Module not found" && exit 1)
-  cd {{mod}} && dagger call {{args}}
-
-# Recipe to run Dagger module tests 🧪
-dct mod *args:
-  #!/usr/bin/env sh
-  set -e
-  echo "🧪 Running Dagger module tests..."
-  echo "🧪 Currently in {{mod}} module, path=`pwd`"
-  test -d {{mod}}/tests || (echo "❌ Module not found" && exit 1)
-  cd {{mod}}/tests && dagger call {{args}}
-
-# Recipe to run Dagger module examples 📄
-dce mod *args:
-  #!/usr/bin/env sh
-  set -e
-  echo "📄 Running Dagger module examples ..."
-  echo "🧪 Currently in {{mod}} module, path=`pwd`"
-  test -d {{mod}}/examples/go || (echo "❌ Module examples not found" && exit 1)
-  cd {{mod}}/examples/go && dagger call {{args}}
 
 # Recipe to bump version of a module 🔄
 bump-version mod bump='minor':
@@ -204,61 +173,180 @@ ci-module-docs mod:
   test -f {{mod}}/LICENSE || (echo "❌ LICENSE file not found" && exit 1)
   echo "✅ Module documentation is valid"
 
-# Recipe for dagger call 📞
-call mod *args:
-  #!/usr/bin/env sh
-  set -e
-  echo "🚀 Running Dagger call..."
-  echo "📦 Currently in {{mod}} module, path=`pwd`"
-  test -d {{mod}} || (echo "❌ Module not found" && exit 1)
-  cd {{mod}} && dagger call {{args}}
+# --------------------------------------------------
+# Section: Dagger Functions
+# --------------------------------------------------
+# This section contains recipes for calling functions
+# in a certain module.
+# --------------------------------------------------
+
+# Recipe to call an specific function from the examples/go project in a certain module 📞
+callfnexample mod *args: (check-dagger-pre-requisites mod) (reloadexamples mod)
+  @echo "🔧 Calling a function in the 📄 examples/go module [{{mod}}/examples/go]..."
+  @echo "📦 Currently in [{{mod}}/examples/go] module, path=`pwd`"
+  @cd {{mod}}/examples/go && dagger call {{args}}
 
 # Recipe for dagger call tests in a certain module 🧪
-calltests mod *args: (reloadtest mod)
-  #!/usr/bin/env sh
-  set -e
-  echo "🚀 Running Dagger call tests..."
-  echo "🧪 Currently in {{mod}} module, path=`pwd`"
-  test -d {{mod}}/tests || (echo "❌ Module not found" && exit 1)
-  cd {{mod}}/tests && dagger functions
-  cd {{mod}}/tests && dagger call {{args}}
-# Recipe to run dagger develop in all modules 🔄
-develop-all:
-  #!/usr/bin/env sh
-  set -e
-  echo "🚀 Developing (or upgrading) all Dagger modules..."
-  cd .daggerx/daggy && cargo build --release
-  .daggerx/daggy/target/release/daggy --task=develop
-
-# Recipe that wraps the dagger CLI in a certain module 📦
-dag mod *args:
-  #!/usr/bin/env sh
-  set -e
-  echo "🚀 Running Dagger CLI in a certain module..."
-  echo "📦 Currently in {{mod}} module, path=`pwd`"
-  test -d {{mod}} || (echo "❌ Module not found" && exit 1)
-  cd {{mod}} && dagger {{args}}
+callfntest mod *args: (check-dagger-pre-requisites mod) (reloadtest mod)
+  @echo "🔨 Calling a function {{args}} in the 🧪 test module [{{mod}}/tests]..."
+  @echo "📦 Currently in [{{mod}}/tests] module, path=`pwd`/{{mod}}/tests"
+  @cd {{mod}}/tests && dagger functions
+  @cd {{mod}}/tests && dagger call {{args}}
 
 # Recipe to call a certain function by a module's name, passing extra arguments optionally 📞
-callfn mod *args:
-  #!/usr/bin/env sh
-  set -e
-  echo "🔧 Calling a function in a certain module..."
-  echo "📦 Currently in {{mod}} module, path=`pwd`"
-  test -d {{mod}} || (echo "❌ Module not found" && exit 1)
-  cd {{mod}} && dagger functions
-  cd {{mod}} && dagger call {{args}}
+callfn mod *args: (check-dagger-pre-requisites mod) (reloadmod mod)
+  @echo "🔨 Calling a function {{args}} in the module [{{mod}}]..."
+  @echo "📂 Currently in [{{mod}}] module, path=`pwd`/{{mod}}"
+  @cd {{mod}} && dagger functions
+  @cd {{mod}} && dagger call {{args}}
+
 # Recipe to list functions in a certain module 📄
-listfns mod *args:
-  #!/usr/bin/env sh
-  set -e
-  echo "📄 Listing functions in a certain module..."
-  echo "📦 Currently in {{mod}} module, path=`pwd`"
-  test -d {{mod}} || (echo "❌ Module not found" && exit 1)
-  cd {{mod}} && dagger functions
+listfns mod *args: (check-dagger-pre-requisites mod) (reloadmod mod)
+  @echo "📄 Retrieving available functions for the module..."
+  @echo "📦 Currently in [{{mod}}] module, path=`pwd`/{{mod}}"
+  @cd {{mod}} && dagger functions
+
+# Recipe to list functions in a test 🧪 module
+listfnstest mod *args: (check-dagger-pre-requisites mod) (reloadtest mod)
+  @echo "📄 Retrieving available functions for the module..."
+  @echo "📦 Currently in [{{mod}}/tests] module, path=`pwd`/{{mod}}/tests"
+  @cd {{mod}}/tests && dagger functions {{args}}
+
+# Recipe to list functions in a examples/go 📄 module
+listfnsexamples mod *args: (check-dagger-pre-requisites mod) (reloadexamples mod)
+  @echo "📄 Retrieving available functions for the module..."
+  @echo "📦 Currently in [{{mod}}/examples/go] module, path=`pwd`"
+  @cd {{mod}}/examples/go && dagger functions {{args}}
+
+# --------------------------------------------------
+# Section: Dagger Maintenance
+# --------------------------------------------------
+# This section contains recipes for various maintenance
+# operations related to Dagger modules.
+# --------------------------------------------------
+
+# Recipe that wraps the dagger CLI in a certain module 📦
+dagcli mod *args: (check-dagger-pre-requisites mod)
+  @echo "🚀 Running Dagger CLI in a certain module..."
+  @echo "📦 Currently in [{{mod}}] module, path=`pwd`/{{mod}}"
+  @cd {{mod}} && dagger {{args}}
+
+# Recipe to run dagger develop and if the engine gots updated, update the modules 🔄
+update-all: (daggy-compile) (check-docker-or-podman)
+  @echo "🚀 Developing (or upgrading) all Dagger modules..."
+  @.daggerx/daggy/target/release/daggy --task=develop
+
+# --------------------------------------------------
+# Section: Creating new modules
+# --------------------------------------------------
+# This section contains recipes for various operations
+# related to Dagger modules, such as calling functions,
+# listing functions, and running tests.
+# --------------------------------------------------
+
+# Recipe to create a new module using Daggy (a rust CLI tool) 🛠️
+create mod with-ci='false' type='full': (daggy-compile) (check-docker-or-podman)
+  @echo "🚀 Creating a new {{type}} module of type {{type}}..."
+  @.daggerx/daggy/target/release/daggy --task=create --module={{mod}} --module-type={{type}}
+  @if [ "{{with-ci}}" = "true" ]; then just cilocal {{mod}}; fi
+
+# Recipe to create a new light module using Daggy 🛠️
+createlight mod with-ci='false' type='light': (daggy-compile) (check-docker-or-podman)
+  @echo "🚀 Creating a new {{type}} module of type {{type}}..."
+  @./.daggerx/daggy/target/release/daggy --task=create --module={{mod}} --module-type={{type}}
+  @if [ "{{with-ci}}" = "true" ]; then just cilocal {{mod}}; fi
+
+# --------------------------------------------------
+# Section: Daggy Operations
+# --------------------------------------------------
+# This section contains recipes for compiling and testing
+# the Daggy tool.
+# --------------------------------------------------
 
 # Recipe to run Daggy tests 🧪
-daggy-tests:
+daggy-tests: (daggy-compile)
   @echo "Running Daggy tests 🧪 ..."
-  @cd .daggerx/daggy && cargo build --release
   @cd .daggerx/daggy && cargo test
+
+# Recipe to compile Daggy 🔄
+daggy-compile:
+  @echo "Compiling Daggy 🔄 ..."
+  @cd .daggerx/daggy && cargo build --release
+  @echo "Daggy compiled successfully 🔄"
+
+# --------------------------------------------------
+# Section: Reloading Dagger Modules
+# --------------------------------------------------
+# This section contains recipes for reloading Dagger
+# modules and their tests.
+# --------------------------------------------------
+
+# Recipe to reload Dagger module (Dagger Develop) 🔄
+reloadmod mod *args: (check-dagger-pre-requisites mod)
+  @echo "🚀 Running Dagger development in a given module..."
+  @echo "📦 Currently in [{{mod}}] module, path=`pwd`/{{mod}}"
+  @cd {{mod}} && dagger develop {{args}}
+  @echo "✅ Module reloaded successfully"
+
+# Recipe to reload a Dagger module's tests (Dagger Develop) 🔄
+reloadtest mod *args: (check-dagger-pre-requisites mod)
+  @echo "🚀 Running Dagger development in a given module's tests..."
+  @echo "📦 Currently in [{{mod}}/tests] module, path=`pwd`/{{mod}}/tests"
+  @cd {{mod}}/tests && dagger develop {{args}}
+  @echo "✅ Module Tests reloaded successfully"
+
+# Recipe to reload the Dagger module's examples (examples/go) 🔄
+reloadexamples mod *args: (check-dagger-pre-requisites mod)
+  @echo "🚀 Reloading the module's examples..."
+  @echo "📦 Currently in {{mod}}/examples/go module, path=`pwd`"
+  @test -d {{mod}}/examples/go || (echo "❌ Module examples not found" && exit 1)
+  @cd {{mod}}/examples/go && dagger develop {{args}}
+  @echo "🚀 Module's examples reloaded successfully"
+
+# Recipe to reload Dagger module and its underlying tests (Dagger Develop & Dagger Call/Functions) 🔄
+reloadall mod *args: (reloadmod mod) (reloadtest mod) (reloadexamples mod)
+  @echo "🔄 Reloading all the module, tests and examples... [{{mod}}]"
+  @echo "🚀 Module reloaded successfully"
+
+
+# --------------------------------------------------
+# Section: Utilities
+# --------------------------------------------------
+# This section contains recipes for utilities that
+# are used to validate if Docker or Podman is running
+# and to validate if a given directory is a Dagger module.
+# --------------------------------------------------
+
+# Recipe to check if Docker or Podman is running 🔄
+check-docker-or-podman:
+  #!/usr/bin/env sh
+  set -e
+
+  if command -v docker > /dev/null 2>&1; then
+    if ! docker info > /dev/null 2>&1; then
+      echo "❌ Docker is installed but not running. Please start Docker and try again."
+      exit 1
+    else
+      echo "✅ Docker is running."
+    fi
+  elif command -v podman > /dev/null 2>&1; then
+    if ! podman info > /dev/null 2>&1; then
+      echo "❌ Podman is installed but not running. Please start Podman and try again."
+      exit 1
+    else
+      echo "✅ Podman is running."
+    fi
+  else
+    echo "❌ Neither Docker nor Podman is installed. Please install one of them and try again."
+    exit 1
+  fi
+
+# Recipe that validate if it's an actual Dagger module
+is-dagger-module mod:
+  @echo "🔍 Validating if [{{mod}}] is a Dagger module..."
+  @test -d {{mod}} || (echo "❌ Module not found at path=`pwd`/{{mod}}" && exit 1)
+  @test -f {{mod}}/dagger.json || (echo "❌ dagger.json not found in module at path=`pwd`/{{mod}}. Not a Dagger module." && exit 1)
+  @echo "✅ [{{mod}}] is a Dagger module"
+
+# Recipe that check Dagger pre-requisites
+check-dagger-pre-requisites mod: (check-docker-or-podman) (is-dagger-module mod)
