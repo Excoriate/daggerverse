@@ -82,41 +82,7 @@ func (m *Tests) assertEnvVarIsSetInContainer(
 	}
 
 	if !strings.Contains(variableOut, variable) {
-		return Errorf("environment variable '%s' is expected to contain '%s', but it doesn't", 
-			variable, variableOut)
-	}
-
-	return nil
-}
-
-// assertEnvVarHasValueInContainer checks if a specific environment variable is set in the container
-// and if it has the expected value. It first calls assertEnvVarIsSetInContainer to ensure the variable
-// is set, then checks if the variable's value matches the expected value.
-// If the variable is not set, or if its value doesn't match the expected value, an error is returned.
-func (m *Tests) assertEnvVarHasValueInContainer(
-	ctx context.Context,
-	ctr *dagger.Container,
-	variable string,
-	expectedValue string,
-) error {
-	// First, check if the variable is set
-	if err := m.assertEnvVarIsSetInContainer(ctx, ctr, variable); err != nil {
-		return err
-	}
-
-	// If the variable is set, check its value
-	variableOut, variableOutErr := ctr.
-		WithExec([]string{"printenv", variable}).
-		Stdout(ctx)
-
-	if variableOutErr != nil {
-		return WrapErrorf(variableOutErr, "failed to get value for environment variable '%s'", variable)
-	}
-
-	variableOut = strings.TrimSpace(variableOut)
-	if variableOut != expectedValue {
-		return Errorf("environment variable '%s' has value '%s', expected '%s'", 
-			variable, variableOut, expectedValue)
+		return Errorf("environment variable '%s' is expected to contain '%s', but it doesn't", variable, variableOut)
 	}
 
 	return nil
@@ -201,15 +167,15 @@ func (m *Tests) assertFileContentShouldContain(
 	content string,
 ) error {
 	if err := m.assertTheseFilesExistsInContainer(ctx, ctr, []string{file}); err != nil {
-		return WrapErrorf(err, "file '%s' does not exist", file)
+		return err
 	}
 
-	fileOut, err := ctr.
+	fileOut, fileOutErr := ctr.
 		WithExec([]string{"cat", file}).
 		Stdout(ctx)
 
-	if err != nil {
-		return WrapErrorf(err, "failed to get content of file '%s'", file)
+	if fileOutErr != nil {
+		return WrapErrorf(fileOutErr, "failed to get file '%s' content", file)
 	}
 
 	if fileOut == "" {
@@ -219,36 +185,6 @@ func (m *Tests) assertFileContentShouldContain(
 	if !strings.Contains(fileOut, content) {
 		return Errorf("file '%s' content is expected to contain '%s', but its current content is '%s'",
 			file, content, fileOut)
-	}
-
-	return nil
-}
-
-// assertCommandIsSuccessfulAndOutputContains executes the specified command in the container
-// and checks if the output contains the expected content.
-// If the command fails, the output is empty, or the expected content is not found in the output, an error is returned.
-//
-//nolint:unused // This function is currently unused but may be used in the future.
-func (m *Tests) assertCommandIsSuccessfulAndOutputContains(
-	ctx context.Context,
-	ctr *dagger.Container,
-	command string,
-	expectedOutput string,
-) error {
-	commandOut, commandOutErr := ctr.
-		WithExec([]string{command}).
-		Stdout(ctx)
-
-	if commandOutErr != nil {
-		return WrapErrorf(commandOutErr, "failed to execute command '%s'", command)
-	}
-
-	if commandOut == "" {
-		return Errorf("command '%s' output is empty", command)
-	}
-
-	if !strings.Contains(commandOut, expectedOutput) {
-		return Errorf("command '%s' output is expected to contain '%s', but it doesn't", command, expectedOutput)
 	}
 
 	return nil

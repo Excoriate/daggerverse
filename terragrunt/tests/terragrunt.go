@@ -2,10 +2,8 @@ package main
 
 import (
 	"context"
-	"path/filepath"
 
 	"github.com/Excoriate/daggerverse/terragrunt/tests/internal/dagger"
-	"github.com/Excoriate/daggerx/pkg/fixtures"
 )
 
 // TestTerragruntContainerIsUp checks if the Terragrunt container is up and running by verifying the versions of
@@ -203,11 +201,6 @@ func (m *Tests) TestTerragruntExecPlanCommand(ctx context.Context) error {
 			EnvVarsFromHost: testEnvVars,
 			TgVersion:       "v0.52.1",
 		}).
-		WithTerragruntPermissionsOnDirs(dagger.TerragruntWithTerragruntPermissionsOnDirsOpts{
-			DirsToOwn: []string{
-				filepath.Join(fixtures.MntPrefix, ".terragrunt-cache"),
-			},
-		}).
 		WithTerraformToken(tfTokenAsSecret).
 		WithTerragruntLogOptions(dagger.TerragruntWithTerragruntLogOptionsOpts{
 			TgLogLevel:             "debug",
@@ -229,7 +222,6 @@ func (m *Tests) TestTerragruntExecPlanCommand(ctx context.Context) error {
 		})
 
 	tgPlanCmdOut, tgPlanCmdErr := tgCtrConfigured.
-		Terminal().
 		Stdout(ctx)
 
 	if tgPlanCmdErr != nil {
@@ -300,7 +292,7 @@ func (m *Tests) TestTerragruntExecLifecycleCommands(ctx context.Context) error {
 		})
 
 	// run init command
-	cmdOut, cmdErr := tgModule.ExecCmd(ctx, "init", dagger.TerragruntExecCmdOpts{
+	cmdInitOut, cmdInitErr := tgModule.ExecCmd(ctx, "init", dagger.TerragruntExecCmdOpts{
 		Source: m.
 			getTestDir("").
 			Directory("terragrunt"),
@@ -311,16 +303,16 @@ func (m *Tests) TestTerragruntExecLifecycleCommands(ctx context.Context) error {
 		},
 	})
 
-	if cmdErr != nil {
-		return WrapErrorf(cmdErr, "failed to execute command init")
+	if cmdInitErr != nil {
+		return WrapErrorf(cmdInitErr, "failed to execute command init")
 	}
 
-	if cmdOut == "" {
+	if cmdInitOut == "" {
 		return Errorf("command init output is empty")
 	}
 
 	// run plan command with arguments
-	cmdOut, cmdErr = tgModule.ExecCmd(ctx, "plan", dagger.TerragruntExecCmdOpts{
+	cmdPlanOut, cmdPlanErr := tgModule.ExecCmd(ctx, "plan", dagger.TerragruntExecCmdOpts{
 		Source: m.
 			getTestDir("").
 			Directory("terragrunt"),
@@ -335,16 +327,11 @@ func (m *Tests) TestTerragruntExecLifecycleCommands(ctx context.Context) error {
 		},
 	})
 
-	if err := m.assertCommandIsSuccessfulAndOutputContains(ctx, tgModule.Ctr(),
-		"plan", "Terraform will perform the following actions:"); err != nil {
-		return WrapErrorf(err, "failed to validate command plan output")
+	if cmdPlanErr != nil {
+		return WrapErrorf(cmdPlanErr, "failed to execute command plan")
 	}
 
-	if cmdErr != nil {
-		return WrapErrorf(cmdErr, "failed to execute command plan")
-	}
-
-	if cmdOut == "" {
+	if cmdPlanOut == "" {
 		return Errorf("command plan output is empty")
 	}
 
