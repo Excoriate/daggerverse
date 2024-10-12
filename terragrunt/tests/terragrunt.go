@@ -375,7 +375,8 @@ func (m *Tests) TestTerragruntExecLifecycleCommands(ctx context.Context) error {
 // TestTerragruntExecWithPlanOutput tests the execution of the 'terragrunt plan' command and validates the output.
 //
 // This function sets up the necessary environment variables and secrets, configures the Terragrunt module,
-// and executes the 'init' command. It validates the output of the command and ensures that the command is executed successfully.
+// and executes the 'init' command. It validates the output of the command and ensures that
+// the command is executed successfully.
 // If any step fails, an error is returned.
 //
 // Parameters:
@@ -424,8 +425,8 @@ func (m *Tests) TestTerragruntExecWithPlanOutput(ctx context.Context) error {
 			DisableBucketUpdate:        true,
 		})
 
-	// Configure the terragrunt container to execute the plan command.
-	outFile, outFileErr := tgModule.Exec("plan", dagger.TerragruntExecOpts{
+	// Execute the plan command and get the container back.
+	tgCtr := tgModule.Exec("plan", dagger.TerragruntExecOpts{
 		Source: m.
 			getTestDir("").
 			Directory("terragrunt"),
@@ -439,21 +440,21 @@ func (m *Tests) TestTerragruntExecWithPlanOutput(ctx context.Context) error {
 			"-out=plan.tfplan",
 			"-refresh=true",
 		},
-	}).File("/mnt/plan.tfplan").
-		Contents(ctx)
+	})
 
-	// // // Getting the contents of the plan file.
-	// catPlanFileOut, catPlanFileErr := tgCtr.
-	// 	Terminal().
-	// 	WithExec([]string{"cat", "/mnt/plan.tfplan"}).
-	// 	Stdout(ctx)
+	// Execute the plan command, and return the stdout.
+	_, outPlanErr := tgCtr.
+		Stdout(ctx)
 
-	if outFileErr != nil {
-		return WrapErrorf(outFileErr, "failed to get the contents of the plan file")
+	if outPlanErr != nil {
+		return WrapErrorf(outPlanErr, "failed to get the stdout of the plan command")
 	}
 
-	if outFile == "" {
-		return Errorf("failed to generate the plan file with name 'plan.tfplan'")
+	// get the plan file
+	planFile := tgCtr.Terminal().File("/mnt/plan.tfplan")
+
+	if planFile == nil {
+		return Errorf("the terragrunt container does not have the plan file named 'plan.tfplan'")
 	}
 
 	return nil

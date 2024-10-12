@@ -194,12 +194,14 @@ func newTerragruntOptionsDagger(
 			// Assume the value is a comma-separated list of key=value pairs
 			pairs := strings.Split(value, ",")
 			formattedPairs := make([]string, 0, len(pairs))
+
 			for _, pair := range pairs {
 				kv := strings.SplitN(pair, "=", 2)
 				if len(kv) == 2 {
 					formattedPairs = append(formattedPairs, fmt.Sprintf("%s=%s", cleanValue(kv[0]), cleanValue(kv[1])))
 				}
 			}
+
 			if len(formattedPairs) > 0 {
 				daggers = append(daggers, TgConfigSetAsEnvVar{
 					EnvVarKey:   key,
