@@ -4,15 +4,29 @@ A powerful [Dagger](https://dagger.io) module for managing Terragrunt, Terraform
 
 ## Features 🎨
 
-- **Flexible Base Image**: Built using APKO for a secure and optimized container environment.
-- **Multi-Tool Support**: Primarily focused on Terragrunt, but also supports Terraform and OpenTofu.
-- **Customizable Configurations**: Extensive options for Terragrunt and Terraform settings.
-- **Caching Mechanisms**: Implements caching for Terragrunt and Terraform for improved performance.
-- **AWS CLI Integration**: Option to include AWS CLI in the container.
-- **Permissions Management**: Fine-grained control over directory permissions.
-- **Environment Variable Handling**: Easy setting and management of environment variables.
-- **Secret Management**: Secure handling of sensitive information like Terraform tokens.
-- **Execution Flexibility**: Run Terragrunt, Terraform, or shell commands within the container.
+| Feature                          | Description                                                                |
+| -------------------------------- | -------------------------------------------------------------------------- |
+| 🛠️ Flexible Base Image           | Built using APKO for a secure and optimized container environment.         |
+| 🔧 Multi-Tool Support            | Primarily focused on Terragrunt, but also supports Terraform and OpenTofu. |
+| ⚙️ Customizable Configurations   | Extensive options for Terragrunt and Terraform settings.                   |
+| 💾 Caching Mechanisms            | Implements caching for Terragrunt and Terraform for improved performance.  |
+| ☁️ AWS CLI Integration           | Option to include AWS CLI in the container.                                |
+| 🔐 Permissions Management        | Fine-grained control over directory permissions.                           |
+| 🌐 Environment Variable Handling | Easy setting and management of environment variables.                      |
+| 🔒 Secret Management             | Secure handling of sensitive information like Terraform tokens.            |
+| 🚀 Execution Flexibility         | Run Terragrunt, Terraform, or shell commands within the container.         |
+
+### Terragrunt Batteries Included 🔋
+
+| Feature                                         | Description                                                             |
+| ----------------------------------------------- | ----------------------------------------------------------------------- |
+| 🛠️ Terragrunt, Terraform, and OpenTofu binaries | Pre-installed binaries for Terragrunt, Terraform, and OpenTofu.         |
+| 📄 Terragrunt Configuration                     | Best practice configuration files for Terragrunt.                       |
+| ⚙️ Terragrunt Options                           | Configurable options for Terragrunt (see `terragrunt_opts.go`).         |
+| 🔧 Directory Permissions                        | Manage directory permissions (see `terragrunt_cfg.go`).                 |
+| 💾 Caching Configuration                        | Setup caching for Terragrunt and Terraform (see `terragrunt_cfg.go`).   |
+| 🌐 Environment Variables                        | Handle environment variables for Terragrunt (see `terragrunt_opts.go`). |
+| 🔐 Secret Management                            | Secure handling of sensitive information like Terraform tokens.         |
 
 ## Configuration 🛠️
 
