@@ -138,7 +138,7 @@ To contribute or modify the module:
 Common commands:
 
 ```bash
-just init           # Initialize pre-commit hooks
+just run-hooks           # Initialize pre-commit hooks
 just lintall terragrunt  # Run linter
 just test terragrunt    # Run tests
 just ci terragrunt # Run entire CI tasks locally
