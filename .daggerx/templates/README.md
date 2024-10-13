@@ -116,13 +116,13 @@ If you'd like to contribute, mostly we use [Just](https://just.systems) to autom
 
 ```bash
 # initialize the pre-commit hooks
-just init
-# run CI or common things locally
-just golint {{.module_name}}
+just run-hooks
+# run linting
+just lintall {{.module_name}}
 # run the tests
 just test {{.module_name}}
-# Run the entire CI tasks locally
-just cilocal {{.module_name}}
+# Run the entire CI pipeline locally
+just ci {{.module_name}}
 ```
 
 ### Examples (aka Recipes) 🍲
@@ -132,4 +132,4 @@ Additionally, this module brings a new [Daggerverse](https://daggerverse.dev/) f
 To generate the documentation
 It's important to notice that each **example** function in order to be rendered in the documentation, it must be preprocessed by module's name, in this case (camelCase) `{{.module_name}}`.
 
->NOTE: The `just` command entails the use of the [**Justfile**](https://just.systems) for task automation. If you don't have it, don't worry, you just need [Nix](https://nixos.org) to run the tasks using the `dev-shell` built-in command: `nix develop --impure --extra-experimental-features nix-command --extra-experimental-features flakes`
+> NOTE: The `just` command entails the use of the [**Justfile**](https://just.systems) for task automation. If you don't have it, don't worry, you just need [Nix](https://nixos.org) to run the tasks using the `dev-shell` built-in command: `nix develop --impure --extra-experimental-features nix-command --extra-experimental-features flakes`
