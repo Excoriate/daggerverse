@@ -1,125 +1,159 @@
-# Module Terragrunt for Dagger
+# Terragrunt Module for Dagger
 
-
-A simple [Dagger](https://dagger.io) _place the description of the module here_
-
-## Configuration 🛠️
-
-Through the [Dagger CLI](https://docs.dagger.io/cli/465058/install), or by using it directly within your module, you can configure the following options:
-
-* ⚙️ `ctr`: The container to use as a base container. If not specified, a new container is created.
-* ⚙️ `version`: The version of the Go image to use. Defaults to `latest`.
-* ⚙️ `image`: The Go image to use. Defaults to `golang:alpine`.
-
-### Structure 🏗️
-```text
-{{.module_name_pkg}} // main module
-├── .gitattributes
-├── .gitignore
-├── LICENSE
-├── README.md
-├── apis.go
-├── cloud.go
-├── commands.go
-├── common.go
-├── config.go
-├── dagger.json
-├── examples // Sub modules that represent examples of the module's functions with each SDK
-│   └── go
-│       ├── .gitattributes
-│       ├── .gitignore
-│       ├── dagger.json
-│       ├── go.mod
-│       ├── go.sum
-│       ├── main.go
-│       └── testdata
-│           └── common
-│               ├── README.md
-│               └── test-file.yml
-├── go.mod
-├── go.sum
-├── main.go
-└── tests // Sub module that represent tests of the module's functions
-    ├── .gitattributes
-    ├── .gitignore
-    ├── dagger.json
-    ├── go.mod
-    ├── go.sum
-    ├── main.go
-    └── testdata
-        └── common
-            ├── README.md
-            └── test-file.yml
-
-```
->NOTE: This structure comes out of the box if it's generated through **Daggy**. Just run `just create <module-name>` and you'll get the structure.
-
----
+A powerful [Dagger](https://dagger.io) module for managing Terragrunt, Terraform, and OpenTofu operations in a containerized environment.
 
 ## Features 🎨
 
-| Command or functionality  | Command | Example                     | Status |
-|---------------------------|---------|-----------------------------|--------|
-| Add your feature **here** | **run** | `dagger call <my function>` | ✅      |
+- **Flexible Base Image**: Built using APKO for a secure and optimized container environment.
+- **Multi-Tool Support**: Primarily focused on Terragrunt, but also supports Terraform and OpenTofu.
+- **Customizable Configurations**: Extensive options for Terragrunt and Terraform settings.
+- **Caching Mechanisms**: Implements caching for Terragrunt and Terraform for improved performance.
+- **AWS CLI Integration**: Option to include AWS CLI in the container.
+- **Permissions Management**: Fine-grained control over directory permissions.
+- **Environment Variable Handling**: Easy setting and management of environment variables.
+- **Secret Management**: Secure handling of sensitive information like Terraform tokens.
+- **Execution Flexibility**: Run Terragrunt, Terraform, or shell commands within the container.
 
+## Configuration 🛠️
 
-## Using the Terragrunt Module 🚀
+### Base Container Options
 
-_Place the description of the module here_
+- `ctr`: Specify a custom base container.
+- `imageURL`: Specify a custom base image URL.
+- `tgVersion`: Set the version of Terragrunt (default: `0.68.1`).
+- `tfVersion`: Set the version of Terraform (default: `1.9.5`).
+- `openTofuVersion`: Set the version of OpenTofu (default: `1.8.2`).
+- `enableAWSCLI`: Enable or disable the installation of the AWS CLI (default: `false`).
+- `awscliVersion`: Set the version of the AWS CLI to install (default: `2.15.1`).
+- `extraPackages`: A list of extra packages to install with APKO, from the Alpine packages repository (default: `[]`).
 
----
+### IaC Tool Versions
 
-### Usage through the Dagger CLI 🚀
+- Terragrunt, Terraform, and OpenTofu versions can be specified or will use defaults.
 
-List all the functions available in the module:
+### Permissions and Caching
 
-  ```bash
-  # enter into the module's directory
-  cd terragrunt
+- Configure directory permissions and set up caching for Terragrunt and Terraform.
 
-  # list all the functions available in the module
-  dagger develop && dagger functions
+### Environment and Secrets
+
+- Set environment variables and manage secrets securely.
+
+## Usage Examples 🚀
+
+### Basic Terragrunt Execution
+
+```go
+	testEnvVars := []string{
+		"AWS_ACCESS_KEY_ID=test",
+		"AWS_SECRET_ACCESS_KEY=test",
+		"AWS_SESSION_TOKEN=test",
+	}
+
+	// Initialize the Terragrunt module
+	tgModule := dag.
+		Terragrunt(dagger.TerragruntOpts{
+			EnvVarsFromHost: testEnvVars,
+		}).
+		WithTerragruntPermissionsOnDirsDefault().
+		WithTerragruntLogOptions(
+			dagger.TerragruntWithTerragruntLogOptionsOpts{
+				TgLogLevel:        "debug",
+				TgForwardTfStdout: true,
+			},
+		)
+
+	// Execute the init command, but don't run it in a container
+	tgCtrConfigured := tgModule.
+		Exec("init", dagger.TerragruntExecOpts{
+			Source: m.getTestDir("").
+				Directory("terragrunt"),
+		})
+
+	// Evaluate the terragrunt init command.
+	tgInitCmdOut, tgInitCmdErr := tgCtrConfigured.
+		Stdout(ctx)
 ```
 
-Call a function:
+### Running Terragrunt with Custom Options
 
-  ```bash
-  # call a function
-  # dagger call <function-name> [arguments]
-  dagger call github.com/excoriate/daggerverse/terragrunt@version <function-name> [arguments]
+```go
+	tgModule := dag.
+		Terragrunt(dagger.TerragruntOpts{
+			EnvVarsFromHost: testEnvVars,
+			TfVersion:       "1.7.0",
+		}).
+		WithTerragruntPermissionsOnDirsDefault().
+		WithTerragruntLogOptions(dagger.TerragruntWithTerragruntLogOptionsOpts{
+			TgLogDisableFormatting: true,
+			TgLogShowAbsPaths:      true,
+			TgLogLevel:             "debug",
+		}).
+		WithTerraformLogOptions(dagger.TerragruntWithTerraformLogOptionsOpts{
+			TfLog:     "debug",
+			TfLogPath: "/mnt/tflogs", // it's a directory that the terragrunt user owns.
+		}).
+		// Extra options added for more realism.
+		WithTerragruntOptions(dagger.TerragruntWithTerragruntOptionsOpts{
+			IgnoreDependencyErrors:     true,
+			IgnoreExternalDependencies: true,
+			DisableBucketUpdate:        true,
+		})
+
+	// Execute the plan command and get the container back.
+	tgCtr := tgModule.Exec("plan", dagger.TerragruntExecOpts{
+		Source: m.
+			getTestDir("").
+			Directory("terragrunt"),
+		Secrets: []*dagger.Secret{
+			dbPasswordSecret,
+			apiKeySecret,
+			sshKeySecret,
+		},
+		// Args to output the plan to a file.
+		Args: []string{
+			"-out=plan.tfplan",
+			"-refresh=true",
+		},
+	})
+
+
 ```
-
----
 
 ## Testing 🧪
 
-This module includes a [testing]({{.module_name_pkg}}/tests) module that aims to test the functionality of the Terragrunt module. The tests are written in Go and can be run using the following command:
+The module includes comprehensive tests covering various aspects of functionality. You can run these tests using:
 
 ```bash
-## Run the tests using the just command
 just test terragrunt
 ```
 
 ## Developer Experience 🛠️
 
-If you'd like to contribute, mostly we use [Just](https://just.systems) to automate tasks and [Nix](https://nixos.org) to manage the development environment. You can use the following commands to get started:
+To contribute or modify the module:
+
+1. Use [Just](https://just.systems) for task automation.
+2. Utilize [Nix](https://nixos.org) for managing the development environment.
+
+Common commands:
 
 ```bash
-# initialize the pre-commit hooks
-just init
-# run CI or common things locally
-just golint terragrunt
-# run the tests
-just test terragrunt
-# Run the entire CI tasks locally
-just cilocal terragrunt
+just run-hooks           # Initialize pre-commit hooks
+just lintall terragrunt  # Run linter
+just test terragrunt    # Run tests
+just ci terragrunt # Run entire CI tasks locally
 ```
 
-### Examples (aka Recipes) 🍲
+## APKO Base Image
 
-Additionally, this module brings a new [Daggerverse](https://daggerverse.dev/) functionality that allows to automatically generate the module's documentation using an special (sub) module called [**{{.module_name_pkg}}/examples/sdk**]({{.module_name_pkg}}/examples). This module contains a set of examples hat demonstrate how to use the module's functions.
+This module uses [APKO](https://github.com/chainguard-dev/apko) to build its base image, ensuring:
 
-To generate the documentation
-It's important to notice that each **example** function in order to be rendered in the documentation, it must be preprocessed by module's name, in this case (camelCase) `terragrunt`.
+- Enhanced security through minimal attack surface
+- Optimized container size and performance
+- Reproducible and declarative image builds
 
->NOTE: The `just` command entails the use of the [**Justfile**](https://just.systems) for task automation. If you don't have it, don't worry, you just need [Nix](https://nixos.org) to run the tasks using the `dev-shell` built-in command: `nix develop --impure --extra-experimental-features nix-command --extra-experimental-features flakes`
+For more information on APKO, refer to the [Chainguard APKO documentation](https://github.com/chainguard-dev/apko/tree/main/docs).
+
+---
+
+For detailed API documentation and more examples, please refer to the source code and test files in the `tests/` directory.
