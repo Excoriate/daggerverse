@@ -8,8 +8,8 @@ import (
 // Default versions for OpenTofu, Terraform, and Terragrunt.
 const (
 	defaultOpenTofuVersion   = "1.8.0"
-	defaultTerraformVersion  = "1.9.5"
-	defaultTerragruntVersion = "0.67.4"
+	defaultTerraformVersion  = "1.9.7"
+	defaultTerragruntVersion = "0.68.1"
 )
 
 // WithTerragruntInstalled installs the specified version of Terragrunt.

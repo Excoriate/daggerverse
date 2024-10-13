@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -39,7 +40,7 @@ func newTerragruntOptionsDagger(
 	iamRoleSessionName string,
 	// The IAM role duration to use when assuming the IAM role.
 	// Corresponds to the TERRAGRUNT_IAM_ROLE_DURATION environment variable.
-	iamRoleDuration string,
+	iamRoleDuration int,
 	// The IAM role external ID to use when assuming the IAM role.
 	// Corresponds to the TERRAGRUNT_IAM_ROLE_EXTERNAL_ID environment variable.
 	iamRoleExternalID string,
@@ -151,6 +152,9 @@ func newTerragruntOptionsDagger(
 	// The flag to disable command validation.
 	// Corresponds to the TERRAGRUNT_DISABLE_COMMAND_VALIDATION environment variable.
 	disableCommandValidation bool,
+	// The duration for IAM role assumption.
+	// Corresponds to the TERRAGRUNT_IAM_ASSUME_ROLE_DURATION environment variable.
+	iamAssumeRoleDuration int,
 ) *TerragruntOptsConfig {
 	var daggers []TgConfigSetAsEnvVar
 
@@ -158,28 +162,53 @@ func newTerragruntOptionsDagger(
 		return strings.TrimSpace(strings.ReplaceAll(value, "\\", "\\\\"))
 	}
 
-	// Helper function to add boolean flags
-	addBoolFlag := func(key string, value bool) {
-		daggers = append(daggers, TgConfigSetAsEnvVar{
-			EnvVarKey:      key,
-			EnvVarValue:    strconv.FormatBool(value),
-			LogOptionValue: value,
-		})
+	addStringFlag := func(key, value, defaultValue string) {
+		if value != "" && value != defaultValue {
+			daggers = append(daggers, TgConfigSetAsEnvVar{
+				EnvVarKey:   key,
+				EnvVarValue: cleanValue(value),
+			})
+		}
 	}
 
-	// Helper function to add string flags
-	addStringFlag := func(key, value, defaultValue string) {
-		if value == "" {
-			value = defaultValue
+	addBoolFlag := func(key string, value bool) {
+		if value {
+			daggers = append(daggers, TgConfigSetAsEnvVar{
+				EnvVarKey:   key,
+				EnvVarValue: "true",
+			})
 		}
+	}
 
-		cleanedValue := cleanValue(value)
+	addIntFlag := func(key string, value, defaultValue int) {
+		if value != defaultValue {
+			daggers = append(daggers, TgConfigSetAsEnvVar{
+				EnvVarKey:   key,
+				EnvVarValue: strconv.Itoa(value),
+			})
+		}
+	}
 
-		daggers = append(daggers, TgConfigSetAsEnvVar{
-			EnvVarKey:      key,
-			EnvVarValue:    cleanedValue,
-			LogOptionValue: cleanedValue,
-		})
+	addMapFlag := func(key, value string) {
+		if value != "" {
+			// Assume the value is a comma-separated list of key=value pairs
+			pairs := strings.Split(value, ",")
+			formattedPairs := make([]string, 0, len(pairs))
+
+			for _, pair := range pairs {
+				kv := strings.SplitN(pair, "=", 2)
+				if len(kv) == 2 {
+					formattedPairs = append(formattedPairs, fmt.Sprintf("%s=%s", cleanValue(kv[0]), cleanValue(kv[1])))
+				}
+			}
+
+			if len(formattedPairs) > 0 {
+				daggers = append(daggers, TgConfigSetAsEnvVar{
+					EnvVarKey:   key,
+					EnvVarValue: strings.Join(formattedPairs, ","),
+				})
+			}
+		}
 	}
 
 	// Add all flags
@@ -188,8 +217,8 @@ func newTerragruntOptionsDagger(
 	addStringFlag("TERRAGRUNT_WORKING_DIR", workingDir, ".")
 	addStringFlag("TERRAGRUNT_LOG_LEVEL", logLevel, "info")
 	addStringFlag("TERRAGRUNT_IAM_ROLE", iamRole, "")
-	addStringFlag("TERRAGRUNT_IAM_ASSUME_ROLE_DURATION", iamRoleDuration, "")
-	addStringFlag("TERRAGRUNT_IAM_ASSUME_ROLE_SESSION_NAME", iamRoleSessionName, "")
+	addIntFlag("TERRAGRUNT_IAM_ASSUME_ROLE_DURATION", iamRoleDuration, 3600) // Default to 1 hour
+	addStringFlag("TERRAGRUNT_IAM_ASSUME_ROLE_SESSION_NAME", iamRoleSessionName, "terragrunt-session")
 	addStringFlag("TERRAGRUNT_IAM_ROLE_EXTERNAL_ID", iamRoleExternalID, "")
 	addStringFlag("TERRAGRUNT_IAM_ROLE_POLICY", iamRolePolicy, "")
 	addStringFlag("TERRAGRUNT_IAM_ROLE_POLICY_ARNS", iamRolePolicyArns, "")
@@ -198,7 +227,6 @@ func newTerragruntOptionsDagger(
 	addStringFlag("TERRAGRUNT_IAM_ROLE_SOURCE_IDENTITY", iamRoleSourceIdentity, "")
 	addStringFlag("TERRAGRUNT_DOWNLOAD_DIR", downloadDir, ".terragrunt-cache")
 	addStringFlag("TERRAGRUNT_SOURCE", source, "")
-	addStringFlag("TERRAGRUNT_SOURCE_MAP", sourceMap, "")
 
 	addBoolFlag("TERRAGRUNT_SOURCE_UPDATE", sourceUpdate)
 	addBoolFlag("TERRAGRUNT_IGNORE_DEPENDENCY_ERRORS", ignoreDependencyErrors)
@@ -213,16 +241,8 @@ func newTerragruntOptionsDagger(
 	addBoolFlag("TERRAGRUNT_DISABLE_LOG_FORMATTING", disableLogFormatting)
 	addBoolFlag("TERRAGRUNT_FORWARD_TF_STDOUT", forwardTfStdout)
 
-	// Add Parallelism with default
-	if parallelism == 0 {
-		parallelism = 10
-	}
-
-	daggers = append(daggers, TgConfigSetAsEnvVar{
-		EnvVarKey:      "TERRAGRUNT_PARALLELISM",
-		EnvVarValue:    strconv.Itoa(parallelism),
-		LogOptionValue: parallelism,
-	})
+	addIntFlag("TERRAGRUNT_PARALLELISM", parallelism, 0)
+	addIntFlag("TERRAGRUNT_IAM_ASSUME_ROLE_DURATION", iamAssumeRoleDuration, 0)
 
 	addStringFlag("TERRAGRUNT_HCLFMT_FILE", hclfmtFile, "")
 	addBoolFlag("TERRAGRUNT_NO_AUTO_INIT", noAutoInit)
@@ -239,6 +259,9 @@ func newTerragruntOptionsDagger(
 	addBoolFlag("TERRAGRUNT_FAIL_ON_STATE_BUCKET_CREATION", failOnStateBucketCreation)
 	addBoolFlag("TERRAGRUNT_DISABLE_BUCKET_UPDATE", disableBucketUpdate)
 	addBoolFlag("TERRAGRUNT_DISABLE_COMMAND_VALIDATION", disableCommandValidation)
+
+	// Handle TERRAGRUNT_SOURCE_MAP as a map-like string
+	addMapFlag("TERRAGRUNT_SOURCE_MAP", sourceMap)
 
 	return &TerragruntOptsConfig{TgOpts: daggers}
 }

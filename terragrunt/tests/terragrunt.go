@@ -82,7 +82,13 @@ func (m *Tests) TestTerragruntExecInitSimpleCommand(ctx context.Context) error {
 		Terragrunt(dagger.TerragruntOpts{
 			EnvVarsFromHost: testEnvVars,
 		}).
-		WithTerragruntPermissionsOnDirsDefault()
+		WithTerragruntPermissionsOnDirsDefault().
+		WithTerragruntLogOptions(
+			dagger.TerragruntWithTerragruntLogOptionsOpts{
+				TgLogLevel:        "debug",
+				TgForwardTfStdout: true,
+			},
+		)
 
 	// Execute the init command, but don't run it in a container
 	tgCtrConfigured := tgModule.
@@ -367,6 +373,94 @@ func (m *Tests) TestTerragruntExecLifecycleCommands(ctx context.Context) error {
 
 	if cmdDestroyOut == "" {
 		return Errorf("command destroy output is empty")
+	}
+
+	return nil
+}
+
+// TestTerragruntExecWithPlanOutput tests the execution of the 'terragrunt plan' command and validates the output.
+//
+// This function sets up the necessary environment variables and secrets, configures the Terragrunt module,
+// and executes the 'init' command. It validates the output of the command and ensures that
+// the command is executed successfully.
+// If any step fails, an error is returned.
+//
+// Parameters:
+// - ctx: The context for controlling the execution.
+//
+// Returns:
+// - error: If any step fails, an error is returned.
+func (m *Tests) TestTerragruntExecWithPlanOutput(ctx context.Context) error {
+	testEnvVars := []string{
+		"TF_VAR_project_name=myProject",
+		"TF_VAR_environment=production",
+		"TF_VAR_region=us-east-1",
+		"TF_VAR_instance_type=t2.micro",
+		"TF_VAR_db_name=myDatabase",
+		"GOOGLE_CLOUD_PROJECT=my-gcp-project",
+		"GOOGLE_CLOUD_KEYFILE_JSON=/path/to/keyfile.json",
+		"AWS_ACCESS_KEY_ID=my_aws_access_key",
+		"AWS_SECRET_ACCESS_KEY=my_aws_secret_key",
+		"DOCKER_REGISTRY=mydockerregistry",
+	}
+
+	dbPasswordSecret := dag.SetSecret("DB_PASSWORD", "supersecurepassword")
+	apiKeySecret := dag.SetSecret("API_KEY", "mysecureapikey")
+	sshKeySecret := dag.SetSecret("SSH_PRIVATE_KEY", "mysshprivatekey")
+
+	// main module configuration.
+	tgModule := dag.
+		Terragrunt(dagger.TerragruntOpts{
+			EnvVarsFromHost: testEnvVars,
+			TfVersion:       "1.7.0",
+		}).
+		WithTerragruntPermissionsOnDirsDefault().
+		WithTerragruntLogOptions(dagger.TerragruntWithTerragruntLogOptionsOpts{
+			TgLogDisableFormatting: true,
+			TgLogShowAbsPaths:      true,
+			TgLogLevel:             "debug",
+		}).
+		WithTerraformLogOptions(dagger.TerragruntWithTerraformLogOptionsOpts{
+			TfLog:     "debug",
+			TfLogPath: "/mnt/tflogs", // it's a directory that the terragrunt user owns.
+		}).
+		// Extra options added for more realism.
+		WithTerragruntOptions(dagger.TerragruntWithTerragruntOptionsOpts{
+			IgnoreDependencyErrors:     true,
+			IgnoreExternalDependencies: true,
+			DisableBucketUpdate:        true,
+		})
+
+	// Execute the plan command and get the container back.
+	tgCtr := tgModule.Exec("plan", dagger.TerragruntExecOpts{
+		Source: m.
+			getTestDir("").
+			Directory("terragrunt"),
+		Secrets: []*dagger.Secret{
+			dbPasswordSecret,
+			apiKeySecret,
+			sshKeySecret,
+		},
+		// Args to output the plan to a file.
+		Args: []string{
+			"-out=plan.tfplan",
+			"-refresh=true",
+		},
+	})
+
+	// Execute the plan command, and return the stdout.
+	_, outPlanErr := tgCtr.
+		Stdout(ctx)
+
+	if outPlanErr != nil {
+		return WrapErrorf(outPlanErr, "failed to get the stdout of the plan command")
+	}
+
+	// get the plan file
+	planFile := tgCtr.Terminal().File("/mnt/plan.tfplan")
+
+	if planFile == nil {
+		return Errorf("the terragrunt container does not have the plan file named 'plan.tfplan'")
 	}
 
 	return nil

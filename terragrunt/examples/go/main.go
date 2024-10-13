@@ -34,6 +34,11 @@ var (
 	errEnvVarsDontMatch        = errors.New("expected env vars to be passed, got empty output")
 	errNetRCFileNotFound       = errors.New("netrc file not found")
 	errExpectedFoldersNotFound = errors.New("expected to have at least one folder, got empty output")
+	errTerragruntPlanEmpty     = errors.New("terragrunt plan command output is empty")
+	errCommandInitEmpty        = errors.New("command init output is empty")
+	errCommandPlanEmpty        = errors.New("command plan output is empty")
+	errCommandApplyEmpty       = errors.New("command apply output is empty")
+	errCommandDestroyEmpty     = errors.New("command destroy output is empty")
 )
 
 // getTestDir returns the test directory.
@@ -58,8 +63,9 @@ func (m *Go) AllRecipes(ctx context.Context) error {
 	polTests := pool.New().WithErrors().WithContext(ctx)
 
 	// Test different ways to configure the base container.
-	// polTests.Go(m.BuiltInRecipes)
+	polTests.Go(m.Terragrunt_PassedEnvVars)
 	// From this point onwards, we're testing the specific functionality of the Terragrunt module.
+	polTests.Go(m.Terragrunt_ExecPlanCommand)
 
 	if err := polTests.Wait(); err != nil {
 		return fmt.Errorf("there are some failed tests: %w", err)
@@ -190,4 +196,201 @@ func (m *Go) Terragrunt_RunArbitraryCommand(ctx context.Context) (string, error)
 	}
 
 	return out, nil
+}
+
+// Terragrunt_ExecPlanCommand executes the 'terragrunt plan' command with specific configurations.
+//
+// This function demonstrates how to:
+// - Set up environment variables for Terragrunt execution
+// - Initialize the Terragrunt module with advanced logging and token options
+// - Execute the 'plan' command
+// - Validate the command output and environment variable setup
+//
+// It uses the Dagger Terragrunt module to perform these operations within a container.
+//
+// Parameters:
+// - ctx: context.Context for controlling the function's lifetime
+//
+// Returns:
+//   - error: If any step in the process fails, including command execution,
+//     output validation, or environment variable checks
+func (m *Go) Terragrunt_ExecPlanCommand(ctx context.Context) error {
+	testEnvVars := []string{
+		"OTHER_ENV_VAR=test",
+		"AWS_ACCESS_KEY_ID=test",
+		"AWS_SECRET_ACCESS_KEY=test",
+		"AWS_SESSION_TOKEN=test",
+		"TF_VAR_test=test",
+	}
+
+	tfTokenAsSecret := dag.SetSecret("TF_TOKEN_gitlab", "mysupertoken")
+
+	// Initialize the Terragrunt module with some advance options.
+	tgModule := dag.
+		Terragrunt(dagger.TerragruntOpts{
+			EnvVarsFromHost: testEnvVars,
+			TgVersion:       "v0.52.1",
+		}).
+		WithTerraformToken(tfTokenAsSecret).
+		WithTerragruntLogOptions(dagger.TerragruntWithTerragruntLogOptionsOpts{
+			TgLogLevel:             "debug",
+			TgLogDisableColor:      true,
+			TgForwardTfStdout:      true,
+			TgLogDisableFormatting: true,
+		}).
+		WithTerraformLogOptions(dagger.TerragruntWithTerraformLogOptionsOpts{
+			TfLog:     "debug",
+			TfLogPath: "/mnt/tflogs", // it's a directory that the terragrunt user owns.
+		})
+
+	// Container configured with all the options.
+	tgCtrConfigured := tgModule.
+		Exec("plan", dagger.TerragruntExecOpts{
+			Source: m.
+				getTestDir().
+				Directory("terragrunt"),
+		})
+
+	tgPlanCmdOut, tgPlanCmdErr := tgCtrConfigured.
+		Stdout(ctx)
+
+	if tgPlanCmdErr != nil {
+		return fmt.Errorf("failed to execute terragrunt plan command: %w", tgPlanCmdErr)
+	}
+
+	if tgPlanCmdOut == "" {
+		return errTerragruntPlanEmpty
+	}
+
+	return nil
+}
+
+// Terragrunt_ExecLifecycleCommands executes Terragrunt lifecycle commands.
+//
+// This function sets up the necessary environment variables and secrets, configures the Terragrunt module,
+// and executes a series of Terragrunt commands ("init", "plan", "apply", "destroy"). It validates the output
+// of each command and ensures that the commands are executed successfully.
+//
+// Parameters:
+// - ctx: The context for controlling the execution.
+//
+// Returns:
+// - error: If any command execution fails or if the command output is empty.
+func (m *Go) Terragrunt_ExecLifecycleCommands(ctx context.Context) error {
+	testEnvVars := []string{
+		"TF_VAR_test=test",
+		"TF_VAR_another_test=test",
+		"TF_VAR_region=westus",
+		"TF_VAR_resource_group=myResourceGroup",
+		"TF_VAR_storage_account=myStorageAccount",
+		"AZURE_SUBSCRIPTION_ID=your_subscription_id",
+		"AZURE_CLIENT_ID=your_client_id",
+		"AZURE_CLIENT_SECRET=your_client_secret",
+		"AZURE_TENANT_ID=your_tenant_id",
+	}
+
+	awsSecret := dag.SetSecret("AWS_SECRET_ACCESS_KEY", "awssecretkey")
+	gcpSecret := dag.SetSecret("GCP_SERVICE_ACCOUNT_KEY", "gcpserviceaccountkey")
+	azureSecret := dag.SetSecret("AZURE_CLIENT_SECRET", "azureclientsecret")
+
+	// github tf token
+	tfTokenGitHub := dag.SetSecret("TF_TOKEN_github", "mygithubtoken")
+
+	// main module configuration.
+	tgModule := dag.
+		Terragrunt(dagger.TerragruntOpts{
+			EnvVarsFromHost: testEnvVars,
+		}).
+		WithTerragruntPermissionsOnDirsDefault().
+		WithTerraformToken(tfTokenGitHub).
+		WithTerragruntLogOptions(dagger.TerragruntWithTerragruntLogOptionsOpts{
+			TgLogLevel:             "debug",
+			TgLogDisableColor:      true,
+			TgForwardTfStdout:      true,
+			TgLogDisableFormatting: true,
+		}).
+		WithTerraformLogOptions(dagger.TerragruntWithTerraformLogOptionsOpts{
+			TfLog:     "debug",
+			TfLogPath: "/mnt/tflogs", // it's a directory that the terragrunt user owns.
+		})
+
+	// run init command
+	cmdInitOut, cmdInitErr := tgModule.ExecCmd(ctx, "init", dagger.TerragruntExecCmdOpts{
+		Source: m.
+			getTestDir().
+			Directory("terragrunt"),
+		Secrets: []*dagger.Secret{
+			awsSecret,
+			gcpSecret,
+			azureSecret,
+		},
+	})
+
+	if cmdInitErr != nil {
+		return fmt.Errorf("failed to execute command init: %w", cmdInitErr)
+	}
+
+	if cmdInitOut == "" {
+		return errCommandInitEmpty
+	}
+
+	// run plan command with arguments
+	cmdPlanOut, cmdPlanErr := tgModule.ExecCmd(ctx, "plan", dagger.TerragruntExecCmdOpts{
+		Source: m.
+			getTestDir().
+			Directory("terragrunt"),
+		Secrets: []*dagger.Secret{
+			awsSecret,
+			gcpSecret,
+			azureSecret,
+		},
+		Args: []string{
+			"-out=plan.tfplan",
+			"-refresh=true",
+		},
+	})
+
+	if cmdPlanErr != nil {
+		return fmt.Errorf("failed to execute command plan: %w", cmdPlanErr)
+	}
+
+	if cmdPlanOut == "" {
+		return errCommandPlanEmpty
+	}
+
+	// run apply command with the auto-approve flag as an argument
+	cmdApplyOut, cmdApplyErr := tgModule.ExecCmd(ctx, "apply", dagger.TerragruntExecCmdOpts{
+		Source: m.
+			getTestDir().
+			Directory("terragrunt"),
+		Args: []string{
+			"-auto-approve",
+		},
+	})
+
+	if cmdApplyErr != nil {
+		return fmt.Errorf("failed to execute command apply: %w", cmdApplyErr)
+	}
+
+	if cmdApplyOut == "" {
+		return errCommandApplyEmpty
+	}
+
+	// run destroy command with the auto-approve built-in option.
+	cmdDestroyOut, cmdDestroyErr := tgModule.ExecCmd(ctx, "destroy", dagger.TerragruntExecCmdOpts{
+		Source: m.
+			getTestDir().
+			Directory("terragrunt"),
+		AutoApprove: true,
+	})
+
+	if cmdDestroyErr != nil {
+		return fmt.Errorf("failed to execute command destroy: %w", cmdDestroyErr)
+	}
+
+	if cmdDestroyOut == "" {
+		return errCommandDestroyEmpty
+	}
+
+	return nil
 }
