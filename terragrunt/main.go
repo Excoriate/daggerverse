@@ -1,4 +1,4 @@
-// Package main provides the Terragrunt Dagger module and related functions.
+// A Dagger module for Terragrunt, batteries included.
 //
 // This module has been generated via dagger init and serves as a reference to
 // basic module structure as you get started with Dagger. The module demonstrates
