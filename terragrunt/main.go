@@ -46,13 +46,13 @@ func New(
 	// ctr is the container to use as a base container.
 	// +optional
 	ctr *dagger.Container,
-	// tgVersion is the Terragrunt version to use. Default is "0.66.0".
-	// +optional
-	tgVersion string,
 	// imageURL is the URL of the image to use as the base container.
 	// It should includes tags. E.g. "ghcr.io/devops-infra/docker-terragrunt:tf-1.9.5-ot-1.8.2-tg-0.67.4"
 	// +optional
 	imageURL string,
+	// tgVersion is the Terragrunt version to use. Default is "0.68.1".
+	// +optional
+	tgVersion string,
 	// tfVersion is the Terraform version to use. Default is "1.9.1".
 	// +optional
 	tfVersion string,

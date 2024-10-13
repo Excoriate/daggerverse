@@ -16,7 +16,7 @@ const (
 	// OpenTofuDefaultVersion specifies the default version for OpenTofu.
 	OpenTofuDefaultVersion DefaultBinaryVersion = "1.8.2"
 	// TerragruntDefaultVersion specifies the default version for Terragrunt.
-	TerragruntDefaultVersion DefaultBinaryVersion = "0.67.4"
+	TerragruntDefaultVersion DefaultBinaryVersion = "0.68.1"
 	// TerraformDefaultVersion specifies the default version for Terraform.
 	TerraformDefaultVersion DefaultBinaryVersion = "1.9.5"
 )
