@@ -1,17 +1,17 @@
 # Module {{.module_name}} for Dagger
 
-
 A simple [Dagger](https://dagger.io) _place the description of the module here_
 
 ## Configuration 🛠️
 
 Through the [Dagger CLI](https://docs.dagger.io/cli/465058/install), or by using it directly within your module, you can configure the following options:
 
-* ⚙️ `ctr`: The container to use as a base container. If not specified, a new container is created.
-* ⚙️ `version`: The version of the Go image to use. Defaults to `latest`.
-* ⚙️ `image`: The Go image to use. Defaults to `golang:alpine`.
+- ⚙️ `ctr`: The container to use as a base container. If not specified, a new container is created.
+- ⚙️ `version`: The version of the Go image to use. Defaults to `latest`.
+- ⚙️ `image`: The Go image to use. Defaults to `golang:alpine`.
 
 ### Structure 🏗️
+
 ```text
 {{.module_name_pkg}} // main module
 ├── .gitattributes
@@ -52,16 +52,26 @@ Through the [Dagger CLI](https://docs.dagger.io/cli/465058/install), or by using
             └── test-file.yml
 
 ```
->NOTE: This structure comes out of the box if it's generated through **Daggy**. Just run `just create <module-name>` and you'll get the structure.
+
+### Key Files
+
+| File          | Description                                                                                                                                       |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apis.go`     | Contains methods for setting up and managing the container environment, including environment variables, directory mounting, and file operations. |
+| `commands.go` | Implements functions for running shell commands and opening terminals in the container.                                                           |
+| `vcs.go`      | Provides functionality for version control system operations, particularly for setting up .netrc files for GitHub and GitLab authentication.      |
+| `cloud.go`    | Includes methods for configuring cloud provider credentials, specifically for AWS and Azure.                                                      |
+| `config.go`   | Defines constants for default container configurations.                                                                                           |
+
+> NOTE: This structure comes out of the box if it's generated through **Daggy**. Just run `just create <module-name>` for the full version, or `just createlight <module-name>` for the minimal version.
 
 ---
 
 ## Features 🎨
 
 | Command or functionality  | Command | Example                     | Status |
-|---------------------------|---------|-----------------------------|--------|
-| Add your feature **here** | **run** | `dagger call <my function>` | ✅      |
-
+| ------------------------- | ------- | --------------------------- | ------ |
+| Add your feature **here** | **run** | `dagger call <my function>` | ✅     |
 
 ## Using the {{.module_name}} Module 🚀
 
@@ -73,20 +83,20 @@ _Place the description of the module here_
 
 List all the functions available in the module:
 
-  ```bash
-  # enter into the module's directory
-  cd {{.module_name}}
+```bash
+# enter into the module's directory
+cd {{.module_name}}
 
-  # list all the functions available in the module
-  dagger develop && dagger functions
+# list all the functions available in the module
+dagger develop && dagger functions
 ```
 
 Call a function:
 
-  ```bash
-  # call a function
-  # dagger call <function-name> [arguments]
-  dagger call github.com/excoriate/daggerverse/{{.module_name}}@version <function-name> [arguments]
+```bash
+# call a function
+# dagger call <function-name> [arguments]
+dagger call github.com/excoriate/daggerverse/{{.module_name}}@version <function-name> [arguments]
 ```
 
 ---
