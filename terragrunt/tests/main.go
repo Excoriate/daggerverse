@@ -71,6 +71,7 @@ func (m *Tests) TestAll(ctx context.Context) error {
 	polTests.Go(m.TestTerragruntExecVersionCommand)
 	polTests.Go(m.TestTerragruntExecPlanCommand)
 	polTests.Go(m.TestTerragruntExecLifecycleCommands)
+	polTests.Go(m.TestTerragruntExecWithPlanOutput)
 
 	if err := polTests.Wait(); err != nil {
 		return WrapError(err, "there are some failed tests")
