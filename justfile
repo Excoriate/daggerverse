@@ -300,5 +300,48 @@ is-dagger-module mod:
   @test -f {{mod}}/dagger.json || (echo "❌ dagger.json not found in module at path=`pwd`/{{mod}}. Not a Dagger module." && exit 1)
   @echo "✅ [{{mod}}] is a Dagger module"
 
+
+# Recipe to format Go files in Dagger modules, excluding internal/ and dagger.gen.go
+fmt mod:
+    #!/usr/bin/env sh
+    set -e
+
+    echo "🔍 Checking and formatting Go files in [{{mod}}] and its submodules..."
+    
+    formatted_files=()
+
+    # Function to format files in a directory if it's a Dagger module
+    format_directory() {
+        if [ -f "$1/dagger.json" ]; then
+            echo "✅ Formatting Dagger module: $1"
+            while IFS= read -r file; do
+                gofmt -s -w "$file"
+                formatted_files+=("$file")
+            done < <(find "$1" -name '*.go' ! -path '*/internal/*' ! -name 'dagger.gen.go')
+        else
+            echo "ℹ️ Skipping non-Dagger module: $1"
+        fi
+    }
+
+    # Format parent module
+    format_directory "{{mod}}"
+
+    # Format tests submodule
+    if [ -d "{{mod}}/tests" ]; then
+        format_directory "{{mod}}/tests"
+    fi
+
+    # Format examples/go submodule
+    if [ -d "{{mod}}/examples/go" ]; then
+        format_directory "{{mod}}/examples/go"
+    fi
+
+    if [ ${#formatted_files[@]} -eq 0 ]; then
+        echo "✅ No files required formatting in Dagger modules within [{{mod}}] and its submodules."
+    else
+        echo "✅ Formatted the following files in Dagger modules within [{{mod}}] and its submodules:"
+        printf '%s\n' "${formatted_files[@]}"
+    fi
+
 # Recipe that check Dagger pre-requisites
 check-dagger-pre-requisites mod: (check-docker-or-podman) (is-dagger-module mod)
