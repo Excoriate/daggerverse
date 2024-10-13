@@ -82,7 +82,13 @@ func (m *Tests) TestTerragruntExecInitSimpleCommand(ctx context.Context) error {
 		Terragrunt(dagger.TerragruntOpts{
 			EnvVarsFromHost: testEnvVars,
 		}).
-		WithTerragruntPermissionsOnDirsDefault()
+		WithTerragruntPermissionsOnDirsDefault().
+		WithTerragruntLogOptions(
+			dagger.TerragruntWithTerragruntLogOptionsOpts{
+				TgLogLevel:        "debug",
+				TgForwardTfStdout: true,
+			},
+		)
 
 	// Execute the init command, but don't run it in a container
 	tgCtrConfigured := tgModule.
@@ -386,16 +392,16 @@ func (m *Tests) TestTerragruntExecLifecycleCommands(ctx context.Context) error {
 // - error: If any step fails, an error is returned.
 func (m *Tests) TestTerragruntExecWithPlanOutput(ctx context.Context) error {
 	testEnvVars := []string{
-		// "TF_VAR_project_name=myProject",
-		// "TF_VAR_environment=production",
-		// "TF_VAR_region=us-east-1",
-		// "TF_VAR_instance_type=t2.micro",
-		// "TF_VAR_db_name=myDatabase",
+		"TF_VAR_project_name=myProject",
+		"TF_VAR_environment=production",
+		"TF_VAR_region=us-east-1",
+		"TF_VAR_instance_type=t2.micro",
+		"TF_VAR_db_name=myDatabase",
 		"GOOGLE_CLOUD_PROJECT=my-gcp-project",
-		// "GOOGLE_CLOUD_KEYFILE_JSON=/path/to/keyfile.json",
-		// "AWS_ACCESS_KEY_ID=my_aws_access_key",
-		// "AWS_SECRET_ACCESS_KEY=my_aws_secret_key",
-		// "DOCKER_REGISTRY=mydockerregistry",
+		"GOOGLE_CLOUD_KEYFILE_JSON=/path/to/keyfile.json",
+		"AWS_ACCESS_KEY_ID=my_aws_access_key",
+		"AWS_SECRET_ACCESS_KEY=my_aws_secret_key",
+		"DOCKER_REGISTRY=mydockerregistry",
 	}
 
 	dbPasswordSecret := dag.SetSecret("DB_PASSWORD", "supersecurepassword")

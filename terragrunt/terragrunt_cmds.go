@@ -12,31 +12,6 @@ const (
 	terragruntEntrypoint = "terragrunt"
 )
 
-// Cmd is an interface that represents a command to be executed by Terragrunt.
-type Cmd interface {
-	// Exec executes a given command within a dagger container.
-	// It returns a pointer to the resulting dagger.Container or an error if the command is invalid or fails to execute.
-	Exec(
-		ctx context.Context,
-		command string,
-		args []string,
-		autoApprove bool,
-		source *dagger.Directory,
-		module string,
-		envVars []string,
-		secrets []*dagger.Secret,
-	) (*dagger.Container, error)
-	// validate checks if the provided command is a recognized IaC tool command.
-	// It returns an error if the command is invalid, otherwise it returns nil.
-	// It expects the command to be a valid IaC tool command.
-	// It returns an error if the command is invalid or empty.
-	validate(
-		command string,
-	) error
-	// getEntrypoint returns the entrypoint to use when executing the command.
-	getEntrypoint() string
-}
-
 // TerragruntCmd represents a command to be executed by Terragrunt.
 type TerragruntCmd struct {
 	// Tg is the Terragrunt module.
