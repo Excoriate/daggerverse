@@ -173,3 +173,19 @@ func (m *Terragrunt) WithSSHAuthForTerraformModules(
 
 	return m
 }
+
+// WithTerragruntProviderCacheServerDisabled disables the Terragrunt provider cache server.
+// It sets the environment variable TERRAGRUNT_PROVIDER_CACHE to "0".
+// WithTerragruntProviderCacheServerDisabled disables the Terragrunt provider cache server.
+//
+// By default, it's enabled, but in some cases, you may want to disable it.
+//
+// Returns:
+//   - *Terragrunt: The updated Terragrunt instance with the provider cache server disabled.
+func (m *Terragrunt) WithTerragruntProviderCacheServerDisabled() *Terragrunt {
+	m.Ctr = m.Ctr.
+		WithoutEnvVariable("TERRAGRUNT_PROVIDER_CACHE").
+		WithEnvVariable("TERRAGRUNT_PROVIDER_CACHE", "1")
+
+	return m
+}
