@@ -22,7 +22,7 @@ type Cmd interface {
 	// - module: The module to execute or the terragrunt configuration where the terragrunt.hcl file is located. +optional
 	// - envVars: The environment variables to pass to the container. +optional
 	// - secrets: The secrets to pass to the container. +optional
-	// - entrypoint: The entrypoint to use for executing the command.
+	// - tool: The tool to use for executing the command.
 	//
 	// Returns:
 	// - *dagger.Container: Pointer to the resulting container.
@@ -50,6 +50,7 @@ type Cmd interface {
 	// - module: The module to execute. +optional
 	// - envVars: The environment variables to pass to the container. +optional
 	// - secrets: The secrets to pass to the container. +optional
+	// - tool: The tool to use for executing the command.
 	//
 	// Returns:
 	// - *dagger.Container: Pointer to the resulting container.
@@ -63,9 +64,10 @@ type Cmd interface {
 		module string,
 		envVars []string,
 		secrets []*dagger.Secret,
+		tool string,
 	) (*dagger.Container, error)
 
-	// TfExecCmd executes a given Terraform command within a Dagger container.
+	// TfExec executes a given Terraform command within a Dagger container.
 	//
 	// Parameters:
 	// - ctx: The context for controlling the execution.
@@ -76,7 +78,32 @@ type Cmd interface {
 	// - module: The module to execute. +optional
 	// - envVars: The environment variables to pass to the container. +optional
 	// - secrets: The secrets to pass to the container. +optional
-	// - entrypoint: The entrypoint to use for executing the command.
+	//
+	// Returns:
+	// - *dagger.Container: Pointer to the resulting container.
+	// - error: If execution fails.
+	TfExec(
+		ctx context.Context,
+		command string,
+		args []string,
+		autoApprove bool,
+		source *dagger.Directory,
+		module string,
+		envVars []string,
+		secrets []*dagger.Secret,
+	) (*dagger.Container, error)
+
+	// TfExecCmd executes a given Terragrunt command within a Dagger container.
+	//
+	// Parameters:
+	// - ctx: The context for controlling the execution.
+	// - command: The Terragrunt command to execute.
+	// - args: The arguments for the command.
+	// - autoApprove: Flag to auto-approve prompts.
+	// - source: The source directory for the command.
+	// - module: The module to execute. +optional
+	// - envVars: The environment variables to pass to the container. +optional
+	// - secrets: The secrets to pass to the container. +optional
 	//
 	// Returns:
 	// - *dagger.Container: Pointer to the resulting container.
@@ -90,35 +117,6 @@ type Cmd interface {
 		module string,
 		envVars []string,
 		secrets []*dagger.Secret,
-		entrypoint Entrypoint,
-	) (*dagger.Container, error)
-
-	// TgExecCmd executes a given Terragrunt command within a Dagger container.
-	//
-	// Parameters:
-	// - ctx: The context for controlling the execution.
-	// - command: The Terragrunt command to execute.
-	// - args: The arguments for the command.
-	// - autoApprove: Flag to auto-approve prompts.
-	// - source: The source directory for the command.
-	// - module: The module to execute. +optional
-	// - envVars: The environment variables to pass to the container. +optional
-	// - secrets: The secrets to pass to the container. +optional
-	// - entrypoint: The entrypoint to use for executing the command.
-	//
-	// Returns:
-	// - *dagger.Container: Pointer to the resulting container.
-	// - error: If execution fails.
-	TgExecCmd(
-		ctx context.Context,
-		command string,
-		args []string,
-		autoApprove bool,
-		source *dagger.Directory,
-		module string,
-		envVars []string,
-		secrets []*dagger.Secret,
-		entrypoint Entrypoint,
 	) (*dagger.Container, error)
 
 	// validate checks if the provided command is recognized by the IaC tool.

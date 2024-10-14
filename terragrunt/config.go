@@ -1,20 +1,20 @@
 package main
 
-// Entrypoint represents the entrypoint to use when executing the command.
-type Entrypoint string
+// Tool represents the entrypoint to use when executing the command.
+type Tool string
 
 const (
-	// TerragruntEntrypoint specifies the entrypoint for Terragrunt.
-	TerragruntEntrypoint Entrypoint = "terragrunt"
-	// TerraformEntrypoint specifies the entrypoint for Terraform.
-	TerraformEntrypoint Entrypoint = "terraform"
-	// OpentofuEntrypoint specifies the entrypoint for Opentofu.
-	OpentofuEntrypoint Entrypoint = "opentofu"
+	// TerragruntTool specifies the tool for Terragrunt.
+	TerragruntTool Tool = "terragrunt"
+	// TerraformTool specifies the tool for Terraform.
+	TerraformTool Tool = "terraform"
+	// OpentofuTool specifies the tool for Opentofu.
+	OpentofuTool Tool = "opentofu"
 )
 
 // IsValidIACTool validates the IaC tool.
 func IsValidIACTool(tool string) error {
-	validTools := []Entrypoint{TerragruntEntrypoint, TerraformEntrypoint, OpentofuEntrypoint}
+	validTools := []Tool{TerragruntTool, TerraformTool, OpentofuTool}
 	isValidTool := false
 
 	for _, valid := range validTools {
@@ -26,7 +26,7 @@ func IsValidIACTool(tool string) error {
 	}
 
 	if !isValidTool {
-		return WrapErrorf(nil, "invalid entrypoint: %s. Must be one of: %v", tool, validTools)
+		return WrapErrorf(nil, "invalid tool: %s. Must be one of: %v", tool, validTools)
 	}
 
 	return nil

@@ -78,6 +78,9 @@ func (m *Terragrunt) Exec(
 	// secrets is the secrets to pass to the container.
 	// +optional
 	secrets []*dagger.Secret,
+	// tool is the tool to use for executing the command.
+	// +optional
+	tool string,
 ) (*dagger.Container, error) {
 	// No too sure about this, but it's a good practice to have a context.
 	if ctx == nil {
@@ -133,6 +136,15 @@ func (m *Terragrunt) Exec(
 			WithSecretVariable(secretName, secret)
 	}
 
+	// Set the entrypoint
+	if tool != "" {
+		if err := IsValidIACTool(tool); err != nil {
+			return nil, WrapErrorf(err, "failed to set the entrypoint with tool: %s", tool)
+		}
+
+		return m.Ctr.WithExec(append([]string{string(tool)}, cmdAsSlice...)), nil
+	}
+
 	// Execute the command
 	return m.Ctr.
 		WithExec(append([]string{m.Tg.getEntrypoint()}, cmdAsSlice...)), nil
@@ -167,8 +179,11 @@ func (m *Terragrunt) ExecCmd(
 	// secrets is the secrets to pass to the container.
 	// +optional
 	secrets []*dagger.Secret,
+	// tool is the tool to use for executing the command.
+	// +optional
+	tool string,
 ) (string, error) {
-	container, err := m.Exec(ctx, command, args, autoApprove, source, module, envVars, secrets)
+	container, err := m.Exec(ctx, command, args, autoApprove, source, module, envVars, secrets, tool)
 
 	if err != nil {
 		return "", WrapErrorf(err, "failed to execute terragrunt command: %s", command)
@@ -179,6 +194,74 @@ func (m *Terragrunt) ExecCmd(
 
 	if err != nil {
 		return "", WrapErrorf(err, "failed to get stdout from terragrunt command: %s", command)
+	}
+
+	return output, nil
+}
+
+func (m *Terragrunt) TfExec(
+	// ctx is the context to use when executing the command.
+	// +optional
+	ctx context.Context,
+	// command is the terraform command to execute. It's the actual command that comes after 'terraform'
+	command string,
+	// args are the arguments to pass to the command.
+	// +optional
+	args []string,
+	// autoApprove is the flag to auto approve the command.
+	// +optional
+	autoApprove bool,
+	// source is the source directory that includes the source code.
+	// +defaultPath="/"
+	// +ignore=[".terragrunt-cache", ".terraform", ".github", ".gitignore", ".git", "vendor", "node_modules", "build", "dist", "log"]
+	source *dagger.Directory,
+	// module is the module to execute or the terraform configuration where the main.tf file is located.
+	// +optional
+	module string,
+	// envVars is the environment variables to pass to the container.
+	// +optional
+	envVars []string,
+	// secrets is the secrets to pass to the container.
+	// +optional
+	secrets []*dagger.Secret,
+) (*dagger.Container, error) {
+	return m.Exec(ctx, command, args, autoApprove, source, module, envVars, secrets, string(TerraformTool))
+}
+
+func (m *Terragrunt) TfExecCmd(
+	// ctx is the context to use when executing the command.
+	// +optional
+	ctx context.Context,
+	// command is the terraform command to execute. It's the actual command that comes after 'terraform'
+	command string,
+	// args are the arguments to pass to the command.
+	// +optional
+	args []string,
+	// autoApprove is the flag to auto approve the command.
+	// +optional
+	autoApprove bool,
+	// source is the source directory that includes the source code.
+	// +defaultPath="/"
+	// +ignore=[".terragrunt-cache", ".terraform", ".github", ".gitignore", ".git", "vendor", "node_modules", "build", "dist", "log"]
+	source *dagger.Directory,
+	// module is the module to execute or the terraform configuration where the main.tf file is located.
+	// +optional
+	module string,
+	// envVars is the environment variables to pass to the container.
+	// +optional
+	envVars []string,
+	// secrets is the secrets to pass to the container.
+	// +optional
+	secrets []*dagger.Secret,
+) (string, error) {
+	container, err := m.TfExec(ctx, command, args, autoApprove, source, module, envVars, secrets)
+	if err != nil {
+		return "", WrapErrorf(err, "failed to execute terraform command: %s", command)
+	}
+
+	output, err := container.Stdout(ctx)
+	if err != nil {
+		return "", WrapErrorf(err, "failed to get stdout from terraform command: %s", command)
 	}
 
 	return output, nil
