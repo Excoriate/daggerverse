@@ -1,13 +1,19 @@
 // A Dagger module for Terragrunt, batteries included.
 //
-// This module has been generated via dagger init and serves as a reference to
-// basic module structure as you get started with Dagger. The module demonstrates
-// usage of arguments and return types using simple echo and grep commands. The functions
-// can be called from the dagger CLI or from one of the SDKs.
+// A powerful Dagger module for managing Terragrunt, Terraform, and OpenTofu in a containerized environment.
 //
-// The first line in this comment block is a short description line and the
-// rest is a long description with more detail on the module's purpose or usage,
-// if appropriate. All modules should have a short description.
+// This module provides a comprehensive set of features for Infrastructure as Code, including:
+// - Flexible base image built using APKO for a secure and optimized container environment.
+// - Multi-tool support for Terragrunt, Terraform, and OpenTofu.
+// - Customizable configurations for Terragrunt and Terraform settings.
+// - Caching mechanisms for improved performance.
+// - Optional AWS CLI integration.
+// - Fine-grained control over directory permissions.
+// - Easy management of environment variables.
+// - Secure handling of sensitive information like Terraform tokens.
+// - Execution flexibility to run Terragrunt, Terraform, or shell commands within the container.
+//
+// The module is designed to be highly configurable and extesible.
 package main
 
 import (
