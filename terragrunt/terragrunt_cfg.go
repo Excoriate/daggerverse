@@ -141,10 +141,10 @@ func (m *Terragrunt) WithIACToolsInstalled(tgVersion, tfVersion, openTofuVersion
 		WithOpenTofuInstalled(openTofuVersion)
 }
 
-// WithModulesWithSourceInSSH configures the container to use SSH authentication for Terragrunt modules with SSH sources.
+// WithSSHAuthForTerraformModules configures SSH authentication for Terraform modules with Git SSH sources.
 //
-// This function mounts an SSH authentication socket into the container, allowing Terragrunt to authenticate
-// when fetching modules from SSH sources (e.g., private Git repositories).
+// This function mounts an SSH authentication socket into the container, enabling Terraform to authenticate
+// when fetching modules from Git repositories using SSH URLs (e.g., git@github.com:org/repo.git).
 //
 // Parameters:
 //   - sshAuthSocket: The SSH authentication socket to mount in the container.
@@ -152,8 +152,8 @@ func (m *Terragrunt) WithIACToolsInstalled(tgVersion, tfVersion, openTofuVersion
 //   - owner: Optional. The owner of the mounted socket in the container.
 //
 // Returns:
-//   - *Terragrunt: The updated Terragrunt instance with SSH authentication configured.
-func (m *Terragrunt) WithModulesWithSourceInSSH(
+//   - *Terragrunt: The updated Terragrunt instance with SSH authentication configured for Terraform modules.
+func (m *Terragrunt) WithSSHAuthForTerraformModules(
 	// sshAuthSocket is the SSH socket to use for authentication.
 	sshAuthSocket *dagger.Socket,
 	// socketPath is the path where the SSH socket will be mounted in the container.
