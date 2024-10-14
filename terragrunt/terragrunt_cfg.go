@@ -1,6 +1,8 @@
 package main
 
 import (
+	"strings"
+
 	"github.com/Excoriate/daggerverse/terragrunt/internal/dagger"
 	"github.com/Excoriate/daggerx/pkg/fixtures"
 )
@@ -170,6 +172,51 @@ func (m *Terragrunt) WithSSHAuthForTerraformModules(
 
 	m.Ctr = m.Ctr.
 		WithUnixSocket(socketPath, sshAuthSocket, socketOpts)
+
+	return m
+}
+
+// WithTerragruntProviderCacheServerDisabled disables the Terragrunt provider cache server.
+// It sets the environment variable TERRAGRUNT_PROVIDER_CACHE to "0".
+// WithTerragruntProviderCacheServerDisabled disables the Terragrunt provider cache server.
+//
+// By default, it's enabled, but in some cases, you may want to disable it.
+//
+// Returns:
+//   - *Terragrunt: The updated Terragrunt instance with the provider cache server disabled.
+func (m *Terragrunt) WithTerragruntProviderCacheServerDisabled() *Terragrunt {
+	m.Ctr = m.Ctr.
+		WithoutEnvVariable("TERRAGRUNT_PROVIDER_CACHE").
+		WithEnvVariable("TERRAGRUNT_PROVIDER_CACHE", "0")
+
+	return m
+}
+
+// WithRegistriesToCacheProvidersFrom adds extra registries to cache providers from.
+//
+// This function appends the provided registries to the default list of registries in the Terragrunt configuration.
+// By default, the Terragrunt provider's cache only caches registry.terraform.io and registry.opentofu.org.
+//
+// Parameters:
+//   - registries: A slice of strings representing the registries to cache providers from.
+//
+// Returns:
+//   - *Terragrunt: The updated Terragrunt instance with the extra registries to cache providers from.
+func (m *Terragrunt) WithRegistriesToCacheProvidersFrom(
+	// registries is a slice of strings representing the registries to cache providers from.
+	registries []string,
+) *Terragrunt {
+	defaultRegistries := []string{
+		"registry.terraform.io",
+		"registry.opentofu.org",
+	}
+
+	registries = append(defaultRegistries, registries...)
+	registryNames := strings.Join(registries, ",")
+
+	m.Ctr = m.Ctr.
+		WithoutEnvVariable("TERRAGRUNT_PROVIDER_CACHE_REGISTRY_NAMES").
+		WithEnvVariable("TERRAGRUNT_PROVIDER_CACHE_REGISTRY_NAMES", registryNames)
 
 	return m
 }
