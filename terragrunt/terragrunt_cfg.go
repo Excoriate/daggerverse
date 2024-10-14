@@ -140,3 +140,36 @@ func (m *Terragrunt) WithIACToolsInstalled(tgVersion, tfVersion, openTofuVersion
 		WithTerraformInstalled(tfVersion).
 		WithOpenTofuInstalled(openTofuVersion)
 }
+
+// WithModulesWithSourceInSSH configures the container to use SSH authentication for Terragrunt modules with SSH sources.
+//
+// This function mounts an SSH authentication socket into the container, allowing Terragrunt to authenticate
+// when fetching modules from SSH sources (e.g., private Git repositories).
+//
+// Parameters:
+//   - sshAuthSocket: The SSH authentication socket to mount in the container.
+//   - socketPath: The path where the SSH socket will be mounted in the container.
+//   - owner: Optional. The owner of the mounted socket in the container.
+//
+// Returns:
+//   - *Terragrunt: The updated Terragrunt instance with SSH authentication configured.
+func (m *Terragrunt) WithModulesWithSourceInSSH(
+	// sshAuthSocket is the SSH socket to use for authentication.
+	sshAuthSocket *dagger.Socket,
+	// socketPath is the path where the SSH socket will be mounted in the container.
+	socketPath string,
+	// owner is the owner of the mounted socket in the container. Optional parameter.
+	// +optional
+	owner string,
+) *Terragrunt {
+	socketOpts := dagger.ContainerWithUnixSocketOpts{}
+
+	if owner != "" {
+		socketOpts.Owner = owner
+	}
+
+	m.Ctr = m.Ctr.
+		WithUnixSocket(socketPath, sshAuthSocket, socketOpts)
+
+	return m
+}
