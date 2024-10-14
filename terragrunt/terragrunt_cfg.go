@@ -187,7 +187,7 @@ func (m *Terragrunt) WithSSHAuthForTerraformModules(
 func (m *Terragrunt) WithTerragruntProviderCacheServerDisabled() *Terragrunt {
 	m.Ctr = m.Ctr.
 		WithoutEnvVariable("TERRAGRUNT_PROVIDER_CACHE").
-		WithEnvVariable("TERRAGRUNT_PROVIDER_CACHE", "1")
+		WithEnvVariable("TERRAGRUNT_PROVIDER_CACHE", "0")
 
 	return m
 }

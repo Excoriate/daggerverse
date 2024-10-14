@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"strings"
 
 	"github.com/Excoriate/daggerverse/terragrunt/tests/internal/dagger"
 )
@@ -441,6 +442,112 @@ func (m *Tests) TestTerragruntExecWithPlanOutput(ctx context.Context) error {
 
 	if planFile == nil {
 		return Errorf("the terragrunt container does not have the plan file named 'plan.tfplan'")
+	}
+
+	return nil
+}
+
+// TestTerragruntWithCustomRegistriesToCacheProvidersFrom tests the configuration of custom registries
+// for caching providers in Terragrunt.
+//
+// This function sets up the Terragrunt module with custom registries, executes the 'printenv' command,
+// and validates that the environment variable TERRAGRUNT_PROVIDER_CACHE_REGISTRY_NAMES is set correctly.
+//
+// Parameters:
+// - ctx: The context for controlling the execution.
+//
+// Returns:
+// - error: If any step fails, an error is returned.
+func (m *Tests) TestTerragruntWithCustomRegistriesToCacheProvidersFrom(ctx context.Context) error {
+	// main module configuration.
+	tgModule := dag.
+		Terragrunt().
+		WithTerragruntPermissionsOnDirsDefault().
+		WithTerragruntLogOptions(dagger.TerragruntWithTerragruntLogOptionsOpts{
+			TgLogDisableFormatting: true,
+			TgLogShowAbsPaths:      true,
+			TgLogLevel:             "debug",
+		}).
+		WithTerraformLogOptions(dagger.TerragruntWithTerraformLogOptionsOpts{
+			TfLog:     "debug",
+			TfLogPath: "/mnt/tflogs", // it's a directory that the terragrunt user owns.
+		}).
+		WithRegistriesToCacheProvidersFrom([]string{
+			"myregistry.mycompany.com",
+		})
+
+	tgCtr := tgModule.Ctr()
+
+	// Execute the plan command, and return the stdout.
+	envVars, outPlanErr := tgCtr.WithExec([]string{"printenv"}).
+		Stdout(ctx)
+
+	// Ensure that the TERRAGRUNT_PROVIDER_CACHE_REGISTRY_NAMES has this value:
+	// "registry.terraform.io,registry.opentofu.org,myregistry.mycompany.com"
+	expectedEnvVarCfg := "TERRAGRUNT_PROVIDER_CACHE_REGISTRY_NAMES=" +
+		"registry.terraform.io,registry.opentofu.org,myregistry.mycompany.com"
+	if !strings.Contains(envVars, expectedEnvVarCfg) {
+		return Errorf("TERRAGRUNT_PROVIDER_CACHE_REGISTRY_NAMES is not set correctly, got: %s", envVars)
+	}
+
+	if outPlanErr != nil {
+		return WrapErrorf(outPlanErr, "failed to get the stdout of the plan command")
+	}
+
+	return nil
+}
+
+// TestTerragruntWithProviderCacheServerDisabled tests the configuration of the provider cache server in Terragrunt.
+//
+// This function sets up the Terragrunt module with the provider cache server disabled, executes the 'printenv' command,
+// and validates that the environment variable TERRAGRUNT_PROVIDER_CACHE is set to "0".
+//
+// Parameters:
+// - ctx: The context for controlling the execution.
+//
+// Returns:
+// - error: If any step fails, an error is returned.
+func (m *Tests) TestTerragruntWithProviderCacheServerDisabled(ctx context.Context) error {
+	// main module configuration.
+	tgModule := dag.
+		Terragrunt().
+		WithTerragruntPermissionsOnDirsDefault().
+		WithTerragruntLogOptions(dagger.TerragruntWithTerragruntLogOptionsOpts{
+			TgLogDisableFormatting: true,
+			TgLogShowAbsPaths:      true,
+			TgLogLevel:             "debug",
+			TgForwardTfStdout:      true, // forward terraform stdout to the terragrunt stdout.
+		}).
+		WithTerragruntProviderCacheServerDisabled()
+
+	tgCtr := tgModule.Ctr()
+
+	// Execute the plan command, and return the stdout.
+	envVars, outPlanErr := tgCtr.WithExec([]string{"printenv"}).
+		Stdout(ctx)
+
+	if outPlanErr != nil {
+		return WrapErrorf(outPlanErr, "failed to get the stdout of the plan command")
+	}
+
+	// Ensure that the TERRAGRUNT_PROVIDER_CACHE is set to "0"
+	if !strings.Contains(envVars, "TERRAGRUNT_PROVIDER_CACHE=0") {
+		return Errorf("TERRAGRUNT_PROVIDER_CACHE is not set correctly")
+	}
+
+	// Run plan command
+	planCmdOut, planCmdErr := tgModule.ExecCmd(ctx, "plan", dagger.TerragruntExecCmdOpts{
+		Source: m.
+			getTestDir("").
+			Directory("terragrunt"),
+	})
+
+	if planCmdErr != nil {
+		return WrapErrorf(planCmdErr, "failed to run plan command")
+	}
+
+	if planCmdOut == "" {
+		return Errorf("plan command output is empty")
 	}
 
 	return nil
