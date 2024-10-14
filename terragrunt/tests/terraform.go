@@ -39,14 +39,21 @@ func (m *Tests) TestTfExecInitSimpleCommand(ctx context.Context) error {
 	tfInitCtr := tgModule.
 		TfExec("init", dagger.TerragruntTfExecOpts{
 			Source: m.getTestDir("").
-				Directory("terraform"),
+				Directory("terraform/tf-module-1"),
 		})
 
-	tfPlanCtr := tgModule.WithContainer(tfInitCtr).
-		TfExec("plan")
+	tfPlanCtr := tfInitCtr.
+		WithExec([]string{"ls"}).
+		WithExec([]string{"terraform", "plan"})
+
+	// tfPlanCtr := tgModule.WithContainer(tfInitCtr).
+	// 	TfExec("plan", dagger.TerragruntTfExecOpts{
+	// 		Source: tfInitCtr.Directory("."),
+	// 	})
 
 	// Evaluate the terraform init command.
-	tfPlanOut, tfPlanErr := tfPlanCtr.WithExec([]string{"ls"}).Terminal().
+	tfPlanOut, tfPlanErr := tfPlanCtr.
+		Terminal().
 		Stdout(ctx)
 
 	if tfPlanErr != nil {
