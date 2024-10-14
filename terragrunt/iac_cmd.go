@@ -36,7 +36,7 @@ type Cmd interface {
 		module string,
 		envVars []string,
 		secrets []*dagger.Secret,
-		entrypoint Entrypoint,
+		tool string,
 	) (*dagger.Container, error)
 
 	// ExecCmd executes a given command within a Dagger container.

@@ -199,6 +199,25 @@ func (m *Terragrunt) ExecCmd(
 	return output, nil
 }
 
+// TfExec executes a Terraform command within the Terragrunt context.
+//
+// This function takes the specified command and its arguments, executes it in the
+// context of the provided source directory, and returns a pointer to the resulting
+// container or an error if the execution fails.
+//
+// Parameters:
+// - ctx: The context to use when executing the command.
+// - command: The terraform command to execute. It's the actual command that comes after 'terraform'.
+// - args: The arguments to pass to the command.
+// - autoApprove: The flag to auto approve the command.
+// - source: The source directory that includes the source code.
+// - module: The module to execute or the terraform configuration where the main.tf file is located.
+// - envVars: The environment variables to pass to the container.
+// - secrets: The secrets to pass to the container.
+//
+// Returns:
+// - *dagger.Container: A pointer to the resulting container.
+// - error: An error if the command execution fails.
 func (m *Terragrunt) TfExec(
 	// ctx is the context to use when executing the command.
 	// +optional
@@ -228,6 +247,25 @@ func (m *Terragrunt) TfExec(
 	return m.Exec(ctx, command, args, autoApprove, source, module, envVars, secrets, string(TerraformTool))
 }
 
+// TfExecCmd executes a Terraform command within the Terragrunt context.
+//
+// This function takes the specified command and its arguments, executes it in the
+// context of the provided source directory, and returns the standard output as a string.
+// If any error occurs during execution, it returns an error with a descriptive message.
+//
+// Parameters:
+// - ctx: The context to use when executing the command.
+// - command: The terraform command to execute. It's the actual command that comes after 'terraform'.
+// - args: The arguments to pass to the command.
+// - autoApprove: The flag to auto approve the command.
+// - source: The source directory that includes the source code.
+// - module: The module to execute or the terraform configuration where the main.tf file is located.
+// - envVars: The environment variables to pass to the container.
+// - secrets: The secrets to pass to the container.
+//
+// Returns:
+// - string: The standard output from the executed command.
+// - error: An error if the command execution fails.
 func (m *Terragrunt) TfExecCmd(
 	// ctx is the context to use when executing the command.
 	// +optional
