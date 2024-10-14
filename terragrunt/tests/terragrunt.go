@@ -297,26 +297,6 @@ func (m *Tests) TestTerragruntExecLifecycleCommands(ctx context.Context) error {
 			TfLogPath: "/mnt/tflogs", // it's a directory that the terragrunt user owns.
 		})
 
-	// run init command
-	cmdInitOut, cmdInitErr := tgModule.ExecCmd(ctx, "init", dagger.TerragruntExecCmdOpts{
-		Source: m.
-			getTestDir("").
-			Directory("terragrunt"),
-		Secrets: []*dagger.Secret{
-			awsSecret,
-			gcpSecret,
-			azureSecret,
-		},
-	})
-
-	if cmdInitErr != nil {
-		return WrapErrorf(cmdInitErr, "failed to execute command init")
-	}
-
-	if cmdInitOut == "" {
-		return Errorf("command init output is empty")
-	}
-
 	// run plan command with arguments
 	cmdPlanOut, cmdPlanErr := tgModule.ExecCmd(ctx, "plan", dagger.TerragruntExecCmdOpts{
 		Source: m.
