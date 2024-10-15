@@ -93,55 +93,30 @@ fn get_modules_to_process(inspect_type: &str) -> Result<Vec<&str>, Error> {
         "full" => Ok(vec!["full"]),
         "light" => Ok(vec!["light"]),
         "all" => Ok(vec!["full", "light"]),
-        _ => Err(Error::new(
-            ErrorKind::InvalidInput,
-            "Invalid inspect type. Must be 'full', 'light', or 'all'.",
-        )),
+        _ => Err(Error::new(ErrorKind::InvalidInput, "Invalid inspect type. Must be 'full', 'light', or 'all'.")),
     }
 }
 
-fn detect_changes(config: &NewDaggerModule, detailed: bool) -> Result<Vec<FileChange>, Error> {
+fn detect_changes(config: &NewDaggerModule) -> Result<Vec<FileChange>, Error> {
     let mut changes = Vec::new();
 
     // Check main module files
-    check_directory_changes(
-        &config.module_src_path,
-        &config.template_path_by_type,
-        &mut changes,
-        detailed,
-    )?;
+    check_directory_changes(&config.module_src_path, &config.template_path_by_type, &mut changes)?;
 
     // Check test files
     let test_src_path = Path::new(&config.path).join("tests");
     let test_template_path = Path::new(&config.template_path_by_type).join("tests");
-    check_directory_changes(
-        &test_src_path.to_string_lossy(),
-        &test_template_path.to_string_lossy(),
-        &mut changes,
-        detailed,
-    )?;
+    check_directory_changes(&test_src_path.to_string_lossy(), &test_template_path.to_string_lossy(), &mut changes)?;
 
     // Check example files
     let example_src_path = Path::new(&config.path).join("examples").join("go");
-    let example_template_path = Path::new(&config.template_path_by_type)
-        .join("examples")
-        .join("go");
-    check_directory_changes(
-        &example_src_path.to_string_lossy(),
-        &example_template_path.to_string_lossy(),
-        &mut changes,
-        detailed,
-    )?;
+    let example_template_path = Path::new(&config.template_path_by_type).join("examples").join("go");
+    check_directory_changes(&example_src_path.to_string_lossy(), &example_template_path.to_string_lossy(), &mut changes)?;
 
     Ok(changes)
 }
 
-fn check_directory_changes(
-    src_path: &str,
-    template_path: &str,
-    changes: &mut Vec<FileChange>,
-    detailed: bool,
-) -> Result<(), Error> {
+fn check_directory_changes(src_path: &str, template_path: &str, changes: &mut Vec<FileChange>) -> Result<(), Error> {
     let src_dir = Path::new(src_path);
     let template_dir = Path::new(template_path);
 
@@ -152,7 +127,7 @@ fn check_directory_changes(
     for entry in fs::read_dir(src_dir)? {
         let entry = entry?;
         let path = entry.path();
-        if path.is_file() && is_relevant_go_file(&path) {
+        if path.is_file() && path.extension().map_or(false, |ext| ext == "go") {
             let relative_path = path.strip_prefix(src_dir).unwrap();
             let template_file = template_dir.join(relative_path.with_extension("go.tmpl"));
 
@@ -190,70 +165,23 @@ fn check_directory_changes(
     Ok(())
 }
 
-fn is_relevant_go_file(path: &Path) -> bool {
-    if let Some(extension) = path.extension() {
-        if extension != "go" {
-            return false;
-        }
-    } else {
-        return false;
-    }
-
-    let file_name = path.file_name().unwrap().to_str().unwrap();
-    if file_name == "dagger.gen.go" {
-        return false;
-    }
-
-    !path.to_str().unwrap().contains("/internal/")
-}
-
-fn files_differ_ignoring_templates(file1: &Path, file2: &Path) -> Result<bool, Error> {
+fn files_differ(file1: &Path, file2: &Path) -> Result<bool, Error> {
     let content1 = fs::read_to_string(file1)?;
     let content2 = fs::read_to_string(file2)?;
-    
-    let normalized1 = normalize_content(&content1);
-    let normalized2 = normalize_content(&content2);
-
-    Ok(normalized1 != normalized2)
-}
-
-fn normalize_content(content: &str) -> String {
-    content
-        .replace("ModuleTemplate", "{{.module_name}}")
-        .replace("module-template", "{{.module_name_pkg}}")
-}
-
-fn generate_diff_ignoring_templates(file1: &Path, file2: &Path) -> Result<String, Error> {
-    let content1 = fs::read_to_string(file1)?;
-    let content2 = fs::read_to_string(file2)?;
-    
-    let normalized1 = normalize_content(&content1);
-    let normalized2 = normalize_content(&content2);
-
-    let diff = TextDiff::from_lines(&normalized1, &normalized2);
-
-    let mut diff_output = String::new();
-    for change in diff.iter_all_changes() {
-        let sign = match change.tag() {
-            ChangeTag::Delete => "-",
-            ChangeTag::Insert => "+",
-            ChangeTag::Equal => " ",
-        };
-        diff_output.push_str(&format!("{}{}\n", sign, change));
-    }
-
-    Ok(diff_output)
+    Ok(content1 != content2)
 }
 
 fn update_template_files(changes: Vec<FileChange>, config: &NewDaggerModule) -> Result<(), Error> {
     for change in changes {
         let src_file = Path::new(&config.module_src_path).join(&change.path);
-        let template_file = Path::new(&config.template_path_by_type).join(&change.path).with_extension("go.tmpl");
+        let template_file = Path::new(&config.template_path_by_type)
+            .join(&change.path)
+            .with_extension("go.tmpl");
 
         match change.status {
             ChangeStatus::Added | ChangeStatus::Modified => {
                 let content = fs::read_to_string(&src_file)?;
-                let updated_content = replace_template_variables(&content, config.module_type);
+                let updated_content = replace_template_variables(&content, &config.module_type);
                 fs::write(&template_file, updated_content)?;
                 println!("Updated: {}", template_file.display());
             }
