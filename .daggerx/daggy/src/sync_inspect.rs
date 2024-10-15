@@ -133,6 +133,7 @@ fn detect_changes(config: &NewDaggerModule, detailed: bool) -> Result<Vec<FileCh
         &config.module_src_path,
         &config.template_path_by_type,
         &mut changes,
+        detailed,
     )?;
 
     // Check test files
