@@ -60,10 +60,8 @@ fn sync_changes(inspect_type: &str, dry_run: bool, detailed: bool) -> Result<(),
             println!("The following changes will be synced:");
             for change in &changes {
                 println!("{:?}: {}", change.status, change.path);
-                if detailed {
-                    if let Some(diff) = &change.diff {
-                        println!("Diff:\n{}", diff);
-                    }
+                if detailed && change.diff.is_some() {
+                    println!("Diff:\n{}", change.diff.as_ref().unwrap());
                 }
             }
 
@@ -91,8 +89,12 @@ fn inspect_changes(inspect_type: &str, dry_run: bool) -> Result<(), Error> {
     let modules_to_inspect = get_modules_to_process(inspect_type)?;
 
     for module_type in modules_to_inspect {
-        println!("Inspecting changes for {} module type (dry run: {})", module_type, dry_run);
-        let config = get_module_configurations(&format!("module-template-{}", module_type), module_type)?;
+        println!(
+            "Inspecting changes for {} module type (dry run: {})",
+            module_type, dry_run
+        );
+        let config =
+            get_module_configurations(&format!("module-template-{}", module_type), module_type)?;
         let changes = detect_changes(&config)?;
 
         if !changes.is_empty() {
@@ -158,9 +160,6 @@ fn detect_changes(config: &NewDaggerModule, detailed: bool) -> Result<Vec<FileCh
         "examples/go/",
     )?;
 
-    // Check and add testdata changes
-    check_testdata_changes(&config, &mut changes)?;
-
     Ok(changes)
 }
 
@@ -183,17 +182,33 @@ fn check_directory_changes(
         let path = entry.path();
         if path.is_file() && path.extension().map_or(false, |ext| ext == "go") {
             let relative_path = path.strip_prefix(src_dir).unwrap();
-            let template_file = template_dir.join(relative_path.with_extension("go.tmpl"));
+            let template_file = template_dir.join(relative_path).with_extension("go.tmpl");
+
+            // Ignore dagger.gen.go files and files in internal/ directories
+            if relative_path.file_name().unwrap() == "dagger.gen.go"
+                || relative_path
+                    .components()
+                    .any(|c| c.as_os_str() == "internal")
+            {
+                continue;
+            }
 
             if !template_file.exists() {
                 changes.push(FileChange {
                     status: ChangeStatus::Added,
-                    path: relative_path.to_string_lossy().to_string(),
+                    path: format!("{}{}", prefix, relative_path.to_string_lossy()),
+                    diff: None,
                 });
             } else if files_differ(&path, &template_file)? {
+                let diff = if detailed {
+                    Some(generate_diff(&path, &template_file)?)
+                } else {
+                    None
+                };
                 changes.push(FileChange {
                     status: ChangeStatus::Modified,
-                    path: relative_path.to_string_lossy().to_string(),
+                    path: format!("{}{}", prefix, relative_path.to_string_lossy()),
+                    diff,
                 });
             }
         }
@@ -210,7 +225,8 @@ fn check_directory_changes(
             if !src_file.exists() {
                 changes.push(FileChange {
                     status: ChangeStatus::Deleted,
-                    path: relative_path.to_string_lossy().to_string(),
+                    path: format!("{}{}", prefix, relative_path.to_string_lossy()),
+                    diff: None,
                 });
             }
         }
@@ -229,6 +245,7 @@ fn update_template_files(changes: Vec<FileChange>, config: &NewDaggerModule) -> 
     for change in changes {
         let src_file = Path::new(&config.module_src_path).join(&change.path);
         let template_file = Path::new(&config.template_path_by_type)
+            .join("module")
             .join(&change.path)
             .with_extension("go.tmpl");
 
@@ -236,15 +253,22 @@ fn update_template_files(changes: Vec<FileChange>, config: &NewDaggerModule) -> 
             ChangeStatus::Added | ChangeStatus::Modified => {
                 let content = fs::read_to_string(&src_file)?;
                 let updated_content = replace_template_variables(&content, &config.module_type);
+                fs::create_dir_all(template_file.parent().unwrap())?;
                 fs::write(&template_file, updated_content)?;
                 println!("Updated: {}", template_file.display());
             }
             ChangeStatus::Deleted => {
-                fs::remove_file(&template_file)?;
-                println!("Deleted: {}", template_file.display());
+                if template_file.exists() {
+                    fs::remove_file(&template_file)?;
+                    println!("Deleted: {}", template_file.display());
+                }
             }
         }
     }
+
+    // Copy testdata directories
+    copy_testdata_directories(config)?;
+
     Ok(())
 }
 
@@ -258,4 +282,56 @@ fn replace_template_variables(content: &str, module_type: &str) -> String {
     content
         .replace(module_name, "{{.module_name}}")
         .replace(module_name_pkg, "{{.module_name_pkg}}")
+}
+
+fn copy_testdata_directories(config: &NewDaggerModule) -> Result<(), Error> {
+    let src_testdata = Path::new(&config.module_src_path)
+        .join("tests")
+        .join("testdata");
+    let dest_testdata = Path::new(&config.template_path_by_type)
+        .join("tests")
+        .join("testdata");
+
+    if src_testdata.exists() {
+        fs::create_dir_all(&dest_testdata)?;
+        copy_dir_contents(&src_testdata, &dest_testdata)?;
+    }
+
+    let src_example_testdata = Path::new(&config.module_src_path)
+        .join("examples")
+        .join("go")
+        .join("testdata");
+    let dest_example_testdata = Path::new(&config.template_path_by_type)
+        .join("examples")
+        .join("go")
+        .join("testdata");
+
+    if src_example_testdata.exists() {
+        fs::create_dir_all(&dest_example_testdata)?;
+        copy_dir_contents(&src_example_testdata, &dest_example_testdata)?;
+    }
+
+    Ok(())
+}
+
+fn copy_dir_contents(src: &Path, dest: &Path) -> Result<(), Error> {
+    for entry in fs::read_dir(src)? {
+        let entry = entry?;
+        let path = entry.path();
+        if path.is_dir() {
+            let new_dest = dest.join(path.file_name().unwrap());
+            fs::create_dir_all(&new_dest)?;
+            copy_dir_contents(&path, &new_dest)?;
+        } else {
+            let new_dest = dest.join(path.file_name().unwrap());
+            fs::copy(&path, &new_dest)?;
+        }
+    }
+    Ok(())
+}
+
+fn generate_diff(file1: &Path, file2: &Path) -> Result<String, Error> {
+    // Implement diff generation logic here
+    // You can use a crate like `diff` or implement a simple line-by-line comparison
+    unimplemented!("Diff generation not implemented yet")
 }
