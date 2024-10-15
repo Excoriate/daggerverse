@@ -98,7 +98,7 @@ fn sync_changes(inspect_type: &str, dry_run: bool, detailed: bool) -> Result<(),
     Ok(())
 }
 
-fn inspect_changes(inspect_type: &str, dry_run: bool) -> Result<(), Error> {
+fn inspect_changes(inspect_type: &str, dry_run: bool, detailed: bool) -> Result<(), Error> {
     let modules_to_inspect = get_modules_to_process(inspect_type)?;
 
     for module_type in modules_to_inspect {
@@ -108,12 +108,15 @@ fn inspect_changes(inspect_type: &str, dry_run: bool) -> Result<(), Error> {
         );
         let config =
             get_module_configurations(&format!("module-template-{}", module_type), module_type)?;
-        let changes = detect_changes(&config)?;
+        let changes = detect_changes(&config, detailed)?;
 
         if !changes.is_empty() {
             println!("Changes detected for {} module type:", module_type);
             for change in &changes {
                 println!("{:?}: {}", change.status, change.path);
+                if detailed && change.diff.is_some() {
+                    println!("Diff:\n{}", change.diff.as_ref().unwrap());
+                }
             }
         } else {
             println!("No changes detected for {} module type", module_type);
@@ -138,19 +141,20 @@ fn get_modules_to_process(inspect_type: &str) -> Result<Vec<&str>, Error> {
 fn detect_changes(config: &NewDaggerModule, detailed: bool) -> Result<Vec<FileChange>, Error> {
     let mut changes = Vec::new();
 
+    // Debug logging
+    println!("Debug: Detecting changes in {}", config.module_src_path);
+
     // Check main module files
     check_directory_changes(
         &config.module_src_path,
-        &Path::new(&config.template_path_by_type)
-            .join("module")
-            .to_string_lossy(),
+        &config.template_path_by_type,
         &mut changes,
         detailed,
         "",
     )?;
 
     // Check test files
-    let test_src_path = Path::new(&config.path).join("tests");
+    let test_src_path = Path::new(&config.module_src_path).join("tests");
     let test_template_path = Path::new(&config.template_path_by_type).join("tests");
     check_directory_changes(
         &test_src_path.to_string_lossy(),
@@ -161,7 +165,9 @@ fn detect_changes(config: &NewDaggerModule, detailed: bool) -> Result<Vec<FileCh
     )?;
 
     // Check example files
-    let example_src_path = Path::new(&config.path).join("examples").join("go");
+    let example_src_path = Path::new(&config.module_src_path)
+        .join("examples")
+        .join("go");
     let example_template_path = Path::new(&config.template_path_by_type)
         .join("examples")
         .join("go");
@@ -184,9 +190,19 @@ fn check_directory_changes(
     prefix: &str,
 ) -> Result<(), Error> {
     let src_dir = Path::new(src_path);
-    let template_dir = Path::new(template_path);
+    let template_dir = if prefix.is_empty() {
+        Path::new(template_path).join("module")
+    } else {
+        Path::new(template_path).join(prefix.trim_end_matches('/'))
+    };
+
+    // Debug logging
+    println!("Debug: Checking directory changes");
+    println!("Debug: src_dir = {}", src_dir.display());
+    println!("Debug: template_dir = {}", template_dir.display());
 
     if !src_dir.exists() || !template_dir.exists() {
+        println!("Debug: One of the directories does not exist");
         return Ok(());
     }
 
