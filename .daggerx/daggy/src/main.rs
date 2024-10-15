@@ -2,6 +2,8 @@
 mod git_test;
 
 mod args;
+mod cmd_create_module;
+mod cmd_develop_modules;
 mod command_utils;
 mod configuration;
 mod dagger_commands;
@@ -11,10 +13,9 @@ mod git;
 mod github_actions;
 mod naming;
 mod readme_and_docs;
+mod sync_inspect;
 mod templating;
 mod utils;
-mod cmd_create_module;
-mod cmd_develop_modules;
 
 use args::Args;
 use clap::Parser;
@@ -27,24 +28,14 @@ fn main() -> Result<(), Error> {
 
     match args.task.as_str() {
         "create" => create_module_task(&args),
-        "sync" => sync_modules_task(),
-        "inspect" => inspect_modules_task(),
+        "sync" => sync_inspect::sync_modules_task(&args),
+        "inspect" => sync_inspect::inspect_modules_task(&args),
         "develop" => cmd_develop_modules::develop_modules(),
         _ => {
             eprintln!("Unknown task: {}", args.task);
             Err(Error::new(ErrorKind::InvalidInput, "Unknown task"))
         }
     }
-}
-
-fn sync_modules_task() -> Result<(), Error> {
-    println!("Syncing modules...");
-    Ok(())
-}
-
-fn inspect_modules_task() -> Result<(), Error> {
-    println!("Inspecting modules...");
-    Ok(())
 }
 
 fn create_module_task(args: &Args) -> Result<(), Error> {
