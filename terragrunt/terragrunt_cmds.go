@@ -199,7 +199,32 @@ func (m *Terragrunt) ExecCmd(
 	return output, nil
 }
 
-// WithTerraformLogOptions sets the terraform log options in the container.
+// GetTerragruntCacheDir returns the terragrunt cache directory.
+// It returns a pointer to the directory containing the terragrunt cache.
+func (m *Terragrunt) GetTerragruntCacheDir() *dagger.Directory {
+	return m.Ctr.Directory(".terragrunt-cache")
+}
+
+// GetTerraformCacheDir returns the terraform cache directory.
+// It returns a pointer to the directory containing the terraform cache.
+func (m *Terragrunt) GetTerraformCacheDir() *dagger.Directory {
+	return m.Ctr.Directory(".terraform")
+}
+
+// WithTerraformLogOptions sets the Terraform log options in the Terragrunt container.
+//
+// This function allows you to configure the logging behavior of Terraform when executing
+// commands through Terragrunt. The parameters specify the log modes and the log file path.
+//
+// Parameters:
+//   - tfLog: The Terraform log mode to use when executing the Terragrunt command.
+//     // +optional
+//   - tfLogCore: The Terraform log core mode to use when executing the Terragrunt command.
+//     // +optional
+//   - tfLogProvider: The Terraform log provider mode to use when executing the Terragrunt command.
+//     // +optional
+//   - tfLogPath: The path to the Terraform log file to use when executing the Terragrunt command.
+//     // +optional
 func (m *Terragrunt) WithTerraformLogOptions(
 	// tfLog is the terraform log mode to use when executing the terragrunt command.
 	// +optional
