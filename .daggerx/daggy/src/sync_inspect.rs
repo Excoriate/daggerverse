@@ -2,12 +2,13 @@ use crate::args::Args;
 use crate::configuration::{get_module_configurations, NewDaggerModule};
 use std::fs;
 use std::io::{Error, ErrorKind};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug)]
 struct FileChange {
     status: ChangeStatus,
     path: String,
+    diff: Option<String>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -20,44 +21,63 @@ enum ChangeStatus {
 pub fn sync_modules_task(args: &Args) -> Result<(), Error> {
     let inspect_type = &args.inspect_type;
     let dry_run = args.dry_run.unwrap_or(false);
+    let detailed = args.detailed.unwrap_or(false);
 
     println!("Syncing modules...");
     println!("Inspect type: {}", inspect_type);
     println!("Dry run: {}", dry_run);
+    println!("Detailed: {}", detailed);
 
-    sync_changes(inspect_type, dry_run)
+    sync_changes(inspect_type, dry_run, detailed)
 }
 
 pub fn inspect_modules_task(args: &Args) -> Result<(), Error> {
     let inspect_type = &args.inspect_type;
     let dry_run = args.dry_run.unwrap_or(false);
+    let detailed = args.detailed.unwrap_or(false);
 
     println!("Inspecting modules...");
     println!("Inspect type: {}", inspect_type);
     println!("Dry run: {}", dry_run);
+    println!("Detailed: {}", detailed);
 
-    inspect_changes(inspect_type, dry_run)
+    inspect_changes(inspect_type, dry_run, detailed)
 }
 
-fn sync_changes(inspect_type: &str, dry_run: bool) -> Result<(), Error> {
+fn sync_changes(inspect_type: &str, dry_run: bool, detailed: bool) -> Result<(), Error> {
     let modules_to_sync = get_modules_to_process(inspect_type)?;
 
     for module_type in modules_to_sync {
-        println!("Syncing changes for {} module type (dry run: {})", module_type, dry_run);
-        let config = get_module_configurations(&format!("module-template-{}", module_type), module_type)?;
-        let changes = detect_changes(&config)?;
+        println!(
+            "Syncing changes for {} module type (dry run: {})",
+            module_type, dry_run
+        );
+        let config =
+            get_module_configurations(&format!("module-template-{}", module_type), module_type)?;
+        let changes = detect_changes(&config, detailed)?;
 
         if !changes.is_empty() {
             println!("The following changes will be synced:");
             for change in &changes {
                 println!("{:?}: {}", change.status, change.path);
+                if detailed {
+                    if let Some(diff) = &change.diff {
+                        println!("Diff:\n{}", diff);
+                    }
+                }
             }
 
             if !dry_run {
                 update_template_files(changes, &config)?;
-                println!("Changes synced successfully for {} module type", module_type);
+                println!(
+                    "Changes synced successfully for {} module type",
+                    module_type
+                );
             } else {
-                println!("Dry run: Changes would be synced for {} module type", module_type);
+                println!(
+                    "Dry run: Changes would be synced for {} module type",
+                    module_type
+                );
             }
         } else {
             println!("No changes detected for {} module type", module_type);
@@ -93,30 +113,64 @@ fn get_modules_to_process(inspect_type: &str) -> Result<Vec<&str>, Error> {
         "full" => Ok(vec!["full"]),
         "light" => Ok(vec!["light"]),
         "all" => Ok(vec!["full", "light"]),
-        _ => Err(Error::new(ErrorKind::InvalidInput, "Invalid inspect type. Must be 'full', 'light', or 'all'.")),
+        _ => Err(Error::new(
+            ErrorKind::InvalidInput,
+            "Invalid inspect type. Must be 'full', 'light', or 'all'.",
+        )),
     }
 }
 
-fn detect_changes(config: &NewDaggerModule) -> Result<Vec<FileChange>, Error> {
+fn detect_changes(config: &NewDaggerModule, detailed: bool) -> Result<Vec<FileChange>, Error> {
     let mut changes = Vec::new();
 
     // Check main module files
-    check_directory_changes(&config.module_src_path, &config.template_path_by_type, &mut changes)?;
+    check_directory_changes(
+        &config.module_src_path,
+        &Path::new(&config.template_path_by_type)
+            .join("module")
+            .to_string_lossy(),
+        &mut changes,
+        detailed,
+        "",
+    )?;
 
     // Check test files
     let test_src_path = Path::new(&config.path).join("tests");
     let test_template_path = Path::new(&config.template_path_by_type).join("tests");
-    check_directory_changes(&test_src_path.to_string_lossy(), &test_template_path.to_string_lossy(), &mut changes)?;
+    check_directory_changes(
+        &test_src_path.to_string_lossy(),
+        &test_template_path.to_string_lossy(),
+        &mut changes,
+        detailed,
+        "tests/",
+    )?;
 
     // Check example files
     let example_src_path = Path::new(&config.path).join("examples").join("go");
-    let example_template_path = Path::new(&config.template_path_by_type).join("examples").join("go");
-    check_directory_changes(&example_src_path.to_string_lossy(), &example_template_path.to_string_lossy(), &mut changes)?;
+    let example_template_path = Path::new(&config.template_path_by_type)
+        .join("examples")
+        .join("go");
+    check_directory_changes(
+        &example_src_path.to_string_lossy(),
+        &example_template_path.to_string_lossy(),
+        &mut changes,
+        detailed,
+        "examples/go/",
+    )?;
+
+    // Check and add testdata changes
+    check_testdata_changes(&config, &mut changes)?;
 
     Ok(changes)
 }
 
-fn check_directory_changes(src_path: &str, template_path: &str, changes: &mut Vec<FileChange>) -> Result<(), Error> {
+fn check_directory_changes(
+    src_path: &str,
+    template_path: &str,
+    changes: &mut Vec<FileChange>,
+    detailed: bool,
+    prefix: &str,
+) -> Result<(), Error> {
     let src_dir = Path::new(src_path);
     let template_dir = Path::new(template_path);
 
