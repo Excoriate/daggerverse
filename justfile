@@ -347,11 +347,11 @@ fmt mod:
 check-dagger-pre-requisites mod: (check-docker-or-podman) (is-dagger-module mod)
 
 # Recipe to sync module-template (light) changes that require sync in the Go templates. 🔍
-syncmodlight:
+syncmodlight: (daggy-compile)
   @echo "🔍 Syncing the module..."
   @./.daggerx/daggy/target/release/daggy --task=sync --inspect-type=light --detailed=false
 
 # Recipe to sync module-template (full) changes that require sync in the Go templates. 🔍
-syncmodfull:
+syncmodfull: (daggy-compile)
   @echo "🔍 Syncing the module..."
   @./.daggerx/daggy/target/release/daggy --task=sync --inspect-type=full --detailed=false

@@ -52,8 +52,21 @@ fn sync_changes(inspect_type: &str, dry_run: bool, detailed: bool) -> Result<(),
             "Syncing changes for {} module type (dry run: {})",
             module_type, dry_run
         );
-        let config =
-            get_module_configurations(&format!("module-template-{}", module_type), module_type)?;
+        let config = get_module_configurations(
+            &format!(
+                "module-template{}",
+                if module_type == "light" { "-light" } else { "" }
+            ),
+            module_type,
+        )?;
+
+        // Debug logging
+        println!("Debug: module_src_path = {}", config.module_src_path);
+        println!(
+            "Debug: template_path_by_type = {}",
+            config.template_path_by_type
+        );
+
         let changes = detect_changes(&config, detailed)?;
 
         if !changes.is_empty() {
@@ -184,6 +197,10 @@ fn check_directory_changes(
             let relative_path = path.strip_prefix(src_dir).unwrap();
             let template_file = template_dir.join(relative_path).with_extension("go.tmpl");
 
+            // Debug logging
+            println!("Debug: Checking file: {}", path.display());
+            println!("Debug: Template file: {}", template_file.display());
+
             // Ignore dagger.gen.go files and files in internal/ directories
             if relative_path.file_name().unwrap() == "dagger.gen.go"
                 || relative_path
@@ -215,11 +232,11 @@ fn check_directory_changes(
     }
 
     // Check for deleted files
-    for entry in fs::read_dir(template_dir)? {
+    for entry in fs::read_dir(template_dir.clone())? {
         let entry = entry?;
         let path = entry.path();
         if path.is_file() && path.extension().map_or(false, |ext| ext == "tmpl") {
-            let relative_path = path.strip_prefix(template_dir).unwrap().with_extension("");
+            let relative_path = path.strip_prefix(&template_dir).unwrap().with_extension("");
             let src_file = src_dir.join(&relative_path);
 
             if !src_file.exists() {
@@ -244,10 +261,20 @@ fn files_differ(file1: &Path, file2: &Path) -> Result<bool, Error> {
 fn update_template_files(changes: Vec<FileChange>, config: &NewDaggerModule) -> Result<(), Error> {
     for change in changes {
         let src_file = Path::new(&config.module_src_path).join(&change.path);
-        let template_file = Path::new(&config.template_path_by_type)
-            .join("module")
-            .join(&change.path)
-            .with_extension("go.tmpl");
+        let template_file = if change.path.starts_with("tests/") {
+            Path::new(&config.template_path_by_type)
+                .join(&change.path)
+                .with_extension("go.tmpl")
+        } else if change.path.starts_with("examples/go/") {
+            Path::new(&config.template_path_by_type)
+                .join(&change.path)
+                .with_extension("go.tmpl")
+        } else {
+            Path::new(&config.template_path_by_type)
+                .join("module")
+                .join(&change.path)
+                .with_extension("go.tmpl")
+        };
 
         match change.status {
             ChangeStatus::Added | ChangeStatus::Modified => {
@@ -330,7 +357,7 @@ fn copy_dir_contents(src: &Path, dest: &Path) -> Result<(), Error> {
     Ok(())
 }
 
-fn generate_diff(file1: &Path, file2: &Path) -> Result<String, Error> {
+fn generate_diff(_file1: &Path, _file2: &Path) -> Result<String, Error> {
     // Implement diff generation logic here
     // You can use a crate like `diff` or implement a simple line-by-line comparison
     unimplemented!("Diff generation not implemented yet")
