@@ -20,53 +20,42 @@ enum ChangeStatus {
 pub fn sync_modules_task(args: &Args) -> Result<(), Error> {
     let inspect_type = &args.inspect_type;
     let dry_run = args.dry_run.unwrap_or(false);
-    let detailed = args.detailed.unwrap_or(false);
 
     println!("Syncing modules...");
     println!("Inspect type: {}", inspect_type);
     println!("Dry run: {}", dry_run);
-    println!("Detailed: {}", detailed);
 
-    sync_changes(inspect_type, dry_run, detailed)
+    sync_changes(inspect_type, dry_run)
 }
 
 pub fn inspect_modules_task(args: &Args) -> Result<(), Error> {
     let inspect_type = &args.inspect_type;
     let dry_run = args.dry_run.unwrap_or(false);
-    let detailed = args.detailed.unwrap_or(false);
 
     println!("Inspecting modules...");
     println!("Inspect type: {}", inspect_type);
     println!("Dry run: {}", dry_run);
-    println!("Detailed: {}", detailed);
 
-    inspect_changes(inspect_type, dry_run, detailed)
+    inspect_changes(inspect_type, dry_run)
 }
 
-fn sync_changes(inspect_type: &str, dry_run: bool, detailed: bool) -> Result<(), Error> {
+fn sync_changes(inspect_type: &str, dry_run: bool) -> Result<(), Error> {
     let modules_to_sync = get_modules_to_process(inspect_type)?;
 
     for module_type in modules_to_sync {
-        println!(
-            "Syncing changes for {} module type (dry run: {})",
-            module_type, dry_run
-        );
+        println!("Syncing changes for {} module type (dry run: {})", module_type, dry_run);
         let config = get_module_configurations(&format!("module-template-{}", module_type), module_type)?;
-        let changes = detect_changes(&config, detailed)?;
+        let changes = detect_changes(&config)?;
 
         if !changes.is_empty() {
             println!("The following changes will be synced:");
             for change in &changes {
-                println!("  {}: {}", change.status, change.path);
+                println!("{:?}: {}", change.status, change.path);
             }
 
             if !dry_run {
-                if confirm_sync()? {
-                    update_template_files(changes, &config)?;
-                    println!("Changes synced successfully for {} module type", module_type);
-                } else {
-                    println!("Sync cancelled for {} module type", module_type);
-                }
+                update_template_files(changes, &config)?;
+                println!("Changes synced successfully for {} module type", module_type);
             } else {
                 println!("Dry run: Changes would be synced for {} module type", module_type);
             }
