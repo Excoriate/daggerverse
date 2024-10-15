@@ -209,9 +209,13 @@ createlight mod with-ci='false' type='light': (daggy-compile) (check-docker-or-p
   @if [ "{{with-ci}}" = "true" ]; then just cilocal {{mod}}; fi
 
 # Recipe to inspect module-template (full, or light) changes that require sync in the Go templates. 🔍
-inspect type='full' : (daggy-compile) (check-docker-or-podman)
+inspect type='full' detailed='false': (daggy-compile) (check-docker-or-podman)
   @echo "🔍 Inspecting the module..."
-  @./.daggerx/daggy/target/release/daggy --task=inspect --module-type={{type}}
+  @./.daggerx/daggy/target/release/daggy --task=inspect --module-type={{type}} --detailed={{detailed}}
+
+sync type='full': (daggy-compile) (check-docker-or-podman)
+  @echo "🔍 Syncing the module..."
+  @./.daggerx/daggy/target/release/daggy --task=sync --module-type={{type}} --detailed={{detailed}}
 
 # --------------------------------------------------
 # Section: Daggy Operations

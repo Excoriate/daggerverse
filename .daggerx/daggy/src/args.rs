@@ -23,4 +23,8 @@ pub struct Args {
     /// The type of inspection to perform (default is "all").
     #[arg(long, default_value = "all")]
     pub inspect_type: String,
+
+    /// Flag to indicate a detailed view. Optional.
+    #[arg(long)]
+    pub detailed: Option<bool>,
 }
