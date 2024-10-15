@@ -1,15 +1,13 @@
 use crate::args::Args;
 use crate::configuration::{get_module_configurations, NewDaggerModule};
 use std::fs;
-use std::io::{Error, ErrorKind, Write};
+use std::io::{Error, ErrorKind};
 use std::path::Path;
-use similar::{ChangeTag, TextDiff};
 
 #[derive(Debug)]
 struct FileChange {
     status: ChangeStatus,
     path: String,
-    diff: Option<String>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -80,31 +78,19 @@ fn sync_changes(inspect_type: &str, dry_run: bool, detailed: bool) -> Result<(),
     Ok(())
 }
 
-fn confirm_sync() -> Result<bool, Error> {
-    print!("Do you want to proceed with the sync? (y/N): ");
-    io::stdout().flush()?;
-
-    let mut input = String::new();
-    io::stdin().read_line(&mut input)?;
-
-    Ok(input.trim().to_lowercase() == "y")
-}
-
-fn inspect_changes(inspect_type: &str, dry_run: bool, detailed: bool) -> Result<(), Error> {
+fn inspect_changes(inspect_type: &str, dry_run: bool) -> Result<(), Error> {
     let modules_to_inspect = get_modules_to_process(inspect_type)?;
 
     for module_type in modules_to_inspect {
-        println!(
-            "Inspecting changes for {} module type (dry run: {})",
-            module_type, dry_run
-        );
+        println!("Inspecting changes for {} module type (dry run: {})", module_type, dry_run);
         let config = get_module_configurations(&format!("module-template-{}", module_type), module_type)?;
-        let changes = detect_changes(&config, detailed)?;
+        let changes = detect_changes(&config)?;
 
         if !changes.is_empty() {
-            let summary = generate_summary(&changes, detailed);
             println!("Changes detected for {} module type:", module_type);
-            println!("{}", summary);
+            for change in &changes {
+                println!("{:?}: {}", change.status, change.path);
+            }
         } else {
             println!("No changes detected for {} module type", module_type);
         }
@@ -185,18 +171,11 @@ fn check_directory_changes(
                 changes.push(FileChange {
                     status: ChangeStatus::Added,
                     path: relative_path.to_string_lossy().to_string(),
-                    diff: if detailed { Some(fs::read_to_string(&path)?) } else { None },
                 });
-            } else if files_differ_ignoring_templates(&path, &template_file)? {
-                let diff = if detailed {
-                    Some(generate_diff_ignoring_templates(&path, &template_file)?)
-                } else {
-                    None
-                };
+            } else if files_differ(&path, &template_file)? {
                 changes.push(FileChange {
                     status: ChangeStatus::Modified,
                     path: relative_path.to_string_lossy().to_string(),
-                    diff,
                 });
             }
         }
@@ -214,7 +193,6 @@ fn check_directory_changes(
                 changes.push(FileChange {
                     status: ChangeStatus::Deleted,
                     path: relative_path.to_string_lossy().to_string(),
-                    diff: if detailed { Some(fs::read_to_string(&path)?) } else { None },
                 });
             }
         }
@@ -309,24 +287,4 @@ fn replace_template_variables(content: &str, module_type: &str) -> String {
     content
         .replace(module_name, "{{.module_name}}")
         .replace(module_name_pkg, "{{.module_name_pkg}}")
-}
-
-fn generate_summary(changes: &[FileChange], detailed: bool) -> String {
-    let mut summary = String::new();
-    for change in changes {
-        let status = match change.status {
-            ChangeStatus::Added => "Added",
-            ChangeStatus::Modified => "Modified",
-            ChangeStatus::Deleted => "Deleted",
-        };
-        summary.push_str(&format!("{}: {}\n", status, change.path));
-        if detailed {
-            if let Some(diff) = &change.diff {
-                summary.push_str("Diff:\n");
-                summary.push_str(diff);
-                summary.push_str("\n");
-            }
-        }
-    }
-    summary
 }

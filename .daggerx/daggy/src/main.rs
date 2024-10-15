@@ -2,6 +2,8 @@
 mod git_test;
 
 mod args;
+mod cmd_create_module;
+mod cmd_develop_modules;
 mod command_utils;
 mod configuration;
 mod dagger_commands;
@@ -11,11 +13,9 @@ mod git;
 mod github_actions;
 mod naming;
 mod readme_and_docs;
+mod sync_inspect;
 mod templating;
 mod utils;
-mod cmd_create_module;
-mod cmd_develop_modules;
-mod sync_inspect;
 
 use args::Args;
 use clap::Parser;

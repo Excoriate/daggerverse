@@ -213,7 +213,7 @@ inspect type='full' detailed='false': (daggy-compile) (check-docker-or-podman)
   @echo "🔍 Inspecting the module..."
   @./.daggerx/daggy/target/release/daggy --task=inspect --module-type={{type}} --detailed={{detailed}}
 
-sync type='full': (daggy-compile) (check-docker-or-podman)
+sync type='full' detailed='false': (daggy-compile) (check-docker-or-podman)
   @echo "🔍 Syncing the module..."
   @./.daggerx/daggy/target/release/daggy --task=sync --module-type={{type}} --detailed={{detailed}}
 
