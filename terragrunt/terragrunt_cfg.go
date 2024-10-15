@@ -8,14 +8,15 @@ import (
 )
 
 const (
-	terragruntCacheDir  = "/home/terragrunt/.terragrunt-providers-cache"
-	terraformCacheDir   = "/home/.terraform.d/plugin-cache"
-	terraformPluginsDir = "/home/.terraform.d/plugins"
-	terragruntHomeDir   = "/home/terragrunt"
-	terraformDir        = "/home/.terraform.d"
-	homeDir             = "/home"
-	varLogDir           = "/var/log"
-	mntPrefixDefault    = fixtures.MntPrefix
+	terragruntCacheDir    = "/home/terragrunt/.terragrunt-providers-cache"
+	terraformCacheDir     = "/home/.terraform.d/plugin-cache"
+	terraformProvidersDir = "/home/.terraform.d/providers"
+	terraformPluginsDir   = "/home/.terraform.d/plugins"
+	terragruntHomeDir     = "/home/terragrunt"
+	terraformDir          = "/home/.terraform.d"
+	homeDir               = "/home"
+	varLogDir             = "/var/log"
+	mntPrefixDefault      = fixtures.MntPrefix
 )
 
 // WithTerragruntPermissionsOnDirsDefault sets the default permissions for the Terragrunt directories.
@@ -40,6 +41,7 @@ func (m *Terragrunt) WithTerragruntPermissionsOnDirsDefault() *Terragrunt {
 		homeDir,
 		varLogDir,
 		mntPrefixDefault,
+		terraformProvidersDir,
 	}
 
 	return m.

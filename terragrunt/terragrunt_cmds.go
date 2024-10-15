@@ -78,6 +78,9 @@ func (m *Terragrunt) Exec(
 	// secrets is the secrets to pass to the container.
 	// +optional
 	secrets []*dagger.Secret,
+	// tool is the tool to use for executing the command.
+	// +optional
+	tool string,
 ) (*dagger.Container, error) {
 	// No too sure about this, but it's a good practice to have a context.
 	if ctx == nil {
@@ -133,6 +136,15 @@ func (m *Terragrunt) Exec(
 			WithSecretVariable(secretName, secret)
 	}
 
+	// Set the entrypoint
+	if tool != "" {
+		if err := IsValidIACTool(tool); err != nil {
+			return nil, WrapErrorf(err, "failed to set the entrypoint with tool: %s", tool)
+		}
+
+		return m.Ctr.WithExec(append([]string{tool}, cmdAsSlice...)), nil
+	}
+
 	// Execute the command
 	return m.Ctr.
 		WithExec(append([]string{m.Tg.getEntrypoint()}, cmdAsSlice...)), nil
@@ -167,8 +179,11 @@ func (m *Terragrunt) ExecCmd(
 	// secrets is the secrets to pass to the container.
 	// +optional
 	secrets []*dagger.Secret,
+	// tool is the tool to use for executing the command.
+	// +optional
+	tool string,
 ) (string, error) {
-	container, err := m.Exec(ctx, command, args, autoApprove, source, module, envVars, secrets)
+	container, err := m.Exec(ctx, command, args, autoApprove, source, module, envVars, secrets, tool)
 
 	if err != nil {
 		return "", WrapErrorf(err, "failed to execute terragrunt command: %s", command)
@@ -519,4 +534,79 @@ func (m *Terragrunt) WithTerraformToken(
 		WithSecretVariable(tfTokenName, tfToken)
 
 	return m, nil
+}
+
+// WithTerraformCommand executes a terraform command in the container.
+//
+// This method takes a terraform command and its arguments as input, validates them,
+// and executes the command in the container. The command is executed with the Terraform
+// binary.
+//
+// Parameters:
+// - command: A string representing the terraform command to execute.
+func (m *Terragrunt) WithTerraformCommand(
+	// command is the terraform command to execute.
+	command string,
+	// args are the arguments to pass to the terraform command.
+	// +optional
+	args []string,
+	// autoApprove is the flag to approve the terraform command.
+	// +optional
+	autoApprove bool,
+) *Terragrunt {
+	// Initialize the command slice with the Terraform tool and the command.
+	cmd := []string{string(TerraformTool), command}
+
+	// Append optional arguments if provided.
+	if len(args) > 0 {
+		cmd = append(cmd, args...)
+	}
+
+	// Append auto-approve flag if set.
+	if autoApprove {
+		cmd = append(cmd, "-auto-approve")
+	}
+
+	// Execute the formed command in the container.
+	m.Ctr = m.Ctr.
+		WithExec(cmd)
+
+	return m
+}
+
+// WithTerragruntCommand executes a terragrunt command in the container.
+//
+// This method takes a terragrunt command and its arguments as input, validates them,
+// and executes the command in the container. The command is executed with the Terragrunt
+// binary.
+//
+// Parameters:
+// - command: A string representing the terragrunt command to execute.
+func (m *Terragrunt) WithTerragruntCommand(
+	// command is the terragrunt command to execute.
+	command string,
+	// args are the arguments to pass to the terragrunt command.
+	// +optional
+	args []string,
+	// autoApprove is the flag to approve the terragrunt command.
+	// +optional
+	autoApprove bool,
+) *Terragrunt {
+	// Initialize the command slice with the Terragrunt tool and the command.
+	cmd := []string{string(TerragruntTool), command}
+
+	// Append optional arguments if provided.
+	if len(args) > 0 {
+		cmd = append(cmd, args...)
+	}
+
+	// Append auto-approve flag if set.
+	if autoApprove {
+		cmd = append(cmd, "-auto-approve")
+	}
+
+	// Execute the formed command in the container.
+	m.Ctr = m.Ctr.WithExec(cmd)
+
+	return m
 }
