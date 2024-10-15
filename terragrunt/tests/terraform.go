@@ -27,33 +27,27 @@ func (m *Tests) TestTfExecInitSimpleCommand(ctx context.Context) error {
 			EnvVarsFromHost: testEnvVars,
 			TfVersion:       "1.9.1",
 		}).
-		WithTerragruntPermissionsOnDirsDefault().
+		WithSource(m.getTestDir("").
+			Directory("terraform/tf-module-1"),
+		).
 		WithTerragruntLogOptions(
 			dagger.TerragruntWithTerragruntLogOptionsOpts{
 				TgLogLevel:        "debug",
 				TgForwardTfStdout: true,
 			},
-		)
-
-	// Execute the init command, but don't run it in a container
-	tfInitCtr := tgModule.
-		TfExec("init", dagger.TerragruntTfExecOpts{
-			Source: m.getTestDir("").
-				Directory("terraform/tf-module-1"),
+		).
+		WithTerragruntPermissionsOnDirsDefault().
+		WithTerraformCommand("init").
+		WithTerraformCommand("plan").
+		WithTerraformCommand("apply", dagger.TerragruntWithTerraformCommandOpts{
+			AutoApprove: true,
 		})
 
-	tfPlanCtr := tfInitCtr.
-		WithExec([]string{"ls"}).
-		WithExec([]string{"terraform", "plan"})
+	// Execute the init command, but don't run it in a container
+	tfCtr := tgModule.Ctr()
 
-	// tfPlanCtr := tgModule.WithContainer(tfInitCtr).
-	// 	TfExec("plan", dagger.TerragruntTfExecOpts{
-	// 		Source: tfInitCtr.Directory("."),
-	// 	})
-
-	// Evaluate the terraform init command.
-	tfPlanOut, tfPlanErr := tfPlanCtr.
-		Terminal().
+	// // Evaluate the terraform init command.
+	tfPlanOut, tfPlanErr := tfCtr.
 		Stdout(ctx)
 
 	if tfPlanErr != nil {
@@ -66,7 +60,7 @@ func (m *Tests) TestTfExecInitSimpleCommand(ctx context.Context) error {
 
 	// Check the environment variables set in the container
 	for _, envVar := range testEnvVars {
-		if err := m.assertEnvVarIsSetInContainer(ctx, tfPlanCtr, envVar); err != nil {
+		if err := m.assertEnvVarIsSetInContainer(ctx, tfCtr, envVar); err != nil {
 			return err
 		}
 	}

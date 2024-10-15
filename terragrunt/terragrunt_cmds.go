@@ -142,7 +142,7 @@ func (m *Terragrunt) Exec(
 			return nil, WrapErrorf(err, "failed to set the entrypoint with tool: %s", tool)
 		}
 
-		return m.Ctr.WithExec(append([]string{string(tool)}, cmdAsSlice...)), nil
+		return m.Ctr.WithExec(append([]string{tool}, cmdAsSlice...)), nil
 	}
 
 	// Execute the command
@@ -194,112 +194,6 @@ func (m *Terragrunt) ExecCmd(
 
 	if err != nil {
 		return "", WrapErrorf(err, "failed to get stdout from terragrunt command: %s", command)
-	}
-
-	return output, nil
-}
-
-// TfExec executes a Terraform command within the Terragrunt context.
-//
-// This function takes the specified command and its arguments, executes it in the
-// context of the provided source directory, and returns a pointer to the resulting
-// container or an error if the execution fails.
-//
-// Parameters:
-// - ctx: The context to use when executing the command.
-// - command: The terraform command to execute. It's the actual command that comes after 'terraform'.
-// - args: The arguments to pass to the command.
-// - autoApprove: The flag to auto approve the command.
-// - source: The source directory that includes the source code.
-// - module: The module to execute or the terraform configuration where the main.tf file is located.
-// - envVars: The environment variables to pass to the container.
-// - secrets: The secrets to pass to the container.
-//
-// Returns:
-// - *dagger.Container: A pointer to the resulting container.
-// - error: An error if the command execution fails.
-func (m *Terragrunt) TfExec(
-	// ctx is the context to use when executing the command.
-	// +optional
-	ctx context.Context,
-	// command is the terraform command to execute. It's the actual command that comes after 'terraform'
-	command string,
-	// args are the arguments to pass to the command.
-	// +optional
-	args []string,
-	// autoApprove is the flag to auto approve the command.
-	// +optional
-	autoApprove bool,
-	// source is the source directory that includes the source code.
-	// +defaultPath="/"
-	// +ignore=[".terragrunt-cache", ".terraform", ".github", ".gitignore", ".git", "vendor", "node_modules", "build", "dist", "log"]
-	source *dagger.Directory,
-	// module is the module to execute or the terraform configuration where the main.tf file is located.
-	// +optional
-	module string,
-	// envVars is the environment variables to pass to the container.
-	// +optional
-	envVars []string,
-	// secrets is the secrets to pass to the container.
-	// +optional
-	secrets []*dagger.Secret,
-) (*dagger.Container, error) {
-	return m.Exec(ctx, command, args, autoApprove, source, module, envVars, secrets, string(TerraformTool))
-}
-
-// TfExecCmd executes a Terraform command within the Terragrunt context.
-//
-// This function takes the specified command and its arguments, executes it in the
-// context of the provided source directory, and returns the standard output as a string.
-// If any error occurs during execution, it returns an error with a descriptive message.
-//
-// Parameters:
-// - ctx: The context to use when executing the command.
-// - command: The terraform command to execute. It's the actual command that comes after 'terraform'.
-// - args: The arguments to pass to the command.
-// - autoApprove: The flag to auto approve the command.
-// - source: The source directory that includes the source code.
-// - module: The module to execute or the terraform configuration where the main.tf file is located.
-// - envVars: The environment variables to pass to the container.
-// - secrets: The secrets to pass to the container.
-//
-// Returns:
-// - string: The standard output from the executed command.
-// - error: An error if the command execution fails.
-func (m *Terragrunt) TfExecCmd(
-	// ctx is the context to use when executing the command.
-	// +optional
-	ctx context.Context,
-	// command is the terraform command to execute. It's the actual command that comes after 'terraform'
-	command string,
-	// args are the arguments to pass to the command.
-	// +optional
-	args []string,
-	// autoApprove is the flag to auto approve the command.
-	// +optional
-	autoApprove bool,
-	// source is the source directory that includes the source code.
-	// +defaultPath="/"
-	// +ignore=[".terragrunt-cache", ".terraform", ".github", ".gitignore", ".git", "vendor", "node_modules", "build", "dist", "log"]
-	source *dagger.Directory,
-	// module is the module to execute or the terraform configuration where the main.tf file is located.
-	// +optional
-	module string,
-	// envVars is the environment variables to pass to the container.
-	// +optional
-	envVars []string,
-	// secrets is the secrets to pass to the container.
-	// +optional
-	secrets []*dagger.Secret,
-) (string, error) {
-	container, err := m.TfExec(ctx, command, args, autoApprove, source, module, envVars, secrets)
-	if err != nil {
-		return "", WrapErrorf(err, "failed to execute terraform command: %s", command)
-	}
-
-	output, err := container.Stdout(ctx)
-	if err != nil {
-		return "", WrapErrorf(err, "failed to get stdout from terraform command: %s", command)
 	}
 
 	return output, nil
@@ -640,4 +534,79 @@ func (m *Terragrunt) WithTerraformToken(
 		WithSecretVariable(tfTokenName, tfToken)
 
 	return m, nil
+}
+
+// WithTerraformCommand executes a terraform command in the container.
+//
+// This method takes a terraform command and its arguments as input, validates them,
+// and executes the command in the container. The command is executed with the Terraform
+// binary.
+//
+// Parameters:
+// - command: A string representing the terraform command to execute.
+func (m *Terragrunt) WithTerraformCommand(
+	// command is the terraform command to execute.
+	command string,
+	// args are the arguments to pass to the terraform command.
+	// +optional
+	args []string,
+	// autoApprove is the flag to approve the terraform command.
+	// +optional
+	autoApprove bool,
+) *Terragrunt {
+	// Initialize the command slice with the Terraform tool and the command.
+	cmd := []string{string(TerraformTool), command}
+
+	// Append optional arguments if provided.
+	if len(args) > 0 {
+		cmd = append(cmd, args...)
+	}
+
+	// Append auto-approve flag if set.
+	if autoApprove {
+		cmd = append(cmd, "-auto-approve")
+	}
+
+	// Execute the formed command in the container.
+	m.Ctr = m.Ctr.
+		WithExec(cmd)
+
+	return m
+}
+
+// WithTerragruntCommand executes a terragrunt command in the container.
+//
+// This method takes a terragrunt command and its arguments as input, validates them,
+// and executes the command in the container. The command is executed with the Terragrunt
+// binary.
+//
+// Parameters:
+// - command: A string representing the terragrunt command to execute.
+func (m *Terragrunt) WithTerragruntCommand(
+	// command is the terragrunt command to execute.
+	command string,
+	// args are the arguments to pass to the terragrunt command.
+	// +optional
+	args []string,
+	// autoApprove is the flag to approve the terragrunt command.
+	// +optional
+	autoApprove bool,
+) *Terragrunt {
+	// Initialize the command slice with the Terragrunt tool and the command.
+	cmd := []string{string(TerragruntTool), command}
+
+	// Append optional arguments if provided.
+	if len(args) > 0 {
+		cmd = append(cmd, args...)
+	}
+
+	// Append auto-approve flag if set.
+	if autoApprove {
+		cmd = append(cmd, "-auto-approve")
+	}
+
+	// Execute the formed command in the container.
+	m.Ctr = m.Ctr.WithExec(cmd)
+
+	return m
 }

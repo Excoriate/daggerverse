@@ -67,58 +67,6 @@ type Cmd interface {
 		tool string,
 	) (*dagger.Container, error)
 
-	// TfExec executes a given Terraform command within a Dagger container.
-	//
-	// Parameters:
-	// - ctx: The context for controlling the execution.
-	// - command: The Terraform command to execute.
-	// - args: The arguments for the command.
-	// - autoApprove: Flag to auto-approve prompts.
-	// - source: The source directory for the command.
-	// - module: The module to execute. +optional
-	// - envVars: The environment variables to pass to the container. +optional
-	// - secrets: The secrets to pass to the container. +optional
-	//
-	// Returns:
-	// - *dagger.Container: Pointer to the resulting container.
-	// - error: If execution fails.
-	TfExec(
-		ctx context.Context,
-		command string,
-		args []string,
-		autoApprove bool,
-		source *dagger.Directory,
-		module string,
-		envVars []string,
-		secrets []*dagger.Secret,
-	) (*dagger.Container, error)
-
-	// TfExecCmd executes a given Terragrunt command within a Dagger container.
-	//
-	// Parameters:
-	// - ctx: The context for controlling the execution.
-	// - command: The Terragrunt command to execute.
-	// - args: The arguments for the command.
-	// - autoApprove: Flag to auto-approve prompts.
-	// - source: The source directory for the command.
-	// - module: The module to execute. +optional
-	// - envVars: The environment variables to pass to the container. +optional
-	// - secrets: The secrets to pass to the container. +optional
-	//
-	// Returns:
-	// - *dagger.Container: Pointer to the resulting container.
-	// - error: If execution fails.
-	TfExecCmd(
-		ctx context.Context,
-		command string,
-		args []string,
-		autoApprove bool,
-		source *dagger.Directory,
-		module string,
-		envVars []string,
-		secrets []*dagger.Secret,
-	) (*dagger.Container, error)
-
 	// validate checks if the provided command is recognized by the IaC tool.
 	//
 	// Returns an error for invalid or empty commands.

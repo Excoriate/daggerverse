@@ -1,86 +1,91 @@
 ---
 contents:
-    repositories:
-        - https://dl-cdn.alpinelinux.org/alpine/v3.18/main
-        - https://dl-cdn.alpinelinux.org/alpine/v3.18/community
-    packages:
-        - alpine-baselayout
-        - alpine-keys
-        - apk-tools
-        - ca-certificates-bundle
-        - musl
-        - curl
-        - bash
-        - unzip
-        - wget
-        - git
-        - tzdata
-        - openssl
+  repositories:
+    - https://dl-cdn.alpinelinux.org/alpine/v3.18/main
+    - https://dl-cdn.alpinelinux.org/alpine/v3.18/community
+  packages:
+    - alpine-baselayout
+    - alpine-keys
+    - apk-tools
+    - ca-certificates-bundle
+    - musl
+    - curl
+    - bash
+    - unzip
+    - wget
+    - git
+    - tzdata
+    - openssl
 
 accounts:
-    groups:
-        - groupname: terragrunt
-          gid: 65532
-    users:
-        - username: terragrunt
-          uid: 65532
-          gid: 65532
-    run-as: terragrunt
+  groups:
+    - groupname: terragrunt
+      gid: 65532
+  users:
+    - username: terragrunt
+      uid: 65532
+      gid: 65532
+  run-as: terragrunt
 
 entrypoint:
-    command: /bin/bash -l
+  command: /bin/bash -l
 
 archs:
-    - x86_64
-    - aarch64
+  - x86_64
+  - aarch64
 
 environment:
-    PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/terragrunt/bin:/home/terragrunt/.local/bin
-    TERRAGRUNT_PROVIDER_CACHE_DIR: /home/terragrunt/.terragrunt-providers-cache
-    TERRAGRUNT_PROVIDER_CACHE: '1'
-    TF_PLUGIN_CACHE_DIR: /home/.terraform.d/plugin-cache
-    TZ: UTC
-    LANG: en_US.UTF-8
-    LC_ALL: en_US.UTF-8
+  PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/terragrunt/bin:/home/terragrunt/.local/bin
+  TERRAGRUNT_PROVIDER_CACHE_DIR: /home/terragrunt/.terragrunt-providers-cache
+  TERRAGRUNT_PROVIDER_CACHE: "1"
+  TF_PLUGIN_CACHE_DIR: /home/.terraform.d/plugin-cache
+  TZ: UTC
+  LANG: en_US.UTF-8
+  LC_ALL: en_US.UTF-8
 
 paths:
-    - path: /home/terragrunt
-      type: directory
-      uid: 65532
-      gid: 65532
-      permissions: 0o755
-    - path: /home/terragrunt/bin
-      type: directory
-      uid: 65532
-      gid: 65532
-      permissions: 0o755
-    - path: /home/terragrunt/.terragrunt-providers-cache
-      type: directory
-      uid: 65532
-      gid: 65532
-      permissions: 0o755
-    - path: /home/.terraform.d/plugin-cache
-      type: directory
-      uid: 65532
-      gid: 65532
-      permissions: 0o755
-    - path: /home/.terraform.d/plugins
-      type: directory
-      uid: 65532
-      gid: 65532
-      permissions: 0o755
+  - path: /home/terragrunt
+    type: directory
+    uid: 65532
+    gid: 65532
+    permissions: 0o755
+  - path: /home/terragrunt/bin
+    type: directory
+    uid: 65532
+    gid: 65532
+    permissions: 0o755
+  - path: /home/terragrunt/.terragrunt-providers-cache
+    type: directory
+    uid: 65532
+    gid: 65532
+    permissions: 0o755
+  - path: /home/.terraform.d/plugin-cache
+    type: directory
+    uid: 65532
+    gid: 65532
+    permissions: 0o755
+  - path: /home/.terraform.d/plugins
+    type: directory
+    uid: 65532
+    gid: 65532
+    permissions: 0o755
+  - path: /home/.terraform.d/providers
+    type: directory
+    uid: 65532
+    gid: 65532
+    permissions: 0o755
   # Default /mnt directory
-    - path: /mnt
-      type: directory
-      uid: 65532
-      gid: 65532
-      permissions: 0o755
+  - path: /mnt
+    type: directory
+    uid: 65532
+    gid: 65532
+    permissions: 0o755
 
 annotations:
-    title: Base Alpine for Terragrunt
-    description: A minimal Alpine base image built with APKO for Terragrunt, optimized for security and performance.
-    version: 1.1.0
-    vendor: github.com/Excoriate - Alex Torres
-    licenses: Apache-2.0
-    url: https://github.com/Excoriate/daggerverse
-    source: https://github.com/Excoriate/daggerverse
+  title: Base Alpine for Terragrunt
+  description: A minimal Alpine base image built with APKO for Terragrunt, optimized for security and performance.
+  version: 1.1.0
+  vendor: github.com/Excoriate - Alex Torres
+  licenses: Apache-2.0
+  url: https://github.com/Excoriate/daggerverse
+  source: https://github.com/Excoriate/daggerverse
