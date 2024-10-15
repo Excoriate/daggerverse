@@ -425,7 +425,6 @@ func (m *Tests) TestTerragruntExecWithPlanOutput(ctx context.Context) error {
 		// Args to output the plan to a file.
 		Args: []string{
 			"-out=plan.tfplan",
-			"-refresh=true",
 		},
 	})
 
