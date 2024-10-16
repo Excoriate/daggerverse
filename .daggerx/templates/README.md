@@ -53,15 +53,15 @@ Through the [Dagger CLI](https://docs.dagger.io/cli/465058/install), or by using
 
 ```
 
-### Key Files
+### Key Files (🔑, included, out-of-the-box)
 
-| File          | Description                                                                                                                                       |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `apis.go`     | Contains methods for setting up and managing the container environment, including environment variables, directory mounting, and file operations. |
-| `commands.go` | Implements functions for running shell commands and opening terminals in the container.                                                           |
-| `vcs.go`      | Provides functionality for version control system operations, particularly for setting up .netrc files for GitHub and GitLab authentication.      |
-| `cloud.go`    | Includes methods for configuring cloud provider credentials, specifically for AWS and Azure.                                                      |
-| `config.go`   | Defines constants for default container configurations.                                                                                           |
+| File          | Description                                                                                                                                                           |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apis.go`     | 🛠️ **API Manager**: Contains methods for setting up and managing the container environment, including environment variables, directory mounting, and file operations. |
+| `commands.go` | ⚙️ **Command Executor**: Implements functions for running shell commands and opening terminals in the container.                                                      |
+| `vcs.go`      | 🔧 **Version Control**: Provides functionality for version control system operations, particularly for setting up .netrc files for GitHub and GitLab authentication.  |
+| `cloud.go`    | ☁️ **Cloud Configurator**: Includes methods for configuring cloud provider credentials, specifically for AWS and Azure.                                               |
+| `config.go`   | 📦 **Configuration Constants**: Defines constants for default container configurations.                                                                               |
 
 > NOTE: This structure comes out of the box if it's generated through **Daggy**. Just run `just create <module-name>` for the full version, or `just createlight <module-name>` for the minimal version.
 
