@@ -144,7 +144,8 @@ func (m *GoServer) WithServerData(
 	})
 
 	if workdir != "" {
-		ctr = ctr.WithWorkdir(filepath.Join(fixtures.MntPrefix, workdir))
+		ctr = ctr.
+			WithWorkdir(filepath.Join(fixtures.MntPrefix, workdir))
 	}
 
 	// Update the container configuration in the GoServer
