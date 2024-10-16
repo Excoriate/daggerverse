@@ -1,13 +1,15 @@
-// Package main provides the Gotest Dagger module and related functions.
+// Package main provides the Gotest Dagger module for container management.
 //
-// This module has been generated via dagger init and serves as a reference to
-// basic module structure as you get started with Dagger. The module demonstrates
-// usage of arguments and return types using simple echo and grep commands. The functions
-// can be called from the dagger CLI or from one of the SDKs.
+// This Dagger module is tailored for running Go test commands within containerized environments.
+// It enables users to execute Go tests efficiently by defining a base container, 
+// passing environment variables from the host,
+// and managing container configurations seamlessly. The Gotest module exemplifies how to 
+// leverage Dagger's capabilities
+// for executing Go tests in various workflows.
 //
-// The first line in this comment block is a short description line and the
-// rest is a long description with more detail on the module's purpose or usage,
-// if appropriate. All modules should have a short description.
+// Functions in this module can be invoked from the Dagger CLI or through SDKs,
+// allowing for flexible integration into CI/CD pipelines. This module is designed to be
+// extensible and adaptable for diverse testing scenarios in Go applications.
 package main
 
 import (
@@ -54,13 +56,23 @@ func New(
 
 	if ctr != nil {
 		dagModule.Ctr = ctr
-	} else {
-		imageURL, imageURLErr := dagModule.getImageURL(image, version)
-		if imageURLErr != nil {
-			return nil, WrapError(imageURLErr, "failed to initialize Dagger module")
+
+		return dagModule, nil
+	}
+
+	if image != "" {
+		isValid, err := containerx.ValidateImageURL(image)
+		if err != nil {
+			return nil, WrapErrorf(err, "failed to validate image URL passed with value %s", image)
 		}
 
-		dagModule.Base(imageURL)
+		if !isValid {
+			return nil, Errorf("the image URL %s is not valid", image)
+		}
+
+		dagModule.Base(image)
+	} else {
+
 	}
 
 	// If environment variables are passed in a string, with a format like "SOMETHING=SOMETHING,SOMETHING=SOMETHING",
