@@ -58,11 +58,41 @@ func (m *Go) AllRecipes(ctx context.Context) error {
 	polTests := pool.New().WithErrors().WithContext(ctx)
 
 	// Test different ways to configure the base container.
-	// polTests.Go(m.BuiltInRecipes)
+	polTests.Go(m.BuiltInRecipes)
 	// From this point onwards, we're testing the specific functionality of the ModuleTemplateLight module.
 
 	if err := polTests.Wait(); err != nil {
 		return fmt.Errorf("there are some failed tests: %w", err)
+	}
+
+	return nil
+}
+
+// BuiltInRecipes demonstrates how to run built-in recipes
+//
+// This method showcases the use of various built-in recipes provided by the ModuleTemplate
+// module, including creating a container, running an arbitrary command, and creating a .netrc
+// file for GitHub authentication.
+//
+// Parameters:
+//   - ctx: The context for controlling the function's timeout and cancellation.
+//
+// Returns:
+//   - An error if any of the internal methods fail, or nil otherwise.
+func (m *Go) BuiltInRecipes(ctx context.Context) error {
+	// Pass environment variables to the ModuleTemplate module using ModuleTemplate_PassedEnvVars
+	if err := m.ModuleTemplateLight_PassedEnvVars(ctx); err != nil {
+		return fmt.Errorf("failed to pass environment variables: %w", err)
+	}
+
+	// Run an arbitrary command in the container using ModuleTemplateLight_RunArbitraryCommand
+	if _, err := m.ModuleTemplateLight_RunArbitraryCommand(ctx); err != nil {
+		return fmt.Errorf("failed to run arbitrary command: %w", err)
+	}
+
+	// Create a new container.
+	if _, err := m.ModuleTemplateLight_CreateContainer(ctx); err != nil {
+		return fmt.Errorf("failed to create container: %w", err)
 	}
 
 	return nil

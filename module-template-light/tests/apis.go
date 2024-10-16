@@ -368,7 +368,7 @@ func (m *Tests) TestWithConfigFile(ctx context.Context) error {
 	configTestFilePath := "common/test-file.yml"
 	configTestFilePathInCtr := filepath.Join(fixtures.MntPrefix, configTestFilePath)
 
-	file := m.getTestDir().
+	file := m.TestDir.
 		File(configTestFilePath)
 
 	targetModule := dag.

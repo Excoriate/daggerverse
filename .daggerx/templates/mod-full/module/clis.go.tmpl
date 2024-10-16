@@ -1,6 +1,8 @@
 package main
 
-import "fmt"
+import (
+	"github.com/Excoriate/daggerx/pkg/installerx"
+)
 
 // WithAWSCLIInAlpineContainer installs the AWS CLI in the
 // Alpine-based container.
@@ -34,25 +36,12 @@ func (m *{{.module_name}}) WithAWSCLIInUbuntuContainer(
 	// Valid values are "x86_64" and "aarch64". Default is "x86_64".
 	// +optional
 	architecture string) *{{.module_name}} {
-	// Validate and default the architecture argument
-	switch architecture {
-	case "":
-		architecture = "x86_64"
-	case "aarch64", "x86_64":
-		// valid architectures
-	default:
-		panic("Invalid architecture specified. Supported values are 'x86_64' and 'aarch64'.")
-	}
-
-	url := fmt.Sprintf("https://awscli.amazonaws.com/awscli-exe-linux-%s.zip", architecture)
+	awsCLIInstallation := installerx.GetAwsCliInstallCommand(architecture)
 
 	m.Ctr = m.Ctr.
 		WithExec([]string{"apt-get", "update"}).
 		WithExec([]string{"apt-get", "install", "-y", "unzip", "curl", "sudo"}).
-		WithExec([]string{"curl", "-L", url, "-o", "awscliv2.zip"}).
-		WithExec([]string{"unzip", "awscliv2.zip"}).
-		WithExec([]string{"sudo", "./aws/install"}).
-		WithExec([]string{"rm", "-rf", "awscliv2.zip", "aws"})
+		WithExec([]string{"sh", "-c", awsCLIInstallation})
 
 	return m
 }

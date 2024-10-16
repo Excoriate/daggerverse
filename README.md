@@ -6,15 +6,16 @@
 
 [![🏗️ CI CodeGen Daggy](https://github.com/Excoriate/daggerverse/actions/workflows/ci-daggy-codegen.yml/badge.svg)](https://github.com/Excoriate/daggerverse/actions/workflows/ci-daggy-codegen.yml)[![CI module-template 🧹](https://github.com/Excoriate/daggerverse/actions/workflows/ci-mod-module-template.yaml/badge.svg)](https://github.com/Excoriate/daggerverse/actions/workflows/ci-mod-module-template.yaml)
 
-| Module                                         | Status | What it does?                                                                |
-| ---------------------------------------------- | ------ | ---------------------------------------------------------------------------- |
-| [Terraform](terraform/README.md)               | ✅     | Run [Terraform](https://www.terraform.io) commands.                          |
-| [Terratest](terratest/README.md)               | ✅     | Run [Terratest](https://terratest.gruntwork.io) commands.                    |
-| [GitLab CICD Vars](gitlab-cicd-vars/README.md) | ✅     | Manage GitLab CI/CD variables.                                               |
-| [GoReleaser](goreleaser/README.md)             | ✅     | Wraps [GoReleaser](https://goreleaser.com) functionality as a dagger module. |
-| [TFLint](tflint/README.md)                     | ✅     | Run [TFLint](https://github.com/terraform-linters/tflint) commands.          |
-| [GoTest](gotest/README.md)                     | ✅     | A simplify way to run Go Tests (using Go Test, and/or GoTestsum).            |
-| [Terragrunt](terragrunt/README.md)             | ✅     | A simple [Terragrunt](https://terragrunt.gruntwork.io) module.               |
+| Module                                         | Status | What it does?                                                                   |
+| ---------------------------------------------- | ------ | ------------------------------------------------------------------------------- |
+| [Terraform](terraform/README.md)               | ✅     | 🌍 Run [Terraform](https://www.terraform.io) commands.                          |
+| [Terratest](terratest/README.md)               | ✅     | 🧪 Run [Terratest](https://terratest.gruntwork.io) commands.                    |
+| [GitLab CICD Vars](gitlab-cicd-vars/README.md) | ✅     | ⚙️ Manage GitLab CI/CD variables.                                               |
+| [GoReleaser](goreleaser/README.md)             | ✅     | 🚀 Wraps [GoReleaser](https://goreleaser.com) functionality as a dagger module. |
+| [TFLint](tflint/README.md)                     | ✅     | 🔍 Run [TFLint](https://github.com/terraform-linters/tflint) commands.          |
+| [GoTest](gotest/README.md)                     | ✅     | 🔋 A batteries-included way to run Go Tests (using Go Test, and/or GoTestsum).  |
+| [Terragrunt](terragrunt/README.md)             | ✅     | 🔋 A batteries-included way to run Terragrunt commands.                         |
+| [Gotoolbox](gotoolbox/README.md)               | ✅     | 🛠️ A toolbox for various Go utilities.                                          |
 
 ---
 
@@ -199,7 +200,7 @@ Currently, the following checks are executed on each module:
 To run the CI checks locally, just execute:
 
 ```bash
-just cilocal <module-name>
+just ci <module-name>
 ```
 
 To run only the tests in your module, just execute:
@@ -211,5 +212,5 @@ just test <module-name>
 To run only the Go lint checks in your module, just execute:
 
 ```bash
-just golint <module-name>
+just lintall <module-name>
 ```
