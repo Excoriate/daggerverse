@@ -67,31 +67,44 @@ fn sync_changes(inspect_type: &str, dry_run: bool, detailed: bool) -> Result<(),
             config.template_path_by_type
         );
 
-        let changes = detect_changes(&config, detailed)?;
+        if !dry_run {
+            // Sync module files
+            sync_directory(
+                &config.module_src_path,
+                &config.template_path_by_type,
+                "module",
+                &config,
+            )?;
 
-        if !changes.is_empty() {
-            println!("The following changes will be synced:");
-            for change in &changes {
-                println!("{:?}: {}", change.status, change.path);
-                if detailed && change.diff.is_some() {
-                    println!("Diff:\n{}", change.diff.as_ref().unwrap());
-                }
-            }
+            // Sync test files
+            let test_src_path = Path::new(&config.module_src_path).join("tests");
+            sync_directory(
+                &test_src_path.to_string_lossy(),
+                &config.template_path_by_type,
+                "tests",
+                &config,
+            )?;
 
-            if !dry_run {
-                update_template_files(changes, &config)?;
-                println!(
-                    "Changes synced successfully for {} module type",
-                    module_type
-                );
-            } else {
-                println!(
-                    "Dry run: Changes would be synced for {} module type",
-                    module_type
-                );
-            }
+            // Sync example files
+            let example_src_path = Path::new(&config.module_src_path)
+                .join("examples")
+                .join("go");
+            sync_directory(
+                &example_src_path.to_string_lossy(),
+                &config.template_path_by_type,
+                "examples/go",
+                &config,
+            )?;
+
+            println!(
+                "Changes synced successfully for {} module type",
+                module_type
+            );
         } else {
-            println!("No changes detected for {} module type", module_type);
+            println!(
+                "Dry run: Changes would be synced for {} module type",
+                module_type
+            );
         }
     }
 
@@ -377,4 +390,48 @@ fn generate_diff(_file1: &Path, _file2: &Path) -> Result<String, Error> {
     // Implement diff generation logic here
     // You can use a crate like `diff` or implement a simple line-by-line comparison
     unimplemented!("Diff generation not implemented yet")
+}
+
+fn sync_directory(
+    src_path: &str,
+    template_base_path: &str,
+    dir_type: &str,
+    config: &NewDaggerModule,
+) -> Result<(), Error> {
+    let src_dir = Path::new(src_path);
+    let template_dir = Path::new(template_base_path).join(dir_type);
+
+    println!("Debug: Syncing directory: {}", src_dir.display());
+    println!("Debug: To template directory: {}", template_dir.display());
+
+    if !src_dir.exists() {
+        println!(
+            "Debug: Source directory does not exist: {}",
+            src_dir.display()
+        );
+        return Ok(());
+    }
+
+    fs::create_dir_all(&template_dir)?;
+
+    for entry in fs::read_dir(src_dir)? {
+        let entry = entry?;
+        let path = entry.path();
+        if path.is_file() && path.extension().map_or(false, |ext| ext == "go") {
+            let file_name = path.file_name().unwrap().to_str().unwrap();
+            if file_name == "dagger.gen.go"
+                || path.components().any(|c| c.as_os_str() == "internal")
+            {
+                continue;
+            }
+
+            let template_file = template_dir.join(file_name).with_extension("go.tmpl");
+            let content = fs::read_to_string(&path)?;
+            let updated_content = replace_template_variables(&content, &config.module_type);
+            fs::write(&template_file, updated_content)?;
+            println!("Updated: {}", template_file.display());
+        }
+    }
+
+    Ok(())
 }
