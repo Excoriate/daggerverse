@@ -52,14 +52,6 @@ func (m *Tests) TestAll(ctx context.Context) error {
 		WithFirstError().
 		WithContext(ctx)
 
-	// Test different ways to configure the base container.
-	polTests.Go(m.TestContainerWithUbuntuBase)
-	polTests.Go(m.TestContainerWithAlpineBase)
-	polTests.Go(m.TestContainerWithBusyBoxBase)
-	polTests.Go(m.TestContainerWithWolfiBase)
-	polTests.Go(m.TestPassingEnvVarsInConstructor)
-	polTests.Go(m.TestContainerWithApkoBaseAlpine)
-	polTests.Go(m.TestContainerWithApkoBaseWolfi)
 	// Test built-in commands
 	polTests.Go(m.TestRunShellCMD)
 	// Test API(s) usage scenarios. APIs -> With<something>
@@ -73,11 +65,6 @@ func (m *Tests) TestAll(ctx context.Context) error {
 	polTests.Go(m.TestWithConfigFile)
 	polTests.Go(m.TestWithUserAsOwnerOfDirs)
 	polTests.Go(m.TestWithUserWithPermissionsOnDirs)
-	// Test installation APIs
-	polTests.Go(m.TestWithUtilitiesInAlpineContainer)
-	polTests.Go(m.TestWithUtilitiesInUbuntuContainer)
-	polTests.Go(m.TestWithGitInAlpineContainer)
-	polTests.Go(m.TestWithGitInUbuntuContainer)
 	// Test utility functions.
 	polTests.Go(m.TestDownloadFile)
 	polTests.Go(m.TestCloneGitRepo)

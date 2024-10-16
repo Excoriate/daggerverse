@@ -1,9 +1,9 @@
 // Package main provides the Gotest Dagger module for container management.
 //
 // This Dagger module is tailored for running Go test commands within containerized environments.
-// It enables users to execute Go tests efficiently by defining a base container, 
+// It enables users to execute Go tests efficiently by defining a base container,
 // passing environment variables from the host,
-// and managing container configurations seamlessly. The Gotest module exemplifies how to 
+// and managing container configurations seamlessly. The Gotest module exemplifies how to
 // leverage Dagger's capabilities
 // for executing Go tests in various workflows.
 //
@@ -38,20 +38,20 @@ type Gotest struct {
 //
 // Returns a pointer to a Gotest instance and an error, if any.
 func New(
-	// version (image tag) to use for the container image.
+	// version is the version of the GoReleaser to use, e.g., "v1.22.0". Optional parameter.
 	// +optional
 	version string,
-	// image is the imageURL (without the version) that's going to be used for his base container.
+	// image is the image to use as the base container. Optional parameter.
 	// +optional
 	image string,
-	// ctr is the container to use as a base container.
+	// ctr is the container to use as a base container. Optional parameter.
 	// +optional
 	ctr *dagger.Container,
-	// envVarsFromHost is a list of environment variables to pass from the host to the container in a slice of strings.
+	// envVarsFromHost is a list of environment variables to pass from the host to the container in a
+	// slice of strings. Optional parameter.
 	// +optional
 	envVarsFromHost []string,
 ) (*Gotest, error) {
-	//nolint:exhaustruct // It's 'okaysh' for now, I'll decide later what's going to be the pattern here.
 	dagModule := &Gotest{}
 
 	if ctr != nil {
@@ -60,76 +60,86 @@ func New(
 		return dagModule, nil
 	}
 
-	if image != "" {
-		isValid, err := containerx.ValidateImageURL(image)
-		if err != nil {
-			return nil, WrapErrorf(err, "failed to validate image URL passed with value %s", image)
-		}
-
-		if !isValid {
-			return nil, Errorf("the image URL %s is not valid", image)
-		}
-
-		dagModule.Base(image)
-	} else {
-
+	if err := dagModule.setupContainer(image, version); err != nil {
+		return nil, err
 	}
 
-	// If environment variables are passed in a string, with a format like "SOMETHING=SOMETHING,SOMETHING=SOMETHING",
-	// they are converted into a map and then into a list of DaggerEnvVars.
-	// Then, each environment variable is added to the container.
-	if len(envVarsFromHost) > 0 {
-		envVars, err := envvars.ToDaggerEnvVarsFromSlice(envVarsFromHost)
-		if err != nil {
-			return nil, WrapError(err, "failed to parse environment variables")
-		}
-
-		for _, envVar := range envVars {
-			dagModule.WithEnvironmentVariable(envVar.Name, envVar.Value, false)
-		}
+	if err := dagModule.setupEnvironmentVariables(envVarsFromHost); err != nil {
+		return nil, err
 	}
 
 	return dagModule, nil
 }
 
-// Base sets the base image and version, and creates the base container.
+// setupContainer sets up the container.
 //
-// The default image is "alpine/latest" and the default version is "latest".
-//
-//nolint:nolintlint,revive // This is a method that is used to set the base image and version.
-func (m *Gotest) Base(imageURL string) *Gotest {
-	c := dag.
-		Container().
-		From(imageURL)
-
-	m.Ctr = c
-
-	return m
-}
-
-// getImageURL gets the image URL and validates it.
-//
-// If the image URL is not valid, it returns an error.
-func (m *Gotest) getImageURL(image, version string) (string, error) {
-	imageURL, err := containerx.GetImageURL(&containerx.NewBaseContainerOpts{
-		Image:           image,
-		Version:         version,
-		FallbackImage:   defaultContainerImage,
-		FallBackVersion: defaultContainerVersion,
-	})
-
-	if err != nil {
-		return "", WrapErrorf(err, "failed to get image URL from image %s and version %s", image, version)
+// If the image is not passed, it sets up the default image.
+// If the image is passed, it sets up the custom image.
+func (m *Gotest) setupContainer(image, version string) error {
+	if image != "" {
+		return m.setupCustomImage(image)
 	}
 
-	isValid, invalidImageErr := containerx.ValidateImageURL(imageURL)
-	if invalidImageErr != nil {
-		return "", WrapErrorf(invalidImageErr, "failed to validate image URL %s", imageURL)
+	return m.setupDefaultImage(version)
+}
+
+// setupCustomImage sets up the custom image.
+//
+// It validates the image URL and sets the base container.
+func (m *Gotest) setupCustomImage(image string) error {
+	isValid, err := containerx.ValidateImageURL(image)
+
+	if err != nil {
+		return WrapErrorf(err, "failed to validate image URL passed with value %s", image)
 	}
 
 	if !isValid {
-		return "", Errorf("the image URL %s is not valid", imageURL)
+		return Errorf("the image URL %s is not valid", image)
 	}
 
-	return imageURL, nil
+	m.Base(image)
+
+	return nil
+}
+
+// setupDefaultImage sets up the default image.
+//
+// If the version is not passed, it sets the default version.
+// If the version is passed, it sets the custom version.
+func (m *Gotest) setupDefaultImage(version string) error {
+	if version == "" {
+		version = defaultContainerVersion
+	}
+
+	imageURL, err := m.getImageURL(defaultContainerImage, version)
+
+	if err != nil {
+		return WrapErrorf(err, "failed to get image URL from image %s and version %s",
+			defaultContainerImage, version)
+	}
+
+	m.Base(imageURL)
+
+	return nil
+}
+
+// setupEnvironmentVariables sets up the environment variables.
+//
+// If the environment variables are not passed, it returns nil.
+// If the environment variables are passed, it sets the environment variables.
+func (m *Gotest) setupEnvironmentVariables(envVarsFromHost []string) error {
+	if len(envVarsFromHost) == 0 {
+		return nil
+	}
+
+	envVars, err := envvars.ToDaggerEnvVarsFromSlice(envVarsFromHost)
+	if err != nil {
+		return WrapError(err, "failed to parse environment variables")
+	}
+
+	for _, envVar := range envVars {
+		m.WithEnvironmentVariable(envVar.Name, envVar.Value, false)
+	}
+
+	return nil
 }

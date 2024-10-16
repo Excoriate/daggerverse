@@ -203,9 +203,7 @@ func (m *Go) Gotest_RunArbitraryCommand(ctx context.Context) (string, error) {
 func (m *Go) Gotest_CreateContainer(ctx context.Context) (*dagger.Container, error) {
 	targetModule := dag.
 		Gotest().
-		BaseAlpine().
-		WithUtilitiesInAlpineContainer(). // Install utilities
-		WithGitInAlpineContainer().       // Install git
+		Base("alpine:latest").
 		WithSource(m.TestDir)
 
 	// Get the OS or container information
