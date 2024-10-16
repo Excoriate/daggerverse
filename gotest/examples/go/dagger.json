@@ -1,0 +1,21 @@
+{
+  "name": "go",
+  "sdk": "go",
+  "exclude": [
+    "../../.direnv",
+    "../../.devenv",
+    "../../.vscode",
+    "../../.idea",
+    "../../.trunk",
+    "../../go.work",
+    "../../go.work.sum"
+  ],
+  "dependencies": [
+    {
+      "name": "gotest",
+      "source": "../.."
+    }
+  ],
+  "source": ".",
+  "engineVersion": "v0.13.5"
+}
