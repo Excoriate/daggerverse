@@ -55,3 +55,9 @@ func (m *Goreleaser) WithEnvVar(key, value string, expand bool) *Goreleaser {
 
 	return m
 }
+
+// WithSecret sets a Secret as environment variable.
+func (m *Goreleaser) WithSecret(name string, secret *Secret) *Goreleaser {
+	m.Ctr = m.Ctr.WithSecretVariable(name, secret)
+	return m
+}
