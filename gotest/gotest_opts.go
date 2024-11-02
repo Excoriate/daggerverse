@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"strconv"
 	"strings"
 )
@@ -207,7 +206,7 @@ func (o *GoTestOptions) WithVerboseOutput() *GoTestOptions {
 }
 
 // ErrInvalidTestFlag is returned when an invalid test flag is encountered.
-var ErrInvalidTestFlag = errors.New("invalid test flag for command go test")
+// var ErrInvalidTestFlag = errors.New("invalid test flag for command go test")
 
 // Validate checks if the test options are valid.
 //
@@ -222,7 +221,7 @@ func (o *GoTestOptions) Validate() error {
 				i++
 			}
 		} else {
-			return errors.New(ErrInvalidTestFlag.Error() + ": " + flag)
+			return Errorf("invalid test flag for command go test: %s", flag)
 		}
 	}
 

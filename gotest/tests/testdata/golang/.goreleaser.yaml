@@ -1,0 +1,71 @@
+---
+version: 2
+project_name: gotoolbox-app
+
+before:
+    hooks:
+        - go mod tidy
+# setups builds for linux and darwin on amd64 and arm64
+# https://goreleaser.com/customization/build
+builds:
+    - env:
+          - CGO_ENABLED=0
+      goos:
+          - linux
+          - darwin
+      goarch:
+          - amd64
+          - arm64
+    # ensures mod timestamp to be the commit timestamp
+      mod_timestamp: '{{ .CommitTimestamp }}'
+      main: main.go
+      flags:
+      # trims path
+          - -trimpath
+      ldflags:
+      # use commit date instead of current date as main.date
+      # only needed if you actually use those things in your main package, otherwise can be ignored.
+          - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{ .CommitDate }}
+
+release:
+    prerelease: auto
+
+# proxies from the go mod proxy before building
+# https://goreleaser.com/customization/gomod
+gomod:
+    proxy: true
+
+# config the checksum filename
+# https://goreleaser.com/customization/checksum
+checksum:
+    name_template: checksums.txt
+
+# create a source tarball
+# https://goreleaser.com/customization/source/
+source:
+    enabled: true
+
+# creates SBOMs of all archives and the source tarball using syft
+# https://goreleaser.com/customization/sbom
+sboms:
+    - artifacts: archive
+    - id: source # Two different sbom configurations need two different IDs
+      artifacts: source
+
+archives:
+    - wrap_in_directory: true
+      format_overrides:
+          - goos: windows
+            format: zip
+
+
+snapshot:
+    name_template: '{{ .Tag }}-snapshot'
+
+changelog:
+    sort: asc
+    filters:
+        exclude:
+            - '^docs:'
+            - '^test:'
+            - '^*.md:'

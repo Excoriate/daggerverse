@@ -1,5 +1,6 @@
 {
   "name": "gotest",
+  "engineVersion": "v0.13.7",
   "sdk": "go",
   "exclude": [
     "../.direnv",
@@ -10,6 +11,5 @@
     "../go.work",
     "../go.work.sum"
   ],
-  "source": ".",
-  "engineVersion": "v0.13.5"
+  "source": "."
 }
