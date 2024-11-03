@@ -307,7 +307,7 @@ fmt mod:
     set -e
 
     echo "🔍 Checking and formatting Go files in [{{mod}}] and its submodules..."
-    
+
     formatted_files=()
 
     # Function to format files in a directory if it's a Dagger module

@@ -13,4 +13,3 @@ walkdir = "2.3.3"
 similar = "2.2.1"
 prettytable-rs = "0.10.0"
 diffy = "0.3"
- 
