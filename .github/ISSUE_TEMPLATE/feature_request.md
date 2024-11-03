@@ -1,29 +1,37 @@
 ---
 name: ⭐ Feature Request
-about: Propose a great feature idea
-title: "[Feature Title]"
+about: Propose new capabilities for daggerverse modules or tooling
+title: "[Module/Tool Name]: Feature description"
 labels: "enhancement"
 ---
 
+## 🎯 Target Component
+
+- [ ] Feature on existing module
+- [ ] New Module Proposal
+- [ ] Daggy CLI Tool
+- [ ] Module Generator
+- [ ] Common Utilities/Shared Code
+- [ ] Other (Please describe)
+
 ## 🌟 Feature Description
-Provide a clear and concise description of the feature you want to suggest.
-For example: "I'd love for the module `xyz` to support the `xyz` command."
 
-## 🚀 What's the Benefit?
-Describe the benefit of implementing the feature from the user's perspective.
-For example: "This feature would speed up the infrastructure setup process by provisioning multiple resources in one command."
+Describe the feature you'd like to see.
+Example: "Add support for AWS Lambda function deployments in the `aws` module"
 
-## 🛠️ Proposed Solution
-Propose a solution if you have one in mind. If not, just leave this section blank.
+## 🎭 Use Case
 
-## 💡 Possible Alternatives
-If applicable, describe any alternative solutions or features you've considered.
+Explain the real-world scenario this feature addresses.
+Example: "Currently deploying Lambda functions requires multiple Dagger Functions across different modules. A unified approach would streamline serverless deployments."
 
-## 🗺️ Example Scenario
-Describe an example where your proposed feature would be beneficial.
+## 💫 Expected Dagger Function Interface
 
-## 📚 Any Relevant Documentation?
-Add any relevant documents or links that will help us understand the feature request better.
+If applicable, describe how you envision using this feature in a Dagger pipeline:
 
-## 🌞 Anything else you would like to add?
-Add any other context or screenshots about the feature request here!
+```typescript
+// Example interface/usage (pseudo-code)
+myModule.doSomething({
+  with: "these",
+  parameters: "ideally",
+});
+```
