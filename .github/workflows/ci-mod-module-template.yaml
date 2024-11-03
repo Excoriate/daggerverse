@@ -22,15 +22,15 @@ defaults:
         working-directory: module-template
 
 env:
-    DAGGER_VERSION_EXAMPLES_GO: 0.13.5
+    DAGGER_VERSION_EXAMPLES_GO: 0.13.7
 
 jobs:
     dagger-linter:
         strategy:
             matrix:
                 go: ['1.22']
-                dagversion: [0.13.4, 0.13.5]
-        name: Lint module-template on ${{ matrix.os }} with Dagger ${{ matrix.dagversion }}
+                dagversion: [0.13.6, 0.13.7]
+        name: Lint module-template on ${{ matrix.go }} with Dagger ${{ matrix.dagversion }}
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
@@ -162,9 +162,9 @@ jobs:
         strategy:
             matrix:
                 go: ['1.22']
-                dagversion: [0.13.4, 0.13.5]
+                dagversion: [0.13.6, 0.13.7]
         needs: [dagger-linter, golangci-lint]
-        name: Run Tests 🧪 in module-template on ${{ matrix.os }} with Dagger ${{ matrix.dagversion }}
+        name: Run Tests 🧪 in module-template on ${{ matrix.go }} with Dagger ${{ matrix.dagversion }}
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
@@ -189,7 +189,7 @@ jobs:
                   cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-            - name: Running Tests 💣 in module-template on ${{ matrix.os }} with Dagger ${{ matrix.dagversion }}
+            - name: Running Tests 💣 in module-template on ${{ matrix.go }} with Dagger ${{ matrix.dagversion }}
               uses: dagger/dagger-for-github@v6
               with:
                   verb: call
@@ -204,9 +204,9 @@ jobs:
         strategy:
             matrix:
                 go: ['1.22']
-                dagversion: [0.13.5]
+                dagversion: [0.13.7]
         needs: [dagger-linter, golangci-lint]
-        name: Run recipes 🥗 in module-template/examples/go on ${{ matrix.os }} with Dagger ${{ matrix.dagversion }}
+        name: Run recipes 🥗 in module-template/examples/go on ${{ matrix.go }} with Dagger ${{ matrix.dagversion }}
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
