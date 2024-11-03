@@ -289,9 +289,11 @@ func (m *Tests) TestGoTestRunTestCMDWithCustomOptions(ctx context.Context) error
 		Coverprofile: "coverage.out",
 		Verbose:      true,
 	})
+
 	if coverErr != nil {
 		return WrapError(coverErr, "coverage test failed")
 	}
+
 	if !strings.Contains(coverOut, "coverage") {
 		return NewError("expected coverage data in output")
 	}
@@ -305,9 +307,11 @@ func (m *Tests) TestGoTestRunTestCMDWithCustomOptions(ctx context.Context) error
 		Packages: []string{"./..."},
 		Verbose:  true,
 	})
+
 	if buildErr != nil {
 		return WrapError(buildErr, "build options test failed")
 	}
+
 	if !strings.Contains(buildOut, "PASS") {
 		return NewError("expected PASS in build output")
 	}
@@ -319,9 +323,11 @@ func (m *Tests) TestGoTestRunTestCMDWithCustomOptions(ctx context.Context) error
 		Verbose:          true,
 		Packages:         []string{"./..."},
 	})
+
 	if shortErr != nil {
 		return WrapError(shortErr, "short mode test failed")
 	}
+
 	// JSON output should contain either "Action" or "Test" fields
 	if !strings.Contains(shortOut, "Action") && !strings.Contains(shortOut, "Test") {
 		return NewError("expected JSON test output")
@@ -334,9 +340,11 @@ func (m *Tests) TestGoTestRunTestCMDWithCustomOptions(ctx context.Context) error
 		Verbose:  true,
 		Packages: []string{"./..."},
 	})
+
 	if timeoutErr != nil {
 		return WrapError(timeoutErr, "timeout test failed")
 	}
+
 	if !strings.Contains(timeoutOut, "PASS") {
 		return NewError("expected PASS in timeout test output")
 	}
