@@ -44,6 +44,45 @@ func (m *ModuleTemplateLight) WithGoPlatform(
 	return m
 }
 
+// WithGoGCCCompilerAlpine installs the GCC compiler and musl-dev package
+// in the container environment using the Alpine package manager (apk).
+//
+// This method is useful for enabling the Go toolchain to compile C code
+// and link against C libraries, which is necessary for certain Go packages
+// that rely on CGO.
+//
+// Returns:
+// - *ModuleTemplateLight: A pointer to the updated ModuleTemplateLight instance.
+func (m *ModuleTemplateLight) WithGoGCCCompilerAlpine() *ModuleTemplateLight {
+	m.Ctr = m.Ctr.
+		WithExec(
+			[]string{"apk", "add", "--no-cache", "gcc", "musl-dev"},
+		)
+
+	return m
+}
+
+// WithGoGCCCompilerUbuntu installs the GCC compiler and musl-dev package
+// in the container environment using the Ubuntu package manager (apt-get).
+//
+// This method is useful for enabling the Go toolchain to compile C code
+// and link against C libraries, which is necessary for certain Go packages
+// that rely on CGO.
+//
+// Returns:
+// - *ModuleTemplateLight: A pointer to the updated ModuleTemplateLight instance.
+func (m *ModuleTemplateLight) WithGoGCCCompilerUbuntu() *ModuleTemplateLight {
+	m.Ctr = m.Ctr.
+		WithExec(
+			[]string{"apt-get", "update", "-y"},
+		).
+		WithExec(
+			[]string{"apt-get", "install", "-y", "gcc", "musl-dev"},
+		)
+
+	return m
+}
+
 // WithGoCgoEnabled enables CGO for the container environment.
 //
 // When CGO is enabled, the Go toolchain will allow the use of cgo, which
