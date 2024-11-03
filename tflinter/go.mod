@@ -1,12 +1,12 @@
-module github.com/Excoriate/daggerverse/module-template-light
+module github.com/Excoriate/daggerverse/tflinter
 
-go 1.23.1
+go 1.23.2
 
 require (
 	github.com/99designs/gqlgen v0.17.55
 	github.com/Excoriate/daggerx v0.0.32
 	github.com/Khan/genqlient v0.7.0
-	github.com/containerd/containerd v1.7.22
+	github.com/containerd/containerd v1.7.23
 	github.com/vektah/gqlparser/v2 v2.5.17
 	go.opentelemetry.io/otel v1.27.0
 	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc v0.0.0-20240518090000-14441aefdf88
@@ -34,7 +34,7 @@ require (
 )
 
 require (
-	github.com/adrg/xdg v0.5.0 // indirect
+	github.com/adrg/xdg v0.5.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
