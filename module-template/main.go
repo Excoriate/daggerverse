@@ -11,7 +11,7 @@
 package main
 
 import (
-	"github.com/Excoriate/daggerverse/module-template/internal/dagger"
+	"github.com/Excoriate/daggerverse/module-template-light/internal/dagger"
 
 	"github.com/Excoriate/daggerx/pkg/containerx"
 	"github.com/Excoriate/daggerx/pkg/envvars"
@@ -54,27 +54,16 @@ func New(
 
 	if ctr != nil {
 		dagModule.Ctr = ctr
-	} else {
-		imageURL, imageURLErr := dagModule.getImageURL(image, version)
-		if imageURLErr != nil {
-			return nil, WrapError(imageURLErr, "failed to initialize Dagger module")
-		}
 
-		dagModule.Base(imageURL)
+		return dagModule, nil
 	}
 
-	// If environment variables are passed in a string, with a format like "SOMETHING=SOMETHING,SOMETHING=SOMETHING",
-	// they are converted into a map and then into a list of DaggerEnvVars.
-	// Then, each environment variable is added to the container.
-	if len(envVarsFromHost) > 0 {
-		envVars, err := envvars.ToDaggerEnvVarsFromSlice(envVarsFromHost)
-		if err != nil {
-			return nil, WrapError(err, "failed to parse environment variables")
-		}
+	if err := dagModule.setupContainer(image, version); err != nil {
+		return nil, err
+	}
 
-		for _, envVar := range envVars {
-			dagModule.WithEnvironmentVariable(envVar.Name, envVar.Value, false)
-		}
+	if err := dagModule.setupEnvironmentVariables(envVarsFromHost); err != nil {
+		return nil, err
 	}
 
 	return dagModule, nil
@@ -120,4 +109,77 @@ func (m *ModuleTemplate) getImageURL(image, version string) (string, error) {
 	}
 
 	return imageURL, nil
+}
+
+// setupContainer sets up the container.
+//
+// If the image is not passed, it sets up the default image.
+// If the image is passed, it sets up the custom image.
+func (m *ModuleTemplate) setupContainer(image, version string) error {
+	if image != "" {
+		return m.setupCustomImage(image)
+	}
+
+	return m.setupDefaultImage(version)
+}
+
+// setupCustomImage sets up the custom image.
+//
+// It validates the image URL and sets the base container.
+func (m *ModuleTemplate) setupCustomImage(image string) error {
+	isValid, err := containerx.ValidateImageURL(image)
+
+	if err != nil {
+		return WrapErrorf(err, "failed to validate image URL passed with value %s", image)
+	}
+
+	if !isValid {
+		return Errorf("the image URL %s is not valid", image)
+	}
+
+	m.Base(image)
+
+	return nil
+}
+
+// setupDefaultImage sets up the default image.
+//
+// If the version is not passed, it sets the default version.
+// If the version is passed, it sets the custom version.
+func (m *ModuleTemplate) setupDefaultImage(version string) error {
+	if version == "" {
+		version = defaultContainerVersion
+	}
+
+	imageURL, err := m.getImageURL(defaultContainerImage, version)
+
+	if err != nil {
+		return WrapErrorf(err, "failed to get image URL from image %s and version %s",
+			defaultContainerImage, version)
+	}
+
+	m.Base(imageURL)
+
+	return nil
+}
+
+// setupEnvironmentVariables sets up the environment variables.
+//
+// If the environment variables are not passed, it returns nil.
+// If the environment variables are passed, it sets the environment variables.
+func (m *ModuleTemplate) setupEnvironmentVariables(envVarsFromHost []string) error {
+	if len(envVarsFromHost) == 0 {
+		return nil
+	}
+
+	envVars, err := envvars.ToDaggerEnvVarsFromSlice(envVarsFromHost)
+	if err != nil {
+		return WrapError(err, "failed to parse environment variables")
+	}
+
+	for _, envVar := range envVars {
+		m.WithEnvironmentVariable(envVar.Name, envVar.Value, false)
+	}
+
+	return nil
 }
