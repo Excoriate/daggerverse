@@ -205,22 +205,25 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 	case "":
 		return dag.Module().
 			WithObject(
-				dag.TypeDef().WithObject("GitlabCicdVars").
+				dag.TypeDef().WithObject("GitlabCicdVars", dagger.TypeDefWithObjectOpts{SourceMap: dag.SourceMap("main.go", 11, 6)}).
 					WithFunction(
 						dag.Function("GetAll",
-							dag.TypeDef().WithKind(dagger.StringKind)).
+							dag.TypeDef().WithKind(dagger.TypeDefKindStringKind)).
 							WithDescription("GetAll returns all the variables in a project").
-							WithArg("path", dag.TypeDef().WithKind(dagger.StringKind), dagger.FunctionWithArgOpts{Description: "path is the path to the GitLab's project, also known as 'namespace'"})).
+							WithSourceMap(dag.SourceMap("main.go", 72, 1)).
+							WithArg("path", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind), dagger.FunctionWithArgOpts{Description: "path is the path to the GitLab's project, also known as 'namespace'", SourceMap: dag.SourceMap("main.go", 74, 2)})).
 					WithFunction(
 						dag.Function("Get",
-							dag.TypeDef().WithKind(dagger.StringKind)).
-							WithArg("path", dag.TypeDef().WithKind(dagger.StringKind), dagger.FunctionWithArgOpts{Description: "path is the path to the GitLab's project, also known as 'namespace'"}).
-							WithArg("varName", dag.TypeDef().WithKind(dagger.StringKind), dagger.FunctionWithArgOpts{Description: "varName is the name of the variable to get"})).
-					WithField("Token", dag.TypeDef().WithKind(dagger.VoidKind).WithOptional(true), dagger.TypeDefWithFieldOpts{Description: "token to use for gitlab api"}).
+							dag.TypeDef().WithKind(dagger.TypeDefKindStringKind)).
+							WithSourceMap(dag.SourceMap("main.go", 94, 1)).
+							WithArg("path", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind), dagger.FunctionWithArgOpts{Description: "path is the path to the GitLab's project, also known as 'namespace'", SourceMap: dag.SourceMap("main.go", 96, 2)}).
+							WithArg("varName", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind), dagger.FunctionWithArgOpts{Description: "varName is the name of the variable to get", SourceMap: dag.SourceMap("main.go", 98, 2)})).
+					WithField("Token", dag.TypeDef().WithKind(dagger.TypeDefKindVoidKind).WithOptional(true), dagger.TypeDefWithFieldOpts{Description: "token to use for gitlab api", SourceMap: dag.SourceMap("main.go", 13, 2)}).
 					WithConstructor(
 						dag.Function("New",
 							dag.TypeDef().WithObject("GitlabCicdVars")).
-							WithArg("token", dag.TypeDef().WithKind(dagger.VoidKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "token is the GitLab API token to use, for information about how to create a token,\nsee https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html"}))), nil
+							WithSourceMap(dag.SourceMap("main.go", 16, 1)).
+							WithArg("token", dag.TypeDef().WithKind(dagger.TypeDefKindVoidKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "token is the GitLab API token to use, for information about how to create a token,\nsee https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html", SourceMap: dag.SourceMap("main.go", 19, 2)}))), nil
 	default:
 		return nil, fmt.Errorf("unknown object %s", parentName)
 	}

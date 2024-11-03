@@ -229,6 +229,9 @@ type ServiceID string
 // The `SocketID` scalar type represents an identifier for an object of type Socket.
 type SocketID string
 
+// The `SourceMapID` scalar type represents an identifier for an object of type SourceMap.
+type SourceMapID string
+
 // The `TerminalID` scalar type represents an identifier for an object of type Terminal.
 type TerminalID string
 
@@ -337,6 +340,7 @@ type Container struct {
 	query *querybuilder.Selection
 
 	envVariable *string
+	exitCode    *int
 	export      *string
 	id          *ContainerID
 	imageRef    *string
@@ -549,6 +553,21 @@ func (r *Container) EnvVariables(ctx context.Context) ([]EnvVariable, error) {
 	}
 
 	return convert(response), nil
+}
+
+// The exit code of the last executed command.
+//
+// Returns an error if no command was set.
+func (r *Container) ExitCode(ctx context.Context) (int, error) {
+	if r.exitCode != nil {
+		return *r.exitCode, nil
+	}
+	q := r.query.Select("exitCode")
+
+	var response int
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
 }
 
 // EXPERIMENTAL API! Subject to change/removal at any time.
@@ -913,7 +932,7 @@ func (r *Container) Rootfs() *Directory {
 
 // The error stream of the last executed command.
 //
-// Will execute default command if none is set, or error if there's no default.
+// Returns an error if no command was set.
 func (r *Container) Stderr(ctx context.Context) (string, error) {
 	if r.stderr != nil {
 		return *r.stderr, nil
@@ -928,7 +947,7 @@ func (r *Container) Stderr(ctx context.Context) (string, error) {
 
 // The output stream of the last executed command.
 //
-// Will execute default command if none is set, or error if there's no default.
+// Returns an error if no command was set.
 func (r *Container) Stdout(ctx context.Context) (string, error) {
 	if r.stdout != nil {
 		return *r.stdout, nil
@@ -1188,6 +1207,8 @@ type ContainerWithExecOpts struct {
 	RedirectStdout string
 	// Redirect the command's standard error to a file in the container (e.g., "/tmp/stderr").
 	RedirectStderr string
+	// Exit codes this command is allowed to exit with without error
+	Expect ReturnType
 	// Provides Dagger access to the executed command.
 	//
 	// Do not use this option unless you trust the command being executed; the command being executed WILL BE GRANTED FULL ACCESS TO YOUR HOST FILESYSTEM.
@@ -1221,6 +1242,10 @@ func (r *Container) WithExec(args []string, opts ...ContainerWithExecOpts) *Cont
 		// `redirectStderr` optional argument
 		if !querybuilder.IsZeroValue(opts[i].RedirectStderr) {
 			q = q.Arg("redirectStderr", opts[i].RedirectStderr)
+		}
+		// `expect` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Expect) {
+			q = q.Arg("expect", opts[i].Expect)
 		}
 		// `experimentalPrivilegedNesting` optional argument
 		if !querybuilder.IsZeroValue(opts[i].ExperimentalPrivilegedNesting) {
@@ -3086,6 +3111,15 @@ func (r *EnumTypeDef) Name(ctx context.Context) (string, error) {
 	return response, q.Execute(ctx)
 }
 
+// The location of this enum declaration.
+func (r *EnumTypeDef) SourceMap() *SourceMap {
+	q := r.query.Select("sourceMap")
+
+	return &SourceMap{
+		query: q,
+	}
+}
+
 // If this EnumTypeDef is associated with a Module, the name of the module. Unset otherwise.
 func (r *EnumTypeDef) SourceModuleName(ctx context.Context) (string, error) {
 	if r.sourceModuleName != nil {
@@ -3220,6 +3254,15 @@ func (r *EnumValueTypeDef) Name(ctx context.Context) (string, error) {
 
 	q = q.Bind(&response)
 	return response, q.Execute(ctx)
+}
+
+// The location of this enum value declaration.
+func (r *EnumValueTypeDef) SourceMap() *SourceMap {
+	q := r.query.Select("sourceMap")
+
+	return &SourceMap{
+		query: q,
+	}
 }
 
 // An environment variable name and value.
@@ -3402,6 +3445,15 @@ func (r *FieldTypeDef) Name(ctx context.Context) (string, error) {
 
 	q = q.Bind(&response)
 	return response, q.Execute(ctx)
+}
+
+// The location of this field declaration.
+func (r *FieldTypeDef) SourceMap() *SourceMap {
+	q := r.query.Select("sourceMap")
+
+	return &SourceMap{
+		query: q,
+	}
 }
 
 // The type of the field.
@@ -3754,6 +3806,15 @@ func (r *Function) ReturnType() *TypeDef {
 	}
 }
 
+// The location of this function declaration.
+func (r *Function) SourceMap() *SourceMap {
+	q := r.query.Select("sourceMap")
+
+	return &SourceMap{
+		query: q,
+	}
+}
+
 // FunctionWithArgOpts contains options for Function.WithArg
 type FunctionWithArgOpts struct {
 	// A doc string for the argument, if any
@@ -3764,6 +3825,8 @@ type FunctionWithArgOpts struct {
 	DefaultPath string
 	// Patterns to ignore when loading the contextual argument value.
 	Ignore []string
+
+	SourceMap *SourceMap
 }
 
 // Returns the function with the provided argument
@@ -3787,6 +3850,10 @@ func (r *Function) WithArg(name string, typeDef *TypeDef, opts ...FunctionWithAr
 		if !querybuilder.IsZeroValue(opts[i].Ignore) {
 			q = q.Arg("ignore", opts[i].Ignore)
 		}
+		// `sourceMap` optional argument
+		if !querybuilder.IsZeroValue(opts[i].SourceMap) {
+			q = q.Arg("sourceMap", opts[i].SourceMap)
+		}
 	}
 	q = q.Arg("name", name)
 	q = q.Arg("typeDef", typeDef)
@@ -3800,6 +3867,17 @@ func (r *Function) WithArg(name string, typeDef *TypeDef, opts ...FunctionWithAr
 func (r *Function) WithDescription(description string) *Function {
 	q := r.query.Select("withDescription")
 	q = q.Arg("description", description)
+
+	return &Function{
+		query: q,
+	}
+}
+
+// Returns the function with the given source map.
+func (r *Function) WithSourceMap(sourceMap *SourceMap) *Function {
+	assertNotNil("sourceMap", sourceMap)
+	q := r.query.Select("withSourceMap")
+	q = q.Arg("sourceMap", sourceMap)
 
 	return &Function{
 		query: q,
@@ -3934,6 +4012,15 @@ func (r *FunctionArg) Name(ctx context.Context) (string, error) {
 
 	q = q.Bind(&response)
 	return response, q.Execute(ctx)
+}
+
+// The location of this arg declaration.
+func (r *FunctionArg) SourceMap() *SourceMap {
+	q := r.query.Select("sourceMap")
+
+	return &SourceMap{
+		query: q,
+	}
 }
 
 // The type of the argument.
@@ -4966,6 +5053,15 @@ func (r *InterfaceTypeDef) Name(ctx context.Context) (string, error) {
 
 	q = q.Bind(&response)
 	return response, q.Execute(ctx)
+}
+
+// The location of this interface declaration.
+func (r *InterfaceTypeDef) SourceMap() *SourceMap {
+	q := r.query.Select("sourceMap")
+
+	return &SourceMap{
+		query: q,
+	}
 }
 
 // If this InterfaceTypeDef is associated with a Module, the name of the module. Unset otherwise.
@@ -6440,6 +6536,15 @@ func (r *ObjectTypeDef) Name(ctx context.Context) (string, error) {
 	return response, q.Execute(ctx)
 }
 
+// The location of this object declaration.
+func (r *ObjectTypeDef) SourceMap() *SourceMap {
+	q := r.query.Select("sourceMap")
+
+	return &SourceMap{
+		query: q,
+	}
+}
+
 // If this ObjectTypeDef is associated with a Module, the name of the module. Unset otherwise.
 func (r *ObjectTypeDef) SourceModuleName(ctx context.Context) (string, error) {
 	if r.sourceModuleName != nil {
@@ -7171,6 +7276,16 @@ func (r *Client) LoadSocketFromID(id SocketID) *Socket {
 	}
 }
 
+// Load a SourceMap from its ID.
+func (r *Client) LoadSourceMapFromID(id SourceMapID) *SourceMap {
+	q := r.query.Select("loadSourceMapFromID")
+	q = q.Arg("id", id)
+
+	return &SourceMap{
+		query: q,
+	}
+}
+
 // Load a Terminal from its ID.
 func (r *Client) LoadTerminalFromID(id TerminalID) *Terminal {
 	q := r.query.Select("loadTerminalFromID")
@@ -7225,6 +7340,8 @@ func (r *Client) ModuleDependency(source *ModuleSource, opts ...ModuleDependency
 
 // ModuleSourceOpts contains options for Client.ModuleSource
 type ModuleSourceOpts struct {
+	// The pinned version of the module source
+	RefPin string
 	// If true, enforce that the source is a stable version for source kinds that support versioning.
 	Stable bool
 	// The relative path to the module root from the host directory
@@ -7235,6 +7352,10 @@ type ModuleSourceOpts struct {
 func (r *Client) ModuleSource(refString string, opts ...ModuleSourceOpts) *ModuleSource {
 	q := r.query.Select("moduleSource")
 	for i := len(opts) - 1; i >= 0; i-- {
+		// `refPin` optional argument
+		if !querybuilder.IsZeroValue(opts[i].RefPin) {
+			q = q.Arg("refPin", opts[i].RefPin)
+		}
 		// `stable` optional argument
 		if !querybuilder.IsZeroValue(opts[i].Stable) {
 			q = q.Arg("stable", opts[i].Stable)
@@ -7281,6 +7402,18 @@ func (r *Client) SetSecret(name string, plaintext string) *Secret {
 	q = q.Arg("plaintext", plaintext)
 
 	return &Secret{
+		query: q,
+	}
+}
+
+// Creates source map metadata.
+func (r *Client) SourceMap(filename string, line int, column int) *SourceMap {
+	q := r.query.Select("sourceMap")
+	q = q.Arg("filename", filename)
+	q = q.Arg("line", line)
+	q = q.Arg("column", column)
+
+	return &SourceMap{
 		query: q,
 	}
 }
@@ -7796,6 +7929,124 @@ func (r *Socket) UnmarshalJSON(bs []byte) error {
 	return nil
 }
 
+// Source location information.
+type SourceMap struct {
+	query *querybuilder.Selection
+
+	column   *int
+	filename *string
+	id       *SourceMapID
+	line     *int
+	module   *string
+}
+
+func (r *SourceMap) WithGraphQLQuery(q *querybuilder.Selection) *SourceMap {
+	return &SourceMap{
+		query: q,
+	}
+}
+
+// The column number within the line.
+func (r *SourceMap) Column(ctx context.Context) (int, error) {
+	if r.column != nil {
+		return *r.column, nil
+	}
+	q := r.query.Select("column")
+
+	var response int
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
+// The filename from the module source.
+func (r *SourceMap) Filename(ctx context.Context) (string, error) {
+	if r.filename != nil {
+		return *r.filename, nil
+	}
+	q := r.query.Select("filename")
+
+	var response string
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
+// A unique identifier for this SourceMap.
+func (r *SourceMap) ID(ctx context.Context) (SourceMapID, error) {
+	if r.id != nil {
+		return *r.id, nil
+	}
+	q := r.query.Select("id")
+
+	var response SourceMapID
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
+// XXX_GraphQLType is an internal function. It returns the native GraphQL type name
+func (r *SourceMap) XXX_GraphQLType() string {
+	return "SourceMap"
+}
+
+// XXX_GraphQLIDType is an internal function. It returns the native GraphQL type name for the ID of this object
+func (r *SourceMap) XXX_GraphQLIDType() string {
+	return "SourceMapID"
+}
+
+// XXX_GraphQLID is an internal function. It returns the underlying type ID
+func (r *SourceMap) XXX_GraphQLID(ctx context.Context) (string, error) {
+	id, err := r.ID(ctx)
+	if err != nil {
+		return "", err
+	}
+	return string(id), nil
+}
+
+func (r *SourceMap) MarshalJSON() ([]byte, error) {
+	id, err := r.ID(marshalCtx)
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(id)
+}
+func (r *SourceMap) UnmarshalJSON(bs []byte) error {
+	var id string
+	err := json.Unmarshal(bs, &id)
+	if err != nil {
+		return err
+	}
+	*r = *dag.LoadSourceMapFromID(SourceMapID(id))
+	return nil
+}
+
+// The line number within the filename.
+func (r *SourceMap) Line(ctx context.Context) (int, error) {
+	if r.line != nil {
+		return *r.line, nil
+	}
+	q := r.query.Select("line")
+
+	var response int
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
+// The module dependency this was declared in.
+func (r *SourceMap) Module(ctx context.Context) (string, error) {
+	if r.module != nil {
+		return *r.module, nil
+	}
+	q := r.query.Select("module")
+
+	var response string
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
 // An interactive terminal that clients can connect to.
 type Terminal struct {
 	query *querybuilder.Selection
@@ -8041,6 +8292,8 @@ func (r *TypeDef) WithConstructor(function *Function) *TypeDef {
 type TypeDefWithEnumOpts struct {
 	// A doc string for the enum, if any
 	Description string
+	// The source map for the enum definition.
+	SourceMap *SourceMap
 }
 
 // Returns a TypeDef of kind Enum with the provided name.
@@ -8052,6 +8305,10 @@ func (r *TypeDef) WithEnum(name string, opts ...TypeDefWithEnumOpts) *TypeDef {
 		// `description` optional argument
 		if !querybuilder.IsZeroValue(opts[i].Description) {
 			q = q.Arg("description", opts[i].Description)
+		}
+		// `sourceMap` optional argument
+		if !querybuilder.IsZeroValue(opts[i].SourceMap) {
+			q = q.Arg("sourceMap", opts[i].SourceMap)
 		}
 	}
 	q = q.Arg("name", name)
@@ -8065,6 +8322,8 @@ func (r *TypeDef) WithEnum(name string, opts ...TypeDefWithEnumOpts) *TypeDef {
 type TypeDefWithEnumValueOpts struct {
 	// A doc string for the value, if any
 	Description string
+	// The source map for the enum value definition.
+	SourceMap *SourceMap
 }
 
 // Adds a static value for an Enum TypeDef, failing if the type is not an enum.
@@ -8074,6 +8333,10 @@ func (r *TypeDef) WithEnumValue(value string, opts ...TypeDefWithEnumValueOpts) 
 		// `description` optional argument
 		if !querybuilder.IsZeroValue(opts[i].Description) {
 			q = q.Arg("description", opts[i].Description)
+		}
+		// `sourceMap` optional argument
+		if !querybuilder.IsZeroValue(opts[i].SourceMap) {
+			q = q.Arg("sourceMap", opts[i].SourceMap)
 		}
 	}
 	q = q.Arg("value", value)
@@ -8087,6 +8350,8 @@ func (r *TypeDef) WithEnumValue(value string, opts ...TypeDefWithEnumValueOpts) 
 type TypeDefWithFieldOpts struct {
 	// A doc string for the field, if any
 	Description string
+	// The source map for the field definition.
+	SourceMap *SourceMap
 }
 
 // Adds a static field for an Object TypeDef, failing if the type is not an object.
@@ -8097,6 +8362,10 @@ func (r *TypeDef) WithField(name string, typeDef *TypeDef, opts ...TypeDefWithFi
 		// `description` optional argument
 		if !querybuilder.IsZeroValue(opts[i].Description) {
 			q = q.Arg("description", opts[i].Description)
+		}
+		// `sourceMap` optional argument
+		if !querybuilder.IsZeroValue(opts[i].SourceMap) {
+			q = q.Arg("sourceMap", opts[i].SourceMap)
 		}
 	}
 	q = q.Arg("name", name)
@@ -8121,6 +8390,8 @@ func (r *TypeDef) WithFunction(function *Function) *TypeDef {
 // TypeDefWithInterfaceOpts contains options for TypeDef.WithInterface
 type TypeDefWithInterfaceOpts struct {
 	Description string
+
+	SourceMap *SourceMap
 }
 
 // Returns a TypeDef of kind Interface with the provided name.
@@ -8130,6 +8401,10 @@ func (r *TypeDef) WithInterface(name string, opts ...TypeDefWithInterfaceOpts) *
 		// `description` optional argument
 		if !querybuilder.IsZeroValue(opts[i].Description) {
 			q = q.Arg("description", opts[i].Description)
+		}
+		// `sourceMap` optional argument
+		if !querybuilder.IsZeroValue(opts[i].SourceMap) {
+			q = q.Arg("sourceMap", opts[i].SourceMap)
 		}
 	}
 	q = q.Arg("name", name)
@@ -8163,6 +8438,8 @@ func (r *TypeDef) WithListOf(elementType *TypeDef) *TypeDef {
 // TypeDefWithObjectOpts contains options for TypeDef.WithObject
 type TypeDefWithObjectOpts struct {
 	Description string
+
+	SourceMap *SourceMap
 }
 
 // Returns a TypeDef of kind Object with the provided name.
@@ -8174,6 +8451,10 @@ func (r *TypeDef) WithObject(name string, opts ...TypeDefWithObjectOpts) *TypeDe
 		// `description` optional argument
 		if !querybuilder.IsZeroValue(opts[i].Description) {
 			q = q.Arg("description", opts[i].Description)
+		}
+		// `sourceMap` optional argument
+		if !querybuilder.IsZeroValue(opts[i].SourceMap) {
+			q = q.Arg("sourceMap", opts[i].SourceMap)
 		}
 	}
 	q = q.Arg("name", name)
@@ -8214,109 +8495,235 @@ func (r *TypeDef) WithScalar(name string, opts ...TypeDefWithScalarOpts) *TypeDe
 	}
 }
 
+// Sharing mode of the cache volume.
 type CacheSharingMode string
 
 func (CacheSharingMode) IsEnum() {}
 
 const (
 	// Shares the cache volume amongst many build pipelines, but will serialize the writes
-	Locked CacheSharingMode = "LOCKED"
+	CacheSharingModeLocked CacheSharingMode = "LOCKED"
+
+	// Shares the cache volume amongst many build pipelines, but will serialize the writes
+	// Deprecated: use CacheSharingModeLocked instead
+	Locked CacheSharingMode = CacheSharingModeLocked
 
 	// Keeps a cache volume for a single build pipeline
-	Private CacheSharingMode = "PRIVATE"
+	CacheSharingModePrivate CacheSharingMode = "PRIVATE"
+
+	// Keeps a cache volume for a single build pipeline
+	// Deprecated: use CacheSharingModePrivate instead
+	Private CacheSharingMode = CacheSharingModePrivate
 
 	// Shares the cache volume amongst many build pipelines
-	Shared CacheSharingMode = "SHARED"
+	CacheSharingModeShared CacheSharingMode = "SHARED"
+
+	// Shares the cache volume amongst many build pipelines
+	// Deprecated: use CacheSharingModeShared instead
+	Shared CacheSharingMode = CacheSharingModeShared
 )
 
+// Compression algorithm to use for image layers.
 type ImageLayerCompression string
 
 func (ImageLayerCompression) IsEnum() {}
 
 const (
-	Estargz ImageLayerCompression = "EStarGZ"
+	ImageLayerCompressionEstarGz ImageLayerCompression = "EStarGZ"
 
-	Gzip ImageLayerCompression = "Gzip"
+	// Deprecated: use ImageLayerCompressionEstarGz instead
+	Estargz ImageLayerCompression = ImageLayerCompressionEstarGz
 
-	Uncompressed ImageLayerCompression = "Uncompressed"
+	ImageLayerCompressionGzip ImageLayerCompression = "Gzip"
 
-	Zstd ImageLayerCompression = "Zstd"
+	// Deprecated: use ImageLayerCompressionGzip instead
+	Gzip ImageLayerCompression = ImageLayerCompressionGzip
+
+	ImageLayerCompressionUncompressed ImageLayerCompression = "Uncompressed"
+
+	// Deprecated: use ImageLayerCompressionUncompressed instead
+	Uncompressed ImageLayerCompression = ImageLayerCompressionUncompressed
+
+	ImageLayerCompressionZstd ImageLayerCompression = "Zstd"
+
+	// Deprecated: use ImageLayerCompressionZstd instead
+	Zstd ImageLayerCompression = ImageLayerCompressionZstd
 )
 
+// Mediatypes to use in published or exported image metadata.
 type ImageMediaTypes string
 
 func (ImageMediaTypes) IsEnum() {}
 
 const (
-	Dockermediatypes ImageMediaTypes = "DockerMediaTypes"
+	ImageMediaTypesDockerMediaTypes ImageMediaTypes = "DockerMediaTypes"
 
-	Ocimediatypes ImageMediaTypes = "OCIMediaTypes"
+	// Deprecated: use ImageMediaTypesDockerMediaTypes instead
+	Dockermediatypes ImageMediaTypes = ImageMediaTypesDockerMediaTypes
+
+	ImageMediaTypesOcimediaTypes ImageMediaTypes = "OCIMediaTypes"
+
+	// Deprecated: use ImageMediaTypesOcimediaTypes instead
+	Ocimediatypes ImageMediaTypes = ImageMediaTypesOcimediaTypes
 )
 
+// The kind of module source.
 type ModuleSourceKind string
 
 func (ModuleSourceKind) IsEnum() {}
 
 const (
-	GitSource ModuleSourceKind = "GIT_SOURCE"
+	ModuleSourceKindGitSource ModuleSourceKind = "GIT_SOURCE"
 
-	LocalSource ModuleSourceKind = "LOCAL_SOURCE"
+	// Deprecated: use ModuleSourceKindGitSource instead
+	GitSource ModuleSourceKind = ModuleSourceKindGitSource
+
+	ModuleSourceKindLocalSource ModuleSourceKind = "LOCAL_SOURCE"
+
+	// Deprecated: use ModuleSourceKindLocalSource instead
+	LocalSource ModuleSourceKind = ModuleSourceKindLocalSource
 )
 
+// Transport layer network protocol associated to a port.
 type NetworkProtocol string
 
 func (NetworkProtocol) IsEnum() {}
 
 const (
-	Tcp NetworkProtocol = "TCP"
+	NetworkProtocolTcp NetworkProtocol = "TCP"
 
-	Udp NetworkProtocol = "UDP"
+	// Deprecated: use NetworkProtocolTcp instead
+	Tcp NetworkProtocol = NetworkProtocolTcp
+
+	NetworkProtocolUdp NetworkProtocol = "UDP"
+
+	// Deprecated: use NetworkProtocolUdp instead
+	Udp NetworkProtocol = NetworkProtocolUdp
 )
 
+// Expected return type of an execution
+type ReturnType string
+
+func (ReturnType) IsEnum() {}
+
+const (
+	// Any execution (exit codes 0-127)
+	ReturnTypeAny ReturnType = "ANY"
+
+	// Any execution (exit codes 0-127)
+	// Deprecated: use ReturnTypeAny instead
+	Any ReturnType = ReturnTypeAny
+
+	// A failed execution (exit codes 1-127)
+	ReturnTypeFailure ReturnType = "FAILURE"
+
+	// A failed execution (exit codes 1-127)
+	// Deprecated: use ReturnTypeFailure instead
+	Failure ReturnType = ReturnTypeFailure
+
+	// A successful execution (exit code 0)
+	ReturnTypeSuccess ReturnType = "SUCCESS"
+
+	// A successful execution (exit code 0)
+	// Deprecated: use ReturnTypeSuccess instead
+	Success ReturnType = ReturnTypeSuccess
+)
+
+// Distinguishes the different kinds of TypeDefs.
 type TypeDefKind string
 
 func (TypeDefKind) IsEnum() {}
 
 const (
 	// A boolean value.
-	BooleanKind TypeDefKind = "BOOLEAN_KIND"
+	TypeDefKindBooleanKind TypeDefKind = "BOOLEAN_KIND"
+
+	// A boolean value.
+	// Deprecated: use TypeDefKindBooleanKind instead
+	BooleanKind TypeDefKind = TypeDefKindBooleanKind
 
 	// A GraphQL enum type and its values
 	//
 	// Always paired with an EnumTypeDef.
-	EnumKind TypeDefKind = "ENUM_KIND"
+	TypeDefKindEnumKind TypeDefKind = "ENUM_KIND"
+
+	// A GraphQL enum type and its values
+	//
+	// Always paired with an EnumTypeDef.
+	// Deprecated: use TypeDefKindEnumKind instead
+	EnumKind TypeDefKind = TypeDefKindEnumKind
 
 	// A graphql input type, used only when representing the core API via TypeDefs.
-	InputKind TypeDefKind = "INPUT_KIND"
+	TypeDefKindInputKind TypeDefKind = "INPUT_KIND"
+
+	// A graphql input type, used only when representing the core API via TypeDefs.
+	// Deprecated: use TypeDefKindInputKind instead
+	InputKind TypeDefKind = TypeDefKindInputKind
 
 	// An integer value.
-	IntegerKind TypeDefKind = "INTEGER_KIND"
+	TypeDefKindIntegerKind TypeDefKind = "INTEGER_KIND"
+
+	// An integer value.
+	// Deprecated: use TypeDefKindIntegerKind instead
+	IntegerKind TypeDefKind = TypeDefKindIntegerKind
 
 	// A named type of functions that can be matched+implemented by other objects+interfaces.
 	//
 	// Always paired with an InterfaceTypeDef.
-	InterfaceKind TypeDefKind = "INTERFACE_KIND"
+	TypeDefKindInterfaceKind TypeDefKind = "INTERFACE_KIND"
+
+	// A named type of functions that can be matched+implemented by other objects+interfaces.
+	//
+	// Always paired with an InterfaceTypeDef.
+	// Deprecated: use TypeDefKindInterfaceKind instead
+	InterfaceKind TypeDefKind = TypeDefKindInterfaceKind
 
 	// A list of values all having the same type.
 	//
 	// Always paired with a ListTypeDef.
-	ListKind TypeDefKind = "LIST_KIND"
+	TypeDefKindListKind TypeDefKind = "LIST_KIND"
+
+	// A list of values all having the same type.
+	//
+	// Always paired with a ListTypeDef.
+	// Deprecated: use TypeDefKindListKind instead
+	ListKind TypeDefKind = TypeDefKindListKind
 
 	// A named type defined in the GraphQL schema, with fields and functions.
 	//
 	// Always paired with an ObjectTypeDef.
-	ObjectKind TypeDefKind = "OBJECT_KIND"
+	TypeDefKindObjectKind TypeDefKind = "OBJECT_KIND"
+
+	// A named type defined in the GraphQL schema, with fields and functions.
+	//
+	// Always paired with an ObjectTypeDef.
+	// Deprecated: use TypeDefKindObjectKind instead
+	ObjectKind TypeDefKind = TypeDefKindObjectKind
 
 	// A scalar value of any basic kind.
-	ScalarKind TypeDefKind = "SCALAR_KIND"
+	TypeDefKindScalarKind TypeDefKind = "SCALAR_KIND"
+
+	// A scalar value of any basic kind.
+	// Deprecated: use TypeDefKindScalarKind instead
+	ScalarKind TypeDefKind = TypeDefKindScalarKind
 
 	// A string value.
-	StringKind TypeDefKind = "STRING_KIND"
+	TypeDefKindStringKind TypeDefKind = "STRING_KIND"
+
+	// A string value.
+	// Deprecated: use TypeDefKindStringKind instead
+	StringKind TypeDefKind = TypeDefKindStringKind
 
 	// A special kind used to signify that no value is returned.
 	//
 	// This is used for functions that have no return value. The outer TypeDef specifying this Kind is always Optional, as the Void is never actually represented.
-	VoidKind TypeDefKind = "VOID_KIND"
+	TypeDefKindVoidKind TypeDefKind = "VOID_KIND"
+
+	// A special kind used to signify that no value is returned.
+	//
+	// This is used for functions that have no return value. The outer TypeDef specifying this Kind is always Optional, as the Void is never actually represented.
+	// Deprecated: use TypeDefKindVoidKind instead
+	VoidKind TypeDefKind = TypeDefKindVoidKind
 )
 
 type Client struct {
