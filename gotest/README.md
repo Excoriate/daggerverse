@@ -1,135 +1,164 @@
-# Module {{.module_name}} for Dagger
+# Gotest Module for Dagger
 
-A simple [Dagger](https://dagger.io) _place the description of the module here_
+A Dagger module that provides comprehensive Go testing capabilities with full control over test execution, build options, and test configurations.
 
 ## Configuration 🛠️
 
-Through the [Dagger CLI](https://docs.dagger.io/cli/465058/install), or by using it directly within your module, you can configure the following options:
+Through the [Dagger CLI](https://docs.dagger.io/cli/465058/install), you can configure:
 
-- ⚙️ `ctr`: The container to use as a base container. If not specified, a new container is created.
-- ⚙️ `version`: The version of the Go image to use. Defaults to `latest`.
-- ⚙️ `image`: The Go image to use. Defaults to `golang:alpine`.
-
-### Structure 🏗️
-
-```text
-{{.module_name_pkg}} // main module
-├── .gitattributes
-├── .gitignore
-├── LICENSE
-├── README.md
-├── apis.go
-├── cloud.go
-├── commands.go
-├── common.go
-├── config.go
-├── dagger.json
-├── examples // Sub modules that represent examples of the module's functions with each SDK
-│   └── go
-│       ├── .gitattributes
-│       ├── .gitignore
-│       ├── dagger.json
-│       ├── go.mod
-│       ├── go.sum
-│       ├── main.go
-│       └── testdata
-│           └── common
-│               ├── README.md
-│               └── test-file.yml
-├── go.mod
-├── go.sum
-├── main.go
-└── tests // Sub module that represent tests of the module's functions
-    ├── .gitattributes
-    ├── .gitignore
-    ├── dagger.json
-    ├── go.mod
-    ├── go.sum
-    ├── main.go
-    └── testdata
-        └── common
-            ├── README.md
-            └── test-file.yml
-
-```
-
-### Key Files (🔑, included, out-of-the-box)
-
-| File          | Description                                                                                                                                                           |
-| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `apis.go`     | 🛠️ **API Manager**: Contains methods for setting up and managing the container environment, including environment variables, directory mounting, and file operations. |
-| `commands.go` | ⚙️ **Command Executor**: Implements functions for running shell commands and opening terminals in the container.                                                      |
-| `vcs.go`      | 🔧 **Version Control**: Provides functionality for version control system operations, particularly for setting up .netrc files for GitHub and GitLab authentication.  |
-| `cloud.go`    | ☁️ **Cloud Configurator**: Includes methods for configuring cloud provider credentials, specifically for AWS and Azure.                                               |
-| `config.go`   | 📦 **Configuration Constants**: Defines constants for default container configurations.                                                                               |
-
-> NOTE: This structure comes out of the box if it's generated through **Daggy**. Just run `just create <module-name>` for the full version, or `just createlight <module-name>` for the minimal version.
-
----
+- ⚙️ `version`: Go version to use (e.g., "1.22.5"). Defaults to `latest`
+- ⚙️ `image`: Custom Go image. Defaults to `golang:alpine`
+- ⚙️ `envVarsFromHost`: Environment variables to pass from host
+- ⚙️ `ctr`: Base container for customization
 
 ## Features 🎨
 
-| Command or functionality  | Command | Example                     | Status |
-| ------------------------- | ------- | --------------------------- | ------ |
-| Add your feature **here** | **run** | `dagger call <my function>` | ✅     |
+| Feature             | Description                             | Example                                                  |
+| ------------------- | --------------------------------------- | -------------------------------------------------------- |
+| Test Execution      | Run Go tests with comprehensive options | `dagger call test --source=. --cover=true`               |
+| Build Configuration | Control build flags and options         | `dagger call test --race=true --buildTags="integration"` |
+| Test Filtering      | Filter and control test execution       | `dagger call test --run="TestSpecific" --short=true`     |
+| Profiling           | CPU, memory, and block profiling        | `dagger call test --cpuprofile="cpu.prof"`               |
+| Benchmarking        | Run and configure benchmarks            | `dagger call test --benchmark="." --benchmem=true`       |
 
-## Using the {{.module_name}} Module 🚀
+## Usage Examples 🚀
 
-_Place the description of the module here_
-
----
-
-### Usage through the Dagger CLI 🚀
-
-List all the functions available in the module:
+### Basic Test Execution
 
 ```bash
-# enter into the module's directory
-cd {{.module_name}}
-
-# list all the functions available in the module
-dagger develop && dagger functions
+dagger call test --source=. --enableDefaultOptions=true
 ```
 
-Call a function:
+### With Coverage and Profiling
 
 ```bash
-# call a function
-# dagger call <function-name> [arguments]
-dagger call github.com/excoriate/daggerverse/{{.module_name}}@version <function-name> [arguments]
+dagger call test \
+  --source=. \
+  --cover=true \
+  --coverprofile="coverage.out" \
+  --cpuprofile="cpu.prof" \
+  --verbose=true
 ```
 
----
+### Race Detection and Build Tags
+
+```bash
+dagger call test \
+  --source=. \
+  --race=true \
+  --buildTags="integration" \
+  --ldflags="-X main.version=test"
+```
+
+### Benchmark Testing
+
+```bash
+dagger call test \
+  --source=. \
+  --benchmark="." \
+  --benchmem=true \
+  --benchtime="1s" \
+  --testCount=3
+```
+
+## Available Options
+
+### Build Options
+
+| Option      | Description               |
+| ----------- | ------------------------- |
+| `race`      | Enable race detection     |
+| `msan`      | Enable memory sanitizer   |
+| `asan`      | Enable address sanitizer  |
+| `buildTags` | Specify build constraints |
+| `ldflags`   | Set linker flags          |
+| `gcflags`   | Set Go compiler flags     |
+| `asmflags`  | Set assembler flags       |
+| `trimpath`  | Remove file system paths  |
+| `buildMode` | Set build mode            |
+| `compiler`  | Specify compiler          |
+| `mod`       | Set module mode           |
+
+### Test Options
+
+| Option             | Description                    |
+| ------------------ | ------------------------------ |
+| `benchmark`        | Run benchmarks matching regexp |
+| `benchmem`         | Report memory allocations      |
+| `benchtime`        | Run time for benchmarks        |
+| `cover`            | Enable coverage analysis       |
+| `coverprofile`     | Write coverage profile         |
+| `cpuprofile`       | Write CPU profile              |
+| `testCount`        | Run tests multiple times       |
+| `failfast`         | Stop on first failure          |
+| `enableJsonOutput` | Enable JSON output             |
+| `parallel`         | Set parallel test count        |
+| `run`              | Run tests matching pattern     |
+| `short`            | Run in short mode              |
+| `timeout`          | Set test timeout               |
+| `verbose`          | Enable verbose output          |
+
+## Environment Variables and Secrets
+
+The module supports:
+
+- Setting environment variables via `envVars`
+- Passing secrets securely via `secrets`
+- Inheriting environment variables from host via `envVarsFromHost`
+
+Example:
+
+```bash
+dagger call test \
+  --source=. \
+  --envVars='["GO_ENV=test", "DEBUG=true"]' \
+  --secrets='["MY_SECRET"]'
+```
 
 ## Testing 🧪
 
-This module includes a [testing]({{.module_name_pkg}}/tests) module that aims to test the functionality of the {{.module_name}} module. The tests are written in Go and can be run using the following command:
+Run the test suite:
 
 ```bash
-## Run the tests using the just command
-just test {{.module_name}}
+just test gotest
 ```
 
 ## Developer Experience 🛠️
 
-If you'd like to contribute, mostly we use [Just](https://just.systems) to automate tasks and [Nix](https://nixos.org) to manage the development environment. You can use the following commands to get started:
+Development commands:
 
 ```bash
-# initialize the pre-commit hooks
+# Initialize pre-commit hooks
 just run-hooks
-# run linting
-just lintall {{.module_name}}
-# run the tests
-just test {{.module_name}}
-# Run the entire CI pipeline locally
-just ci {{.module_name}}
+
+# Run linting
+just lintall gotest
+
+# Run tests
+just test gotest
+
+# Run CI pipeline locally
+just ci gotest
 ```
 
-### Examples (aka Recipes) 🍲
+## API Reference
 
-Additionally, this module brings a new [Daggerverse](https://daggerverse.dev/) functionality that allows to automatically generate the module's documentation using an special (sub) module called [**{{.module_name_pkg}}/examples/sdk**]({{.module_name_pkg}}/examples). This module contains a set of examples hat demonstrate how to use the module's functions.
+### Main Functions
 
-To generate the documentation
-It's important to notice that each **example** function in order to be rendered in the documentation, it must be preprocessed by module's name, in this case (camelCase) `{{.module_name}}`.
+#### RunTest
 
-> NOTE: The `just` command entails the use of the [**Justfile**](https://just.systems) for task automation. If you don't have it, don't worry, you just need [Nix](https://nixos.org) to run the tasks using the `dev-shell` built-in command: `nix develop --impure --extra-experimental-features nix-command --extra-experimental-features flakes`
+Executes Go tests with full configuration options:
+
+```go
+RunTest(source *dagger.Directory, packages []string, envVars []string, secrets []*dagger.Secret, ...) (*dagger.Container, error)
+```
+
+#### RunTestCmd
+
+Executes tests and returns command output:
+
+```go
+RunTestCmd(source *dagger.Directory, packages []string, envVars []string, secrets []*dagger.Secret, ...) (string, error)
+```
+
+For detailed API documentation and more examples, see the [Dagger documentation](https://docs.dagger.io).
