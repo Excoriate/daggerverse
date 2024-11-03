@@ -51,7 +51,7 @@ func New(
 
 	if ctr != nil {
 		dagModule.Ctr = ctr
-		return dagModule, nil	
+		return dagModule, nil
 	}
 
 	if imageURL != "" {
