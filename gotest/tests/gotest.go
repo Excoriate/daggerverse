@@ -276,9 +276,11 @@ func (m *Tests) TestGoTestRunTestCMDWithCustomOptions(ctx context.Context) error
 		Packages:  []string{"./..."},
 		EnvVars:   []string{"TEST_ENV=race_test"},
 	})
+
 	if raceErr != nil {
 		return WrapError(raceErr, "race detection test failed")
 	}
+
 	if !strings.Contains(raceOut, "PASS") {
 		return NewError("expected PASS in race test output")
 	}

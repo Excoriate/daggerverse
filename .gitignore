@@ -58,5 +58,5 @@ Cargo.lock
 
 # AI
 .aider*
-AI/**.md
 .cursorrules
+AI/
