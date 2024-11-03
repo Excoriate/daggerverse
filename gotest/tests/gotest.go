@@ -95,7 +95,7 @@ func (m *Tests) TestGoTestReturningCtr(ctx context.Context) error {
 //
 //	An error if any test configuration fails; otherwise, it returns nil.
 //
-//nolint:cyclop,funlen // It's okay to have this size, it's by design.
+//nolint:cyclop,funlen,gocyclo // It's okay to have this size, it's by design.
 func (m *Tests) TestGoTestRunTestWithCustomOptions(ctx context.Context) error {
 	testDir := m.getTestDir("testdata/golang")
 
