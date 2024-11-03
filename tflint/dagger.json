@@ -1,6 +1,0 @@
-{
-  "name": "tflint",
-  "engineVersion": "v0.13.7",
-  "sdk": "go",
-  "source": "dagger"
-}
