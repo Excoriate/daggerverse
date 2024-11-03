@@ -76,6 +76,9 @@ func (m *Tests) TestAll(ctx context.Context) error {
 	polTests.Go(m.TestGoWithCgoDisabled)
 
 	// From this point onwards, we're testing the specific functionality of the Gotest module.
+	polTests.Go(m.TestGoTestReturningCtr)
+	polTests.Go(m.TestGoTestRunTestCMDWithCustomOptions)
+	polTests.Go(m.TestGoTestRunTestWithCustomOptions)
 
 	if err := polTests.Wait(); err != nil {
 		return WrapError(err, "there are some failed tests")

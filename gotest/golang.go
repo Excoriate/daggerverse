@@ -52,7 +52,26 @@ func (m *Gotest) WithGoPlatform(
 // Returns:
 // - *Gotest: A pointer to the updated Gotest instance.
 func (m *Gotest) WithGoCgoEnabled() *Gotest {
-	m.Ctr = m.Ctr.WithEnvVariable("CGO_ENABLED", "1")
+	m.Ctr = m.Ctr.
+		WithEnvVariable("CGO_ENABLED", "1")
+
+	return m
+}
+
+// WithGCCCompilerInstalled installs the GCC compiler and musl-dev package
+// in the container environment using the Alpine package manager (apk).
+//
+// This method is useful for enabling the Go toolchain to compile C code
+// and link against C libraries, which is necessary for certain Go packages
+// that rely on CGO.
+//
+// Returns:
+// - *Gotest: A pointer to the updated Gotest instance.
+func (m *Gotest) WithGCCCompilerInstalled() *Gotest {
+	m.Ctr = m.Ctr.
+		WithExec(
+			[]string{"apk", "add", "--no-cache", "gcc", "musl-dev"},
+		)
 
 	return m
 }

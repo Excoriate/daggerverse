@@ -435,6 +435,21 @@ func (m *Gotest) RunTest(
 	cmdToAppend = append(cmdToAppend, buildOpts.Flags...)
 	cmdToAppend = append(cmdToAppend, testOptions.Flags...)
 
+	if envVars != nil {
+		if err := m.setupEnvironmentVariables(envVars); err != nil {
+			return nil, WrapError(err, "failed to setup environment variables")
+		}
+	}
+
+	for _, secret := range secrets {
+		name, err := secret.Name(context.Background())
+		if err != nil {
+			return nil, WrapError(err, "failed to get secret name")
+		}
+
+		m.Ctr = m.Ctr.WithSecretVariable(name, secret)
+	}
+
 	return m.
 		Ctr.
 		WithExec(cmdToAppend), nil
@@ -710,7 +725,8 @@ func (m *Gotest) RunTestCmd(
 		return "", WrapErrorf(err, "failed to run Go test command")
 	}
 
-	stdout, err := ctr.Stdout(context.Background())
+	stdout, err := ctr.
+		Stdout(context.Background())
 
 	if err != nil {
 		return "", WrapErrorf(err, "failed to get stdout from Go test command")

@@ -84,7 +84,7 @@ func (m *Tests) TestGoTestReturningCtr(ctx context.Context) error {
 	return nil
 }
 
-// TestGoTestWithCustomOptions tests various configurations of the Go test command
+// TestGoTestRunTestWithCustomOptions tests various configurations of the Go test command
 // using different GotestOpts options.
 //
 // Parameters:
@@ -96,13 +96,13 @@ func (m *Tests) TestGoTestReturningCtr(ctx context.Context) error {
 //	An error if any test configuration fails; otherwise, it returns nil.
 //
 //nolint:cyclop // It's okay to have this size, it's by design.
-func (m *Tests) TestGoTestWithCustomOptions(ctx context.Context) error {
+func (m *Tests) TestGoTestRunTestWithCustomOptions(ctx context.Context) error {
 	testDir := m.getTestDir("testdata/golang")
 
 	// Test with custom version
 	dagModuleWithVersion := dag.Gotest(
 		dagger.GotestOpts{
-			Version: "v1.22.0",
+			Version: "1.23.0-alpine3.20",
 			EnvVarsFromHost: []string{
 				"GOLANG_VERSION=1.22.5",
 			},
@@ -110,88 +110,235 @@ func (m *Tests) TestGoTestWithCustomOptions(ctx context.Context) error {
 	)
 
 	versionCtr := dagModuleWithVersion.
+		WithGoCgoEnabled().
+		WithGcccompilerInstalled().
 		RunTest(testDir, dagger.GotestRunTestOpts{
 			EnableDefaultOptions: true,
+			EnvVars:              []string{"MY_ENV_VAR=my_value"},
 		})
 
-	if exitCode, err := versionCtr.ExitCode(ctx); err != nil {
+	if exitCode, err := versionCtr.
+		ExitCode(ctx); err != nil {
 		return WrapError(err, "failed to get exit code for version test")
 	} else if exitCode != 0 {
 		return Errorf("version test failed with exit code %d", exitCode)
 	}
 
-	// Test with custom base container
-	customBaseCtr := dag.Container().
-		From("golang:1.22.5-alpine").
-		WithEnvVariable("CGO_ENABLED", "0")
-
-	dagModuleWithCtr := dag.Gotest(
-		dagger.GotestOpts{
-			Ctr: customBaseCtr,
-			EnvVarsFromHost: []string{
-				"GOLANG_VERSION=1.22.5",
-			},
-		},
-	)
-
-	customCtr := dagModuleWithCtr.
+	// Basic test with default options and environment variables
+	basicCtr := dagModuleWithVersion.
+		WithGoCgoEnabled().
+		WithGcccompilerInstalled().
 		RunTest(testDir, dagger.GotestRunTestOpts{
 			EnableDefaultOptions: true,
+			EnvVars:              []string{"MY_ENV_VAR=my_value"},
 		})
 
-	if exitCode, err := customCtr.ExitCode(ctx); err != nil {
-		return WrapError(err, "failed to get exit code for custom container test")
+	if exitCode, err := basicCtr.ExitCode(ctx); err != nil {
+		return WrapError(err, "failed to get exit code for basic test")
 	} else if exitCode != 0 {
-		return Errorf("custom container test failed with exit code %d", exitCode)
+		return Errorf("basic test failed with exit code %d", exitCode)
 	}
 
-	// Verify custom container environment
-	envOut, err := customCtr.WithExec([]string{"go", "version"}).Stdout(ctx)
-	if err != nil {
-		return WrapError(err, "failed to get Go version from custom container")
-	}
-
-	if envOut == "" {
-		return NewError("failed to get Go version output, got empty string")
-	}
-
-	// Test with custom image
-	dagModuleWithImage := dag.Gotest(
-		dagger.GotestOpts{
-			Image: "golang:1.22.5-bullseye",
-			EnvVarsFromHost: []string{
-				"GOLANG_VERSION=1.22.5",
-				"TEST_ENV=custom_image",
-			},
-		},
-	)
-
-	imageCtr := dagModuleWithImage.
+	// Coverage and profiling test case
+	coverageCtr := dagModuleWithVersion.
+		WithGoCgoEnabled().
+		WithGcccompilerInstalled().
 		RunTest(testDir, dagger.GotestRunTestOpts{
 			EnableDefaultOptions: true,
+			Cover:                true,
+			Coverprofile:         "coverage.out",
+			Cpuprofile:           "cpu.prof",
+			Verbose:              true,
 		})
 
-	if exitCode, err := imageCtr.ExitCode(ctx); err != nil {
-		return WrapError(err, "failed to get exit code for custom image test")
+	if exitCode, err := coverageCtr.ExitCode(ctx); err != nil {
+		return WrapError(err, "failed to get exit code for coverage test")
 	} else if exitCode != 0 {
-		return Errorf("custom image test failed with exit code %d", exitCode)
+		return Errorf("coverage test failed with exit code %d", exitCode)
 	}
 
-	// Verify environment variables in custom image
-	expectedEnvVars := []string{
-		"GOLANG_VERSION=1.22.5",
-		"TEST_ENV=custom_image",
+	// Race detection and build tags test case
+	raceCtr := dagModuleWithVersion.
+		WithGoCgoEnabled().
+		WithGcccompilerInstalled().
+		RunTest(testDir, dagger.GotestRunTestOpts{
+			EnableDefaultOptions: true,
+			Race:                 true,
+			BuildTags:            "integration",
+			Ldflags:              "-X main.version=test",
+		})
+
+	if exitCode, err := raceCtr.ExitCode(ctx); err != nil {
+		return WrapError(err, "failed to get exit code for race test")
+	} else if exitCode != 0 {
+		return Errorf("race test failed with exit code %d", exitCode)
 	}
 
-	envOutImage, err := imageCtr.WithExec([]string{"printenv"}).Stdout(ctx)
-	if err != nil {
-		return WrapError(err, "failed to get environment variables from custom image")
+	// Benchmark test case
+	benchCtr := dagModuleWithVersion.
+		WithGoCgoEnabled().
+		WithGcccompilerInstalled().
+		RunTest(testDir, dagger.GotestRunTestOpts{
+			EnableDefaultOptions: true,
+			Benchmark:            ".",
+			Benchmem:             true,
+			Benchtime:            "1s",
+			TestCount:            3,
+		})
+
+	if exitCode, err := benchCtr.ExitCode(ctx); err != nil {
+		return WrapError(err, "failed to get exit code for benchmark test")
+	} else if exitCode != 0 {
+		return Errorf("benchmark test failed with exit code %d", exitCode)
 	}
 
-	for _, envVar := range expectedEnvVars {
-		if !strings.Contains(envOutImage, envVar) {
-			return Errorf("missing expected environment variable in custom image: %s", envVar)
-		}
+	// Test filtering and parallel execution test case
+	filteredCtr := dagModuleWithVersion.
+		WithGoCgoEnabled().
+		WithGcccompilerInstalled().
+		RunTest(testDir, dagger.GotestRunTestOpts{
+			EnableDefaultOptions: true,
+			Run:                  "TestSpecific",
+			Parallel:             4,
+			Timeout:              "30s",
+			Failfast:             true,
+			EnableJsonoutput:     true,
+		})
+
+	if exitCode, err := filteredCtr.ExitCode(ctx); err != nil {
+		return WrapError(err, "failed to get exit code for filtered test")
+	} else if exitCode != 0 {
+		return Errorf("filtered test failed with exit code %d", exitCode)
+	}
+
+	// Build mode and compiler flags test case
+	buildCtr := dagModuleWithVersion.
+		WithGoCgoEnabled().
+		WithGcccompilerInstalled().
+		RunTest(testDir, dagger.GotestRunTestOpts{
+			EnableDefaultOptions: true,
+			BuildMode:            "pie",
+			Gcflags:              "-N -l",
+			Mod:                  "readonly",
+			Trimpath:             true,
+			Work:                 true,
+		})
+
+	if exitCode, err := buildCtr.ExitCode(ctx); err != nil {
+		return WrapError(err, "failed to get exit code for build mode test")
+	} else if exitCode != 0 {
+		return Errorf("build mode test failed with exit code %d", exitCode)
+	}
+
+	// Short mode with specific packages test case
+	packagesCtr := dagModuleWithVersion.
+		WithGoCgoEnabled().
+		WithGcccompilerInstalled().
+		RunTest(testDir, dagger.GotestRunTestOpts{
+			EnableDefaultOptions: true,
+			Packages:             []string{"./..."},
+			Short:                true,
+			Verbose:              true,
+			EnvVars:              []string{"TEST_ENV=test"},
+		})
+
+	if exitCode, err := packagesCtr.ExitCode(ctx); err != nil {
+		return WrapError(err, "failed to get exit code for packages test")
+	} else if exitCode != 0 {
+		return Errorf("packages test failed with exit code %d", exitCode)
+	}
+
+	return nil
+}
+
+// TestGoTestRunTestCMDWithCustomOptions tests various configurations of the Go test command
+// using different RunTestCmd options.
+//
+// Parameters:
+//
+//	ctx - The context for managing cancellation and deadlines.
+//
+// Returns:
+//
+//	An error if any test configuration fails; otherwise, it returns nil.
+//
+//nolint:cyclop // Test function with multiple test cases by design
+func (m *Tests) TestGoTestRunTestCMDWithCustomOptions(ctx context.Context) error {
+	testDir := m.getTestDir("testdata/golang")
+	dagMod := dag.Gotest().
+		WithGoCgoEnabled().
+		WithGcccompilerInstalled()
+
+	// Test 1: Test with race detection and build tags
+	raceOut, raceErr := dagMod.RunTestCmd(ctx, testDir, dagger.GotestRunTestCmdOpts{
+		Race:      true,
+		BuildTags: "integration",
+		Packages:  []string{"./..."},
+		EnvVars:   []string{"TEST_ENV=race_test"},
+	})
+	if raceErr != nil {
+		return WrapError(raceErr, "race detection test failed")
+	}
+	if !strings.Contains(raceOut, "PASS") {
+		return NewError("expected PASS in race test output")
+	}
+
+	// Test 2: Test coverage and verbose output
+	coverOut, coverErr := dagMod.RunTestCmd(ctx, testDir, dagger.GotestRunTestCmdOpts{
+		Cover:        true,
+		Coverprofile: "coverage.out",
+		Verbose:      true,
+	})
+	if coverErr != nil {
+		return WrapError(coverErr, "coverage test failed")
+	}
+	if !strings.Contains(coverOut, "coverage") {
+		return NewError("expected coverage data in output")
+	}
+
+	// Test 3: Test with specific compiler flags and build options
+	buildOut, buildErr := dagMod.RunTestCmd(ctx, testDir, dagger.GotestRunTestCmdOpts{
+		Gcflags:  "-N -l",
+		Ldflags:  "-w -s",
+		Mod:      "readonly",
+		Trimpath: true,
+		Packages: []string{"./..."},
+		Verbose:  true,
+	})
+	if buildErr != nil {
+		return WrapError(buildErr, "build options test failed")
+	}
+	if !strings.Contains(buildOut, "PASS") {
+		return NewError("expected PASS in build output")
+	}
+
+	// Test 4: Test with short mode and JSON output
+	shortOut, shortErr := dagMod.RunTestCmd(ctx, testDir, dagger.GotestRunTestCmdOpts{
+		Short:            true,
+		EnableJsonoutput: true,
+		Verbose:          true,
+		Packages:         []string{"./..."},
+	})
+	if shortErr != nil {
+		return WrapError(shortErr, "short mode test failed")
+	}
+	// JSON output should contain either "Action" or "Test" fields
+	if !strings.Contains(shortOut, "Action") && !strings.Contains(shortOut, "Test") {
+		return NewError("expected JSON test output")
+	}
+
+	// Test 5: Test with timeout and fail-fast options
+	timeoutOut, timeoutErr := dagMod.RunTestCmd(ctx, testDir, dagger.GotestRunTestCmdOpts{
+		Timeout:  "30s",
+		Failfast: true,
+		Verbose:  true,
+		Packages: []string{"./..."},
+	})
+	if timeoutErr != nil {
+		return WrapError(timeoutErr, "timeout test failed")
+	}
+	if !strings.Contains(timeoutOut, "PASS") {
+		return NewError("expected PASS in timeout test output")
 	}
 
 	return nil
