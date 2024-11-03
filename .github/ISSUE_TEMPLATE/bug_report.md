@@ -1,46 +1,59 @@
 ---
 name: 🪲 Bug Report
-about: If something isn't working as expected
-title: "[Bug Title]"
+about: Report issues with daggerverse modules or tooling
+title: "[Module/Tool Name]: Brief description of bug"
 labels: "bug"
 ---
 
-## 🪲 Describe the Bug
-Provide a clear explanation of the bug.
-Example: "The module XYZ crashes when attempting to run the `xyz` command."
+## 🪲 What's Not Working
 
-## ⚡️ Type of Bug
-Please select the type of bug you are reporting:
-- [ ] Command Error
-- [ ] Crash/Error Message
-- [ ] Installation Issue
-- [ ] Documentation Issue
+Provide a clear explanation of what's not working as expected.
+Example: "The `aws` module's `deploy` function fails when using a custom VPC configuration"
+
+### Expected Behavior
+
+Provide a clear explanation of what you expected to happen.
+Example: "The `aws` module's `deploy` function should create an EC2 instance with the specified VPC configuration"
+
+### Actual Behavior
+
+Provide a clear explanation of what actually happened.
+Example: "The `aws` module's `deploy` function fails when using a custom VPC configuration"
+
+## 🎯 Component Type
+
+Please select what you're having issues with:
+
+- [ ] Daggerverse Module (specify which: **\_\_\_**)
+- [ ] Daggy CLI Tool
+- [ ] Module Template Full
+- [ ] Module Template Light
+- [ ] Documentation
+- [ ] Tooling (E.g.: Justfile)
 - [ ] Other (Please describe)
 
-## 🔬 Steps to Reproduce
-Detail out the steps to reproduce the bug.
-Example:
-1. Run the `xyz` command.
-2. Define the resource parameters.
-3. Observe the crash/error message.
+## 📋 Environment Details
 
-## 🔑 Expected Behavior
-Explain what you anticipated happening.
+- Dagger Version: (e.g., v0.9.3)
+- Module/Tool Version: (e.g., aws@v0.2.1)
+- OS: (e.g., Ubuntu 22.04)
 
-## 🌚 Actual Behavior
-Describe what actually occurred given the steps.
+## 🔬 Reproduction
 
-## 📷 Screenshots
-Include screenshots to better illustrate the bug, if necessary.
+### Code Sample
 
-## 🧰 Possible Solution
-Impart any insight on a potential bug fix, if possible.
+```go
+// Include your Dagger Function call or relevant code
+```
 
-## 📝 Additional Context
-Include any relevant logs, error messages, or related information that would provide more context to the bug.
+### Dagger Version
 
-## 🌪️ Impact
-Provide details on the scale and severity of the bug. This helps determine the urgency of the fix.
+```sh
+dagger version
+```
 
-## 📚 Related Documentation
-Include any relevant documentation/resources that correlate with the bug.
+### Module/Tool Version
+
+```sh
+module/tool version
+```
