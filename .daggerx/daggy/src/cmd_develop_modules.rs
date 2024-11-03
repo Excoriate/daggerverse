@@ -4,6 +4,8 @@ use std::path::Path;
 use crate::dagger_commands::run_dagger_develop;
 use crate::dagger_utils::find_dagger_modules;
 
+const EXCLUDED_PATHS: &[&str] = &["AI/", "./AI/", "./.devenv/"];
+
 pub fn develop_modules() -> Result<(), Error> {
     // Ensure we're in a Git repository
     if !Path::new(".git").exists() {
@@ -15,8 +17,15 @@ pub fn develop_modules() -> Result<(), Error> {
 
     println!("Git repository detected. Proceeding...");
 
-    // Find all directories containing a 'dagger.json' file
-    let modules = find_dagger_modules()?;
+    // Find all directories containing a 'dagger.json' file and filter excluded paths
+    let modules = find_dagger_modules()?
+        .into_iter()
+        .filter(|dir| {
+            !EXCLUDED_PATHS
+                .iter()
+                .any(|excluded| dir.starts_with(excluded))
+        })
+        .collect::<Vec<String>>();
 
     if modules.is_empty() {
         println!("No modules found.");

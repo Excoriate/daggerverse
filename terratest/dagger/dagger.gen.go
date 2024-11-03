@@ -322,52 +322,59 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 	case "":
 		return dag.Module().
 			WithObject(
-				dag.TypeDef().WithObject("Terratest").
+				dag.TypeDef().WithObject("Terratest", dagger.TypeDefWithObjectOpts{SourceMap: dag.SourceMap("main.go", 15, 6)}).
 					WithFunction(
 						dag.Function("Base",
 							dag.TypeDef().WithObject("Terratest")).
 							WithDescription("Base sets up the Container with a golang image and cache volumes\nversion string").
-							WithArg("goVersion", dag.TypeDef().WithKind(dagger.StringKind)).
-							WithArg("tfVersion", dag.TypeDef().WithKind(dagger.StringKind))).
+							WithSourceMap(dag.SourceMap("main.go", 84, 1)).
+							WithArg("goVersion", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind), dagger.FunctionWithArgOpts{SourceMap: dag.SourceMap("main.go", 84, 26)}).
+							WithArg("tfVersion", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind), dagger.FunctionWithArgOpts{SourceMap: dag.SourceMap("main.go", 84, 37)})).
 					WithFunction(
 						dag.Function("WithContainer",
 							dag.TypeDef().WithObject("Terratest")).
 							WithDescription("WithContainer specifies the container to use in the Terraform module.").
-							WithArg("ctr", dag.TypeDef().WithKind(dagger.VoidKind).WithOptional(true))).
+							WithSourceMap(dag.SourceMap("main.go", 115, 1)).
+							WithArg("ctr", dag.TypeDef().WithKind(dagger.TypeDefKindVoidKind).WithOptional(true), dagger.FunctionWithArgOpts{SourceMap: dag.SourceMap("main.go", 115, 35)})).
 					WithFunction(
 						dag.Function("Run",
-							dag.TypeDef().WithKind(dagger.VoidKind).WithOptional(true)).
-							WithArg("testDir", dag.TypeDef().WithKind(dagger.VoidKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "testDir is the directory that contains all the test code."}).
-							WithArg("args", dag.TypeDef().WithKind(dagger.StringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "args is the arguments to pass to the 'go test' command."})).
+							dag.TypeDef().WithKind(dagger.TypeDefKindVoidKind).WithOptional(true)).
+							WithSourceMap(dag.SourceMap("main.go", 120, 1)).
+							WithArg("testDir", dag.TypeDef().WithKind(dagger.TypeDefKindVoidKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "testDir is the directory that contains all the test code.", SourceMap: dag.SourceMap("main.go", 122, 2)}).
+							WithArg("args", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "args is the arguments to pass to the 'go test' command.", SourceMap: dag.SourceMap("main.go", 125, 2)})).
 					WithFunction(
 						dag.Function("WithSource",
 							dag.TypeDef().WithObject("Terratest")).
 							WithDescription("WithSource Set the source directory.").
-							WithArg("src", dag.TypeDef().WithKind(dagger.VoidKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "Src is the directory that contains all the source code, including the module directory."}).
-							WithArg("workdir", dag.TypeDef().WithKind(dagger.StringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "workdir is the working directory."})).
+							WithSourceMap(dag.SourceMap("apis.go", 10, 1)).
+							WithArg("src", dag.TypeDef().WithKind(dagger.TypeDefKindVoidKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "Src is the directory that contains all the source code, including the module directory.", SourceMap: dag.SourceMap("apis.go", 12, 2)}).
+							WithArg("workdir", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "workdir is the working directory.", SourceMap: dag.SourceMap("apis.go", 15, 2)})).
 					WithFunction(
 						dag.Function("WithCgoDisabled",
 							dag.TypeDef().WithObject("Terratest")).
-							WithDescription("WithCgoDisabled Set CGO_ENABLED environment variable to 0.")).
+							WithDescription("WithCgoDisabled Set CGO_ENABLED environment variable to 0.").
+							WithSourceMap(dag.SourceMap("apis.go", 31, 1))).
 					WithFunction(
 						dag.Function("WithEnvVar",
 							dag.TypeDef().WithObject("Terratest")).
 							WithDescription("WithEnvVar Set an environment variable.").
-							WithArg("name", dag.TypeDef().WithKind(dagger.StringKind), dagger.FunctionWithArgOpts{Description: "The name of the environment variable (e.g., \"HOST\")."}).
-							WithArg("value", dag.TypeDef().WithKind(dagger.StringKind), dagger.FunctionWithArgOpts{Description: "The value of the environment variable (e.g., \"localhost\")."}).
-							WithArg("expand", dag.TypeDef().WithKind(dagger.BooleanKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "Replace `${VAR}` or $VAR in the value according to the current environment\nvariables defined in the container (e.g., \"/opt/bin:$PATH\")."})).
-					WithField("Version", dag.TypeDef().WithKind(dagger.StringKind), dagger.TypeDefWithFieldOpts{Description: "The Version of the Golang image that'll host the 'terratest' test"}).
-					WithField("TfVersion", dag.TypeDef().WithKind(dagger.StringKind), dagger.TypeDefWithFieldOpts{Description: "TfVersion is the Version of the Terraform to use, e.g., \"0.12.24\".\nby default, it uses the latest Version."}).
-					WithField("Image", dag.TypeDef().WithKind(dagger.StringKind), dagger.TypeDefWithFieldOpts{Description: "Image of the container to use."}).
-					WithField("Ctr", dag.TypeDef().WithKind(dagger.VoidKind).WithOptional(true), dagger.TypeDefWithFieldOpts{Description: "Ctr is the container to use as a base container."}).
+							WithSourceMap(dag.SourceMap("apis.go", 38, 1)).
+							WithArg("name", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind), dagger.FunctionWithArgOpts{Description: "The name of the environment variable (e.g., \"HOST\").", SourceMap: dag.SourceMap("apis.go", 40, 2)}).
+							WithArg("value", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind), dagger.FunctionWithArgOpts{Description: "The value of the environment variable (e.g., \"localhost\").", SourceMap: dag.SourceMap("apis.go", 43, 2)}).
+							WithArg("expand", dag.TypeDef().WithKind(dagger.TypeDefKindBooleanKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "Replace `${VAR}` or $VAR in the value according to the current environment\nvariables defined in the container (e.g., \"/opt/bin:$PATH\").", SourceMap: dag.SourceMap("apis.go", 48, 2)})).
+					WithField("Version", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind), dagger.TypeDefWithFieldOpts{Description: "The Version of the Golang image that'll host the 'terratest' test", SourceMap: dag.SourceMap("main.go", 17, 2)}).
+					WithField("TfVersion", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind), dagger.TypeDefWithFieldOpts{Description: "TfVersion is the Version of the Terraform to use, e.g., \"0.12.24\".\nby default, it uses the latest Version.", SourceMap: dag.SourceMap("main.go", 20, 2)}).
+					WithField("Image", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind), dagger.TypeDefWithFieldOpts{Description: "Image of the container to use.", SourceMap: dag.SourceMap("main.go", 22, 2)}).
+					WithField("Ctr", dag.TypeDef().WithKind(dagger.TypeDefKindVoidKind).WithOptional(true), dagger.TypeDefWithFieldOpts{Description: "Ctr is the container to use as a base container.", SourceMap: dag.SourceMap("main.go", 24, 2)}).
 					WithConstructor(
 						dag.Function("New",
 							dag.TypeDef().WithObject("Terratest")).
-							WithArg("version", dag.TypeDef().WithKind(dagger.StringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "the Version of the Terraform to use, e.g., \"0.12.24\".\nby default, it uses the latest Version.", DefaultValue: dagger.JSON("\"1.22.0-alpine3.19\"")}).
-							WithArg("tfVersion", dag.TypeDef().WithKind(dagger.StringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "the Version of the Terraform to use, e.g., \"0.12.24\".\nby default, it uses the latest Version.", DefaultValue: dagger.JSON("\"1.6.0\"")}).
-							WithArg("image", dag.TypeDef().WithKind(dagger.StringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "Image of the container to use.\nby default, it uses the official HashiCorp Terraform Image hashicorp/terraform.", DefaultValue: dagger.JSON("\"gcr.io/distroless/static-debian11\"")}).
-							WithArg("ctr", dag.TypeDef().WithKind(dagger.VoidKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "ctr is the container to use as a base container.\nIt's an optional parameter. If it's not set, it's going to create a new container."}).
-							WithArg("envVars", dag.TypeDef().WithKind(dagger.StringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "envVars is a string of environment variables in the form of \"key1=value1,key2=value2\""}))), nil
+							WithSourceMap(dag.SourceMap("main.go", 27, 1)).
+							WithArg("version", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "the Version of the Terraform to use, e.g., \"0.12.24\".\nby default, it uses the latest Version.", SourceMap: dag.SourceMap("main.go", 32, 2), DefaultValue: dagger.JSON("\"1.22.0-alpine3.19\"")}).
+							WithArg("tfVersion", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "the Version of the Terraform to use, e.g., \"0.12.24\".\nby default, it uses the latest Version.", SourceMap: dag.SourceMap("main.go", 37, 2), DefaultValue: dagger.JSON("\"1.6.0\"")}).
+							WithArg("image", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "Image of the container to use.\nby default, it uses the official HashiCorp Terraform Image hashicorp/terraform.", SourceMap: dag.SourceMap("main.go", 42, 2), DefaultValue: dagger.JSON("\"gcr.io/distroless/static-debian11\"")}).
+							WithArg("ctr", dag.TypeDef().WithKind(dagger.TypeDefKindVoidKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "ctr is the container to use as a base container.\nIt's an optional parameter. If it's not set, it's going to create a new container.", SourceMap: dag.SourceMap("main.go", 45, 2)}).
+							WithArg("envVars", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "envVars is a string of environment variables in the form of \"key1=value1,key2=value2\"", SourceMap: dag.SourceMap("main.go", 48, 2)}))), nil
 	default:
 		return nil, fmt.Errorf("unknown object %s", parentName)
 	}

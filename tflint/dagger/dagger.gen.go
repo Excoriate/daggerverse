@@ -356,62 +356,71 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 	case "":
 		return dag.Module().
 			WithObject(
-				dag.TypeDef().WithObject("Tflint").
+				dag.TypeDef().WithObject("Tflint", dagger.TypeDefWithObjectOpts{SourceMap: dag.SourceMap("main.go", 14, 6)}).
 					WithFunction(
 						dag.Function("Base",
 							dag.TypeDef().WithObject("Tflint")).
 							WithDescription("Base sets the base image and version, and creates the base container.").
-							WithArg("image", dag.TypeDef().WithKind(dagger.StringKind)).
-							WithArg("version", dag.TypeDef().WithKind(dagger.StringKind))).
+							WithSourceMap(dag.SourceMap("main.go", 53, 1)).
+							WithArg("image", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind), dagger.FunctionWithArgOpts{SourceMap: dag.SourceMap("main.go", 53, 23)}).
+							WithArg("version", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind), dagger.FunctionWithArgOpts{SourceMap: dag.SourceMap("main.go", 53, 30)})).
 					WithFunction(
 						dag.Function("WithSource",
 							dag.TypeDef().WithObject("Tflint")).
 							WithDescription("WithSource sets the source directory if it's passed, and\nmounts the source directory to the container.").
-							WithArg("src", dag.TypeDef().WithKind(dagger.VoidKind).WithOptional(true))).
+							WithSourceMap(dag.SourceMap("main.go", 74, 1)).
+							WithArg("src", dag.TypeDef().WithKind(dagger.TypeDefKindVoidKind).WithOptional(true), dagger.FunctionWithArgOpts{SourceMap: dag.SourceMap("main.go", 74, 29)})).
 					WithFunction(
 						dag.Function("Version",
-							dag.TypeDef().WithKind(dagger.StringKind)).
-							WithDescription("Version runs the 'tflint --version' command.")).
+							dag.TypeDef().WithKind(dagger.TypeDefKindStringKind)).
+							WithDescription("Version runs the 'tflint --version' command.").
+							WithSourceMap(dag.SourceMap("main.go", 85, 1))).
 					WithFunction(
 						dag.Function("Run",
-							dag.TypeDef().WithKind(dagger.StringKind)).
+							dag.TypeDef().WithKind(dagger.TypeDefKindStringKind)).
 							WithDescription("Run executes any tflint command.").
-							WithArg("cfg", dag.TypeDef().WithKind(dagger.StringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "cfg is the configuration file to use."}).
-							WithArg("args", dag.TypeDef().WithKind(dagger.StringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "args is the arguments to pass to the tfLint command."})).
+							WithSourceMap(dag.SourceMap("main.go", 95, 1)).
+							WithArg("cfg", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "cfg is the configuration file to use.", SourceMap: dag.SourceMap("main.go", 98, 2)}).
+							WithArg("args", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "args is the arguments to pass to the tfLint command.", SourceMap: dag.SourceMap("main.go", 101, 2)})).
 					WithFunction(
 						dag.Function("WithInit",
 							dag.TypeDef().WithObject("Tflint")).
 							WithDescription("WithInit adds the 'init' command to the container.").
-							WithArg("cfg", dag.TypeDef().WithKind(dagger.StringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "cfg is the configuration file to use."}).
-							WithArg("args", dag.TypeDef().WithKind(dagger.StringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "args is the arguments to pass to the tfLint init command."})).
+							WithSourceMap(dag.SourceMap("main.go", 118, 1)).
+							WithArg("cfg", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "cfg is the configuration file to use.", SourceMap: dag.SourceMap("main.go", 121, 2)}).
+							WithArg("args", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "args is the arguments to pass to the tfLint init command.", SourceMap: dag.SourceMap("main.go", 124, 2)})).
 					WithFunction(
 						dag.Function("RunInit",
-							dag.TypeDef().WithKind(dagger.StringKind)).
+							dag.TypeDef().WithKind(dagger.TypeDefKindStringKind)).
 							WithDescription("RunInit executes the 'init' command.").
-							WithArg("cfg", dag.TypeDef().WithKind(dagger.StringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "cfg is the configuration file to use."}).
-							WithArg("args", dag.TypeDef().WithKind(dagger.StringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "args is the arguments to pass to the tfLint init command."})).
+							WithSourceMap(dag.SourceMap("main.go", 138, 1)).
+							WithArg("cfg", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "cfg is the configuration file to use.", SourceMap: dag.SourceMap("main.go", 141, 2)}).
+							WithArg("args", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "args is the arguments to pass to the tfLint init command.", SourceMap: dag.SourceMap("main.go", 144, 2)})).
 					WithFunction(
 						dag.Function("Lint",
 							dag.TypeDef().WithObject("Tflint")).
-							WithArg("init", dag.TypeDef().WithKind(dagger.BooleanKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "init specifies whether to run the 'init' command before running the 'lint' command.", DefaultValue: dagger.JSON("false")}).
-							WithArg("cfg", dag.TypeDef().WithKind(dagger.StringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "cfg is the configuration file to use."}).
-							WithArg("args", dag.TypeDef().WithKind(dagger.StringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "args is the arguments to pass to the tfLint init command."})).
+							WithSourceMap(dag.SourceMap("main.go", 161, 1)).
+							WithArg("init", dag.TypeDef().WithKind(dagger.TypeDefKindBooleanKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "init specifies whether to run the 'init' command before running the 'lint' command.", SourceMap: dag.SourceMap("main.go", 165, 2), DefaultValue: dagger.JSON("false")}).
+							WithArg("cfg", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "cfg is the configuration file to use.", SourceMap: dag.SourceMap("main.go", 168, 2)}).
+							WithArg("args", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "args is the arguments to pass to the tfLint init command.", SourceMap: dag.SourceMap("main.go", 171, 2)})).
 					WithFunction(
 						dag.Function("RunLint",
-							dag.TypeDef().WithKind(dagger.StringKind)).
+							dag.TypeDef().WithKind(dagger.TypeDefKindStringKind)).
 							WithDescription("RunLint executes the 'init' command.\nIt's equivalent to running 'tflint' in the terminal.").
-							WithArg("init", dag.TypeDef().WithKind(dagger.BooleanKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "init specifies whether to run the 'init' command before running the 'lint' command.", DefaultValue: dagger.JSON("false")}).
-							WithArg("cfg", dag.TypeDef().WithKind(dagger.StringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "cfg is the configuration file to use."}).
-							WithArg("args", dag.TypeDef().WithKind(dagger.StringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "args is the arguments to pass to the tfLint init command."})).
-					WithField("Src", dag.TypeDef().WithKind(dagger.VoidKind).WithOptional(true), dagger.TypeDefWithFieldOpts{Description: "Src is the directory that contains all the source code, including the module directory."}).
-					WithField("Ctr", dag.TypeDef().WithKind(dagger.VoidKind).WithOptional(true), dagger.TypeDefWithFieldOpts{Description: "Ctr is the container to use as a base container."}).
+							WithSourceMap(dag.SourceMap("main.go", 192, 1)).
+							WithArg("init", dag.TypeDef().WithKind(dagger.TypeDefKindBooleanKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "init specifies whether to run the 'init' command before running the 'lint' command.", SourceMap: dag.SourceMap("main.go", 196, 2), DefaultValue: dagger.JSON("false")}).
+							WithArg("cfg", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "cfg is the configuration file to use.", SourceMap: dag.SourceMap("main.go", 199, 2)}).
+							WithArg("args", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "args is the arguments to pass to the tfLint init command.", SourceMap: dag.SourceMap("main.go", 202, 2)})).
+					WithField("Src", dag.TypeDef().WithKind(dagger.TypeDefKindVoidKind).WithOptional(true), dagger.TypeDefWithFieldOpts{Description: "Src is the directory that contains all the source code, including the module directory.", SourceMap: dag.SourceMap("main.go", 16, 2)}).
+					WithField("Ctr", dag.TypeDef().WithKind(dagger.TypeDefKindVoidKind).WithOptional(true), dagger.TypeDefWithFieldOpts{Description: "Ctr is the container to use as a base container.", SourceMap: dag.SourceMap("main.go", 19, 2)}).
 					WithConstructor(
 						dag.Function("New",
 							dag.TypeDef().WithObject("Tflint")).
-							WithArg("version", dag.TypeDef().WithKind(dagger.StringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "version is the version of the TFLint to use, e.g., \"v0.50.3\". For more information, see https://github.com/terraform-linters/tflint", DefaultValue: dagger.JSON("\"v0.50.3\"")}).
-							WithArg("image", dag.TypeDef().WithKind(dagger.StringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "image is the image to use as the base container.", DefaultValue: dagger.JSON("\"ghcr.io/terraform-linters/tflint\"")}).
-							WithArg("src", dag.TypeDef().WithKind(dagger.VoidKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "src is the directory that contains all the source code, including the module directory."}).
-							WithArg("ctr", dag.TypeDef().WithKind(dagger.VoidKind).WithOptional(true).WithOptional(true), dagger.FunctionWithArgOpts{Description: "Ctrl is the container to use as a base container."}))), nil
+							WithSourceMap(dag.SourceMap("main.go", 22, 1)).
+							WithArg("version", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "version is the version of the TFLint to use, e.g., \"v0.50.3\". For more information, see https://github.com/terraform-linters/tflint", SourceMap: dag.SourceMap("main.go", 26, 2), DefaultValue: dagger.JSON("\"v0.50.3\"")}).
+							WithArg("image", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "image is the image to use as the base container.", SourceMap: dag.SourceMap("main.go", 30, 2), DefaultValue: dagger.JSON("\"ghcr.io/terraform-linters/tflint\"")}).
+							WithArg("src", dag.TypeDef().WithKind(dagger.TypeDefKindVoidKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "src is the directory that contains all the source code, including the module directory.", SourceMap: dag.SourceMap("main.go", 32, 2)}).
+							WithArg("ctr", dag.TypeDef().WithKind(dagger.TypeDefKindVoidKind).WithOptional(true).WithOptional(true), dagger.FunctionWithArgOpts{Description: "Ctrl is the container to use as a base container.", SourceMap: dag.SourceMap("main.go", 35, 2)}))), nil
 	default:
 		return nil, fmt.Errorf("unknown object %s", parentName)
 	}

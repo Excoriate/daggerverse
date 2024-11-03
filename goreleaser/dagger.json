@@ -1,6 +1,6 @@
 {
   "name": "goreleaser",
+  "engineVersion": "v0.13.7",
   "sdk": "go",
-  "source": "dagger",
-  "engineVersion": "v0.13.5"
+  "source": "dagger"
 }

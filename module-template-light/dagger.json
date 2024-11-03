@@ -1,5 +1,6 @@
 {
   "name": "module-template-light",
+  "engineVersion": "v0.13.7",
   "sdk": "go",
   "exclude": [
     "../.direnv",

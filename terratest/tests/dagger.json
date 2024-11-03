@@ -1,12 +1,13 @@
 {
   "name": "tests",
+  "engineVersion": "v0.13.7",
   "sdk": "go",
   "dependencies": [
     {
       "name": "dagindag",
-      "source": "github.com/Excoriate/daggerverse/dagindag@9783ed1cc5a3c50165c861895d113f4c8612ef47"
+      "source": "github.com/Excoriate/daggerverse/dagindag@9783ed1cc5a3c50165c861895d113f4c8612ef47",
+      "pin": "9783ed1cc5a3c50165c861895d113f4c8612ef47"
     }
   ],
-  "source": "dagger",
-  "engineVersion": "v0.13.5"
+  "source": "dagger"
 }

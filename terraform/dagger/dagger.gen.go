@@ -399,73 +399,83 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 	case "":
 		return dag.Module().
 			WithObject(
-				dag.TypeDef().WithObject("Terraform").
+				dag.TypeDef().WithObject("Terraform", dagger.TypeDefWithObjectOpts{SourceMap: dag.SourceMap("main.go", 20, 6)}).
 					WithFunction(
 						dag.Function("Base",
 							dag.TypeDef().WithObject("Terraform")).
-							WithDescription("Base sets up the Container with a Terraform Image and cache volumes")).
+							WithDescription("Base sets up the Container with a Terraform Image and cache volumes").
+							WithSourceMap(dag.SourceMap("main.go", 90, 1))).
 					WithFunction(
 						dag.Function("WithModule",
 							dag.TypeDef().WithObject("Terraform")).
 							WithDescription("WithModule specifies the module to use in the Terraform module by the 'Src' directory.").
-							WithArg("src", dag.TypeDef().WithKind(dagger.VoidKind).WithOptional(true))).
+							WithSourceMap(dag.SourceMap("main.go", 102, 1)).
+							WithArg("src", dag.TypeDef().WithKind(dagger.TypeDefKindVoidKind).WithOptional(true), dagger.FunctionWithArgOpts{SourceMap: dag.SourceMap("main.go", 102, 32)})).
 					WithFunction(
 						dag.Function("WithContainer",
 							dag.TypeDef().WithObject("Terraform")).
 							WithDescription("WithContainer specifies the container to use in the Terraform module.").
-							WithArg("ctr", dag.TypeDef().WithKind(dagger.VoidKind).WithOptional(true))).
+							WithSourceMap(dag.SourceMap("main.go", 108, 1)).
+							WithArg("ctr", dag.TypeDef().WithKind(dagger.TypeDefKindVoidKind).WithOptional(true), dagger.FunctionWithArgOpts{SourceMap: dag.SourceMap("main.go", 108, 35)})).
 					WithFunction(
 						dag.Function("Init",
-							dag.TypeDef().WithKind(dagger.VoidKind).WithOptional(true)).
+							dag.TypeDef().WithKind(dagger.TypeDefKindVoidKind).WithOptional(true)).
 							WithDescription("Init initializes the Terraform module.").
-							WithArg("tfmod", dag.TypeDef().WithKind(dagger.StringKind), dagger.FunctionWithArgOpts{Description: "The tfmod is the Terraform module to use."}).
-							WithArg("args", dag.TypeDef().WithKind(dagger.StringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "args are the n number of arguments to pass to the Terraform init command."})).
+							WithSourceMap(dag.SourceMap("main.go", 123, 1)).
+							WithArg("tfmod", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind), dagger.FunctionWithArgOpts{Description: "The tfmod is the Terraform module to use.", SourceMap: dag.SourceMap("main.go", 125, 2)}).
+							WithArg("args", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "args are the n number of arguments to pass to the Terraform init command.", SourceMap: dag.SourceMap("main.go", 128, 2)})).
 					WithFunction(
 						dag.Function("Plan",
-							dag.TypeDef().WithKind(dagger.VoidKind).WithOptional(true)).
+							dag.TypeDef().WithKind(dagger.TypeDefKindVoidKind).WithOptional(true)).
 							WithDescription("Plan creates an execution plan for the Terraform module.").
-							WithArg("tfmod", dag.TypeDef().WithKind(dagger.StringKind), dagger.FunctionWithArgOpts{Description: "The tfmod is the Terraform module to use."}).
-							WithArg("args", dag.TypeDef().WithKind(dagger.StringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "args are the n number of arguments to pass to the Terraform plan command."}).
-							WithArg("initArgs", dag.TypeDef().WithKind(dagger.StringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "initArgs are the n number of arguments to pass to the Terraform init command."})).
+							WithSourceMap(dag.SourceMap("main.go", 137, 1)).
+							WithArg("tfmod", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind), dagger.FunctionWithArgOpts{Description: "The tfmod is the Terraform module to use.", SourceMap: dag.SourceMap("main.go", 139, 2)}).
+							WithArg("args", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "args are the n number of arguments to pass to the Terraform plan command.", SourceMap: dag.SourceMap("main.go", 142, 2)}).
+							WithArg("initArgs", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "initArgs are the n number of arguments to pass to the Terraform init command.", SourceMap: dag.SourceMap("main.go", 145, 2)})).
 					WithFunction(
 						dag.Function("Apply",
-							dag.TypeDef().WithKind(dagger.VoidKind).WithOptional(true)).
+							dag.TypeDef().WithKind(dagger.TypeDefKindVoidKind).WithOptional(true)).
 							WithDescription("Apply creates an execution plan for the Terraform module.").
-							WithArg("tfmod", dag.TypeDef().WithKind(dagger.StringKind), dagger.FunctionWithArgOpts{Description: "The tfmod is the Terraform module to use."}).
-							WithArg("args", dag.TypeDef().WithKind(dagger.StringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "args are the n number of arguments to pass to the Terraform apply command."}).
-							WithArg("initArgs", dag.TypeDef().WithKind(dagger.StringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "initArgs are the n number of arguments to pass to the Terraform init command."})).
+							WithSourceMap(dag.SourceMap("main.go", 159, 1)).
+							WithArg("tfmod", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind), dagger.FunctionWithArgOpts{Description: "The tfmod is the Terraform module to use.", SourceMap: dag.SourceMap("main.go", 161, 2)}).
+							WithArg("args", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "args are the n number of arguments to pass to the Terraform apply command.", SourceMap: dag.SourceMap("main.go", 164, 2)}).
+							WithArg("initArgs", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "initArgs are the n number of arguments to pass to the Terraform init command.", SourceMap: dag.SourceMap("main.go", 167, 2)})).
 					WithFunction(
 						dag.Function("Destroy",
-							dag.TypeDef().WithKind(dagger.VoidKind).WithOptional(true)).
+							dag.TypeDef().WithKind(dagger.TypeDefKindVoidKind).WithOptional(true)).
 							WithDescription("Destroy creates an execution plan for the Terraform module.").
-							WithArg("tfmod", dag.TypeDef().WithKind(dagger.StringKind), dagger.FunctionWithArgOpts{Description: "The tfmod is the Terraform module to use."}).
-							WithArg("args", dag.TypeDef().WithKind(dagger.StringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "args are the n number of arguments to pass to the Terraform destroy command."}).
-							WithArg("initArgs", dag.TypeDef().WithKind(dagger.StringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "initArgs are the n number of arguments to pass to the Terraform init command."})).
+							WithSourceMap(dag.SourceMap("main.go", 180, 1)).
+							WithArg("tfmod", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind), dagger.FunctionWithArgOpts{Description: "The tfmod is the Terraform module to use.", SourceMap: dag.SourceMap("main.go", 182, 2)}).
+							WithArg("args", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "args are the n number of arguments to pass to the Terraform destroy command.", SourceMap: dag.SourceMap("main.go", 185, 2)}).
+							WithArg("initArgs", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "initArgs are the n number of arguments to pass to the Terraform init command.", SourceMap: dag.SourceMap("main.go", 188, 2)})).
 					WithFunction(
 						dag.Function("Validate",
-							dag.TypeDef().WithKind(dagger.VoidKind).WithOptional(true)).
+							dag.TypeDef().WithKind(dagger.TypeDefKindVoidKind).WithOptional(true)).
 							WithDescription("Validate creates an execution plan for the Terraform module.").
-							WithArg("tfmod", dag.TypeDef().WithKind(dagger.StringKind), dagger.FunctionWithArgOpts{Description: "The tfmod is the Terraform module to use."}).
-							WithArg("args", dag.TypeDef().WithKind(dagger.StringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "args are the n number of arguments to pass to the Terraform validate command."}).
-							WithArg("initArgs", dag.TypeDef().WithKind(dagger.StringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "initArgs are the n number of arguments to pass to the Terraform init command."})).
+							WithSourceMap(dag.SourceMap("main.go", 201, 1)).
+							WithArg("tfmod", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind), dagger.FunctionWithArgOpts{Description: "The tfmod is the Terraform module to use.", SourceMap: dag.SourceMap("main.go", 203, 2)}).
+							WithArg("args", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "args are the n number of arguments to pass to the Terraform validate command.", SourceMap: dag.SourceMap("main.go", 206, 2)}).
+							WithArg("initArgs", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "initArgs are the n number of arguments to pass to the Terraform init command.", SourceMap: dag.SourceMap("main.go", 209, 2)})).
 					WithFunction(
 						dag.Function("Format",
-							dag.TypeDef().WithKind(dagger.VoidKind).WithOptional(true)).
+							dag.TypeDef().WithKind(dagger.TypeDefKindVoidKind).WithOptional(true)).
 							WithDescription("Format creates an execution plan for the Terraform module.").
-							WithArg("tfmod", dag.TypeDef().WithKind(dagger.StringKind), dagger.FunctionWithArgOpts{Description: "The tfmod is the Terraform module to use."}).
-							WithArg("args", dag.TypeDef().WithKind(dagger.StringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "args are the n number of arguments to pass to the Terraform fmt command."})).
-					WithField("Version", dag.TypeDef().WithKind(dagger.StringKind), dagger.TypeDefWithFieldOpts{Description: "The Version of the Terraform to use, e.g., \"0.12.24\"."}).
-					WithField("Image", dag.TypeDef().WithKind(dagger.StringKind), dagger.TypeDefWithFieldOpts{Description: "Image of the container to use."}).
-					WithField("Src", dag.TypeDef().WithKind(dagger.VoidKind).WithOptional(true), dagger.TypeDefWithFieldOpts{Description: "Src is the directory that contains all the source code, including the module directory."}).
-					WithField("BaseCtr", dag.TypeDef().WithKind(dagger.VoidKind).WithOptional(true), dagger.TypeDefWithFieldOpts{Description: "BaseCtr is the container to use as a base container."}).
+							WithSourceMap(dag.SourceMap("main.go", 222, 1)).
+							WithArg("tfmod", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind), dagger.FunctionWithArgOpts{Description: "The tfmod is the Terraform module to use.", SourceMap: dag.SourceMap("main.go", 224, 2)}).
+							WithArg("args", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "args are the n number of arguments to pass to the Terraform fmt command.", SourceMap: dag.SourceMap("main.go", 227, 2)})).
+					WithField("Version", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind), dagger.TypeDefWithFieldOpts{Description: "The Version of the Terraform to use, e.g., \"0.12.24\".", SourceMap: dag.SourceMap("main.go", 22, 2)}).
+					WithField("Image", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind), dagger.TypeDefWithFieldOpts{Description: "Image of the container to use.", SourceMap: dag.SourceMap("main.go", 24, 2)}).
+					WithField("Src", dag.TypeDef().WithKind(dagger.TypeDefKindVoidKind).WithOptional(true), dagger.TypeDefWithFieldOpts{Description: "Src is the directory that contains all the source code, including the module directory.", SourceMap: dag.SourceMap("main.go", 26, 2)}).
+					WithField("BaseCtr", dag.TypeDef().WithKind(dagger.TypeDefKindVoidKind).WithOptional(true), dagger.TypeDefWithFieldOpts{Description: "BaseCtr is the container to use as a base container.", SourceMap: dag.SourceMap("main.go", 28, 2)}).
 					WithConstructor(
 						dag.Function("New",
 							dag.TypeDef().WithObject("Terraform")).
-							WithArg("version", dag.TypeDef().WithKind(dagger.StringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "the Version of the Terraform to use, e.g., \"0.12.24\".\nby default, it uses the latest Version.", DefaultValue: dagger.JSON("\"latest\"")}).
-							WithArg("image", dag.TypeDef().WithKind(dagger.StringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "Image of the container to use.\nby default, it uses the official HashiCorp Terraform Image hashicorp/terraform.", DefaultValue: dagger.JSON("\"hashicorp/terraform\"")}).
-							WithArg("src", dag.TypeDef().WithKind(dagger.VoidKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "Src is the directory that contains all the source code,\nincluding the module directory."}).
-							WithArg("ctr", dag.TypeDef().WithKind(dagger.VoidKind).WithOptional(true).WithOptional(true), dagger.FunctionWithArgOpts{Description: "ctr is the container to use as a base container.\nIt's an optional parameter. If it's not set, it's going to create a new container."}).
-							WithArg("envVars", dag.TypeDef().WithKind(dagger.StringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "envVars is a string of environment variables in the form of \"key1=value1,key2=value2\""}))), nil
+							WithSourceMap(dag.SourceMap("main.go", 31, 1)).
+							WithArg("version", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "the Version of the Terraform to use, e.g., \"0.12.24\".\nby default, it uses the latest Version.", SourceMap: dag.SourceMap("main.go", 36, 2), DefaultValue: dagger.JSON("\"latest\"")}).
+							WithArg("image", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "Image of the container to use.\nby default, it uses the official HashiCorp Terraform Image hashicorp/terraform.", SourceMap: dag.SourceMap("main.go", 42, 2), DefaultValue: dagger.JSON("\"hashicorp/terraform\"")}).
+							WithArg("src", dag.TypeDef().WithKind(dagger.TypeDefKindVoidKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "Src is the directory that contains all the source code,\nincluding the module directory.", SourceMap: dag.SourceMap("main.go", 46, 2)}).
+							WithArg("ctr", dag.TypeDef().WithKind(dagger.TypeDefKindVoidKind).WithOptional(true).WithOptional(true), dagger.FunctionWithArgOpts{Description: "ctr is the container to use as a base container.\nIt's an optional parameter. If it's not set, it's going to create a new container.", SourceMap: dag.SourceMap("main.go", 50, 2)}).
+							WithArg("envVars", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "envVars is a string of environment variables in the form of \"key1=value1,key2=value2\"", SourceMap: dag.SourceMap("main.go", 53, 2)}))), nil
 	default:
 		return nil, fmt.Errorf("unknown object %s", parentName)
 	}
