@@ -1,6 +1,6 @@
 {
-  "name": "terragrunt",
-  "engineVersion": "v0.14.0",
+  "name": "gopkgpublisher",
+  "engineVersion": "v0.13.7",
   "sdk": "go",
   "exclude": [
     "../.direnv",
