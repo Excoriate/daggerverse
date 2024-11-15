@@ -1,0 +1,92 @@
+---
+contents:
+  repositories:
+    - https://dl-cdn.alpinelinux.org/alpine/v3.20/main
+    - https://dl-cdn.alpinelinux.org/alpine/v3.20/community
+  packages:
+    - alpine-baselayout
+    - alpine-keys
+    - apk-tools
+    - ca-certificates-bundle
+    - musl
+    - curl
+    - bash
+    - git
+    - openssl
+    - gcc
+    - musl-dev
+    - gnupg
+    - openssh-client
+
+accounts:
+  groups:
+    - groupname: gopkgpublisher
+      gid: 65532
+  users:
+    - username: gopkgpublisher
+      uid: 65532
+      gid: 65532
+  run-as: gopkgpublisher
+
+entrypoint:
+  command: /bin/bash -l
+
+archs:
+  - x86_64
+  - aarch64
+
+environment:
+  PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/gopkgpublisher/bin:/home/gopkgpublisher/.local/bin
+  TZ: UTC
+  LANG: en_US.UTF-8
+  LC_ALL: en_US.UTF-8
+  GOPATH: /home/gopkgpublisher/go
+  GOCACHE: /home/gopkgpublisher/.cache/go-build
+  GOMODCACHE: /home/gopkgpublisher/go/pkg/mod
+  GOTESTCACHE: /home/gopkgpublisher/.cache/go-test
+  GO111MODULE: "on"
+
+paths:
+  - path: /home/gopkgpublisher
+    type: directory
+    uid: 65532
+    gid: 65532
+    permissions: 0o755
+  - path: /home/gopkgpublisher/bin
+    type: directory
+    uid: 65532
+    gid: 65532
+    permissions: 0o755
+  - path: /mnt
+    type: directory
+    uid: 65532
+    gid: 65532
+    permissions: 0o755
+  - path: /home/gopkgpublisher/.cache/go-build
+    type: directory
+    uid: 65532
+    gid: 65532
+    permissions: 0o755
+  - path: /home/gopkgpublisher/go/pkg/mod
+    type: directory
+    uid: 65532
+    gid: 65532
+    permissions: 0o755
+  - path: /home/gopkgpublisher/.cache/go-test
+    type: directory
+    uid: 65532
+    gid: 65532
+    permissions: 0o755
+  - path: /tmp
+    type: directory
+    uid: 65532
+    gid: 65532
+    permissions: 0o777
+
+annotations:
+  title: Base Alpine for Go Package Publisher
+  description: A minimal Alpine base image built with APKO for publishing Go packages.
+  vendor: github.com/Excoriate - Alex Torres
+  licenses: Apache-2.0
+  url: https://github.com/Excoriate/daggerverse
+  source: https://github.com/Excoriate/daggerverse
