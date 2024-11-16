@@ -625,7 +625,7 @@ func (m *Tests) TestGoWithGCCCompiler(ctx context.Context) error {
 func (m *Tests) TestGoWithGoTestSum(ctx context.Context) error {
 	baseModule := dag.ModuleTemplate(
 		dagger.ModuleTemplateOpts{
-			Ctr: getGolangAlpineContainer("1.20.4"),
+			Ctr: getGolangAlpineContainer("1.21"),
 		},
 	)
 
