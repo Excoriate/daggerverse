@@ -19,6 +19,7 @@ permissions:
 
 env:
   DAGGER_VERSION_EXAMPLES_GO: 0.14.0
+  DAGGER_VERSION: 0.14.0
 
 defaults:
   run:
@@ -30,7 +31,7 @@ jobs:
       matrix:
         go: ["1.22"]
         dagversion: [0.14.0]
-    name: Lint module-template-light on ${{ matrix.os }} with Dagger ${{ matrix.dagversion }}
+    name: Lint module-template-light on ${{ matrix.go }} with Dagger ${{ matrix.dagversion }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -106,12 +107,12 @@ jobs:
           go-version: ${{ matrix.go }}
 
       # Dagger main module 📦 (develop & golang ci-lint)
-      - name: Dagger Develop on Module 📦 module-template-light with Dagger ${{ matrix.dagversion }}
+      - name: Dagger Develop on Module 📦 module-template-light with Dagger ${{ env.DAGGER_VERSION }}
         uses: dagger/dagger-for-github@v7
         with:
           verb: develop
           module: module-template-light
-          version: ${{ matrix.dagversion }}
+          version: ${{ env.DAGGER_VERSION }}
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -127,12 +128,12 @@ jobs:
           golangci-lint run --config=../.golangci.yml --verbose
 
       # Dagger test module 🧪 (develop & golang ci-lint)
-      - name: Dagger Develop on Module tests 🧪 module-template-light with Dagger ${{ matrix.dagversion }}
+      - name: Dagger Develop on Module tests 🧪 module-template-light with Dagger ${{ env.DAGGER_VERSION }}
         uses: dagger/dagger-for-github@v7
         with:
           verb: develop
           module: module-template-light/tests
-          version: ${{ matrix.dagversion }}
+          version: ${{ env.DAGGER_VERSION }}
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -143,12 +144,12 @@ jobs:
           golangci-lint run --config=../../.golangci.yml --verbose
 
       # Dagger examples (go) module 📄 (develop & golang ci-lint)
-      - name: Dagger Develop on Module Examples/Go 📄 module-template-light with Dagger ${{ matrix.dagversion }}
+      - name: Dagger Develop on Module Examples/Go 📄 module-template-light with Dagger ${{ env.DAGGER_VERSION }}
         uses: dagger/dagger-for-github@v7
         with:
           verb: develop
           module: module-template-light/examples/go
-          version: ${{ matrix.dagversion }}
+          version: ${{ env.DAGGER_VERSION }}
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
