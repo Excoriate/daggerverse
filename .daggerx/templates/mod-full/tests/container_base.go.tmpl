@@ -207,14 +207,11 @@ func (m *Tests) TestContainerWithWolfiBase(ctx context.Context) error {
 // Returns:
 //   - error: Returns an error if the Apko image is not used or if the output is not as expected.
 func (m *Tests) TestContainerWithApkoBaseAlpine(ctx context.Context) error {
-	alpinePresetPath := "testdata/apko-presets/base-alpine.yaml"
-	alpinePresetFile := dag.CurrentModule().
-		Source().
-		File(alpinePresetPath)
+	alpinePresetPath := "tests/testdata/apko-presets/base-alpine.yaml"
 
 	scenarioBaseAlpineBasic := dag.
 		{{.module_name}}().
-		BaseApko(alpinePresetPath, alpinePresetFile)
+		BaseApko(alpinePresetPath, []string{})
 
 	outInspectCtr, outInspectCtrErr := scenarioBaseAlpineBasic.Ctr().
 		WithExec([]string{"sh", "-c", "uname"}).
@@ -262,14 +259,10 @@ func (m *Tests) TestContainerWithApkoBaseAlpine(ctx context.Context) error {
 //   - error: Returns an error if the Wolfi image is not used, if the output is not as expected,
 //     or if package installation fails.
 func (m *Tests) TestContainerWithApkoBaseWolfi(ctx context.Context) error {
-	wolfiPresetPath := "testdata/apko-presets/base-wolfi.yaml"
-	wolfiPresetFile := dag.CurrentModule().
-		Source().
-		File(wolfiPresetPath)
-
+	wolfiPresetPath := "tests/testdata/apko-presets/base-wolfi.yaml"
 	scenarioBaseWolfi := dag.
 		{{.module_name}}().
-		BaseApko(wolfiPresetPath, wolfiPresetFile)
+		BaseApko(wolfiPresetPath, []string{})
 
 	// Check /etc/os-release to verify it's a Wolfi image
 	outOSRelease, err := scenarioBaseWolfi.

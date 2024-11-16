@@ -9,7 +9,7 @@ on:
 
 env:
     GO_VERSION: ~1.22
-    DAG_VERSION: 0.13.7
+    DAG_VERSION: 0.14.0
 
 permissions:
     contents: write
