@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
+	"path/filepath"
 
 	"github.com/Excoriate/daggerverse/{{.module_name_pkg}}/internal/dagger"
-	"github.com/Excoriate/daggerx/pkg/apkox"
+	"github.com/Excoriate/daggerx/pkg/fixtures"
 )
 
 const (
@@ -131,143 +132,34 @@ func (m *{{.module_name}}) BaseWolfi(
 
 // BaseApko sets the base image to an Apko image and creates the base container.
 //
-// Parameters:
-// - presetFilePath: The path to the preset file. Either presetFile or presetFilePath must be provided.
-// - presetFile: The preset file to use for the Apko image. Either presetFile or presetFilePath must be provided.
-// - cacheDir: The cache directory to use for the Apko image. Optional parameter.
-// - keyrings: The list of keyrings to use for the Apko image. They should be provided as path=url.
-// - buildArch: Specifies the architecture to build for. Optional parameter.
-// - buildContext: The build context directory. Optional parameter.
-// - debug: Enables debug mode for verbose output. Optional parameter.
-// - noNetwork: Disables network access during the build. Optional parameter.
-// - repositoryAppend: A slice of additional repositories to append. Optional parameter.
-// - timestamp: Sets a specific timestamp for reproducible builds. Optional parameter.
-// - tags: A slice of additional tags for the output image. Optional parameter.
-// - buildDate: Sets the build date for the APKO build. Optional parameter.
-// - lockfile: Sets the lockfile path for the APKO build. Optional parameter.
-// - offline: Enables offline mode for the APKO build. Optional parameter.
-// - packageAppend: Adds extra packages to the APKO build. Optional parameter.
-// - sbom: Enables or disables SBOM generation. Optional parameter.
-// - sbomFormats: Sets the SBOM formats for the APKO build. Optional parameter.
-//
 // Returns a pointer to the {{.module_name}} instance.
-func (m *{{.module_name}}) BaseApko(
-	// presetFilePath is the path to the preset file. Either presetFile or presetFilePath must be provided.
-	presetFilePath string,
-	// presetFile is the preset file to use for the Apko image. Either presetFile or presetFilePath must be provided.
-	presetFile *dagger.File,
-	// cacheDir is the cache directory to use for the Apko image.
-	// +optional
-	cacheDir string,
-	// keyrings is the list of keyrings to use for the Apko image. They should be provided as path=url.
-	// E.g.: /etc/apk/keys/alpine-devel@lists.alpinelinux.org-4a6a0840.rsa.pub=
-	// https://alpinelinux.org/keys/alpine-devel@lists.alpinelinux.org-4a6a0840.rsa.pub
-	// +optional
-	keyrings []string,
-	// buildArch specifies the architecture to build for.
-	// +optional
-	buildArch string,
-	// buildContext is the build context directory.
-	// +optional
-	buildContext string,
-	// debug enables debug mode for verbose output.
-	// +optional
-	debug bool,
-	// noNetwork disables network access during the build.
-	// +optional
-	noNetwork bool,
-	// repositoryAppend is a slice of additional repositories to append.
-	// +optional
-	repositoryAppend []string,
-	// timestamp sets a specific timestamp for reproducible builds.
-	// +optional
-	timestamp string,
-	// tags is a slice of additional tags for the output image.
-	// +optional
-	tags []string,
-	// buildDate sets the build date for the APKO build.
-	// +optional
-	buildDate string,
-	// lockfile sets the lockfile path for the APKO build.
-	// +optional
-	lockfile string,
-	// offline enables offline mode for the APKO build.
-	// +optional
-	offline bool,
-	// packageAppend adds extra packages to the APKO build.
-	// +optional
-	packageAppend []string,
-	// sbom enables or disables SBOM generation.
-	// +optional
-	sbom bool,
-	// sbomFormats sets the SBOM formats for the APKO build.
-	// +optional
-	sbomFormats []string,
-	// sbomPath sets the SBOM output path for the APKO build.
-	// +optional
-	sbomPath string,
-	// vcs enables or disables VCS detection.
-	// +optional
-	vcs bool,
-	// logLevel sets the log level for the APKO build.
-	// +optional
-	logLevel string,
-	// logPolicy sets the log policy for the APKO build.
-	// +optional
-	logPolicy []string,
-	// workdir sets the working directory for the APKO build.
-	// +optional
-	workdir string,
-) (*{{.module_name}}, error) {
-	builder := m.initializeApkoBuilder(
-		presetFilePath,
-		cacheDir,
-		keyrings,
-		buildArch,
-		buildContext,
-		debug,
-		noNetwork,
-		repositoryAppend,
-		timestamp,
-		tags,
-		buildDate,
-		lockfile,
-		offline,
-		packageAppend,
-		sbom,
-		sbomFormats,
-		sbomPath,
-		vcs,
-		logLevel,
-		logPolicy,
-		workdir,
-	)
+func (m *{{.module_name}}) BaseApko(apkoCfgFilePath string, pkgs []string) (*{{.module_name}}, error) {
+	apkoCfgFile := dag.CurrentModule().
+		Source().
+		File(apkoCfgFilePath)
 
-	cmd, err := builder.BuildCommand()
-	if err != nil {
-		return nil, WrapError(err, "failed to build command")
-	}
+	apkoCfgFilePathMounted := filepath.Join(fixtures.MntPrefix, apkoCfgFilePath)
 
 	apkoCtr := dag.Container().
 		From(defaultApkoImage).
-		WithMountedFile(presetFilePath, presetFile)
+		WithMountedFile(apkoCfgFilePathMounted, apkoCfgFile)
 
-	// Validate Keyring format if passed.
-	if len(keyrings) > 0 {
-		err := apkox.IsKeyringFormatValid(keyrings, false)
-		if err != nil {
-			return nil, WrapError(err, "invalid keyring format")
-		}
+	apkoBuildCmd := []string{
+		"apko",
+		"build",
+		apkoCfgFilePathMounted,
+		"latest",
+		defaultApkoTarball,
+		"--cache-dir",
+		"/var/cache/apko",
+	}
 
-		for _, keyring := range keyrings {
-			path, _ := apkox.ParseKeyring(keyring)
-			apkoCtr = apkoCtr.
-				WithMountedFile(path.Path, dag.HTTP(path.URL))
-		}
+	for _, pkg := range pkgs {
+		apkoBuildCmd = append(apkoBuildCmd, "--package-append", pkg)
 	}
 
 	apkoCtr = apkoCtr.
-		WithExec(cmd)
+		WithExec(apkoBuildCmd)
 
 	outputTar := apkoCtr.
 		File(defaultApkoTarball)
@@ -277,102 +169,4 @@ func (m *{{.module_name}}) BaseApko(
 		Import(outputTar)
 
 	return m, nil
-}
-
-//nolint:cyclop,gocyclo // Cyclomatic complexity is high, but refactoring is not feasible at the moment.
-func (m *{{.module_name}}) initializeApkoBuilder(
-	presetFilePath, cacheDir string,
-	keyrings []string, buildArch, buildContext string,
-	debug, noNetwork bool, repositoryAppend []string,
-	timestamp string, tags []string, buildDate, lockfile string,
-	offline bool, packageAppend []string, sbom bool,
-	sbomFormats []string, sbomPath string, vcs bool,
-	logLevel string, logPolicy []string, workdir string,
-) *apkox.ApkoBuilder {
-	builder := apkox.
-		NewApkoBuilder().
-		WithOutputImage(defaultApkoTarball).
-		WithConfigFile(presetFilePath)
-
-	if cacheDir != "" {
-		builder = builder.WithCacheDir(cacheDir)
-	}
-
-	for _, keyring := range keyrings {
-		builder = builder.WithKeyring(keyring)
-	}
-
-	if buildArch != "" {
-		builder = builder.WithArchitecture(buildArch)
-	}
-
-	if buildContext != "" {
-		builder = builder.WithBuildContext(buildContext)
-	}
-
-	if debug {
-		builder = builder.WithDebug()
-	}
-
-	if noNetwork {
-		builder = builder.WithNoNetwork()
-	}
-
-	for _, repo := range repositoryAppend {
-		builder = builder.WithRepositoryAppend(repo)
-	}
-
-	if timestamp != "" {
-		builder = builder.WithTimestamp(timestamp)
-	}
-
-	for _, tag := range tags {
-		builder = builder.WithTag(tag)
-	}
-
-	if buildDate != "" {
-		builder = builder.WithBuildDate(buildDate)
-	}
-
-	if lockfile != "" {
-		builder = builder.WithLockfile(lockfile)
-	}
-
-	if offline {
-		builder = builder.WithOffline()
-	}
-
-	for _, pkg := range packageAppend {
-		builder = builder.WithPackageAppend(pkg)
-	}
-
-	if sbom {
-		builder = builder.WithSBOM(sbom)
-	}
-
-	if len(sbomFormats) > 0 {
-		builder = builder.WithSBOMFormats(sbomFormats...)
-	}
-
-	if sbomPath != "" {
-		builder = builder.WithSBOMPath(sbomPath)
-	}
-
-	if vcs {
-		builder = builder.WithVCS(vcs)
-	}
-
-	if logLevel != "" {
-		builder = builder.WithLogLevel(logLevel)
-	}
-
-	for _, policy := range logPolicy {
-		builder = builder.WithLogPolicy(policy)
-	}
-
-	if workdir != "" {
-		builder = builder.WithWorkdir(workdir)
-	}
-
-	return builder
 }
