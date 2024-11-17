@@ -195,7 +195,7 @@ jobs:
 
       - name: 📝 Run lint on Main Module
         run: |
-          cd ${{ matrix.module }}
+          cd ${{ matrix.module }} && ls -ltrah && \
           golangci-lint run --config=../.golangci.yml --verbose
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
