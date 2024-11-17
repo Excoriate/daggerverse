@@ -84,7 +84,8 @@ jobs:
       - name: 📦 List Main Module Functions
         uses: dagger/dagger-for-github@v6
         with:
-          module: ${{ matrix.module }}
+          workdir: ${{ matrix.module }}
+          verb: call
           version: ${{ env.DAGGER_VERSION }}
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
         env:
