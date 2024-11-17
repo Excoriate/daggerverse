@@ -28,7 +28,7 @@ jobs:
       matrix:
         module: [module-template, module-template-light]
       fail-fast: true
-    name: 🏗️ Build ${{ matrix.module }} with Dagger ${{ env.DAGGER_VERSION }}
+    name: 🏗️ Build ${{ matrix.module }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -72,7 +72,7 @@ jobs:
       matrix:
         module: [module-template, module-template-light]
       fail-fast: false
-    name: 📞 Call Functions in ${{ matrix.module }} with Dagger ${{ env.DAGGER_VERSION }}
+    name: 📞 Call Functions in ${{ matrix.module }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -116,7 +116,7 @@ jobs:
       matrix:
         module: [module-template, module-template-light]
       fail-fast: false
-    name: 🧪 Run Tests for ${{ matrix.module }} with Dagger ${{ env.DAGGER_VERSION }}
+    name: 🧪 Run Tests for ${{ matrix.module }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -141,7 +141,7 @@ jobs:
       matrix:
         module: [module-template, module-template-light]
       fail-fast: false
-    name: 🥗 Run Recipes for ${{ matrix.module }} with Dagger ${{ env.DAGGER_VERSION }}
+    name: 🥗 Run Recipes for ${{ matrix.module }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
