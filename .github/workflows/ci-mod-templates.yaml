@@ -66,7 +66,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  dagger-call:
+  dagger-list-functions:
     needs: dagger-build
     strategy:
       matrix:
@@ -84,7 +84,7 @@ jobs:
         uses: dagger/dagger-for-github@v6
         with:
           verb: call
-          module: ${{ matrix.module }}
+          workdir: ${{ matrix.module }}
           version: ${{ env.DAGGER_VERSION }}
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
         env:
@@ -94,7 +94,7 @@ jobs:
         uses: dagger/dagger-for-github@v6
         with:
           verb: call
-          module: ${{ matrix.module }}/tests
+          workdir: ${{ matrix.module }}/tests
           version: ${{ env.DAGGER_VERSION }}
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
         env:
@@ -104,7 +104,7 @@ jobs:
         uses: dagger/dagger-for-github@v6
         with:
           verb: call
-          module: ${{ matrix.module }}/examples/go
+          workdir: ${{ matrix.module }}/examples/go
           version: ${{ env.DAGGER_VERSION }}
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
         env:
