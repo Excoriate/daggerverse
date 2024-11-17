@@ -83,7 +83,8 @@ jobs:
       - name: 📦 List Main Module Functions
         uses: dagger/dagger-for-github@v6
         with:
-          verb: call
+          # Empty call to list functions
+          call:
           module: ${{ matrix.module }}
           version: ${{ env.DAGGER_VERSION }}
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
@@ -93,7 +94,8 @@ jobs:
       - name: 🧪 List Test Module Functions
         uses: dagger/dagger-for-github@v6
         with:
-          verb: call
+          # Empty call to list functions
+          call:
           module: ${{ matrix.module }}/tests
           version: ${{ env.DAGGER_VERSION }}
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
@@ -103,7 +105,8 @@ jobs:
       - name: 📄 List Example Module Functions
         uses: dagger/dagger-for-github@v6
         with:
-          verb: call
+          # Empty call to list functions
+          call:
           module: ${{ matrix.module }}/examples/go
           version: ${{ env.DAGGER_VERSION }}
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
@@ -127,8 +130,7 @@ jobs:
       - name: 💣 Run All Tests
         uses: dagger/dagger-for-github@v6
         with:
-          verb: call
-          args: test-all
+          call: test-all
           module: ${{ matrix.module }}/tests
           version: ${{ env.DAGGER_VERSION }}
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
@@ -152,8 +154,7 @@ jobs:
       - name: 🥗 Run All Example Recipes
         uses: dagger/dagger-for-github@v6
         with:
-          verb: call
-          args: all-recipes
+          call: all-recipes
           module: ${{ matrix.module }}/examples/go
           version: ${{ env.DAGGER_VERSION }}
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
