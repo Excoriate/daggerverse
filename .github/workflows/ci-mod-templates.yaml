@@ -190,7 +190,7 @@ jobs:
               run: |
                   # Dagger develop for main module
                   cd ${{ matrix.module }}
-                  dagger develop }}
+                  dagger develop
 
                   # Run golangci-lint on main module
                   golangci-lint run --config=../.golangci.yml --verbose
