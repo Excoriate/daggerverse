@@ -11,6 +11,7 @@ on:
     paths:
       - "module-template/**"
       - "module-template-light/**"
+      - ".github/workflows/ci-mod-templates.yaml"
   workflow_dispatch:
 
 permissions:
@@ -84,7 +85,8 @@ jobs:
         uses: dagger/dagger-for-github@v6
         with:
           verb: call
-          workdir: ${{ matrix.module }}
+          args: ""
+          module: ${{ matrix.module }}
           version: ${{ env.DAGGER_VERSION }}
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
         env:
@@ -94,7 +96,8 @@ jobs:
         uses: dagger/dagger-for-github@v6
         with:
           verb: call
-          workdir: ${{ matrix.module }}/tests
+          args: ""
+          module: ${{ matrix.module }}/tests
           version: ${{ env.DAGGER_VERSION }}
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
         env:
@@ -104,7 +107,8 @@ jobs:
         uses: dagger/dagger-for-github@v6
         with:
           verb: call
-          workdir: ${{ matrix.module }}/examples/go
+          args: ""
+          module: ${{ matrix.module }}/examples/go
           version: ${{ env.DAGGER_VERSION }}
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
         env:
@@ -127,7 +131,8 @@ jobs:
       - name: 💣 Run All Tests
         uses: dagger/dagger-for-github@v6
         with:
-          call: test-all
+          verb: call
+          args: test-all
           module: ${{ matrix.module }}/tests
           version: ${{ env.DAGGER_VERSION }}
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
@@ -151,7 +156,8 @@ jobs:
       - name: 🥗 Run All Example Recipes
         uses: dagger/dagger-for-github@v6
         with:
-          call: all-recipes
+          verb: call
+          args: all-recipes
           module: ${{ matrix.module }}/examples/go
           version: ${{ env.DAGGER_VERSION }}
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
