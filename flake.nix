@@ -40,6 +40,9 @@
               go
               golangci-lint
 
+              # Terraform
+              terraform
+
               # Required tools
               just
               git
@@ -52,7 +55,8 @@
             shellHook = ''
               export RUST_SRC_PATH=${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}
               export GOROOT=${pkgs.go}/share/go
-              echo "🚀 Development environment loaded!"
+              echo "🌟 Welcome to the Daggerverse development environment! 🚀"
+              echo "Happy coding! 💻"
             '';
           };
 
@@ -65,6 +69,10 @@
               rustfmt.enable = true;
               prettier.enable = true;
               gofmt.enable = true;
+              terraform-fmt = {
+                enable = true;
+                command = "${pkgs.terraform}/bin/terraform fmt -";
+              };
             };
           };
 
