@@ -27,9 +27,8 @@ jobs:
     strategy:
       matrix:
         module: [module-template, module-template-light]
-        dagger-version: [0.13.7, 0.14.0]
       fail-fast: true
-    name: 🏗️ Build ${{ matrix.module }} with Dagger ${{ matrix.dagger-version }}
+    name: 🏗️ Build ${{ matrix.module }} with Dagger ${{ env.DAGGER_VERSION }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -42,7 +41,7 @@ jobs:
         with:
           verb: develop
           module: ${{ matrix.module }}
-          version: ${{ matrix.dagger-version }}
+          version: ${{ env.DAGGER_VERSION }}
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -52,7 +51,7 @@ jobs:
         with:
           verb: develop
           module: ${{ matrix.module }}/tests
-          version: ${{ matrix.dagger-version }}
+          version: ${{ env.DAGGER_VERSION }}
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -62,7 +61,7 @@ jobs:
         with:
           verb: develop
           module: ${{ matrix.module }}/examples/go
-          version: ${{ matrix.dagger-version }}
+          version: ${{ env.DAGGER_VERSION }}
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -72,9 +71,8 @@ jobs:
     strategy:
       matrix:
         module: [module-template, module-template-light]
-        dagger-version: [0.13.7, 0.14.0]
       fail-fast: false
-    name: 📞 Call Functions in ${{ matrix.module }} with Dagger ${{ matrix.dagger-version }}
+    name: 📞 Call Functions in ${{ matrix.module }} with Dagger ${{ env.DAGGER_VERSION }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -87,7 +85,7 @@ jobs:
         with:
           verb: call
           module: ${{ matrix.module }}
-          version: ${{ matrix.dagger-version }}
+          version: ${{ env.DAGGER_VERSION }}
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -97,7 +95,7 @@ jobs:
         with:
           verb: call
           module: ${{ matrix.module }}/tests
-          version: ${{ matrix.dagger-version }}
+          version: ${{ env.DAGGER_VERSION }}
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -107,7 +105,7 @@ jobs:
         with:
           verb: call
           module: ${{ matrix.module }}/examples/go
-          version: ${{ matrix.dagger-version }}
+          version: ${{ env.DAGGER_VERSION }}
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -117,9 +115,8 @@ jobs:
     strategy:
       matrix:
         module: [module-template, module-template-light]
-        dagger-version: [0.13.7, 0.14.0]
       fail-fast: false
-    name: 🧪 Run Tests for ${{ matrix.module }} with Dagger ${{ matrix.dagger-version }}
+    name: 🧪 Run Tests for ${{ matrix.module }} with Dagger ${{ env.DAGGER_VERSION }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -133,12 +130,26 @@ jobs:
           verb: call
           args: test-all
           module: ${{ matrix.module }}/tests
-          version: ${{ matrix.dagger-version }}
+          version: ${{ env.DAGGER_VERSION }}
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 🥗 Run All Example Recipes with Dagger ${{ env.DAGGER_VERSION }}
+  run-recipes:
+    needs: dagger-build
+    strategy:
+      matrix:
+        module: [module-template, module-template-light]
+      fail-fast: false
+    name: 🥗 Run Recipes for ${{ matrix.module }} with Dagger ${{ env.DAGGER_VERSION }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: 🥗 Run All Example Recipes
         uses: dagger/dagger-for-github@v6
         with:
           verb: call
