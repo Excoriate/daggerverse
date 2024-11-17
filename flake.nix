@@ -40,8 +40,9 @@
               go
               golangci-lint
 
-              # Terraform
+              # Terraform and Terragrunt
               terraform
+              terragrunt
 
               # Required tools
               just
@@ -67,11 +68,21 @@
             programs = {
               alejandra.enable = true;
               rustfmt.enable = true;
-              prettier.enable = true;
+              prettier = {
+                enable = true;
+                # Configure Prettier to format JSON and YAML files
+                include = [ "**/*.{js,jsx,ts,tsx,json,yml,yaml}" ];
+              };
               gofmt.enable = true;
               terraform-fmt = {
                 enable = true;
                 command = "${pkgs.terraform}/bin/terraform fmt -";
+                include = [ "**/*.tf" ];
+              };
+              terragrunt-fmt = {
+                enable = true;
+                command = "${pkgs.terragrunt}/bin/terragrunt hclfmt";
+                include = [ "**/*.hcl" ];
               };
             };
           };
