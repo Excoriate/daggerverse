@@ -84,9 +84,8 @@ jobs:
       - name: 📦 List Main Module Functions
         uses: dagger/dagger-for-github@6b6e9832f7dffd6cd9cdd989a577bb2cbfc45432 # v6.13.0
         with:
-          verb: call
-          workdir: ${{ matrix.module }}
-          module: .
+          verb: functions
+          module: ${{ matrix.module }}
           version: ${{ env.DAGGER_VERSION }}
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
         env:
@@ -95,8 +94,7 @@ jobs:
       - name: 🧪 List Test Module Functions
         uses: dagger/dagger-for-github@v6
         with:
-          verb: call
-          args: ""
+          verb: functions
           module: ${{ matrix.module }}/tests
           version: ${{ env.DAGGER_VERSION }}
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
@@ -106,7 +104,7 @@ jobs:
       - name: 📄 List Example Module Functions
         uses: dagger/dagger-for-github@v6
         with:
-          verb: call
+          verb: functions
           args: ""
           module: ${{ matrix.module }}/examples/go
           version: ${{ env.DAGGER_VERSION }}
