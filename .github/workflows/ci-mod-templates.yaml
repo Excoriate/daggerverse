@@ -1,4 +1,4 @@
-name: CI Templates 🧰
+name: CI Mod Templates 🧰
 on:
   push:
     branches:
@@ -160,3 +160,52 @@ jobs:
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  golangci-lint:
+    needs: dagger-build
+    strategy:
+      matrix:
+        module: [module-template, module-template-light]
+      fail-fast: false
+    name: 🔍 Lint ${{ matrix.module }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: 📦 Dagger Develop Main Module
+        uses: dagger/dagger-for-github@6b6e9832f7dffd6cd9cdd989a577bb2cbfc45432 # v6.13.0
+        with:
+          verb: develop
+          module: ${{ matrix.module }}
+          version: ${{ env.DAGGER_VERSION }}
+          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🧪 Dagger Develop Test Module
+        uses: dagger/dagger-for-github@6b6e9832f7dffd6cd9cdd989a577bb2cbfc45432 # v6.13.0
+        with:
+          verb: develop
+          module: ${{ matrix.module }}/tests
+          version: ${{ env.DAGGER_VERSION }}
+          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🔧 Install golangci-lint
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s latest
+          sudo mv ./bin/golangci-lint /usr/local/bin/golangci-lint
+
+      - name: 📝 Run golangci-lint on Main Module
+        working-directory: ${{ matrix.module }}
+        run: |
+          golangci-lint run --config=../.golangci.yml --verbose
+
+      - name: 📝 Run golangci-lint on Test Module
+        working-directory: ${{ matrix.module }}/tests
+        run: |
+          golangci-lint run --config=../../.golangci.yml --verbose
