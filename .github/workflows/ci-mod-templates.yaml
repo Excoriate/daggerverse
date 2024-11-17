@@ -23,6 +23,7 @@ permissions:
 env:
   GO_VERSION: "1.22"
   DAGGER_VERSION: 0.14.0
+  GOLANGCI_LINT_VERSION: "1.59.1"
 
 jobs:
   dagger-build:
@@ -202,14 +203,14 @@ jobs:
 
       - name: 🚀 Dagger Develop Test Module
         run: |
-          cd ${{ matrix.module }}/tests
+          cd ${{ matrix.module }}/tests && ls -ltrah && \
           dagger develop
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 📝 Run lint on Test Module
         run: |
-          cd ${{ matrix.module }}/tests
+          cd ${{ matrix.module }}/tests && ls -ltrah && \
           golangci-lint run --config=../../.golangci.yml --verbose
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -223,7 +224,7 @@ jobs:
 
       - name: 📝 Run lint on Example Module
         run: |
-          cd ${{ matrix.module }}/examples/go
+          cd ${{ matrix.module }}/examples/go && ls -ltrah && \
           golangci-lint run --config=../../../.golangci.yml --verbose
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
