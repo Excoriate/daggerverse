@@ -85,7 +85,8 @@ jobs:
         uses: dagger/dagger-for-github@6b6e9832f7dffd6cd9cdd989a577bb2cbfc45432 # v6.13.0
         with:
           verb: call
-          module: ${{ matrix.module }}
+          workdir: ${{ matrix.module }}
+          module: .
           version: ${{ env.DAGGER_VERSION }}
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
         env:
