@@ -69,7 +69,8 @@ jobs:
       - name: Dagger Call on Module 📦 with Dagger ${{ matrix.dagversion }}
         uses: dagger/dagger-for-github@v6
         with:
-          verb: call
+          # Default, it should list all the functions.
+          call:
           module: module-template-light
           version: ${{ matrix.dagversion }}
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
@@ -78,7 +79,8 @@ jobs:
       - name: Dagger Call on Test Module 🧪 with Dagger ${{ matrix.dagversion }}
         uses: dagger/dagger-for-github@v6
         with:
-          verb: call
+          # Default, it should list all the functions.
+          call:
           module: module-template-light/tests
           version: ${{ matrix.dagversion }}
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
@@ -87,7 +89,8 @@ jobs:
       - name: Dagger Call on Test Examples/Go Module 📄 with Dagger ${{ matrix.dagversion }}
         uses: dagger/dagger-for-github@v6
         with:
-          verb: call
+          # Default, it should list all the functions.
+          call:
           module: module-template-light/examples/go
           version: ${{ matrix.dagversion }}
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
