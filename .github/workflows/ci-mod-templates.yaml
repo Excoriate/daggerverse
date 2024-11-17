@@ -175,6 +175,11 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
+      - name: 🔧 Install Dagger CLI
+        run: |
+          curl -fsSL https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=${{ env.DAGGER_VERSION }} BIN_DIR=/usr/local/bin sudo -E sh
+          dagger version
+
       - name: 🔧 Install golangci-lint
         run: |
           curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s latest
