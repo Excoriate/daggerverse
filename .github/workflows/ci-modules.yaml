@@ -1,0 +1,148 @@
+name: CI Modules 📦
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+  checks: write
+
+env:
+  GO_VERSION: "1.22"
+  DAGGER_VERSION: "0.14.0"
+  GOLANGCI_LINT_VERSION: v1.60.0
+
+jobs:
+  main-module:
+    strategy:
+      matrix:
+        module: 
+          - module-template
+          - module-template-light
+          - gotest
+          - gotoolbox
+          - terragrunt
+      fail-fast: false
+    name: 📦 Main Module - ${{ matrix.module }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          
+      - name: 🏗️ Dagger Build
+        uses: dagger/dagger-for-github@v6
+        with:
+          verb: develop
+          module: ${{ matrix.module }}
+          version: ${{ env.DAGGER_VERSION }}
+          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: 📞 List Functions
+        uses: dagger/dagger-for-github@v6
+        with:
+          verb: functions
+          module: ${{ matrix.module }}
+          version: ${{ env.DAGGER_VERSION }}
+          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: 🔧 Install golangci-lint
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s ${{ env.GOLANGCI_LINT_VERSION }}
+          sudo mv ./bin/golangci-lint /usr/local/bin/golangci-lint
+          
+      - name: 🔍 Run Lint
+        run: cd ${{ matrix.module }} && golangci-lint run --config=../.golangci.yml --verbose
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  test-module:
+    needs: main-module
+    strategy:
+      matrix:
+        module: 
+          - module-template
+          - module-template-light
+          - gotest
+          - gotoolbox
+          - terragrunt
+      fail-fast: false
+    name: 🧪 Test Module - ${{ matrix.module }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          
+      - name: 🏗️ Dagger Build
+        uses: dagger/dagger-for-github@v6
+        with:
+          verb: develop
+          module: ${{ matrix.module }}/tests
+          version: ${{ env.DAGGER_VERSION }}
+          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: 💣 Run All Tests
+        uses: dagger/dagger-for-github@v6
+        with:
+          verb: call
+          args: test-all
+          module: ${{ matrix.module }}/tests
+          version: ${{ env.DAGGER_VERSION }}
+          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  examples-module:
+    needs: [main-module, test-module]
+    strategy:
+      matrix:
+        module: 
+          - module-template
+          - module-template-light
+          - gotest
+          - gotoolbox
+          - terragrunt
+      fail-fast: false
+    name: 📚 Examples Module - ${{ matrix.module }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          
+      - name: 🏗️ Dagger Build
+        uses: dagger/dagger-for-github@v6
+        with:
+          verb: develop
+          module: ${{ matrix.module }}/examples/go
+          version: ${{ env.DAGGER_VERSION }}
+          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: 🥗 Run All Example Recipes
+        uses: dagger/dagger-for-github@v6
+        with:
+          verb: call
+          args: all-recipes
+          module: ${{ matrix.module }}/examples/go
+          version: ${{ env.DAGGER_VERSION }}
+          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
