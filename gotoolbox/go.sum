@@ -1,25 +1,9 @@
-<<<<<<< ours
 dagger.io/dagger v0.13.0 h1:2WE9Bfq5SZn/EAqMaklWIwfp13s6sj/Jkg/mmbP4KU8=
 dagger.io/dagger v0.13.0/go.mod h1:Qxqy5hz1MLMdmVOaByAKpTa/c7K0R0NuxPZX5ZzEneM=
 github.com/99designs/gqlgen v0.17.55 h1:3vzrNWYyzSZjGDFo68e5j9sSauLxfKvLp+6ioRokVtM=
 github.com/99designs/gqlgen v0.17.55/go.mod h1:3Bq768f8hgVPGZxL8aY9MaYmbxa6llPM/qu1IGH1EJo=
 github.com/Excoriate/daggerx v0.0.32 h1:aDZ/wZH8Liwc3eGti0jUOa+6fiBGBOzP5rpBPuPGmn4=
 github.com/Excoriate/daggerx v0.0.32/go.mod h1:eUUEHbbGJ5seyQxPkW3NQtqSQWJzzOx7Fg1PHbeZ2To=
-||||||| ancestor
-dagger.io/dagger v0.11.4 h1:br81yt7S/KWrxieajFyzleOMBccevhi3TSSxmBp2lu0=
-dagger.io/dagger v0.11.4/go.mod h1:YyHN9NpFZ0U70vLfGR9RQw1ppwxzXG7q/DPn7kn25Oc=
-github.com/99designs/gqlgen v0.17.49 h1:b3hNGexHd33fBSAd4NDT/c3NCcQzcAVkknhN9ym36YQ=
-github.com/99designs/gqlgen v0.17.49/go.mod h1:tC8YFVZMed81x7UJ7ORUwXF4Kn6SXuucFqQBhN8+BU0=
-github.com/Excoriate/daggerx v0.0.16 h1:TVlJjQDp8I/j0dUvCuHtaOs99zoR/9qz/c2MqTJevmA=
-github.com/Excoriate/daggerx v0.0.16/go.mod h1:2AhOs+3Sxthq6sJBzeidU1v6dNA5VTBgse5pXLMz1/I=
-=======
-dagger.io/dagger v0.13.0 h1:2WE9Bfq5SZn/EAqMaklWIwfp13s6sj/Jkg/mmbP4KU8=
-dagger.io/dagger v0.13.0/go.mod h1:Qxqy5hz1MLMdmVOaByAKpTa/c7K0R0NuxPZX5ZzEneM=
-github.com/99designs/gqlgen v0.17.49 h1:b3hNGexHd33fBSAd4NDT/c3NCcQzcAVkknhN9ym36YQ=
-github.com/99designs/gqlgen v0.17.49/go.mod h1:tC8YFVZMed81x7UJ7ORUwXF4Kn6SXuucFqQBhN8+BU0=
-github.com/Excoriate/daggerx v0.0.32 h1:aDZ/wZH8Liwc3eGti0jUOa+6fiBGBOzP5rpBPuPGmn4=
-github.com/Excoriate/daggerx v0.0.32/go.mod h1:eUUEHbbGJ5seyQxPkW3NQtqSQWJzzOx7Fg1PHbeZ2To=
->>>>>>> theirs
 github.com/Khan/genqlient v0.7.0 h1:GZ1meyRnzcDTK48EjqB8t3bcfYvHArCUUvgOwpz1D4w=
 github.com/Khan/genqlient v0.7.0/go.mod h1:HNyy3wZvuYwmW3Y7mkoQLZsa/R5n5yIRajS1kPBvSFM=
 github.com/Microsoft/hcsshim v0.11.7 h1:vl/nj3Bar/CvJSYo7gIQPyRWc9f3c6IeSNavBTSZNZQ=
