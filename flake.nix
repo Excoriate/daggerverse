@@ -40,6 +40,9 @@
           config.allowUnfree = true;
         };
 
+        # Import nodePackages from pkgs
+        nodePackages = pkgs.nodePackages;
+
         # Pre-commit hooks configuration
         pre-commit-check = pre-commit-hooks.lib.${system}.run {
           src = builtins.filterSource
@@ -129,8 +132,10 @@
             yamlfmt
             pre-commit
 
-            # Add treefmt here
+            # Formatter tools
             treefmt
+            nodejs
+            nodePackages.prettier
           ];
 
           shellHook = ''
@@ -140,14 +145,6 @@
             # Cache Go modules
             export GOMODCACHE="$PWD/.direnv/go/pkg/mod"
             export GOCACHE="$PWD/.direnv/go/cache"
-
-            # Only run pre-commit on changed files
-            export PRE_COMMIT_FILES_CHANGED=$(git diff --name-only HEAD)
-
-            # Run pre-commit checks only if there are changes
-            if [ -n "$PRE_COMMIT_FILES_CHANGED" ]; then
-              ${pre-commit-check.shellHook}
-            fi
 
             echo "🌟 Welcome to the Daggerverse development environment! 🚀"
             echo "Happy coding! 💻"

@@ -28,7 +28,7 @@ clean-all:
 
 fmt:
   @echo "Formatting code 🔍 ..."
-  @nix fmt
+  @treefmt
 
 # Recipe to run pre-commit hooks 🔍
 run-hooks:

@@ -3,6 +3,7 @@ default_language_version:
   python: python3
   rust: stable
   golang: "1.21"
+  node: system
 
 # Skip these files/directories for all hooks
 exclude: |
@@ -22,7 +23,6 @@ repos:
     hooks:
       - id: check-hooks-apply
       - id: check-useless-excludes
-      - id: identity 
 
   - repo: local
     hooks:

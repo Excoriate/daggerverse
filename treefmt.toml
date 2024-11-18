@@ -12,7 +12,7 @@ include = ["**/*.rs"]
 
 [formatter.prettier]
 command = "prettier --write"
-include = ["**/*.{js,jsx,ts,tsx,json}"]
+include = ["**/*.{js,jsx,ts,tsx,json,md,markdown,yaml,yml}"]
 
 [formatter.gofmt]
 command = "gofmt -w"
@@ -25,7 +25,3 @@ include = ["**/*.tf"]
 [formatter.terragrunt-fmt]
 command = "terragrunt hclfmt"
 include = ["**/*.hcl"]
-
-[formatter.yamllint]
-command = "yamllint -c .yamllint.yml --format parsable"
-include = ["**/*.yaml", "**/*.yml"]
