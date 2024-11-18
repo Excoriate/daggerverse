@@ -12,4 +12,3 @@ newPRWelcomeComment: >
 # Comment to be posted to on pull requests merged by a first time user
 firstPRMergeComment: >
   Congrats on merging your first pull request! 🎉 We here at `Create Go App` are proud of you.
-

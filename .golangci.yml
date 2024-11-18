@@ -67,6 +67,7 @@ linters:
     - gofumpt
     - exhaustruct
     - mnd
+    - recvcheck
   presets:
     - bugs
     - comment
