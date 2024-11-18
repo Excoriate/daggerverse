@@ -10,15 +10,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Install yamlfmt
         run: |
           go install github.com/google/yamlfmt/cmd/yamlfmt@latest
-      
+
       - name: Run yamlfmt
         run: |
           yamlfmt -config .yamlfmt.yml
-      
+
       - name: Lint Workflows
         uses: karancode/yamllint-github-action@v2.1.1
         with:
@@ -27,7 +27,7 @@ jobs:
           yamllint_comment: "true"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Lint GitHub config yamls
         uses: karancode/yamllint-github-action@v2.1.1
         with:
@@ -36,7 +36,7 @@ jobs:
           yamllint_comment: "true"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Lint yaml files in root dir
         uses: karancode/yamllint-github-action@v2.1.1
         with:

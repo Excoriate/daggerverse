@@ -167,4 +167,4 @@ output:
   formats:
     - format: colored-line-number
       path: stdout
-#    - format: checkstyle
+      #    - format: checkstyle

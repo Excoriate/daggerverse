@@ -110,5 +110,5 @@ jobs:
           echo "::notice::🎊 Successfully published all modules! Great job!"
       - name: ❌ Notify on failure
         if: failure()
-        run: |
+        run: |-
           echo "::error::💥 Failed to publish one or more modules. Please check the logs for details."

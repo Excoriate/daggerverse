@@ -187,8 +187,11 @@ jobs:
     if: always()
     steps:
       - name: 🎉 CI Success Notification
-        if: needs.ci-main.result == 'success' && needs.ci-test.result == 'success' && needs.ci-examples.result == 'success'
+        if: needs.ci-main.result == 'success' && needs.ci-test.result == 'success'
+          && needs.ci-examples.result == 'success'
         run: echo "::notice::🎊 CI for ${{ env.MODULE_NAME }} completed successfully!"
       - name: ❌ CI Failure Notification
-        if: needs.ci-main.result == 'failure' || needs.ci-test.result == 'failure' || needs.ci-examples.result == 'failure'
-        run: echo "::error::💥 CI for ${{ env.MODULE_NAME }} failed. Please check the logs for details."
+        if: needs.ci-main.result == 'failure' || needs.ci-test.result == 'failure'
+          || needs.ci-examples.result == 'failure'
+        run: echo "::error::💥 CI for ${{ env.MODULE_NAME }} failed. Please check the
+          logs for details."

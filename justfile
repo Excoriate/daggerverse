@@ -33,6 +33,7 @@ fmt:
 # Recipe to run pre-commit hooks 🔍
 run-hooks:
   @echo "Running pre-commit hooks 🔍 ..."
+  @pre-commit autoupdate
   @pre-commit run --all-files
   @echo "Pre-commit hooks passed ✅"
 

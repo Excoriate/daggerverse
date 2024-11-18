@@ -68,7 +68,7 @@ jobs:
       - name: 🚀 Publish to Daggerverse
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
+        run: |-
           module="${{ steps.validate-inputs.outputs.module }}"
           version="${{ steps.validate-inputs.outputs.version }}"
           tag="${{ steps.validate-inputs.outputs.tag }}"

@@ -23,9 +23,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          sizes: >
-            {
-
+          sizes: >-
+            { #magic___^_^___line
               "0": "XS",
               "15": "S",
               "30": "M",

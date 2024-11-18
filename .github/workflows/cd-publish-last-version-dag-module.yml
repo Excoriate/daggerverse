@@ -95,5 +95,5 @@ jobs:
           echo "::notice::🔗 Install with: dagger install github.com/Excoriate/daggerverse/${module}@${version#v}"
       - name: ❌ Notify on failure
         if: failure()
-        run: |
+        run: |-
           echo "::error::💥 Failed to publish the module. Please check the logs for details."

@@ -41,6 +41,6 @@ jobs:
       - uses: mondeja/remove-labels-gh-action@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          labels: |
+          labels: |-
             in discussion
             pending
