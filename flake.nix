@@ -8,107 +8,131 @@
     # Add this for direnv support
     flake-root.url = "github:srid/flake-root";
     nix-direnv.url = "github:nix-community/nix-direnv";
+    pre-commit-hooks.url = "github:cachix/pre-commit-hooks.nix";
   };
 
-  outputs = inputs@{ flake-parts, nixpkgs, rust-overlay, ... }:
-    flake-parts.lib.mkFlake { inherit inputs; } {
+  outputs = inputs @ {
+    flake-parts,
+    nixpkgs,
+    rust-overlay,
+    pre-commit-hooks,
+    ...
+  }:
+    flake-parts.lib.mkFlake {inherit inputs;} {
       imports = [
         inputs.treefmt-nix.flakeModule
         inputs.flake-root.flakeModule
       ];
 
-      systems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" "x86_64-windows" ];
+      systems = ["x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin"];
 
-      perSystem = { config, self', inputs', pkgs, system, ... }:
-        let
-          overlays = [
-            (import rust-overlay)
-          ];
-          pkgs = import nixpkgs {
-            inherit system overlays;
-            config.allowUnfree = true;
-          };
-        in
-        {
-          devShells.default = pkgs.mkShell {
-            name = "dev-environment";
-            shell = "${pkgs.bash}/bin/bash --noprofile --norc";
+      perSystem = {
+        config,
+        self',
+        inputs',
+        pkgs,
+        system,
+        ...
+      }: let
+        overlays = [
+          (import rust-overlay)
+        ];
+        pkgs = import nixpkgs {
+          inherit system overlays;
+          config.allowUnfree = true;
+        };
 
-            packages = with pkgs; [
-              # Direnv
-              nix-direnv
+        # Pre-commit hooks configuration
+        pre-commit-check = pre-commit-hooks.lib.${system}.run {
+          src = ./.;
+          hooks = {
+            # Treefmt will handle most formatting
+            treefmt.enable = true;
 
-              # Rust
-              rust-bin.stable.latest.default
-              cargo
-              rustc
-              rustfmt
-              clippy
+            # Additional specific hooks
+            rustfmt = {
+              enable = true;
+              entry = "${pkgs.rustfmt}/bin/rustfmt";
+              types = ["rust"];
+            };
 
-              # Go tools
-              go
-              golangci-lint
+            golangci-lint = {
+              enable = true;
+              entry = "${pkgs.golangci-lint}/bin/golangci-lint run";
+              types = ["go"];
+            };
 
-              # Terraform and Terragrunt
-              terraform
-              terragrunt
-
-              # Required tools
-              just
-              git
-              semver-tool
-              jq
-              yq-go
-              moreutils
-              yamllint
-              yamlfmt
-            ];
-
-            shellHook = ''
-              export RUST_SRC_PATH=${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}
-              export GOROOT=${pkgs.go}/share/go
-
-              echo "🌟 Welcome to the Daggerverse development environment! 🚀"
-              echo "Happy coding! 💻"
-            '';
-          };
-
-          treefmt.config = {
-            inherit (config.flake-root) projectRootFile;
-            package = pkgs.treefmt;
-
-            programs = {
-              alejandra.enable = true;
-              rustfmt.enable = true;
-              prettier = {
-                enable = true;
-                include = [ "**/*.{js,jsx,ts,tsx,json}" ];
-              };
-              gofmt.enable = true;
-              terraform-fmt = {
-                enable = true;
-                command = "${pkgs.terraform}/bin/terraform fmt -";
-                include = [ "**/*.tf" ];
-              };
-              terragrunt-fmt = {
-                enable = true;
-                command = "${pkgs.terragrunt}/bin/terragrunt hclfmt";
-                include = [ "**/*.hcl" ];
-              };
-              yamllint = {
-                enable = true;
-                command = "${pkgs.yamllint}/bin/yamllint -c .yamllint.yml";
-                include = [ "**/*.yaml" "**/*.yml" ];
-              };
-              yamlfmt = {
-                enable = true;
-                command = "${pkgs.yamlfmt}/bin/yamlfmt -w";
-                include = [ "**/*.yaml" "**/*.yml" ];
-              };
+            yamllint = {
+              enable = true;
+              entry = "${pkgs.yamllint}/bin/yamllint";
+              types = ["yaml"];
             };
           };
-
-          formatter = config.treefmt.build.wrapper;
         };
+      in {
+        devShells.default = pkgs.mkShell {
+          name = "dev-environment";
+          shell = "${pkgs.bash}/bin/bash --noprofile --norc";
+
+          packages = with pkgs; [
+            # Direnv
+            nix-direnv
+
+            # Rust
+            rust-bin.stable.latest.default
+            cargo
+            rustc
+            rustfmt
+            clippy
+
+            # Go tools
+            go
+            golangci-lint
+
+            # Terraform and Terragrunt
+            terraform
+            terragrunt
+
+            # Required tools
+            just
+            git
+            semver-tool
+            jq
+            yq-go
+            moreutils
+            yamllint
+            yamlfmt
+            pre-commit
+
+            # Add treefmt here
+            treefmt
+          ];
+
+          shellHook = ''
+            export RUST_SRC_PATH=${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}
+            export GOROOT=${pkgs.go}/share/go
+
+            # Run pre-commit checks
+            ${pre-commit-check.shellHook}
+
+            echo "🌟 Welcome to the Daggerverse development environment! 🚀"
+            echo "Happy coding! 💻"
+          '';
+        };
+
+        # Add pre-commit check to checks
+        checks.pre-commit-check = pre-commit-check;
+
+        treefmt = {
+          projectRootFile = config.flake-root.projectRootFile;
+          programs = {
+            alejandra.enable = true;
+            rustfmt.enable = true;
+            prettier.enable = true;
+            gofmt.enable = true;
+            terraform.enable = true;
+          };
+        };
+      };
     };
 }

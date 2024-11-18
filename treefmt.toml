@@ -1,0 +1,31 @@
+exclude_patterns = ["*/internal/*", "dagger.gen.go"]
+
+check_before_format = true
+
+[formatter.alejandra]
+command = "alejandra"
+include = ["**/*.nix"]
+
+[formatter.rustfmt]
+command = "rustfmt"
+include = ["**/*.rs"]
+
+[formatter.prettier]
+command = "prettier --write"
+include = ["**/*.{js,jsx,ts,tsx,json}"]
+
+[formatter.gofmt]
+command = "gofmt -w"
+include = ["**/*.go"]
+
+[formatter.terraform-fmt]
+command = "terraform fmt -"
+include = ["**/*.tf"]
+
+[formatter.terragrunt-fmt]
+command = "terragrunt hclfmt"
+include = ["**/*.hcl"]
+
+[formatter.yamllint]
+command = "yamllint -c .yamllint.yml --format parsable"
+include = ["**/*.yaml", "**/*.yml"]

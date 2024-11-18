@@ -1,158 +1,136 @@
----
 name: 🏗️ CI CodeGen Daggy (Light)
-
 on:
-    workflow_dispatch:
-        inputs:
-            dag_version:
-                description: Dagger version to use
-                required: false
-                default: 0.14.0
-    schedule:
-        - cron: 0 8,20 * * * # Runs at 8:00 AM and 8:00 PM UTC
-    push:
-        paths:
-            - .daggerx/**
-            - module-template-light/**
-
+  workflow_dispatch:
+    inputs:
+      dag_version:
+        description: Dagger version to use
+        required: false
+        default: 0.14.0
+  schedule:
+    - cron: 0 8,20 * * * # Runs at 8:00 AM and 8:00 PM UTC
+  push:
+    paths:
+      - .daggerx/**
+      - module-template-light/**
 env:
-    GO_VERSION: ~1.22
-    DAG_VERSION: ${{ github.event.inputs.dag_version || '0.14.0' }}
-    RUST_VERSION: 1.74.0
-    MODULE_NAME: mymodulecilight
-
+  GO_VERSION: ~1.22
+  DAG_VERSION: ${{ github.event.inputs.dag_version || '0.14.0' }}
+  RUST_VERSION: 1.74.0
+  MODULE_NAME: mymodulecilight
 permissions:
-    contents: read
-    id-token: write
-
+  contents: read
+  id-token: write
 jobs:
-    codegen:
-        name: 🎨 Generate Module Light
-        runs-on: ubuntu-latest
-        steps:
-            - name: 📥 Checkout repository
-              uses: actions/checkout@v4
-
-            - name: 🦀 Setup Rust
-              uses: actions-rs/toolchain@v1
-              with:
-                  toolchain: ${{ env.RUST_VERSION }}
-                  override: true
-
-            - name: 🛠️ Set up environment
-              run: |
-                  sudo apt-get update
-                  sudo apt-get install jq
-                  curl -L https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=${{ env.DAG_VERSION }} sh
-                  sudo mv bin/dagger /usr/local/bin/
-                  git config --global user.name 'github-actions[bot]'
-                  git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-                  echo "🔧 Environment setup complete"
-
-            - name: 🐳 Verify Dagger CLI
-              run: |
-                  dagger version
-                  if [[ $(dagger version | grep -oP '(?<=dagger v)\S+') != "${{ env.DAG_VERSION }}" ]]; then
-                    echo "::error::❌ Installed Dagger version does not match DAG_VERSION"
-                    exit 1
-                  fi
-                  echo "✅ Dagger CLI verified successfully"
-
-            - name: 🏗️ Generate Module Light
-              run: |
-                  echo "Creating a new module: ${{ env.MODULE_NAME }}..."
-                  cd .daggerx/daggy && cargo build --release
-                  cd ../..
-                  ./.daggerx/daggy/target/release/daggy --task=create --module=${{ env.MODULE_NAME }} --module-type=light
-                  echo "✅ Module ${{ env.MODULE_NAME }} created successfully"
-
-            - name: 📦 Upload generated module
-              uses: actions/upload-artifact@v3
-              with:
-                  name: generated-module
-                  path: ${{ env.MODULE_NAME }}
-
-    ci:
-        name: 🧪 CI for Generated Module
-        needs: codegen
-        runs-on: ubuntu-latest
-        steps:
-            - name: 📥 Checkout repository
-              uses: actions/checkout@v4
-
-            - name: 📦 Download generated module
-              uses: actions/download-artifact@v3
-              with:
-                  name: generated-module
-                  path: ${{ env.MODULE_NAME }}
-
-            - name: 🛠️ Set up environment
-              run: |
-                  sudo apt-get update
-                  sudo apt-get install jq
-                  curl -L https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=${{ env.DAG_VERSION }} sh
-                  sudo mv bin/dagger /usr/local/bin/
-                  echo "🔧 Environment setup complete"
-
-            - name: 🐳 Verify Dagger CLI
-              run: |
-                  dagger version
-                  if [[ $(dagger version | grep -oP '(?<=dagger v)\S+') != "${{ env.DAG_VERSION }}" ]]; then
-                    echo "::error::❌ Installed Dagger version does not match DAG_VERSION"
-                    exit 1
-                  fi
-                  echo "✅ Dagger CLI verified successfully"
-
-            - name: 🔄 Reload Dagger module
-              run: |
-                  echo "Reloading Dagger module and tests..."
-                  cd ${{ env.MODULE_NAME }} && dagger develop
-                  cd tests && dagger develop
-                  cd ../examples/go && dagger develop
-                  cd ../../
-                  echo "✅ Module reloaded successfully"
-                  dagger call && dagger functions
-
-            - name: 🛠️ Install golangci-lint
-              run: |
-                  curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s latest
-                  sudo mv ./bin/golangci-lint /usr/local/bin/golangci-lint
-                  golangci-lint --version
-
-            - name: 🧹 Run GolangCI Lint
-              run: |
-                  echo "Running Go (GolangCI)... 🧹"
-                  cd ${{ env.MODULE_NAME }}
-                  golangci-lint run --config=../.golangci.yml --verbose
-                  cd tests
-                  golangci-lint run --config=../../.golangci.yml --verbose
-                  cd ../examples/go
-                  golangci-lint run --config=../../../.golangci.yml --verbose
-
-            - name: 🧹 Run GolangCI Lint
-              run: |
-                  echo "Running Go (GolangCI)... 🧹"
-                  cd ${{ env.MODULE_NAME }} && golangci-lint run --config ../.golangci.yml
-                  cd tests && golangci-lint run --config ../../.golangci.yml
-                  cd ../examples/go && golangci-lint run --config ../../../.golangci.yml
-
-            - name: 🧪 Run module tests
-              run: |
-                  echo "Running Dagger module tests..."
-                  cd ${{ env.MODULE_NAME }}/tests
-                  dagger functions
-                  dagger call test-all
-
-            - name: 📚 Run module examples
-              run: |
-                  echo "Running Dagger module examples (Go SDK)..."
-                  cd ${{ env.MODULE_NAME }}/examples/go
-                  dagger call all-recipes
-
-            - name: 🎉 CI Success Notification
-              if: success()
-              run: echo "::notice::🎊 CI for ${{ env.MODULE_NAME }} completed successfully!"
-
-            - name: ❌ CI Failure Notification
-              if: failure()
-              run: echo "::error::💥 CI for ${{ env.MODULE_NAME }} failed. Please check the logs for details."
+  codegen:
+    name: 🎨 Generate Module Light
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+      - name: 🦀 Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          override: true
+      - name: 🛠️ Set up environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install jq
+          curl -L https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=${{ env.DAG_VERSION }} sh
+          sudo mv bin/dagger /usr/local/bin/
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          echo "🔧 Environment setup complete"
+      - name: 🐳 Verify Dagger CLI
+        run: |
+          dagger version
+          if [[ $(dagger version | grep -oP '(?<=dagger v)\S+') != "${{ env.DAG_VERSION }}" ]]; then
+            echo "::error::❌ Installed Dagger version does not match DAG_VERSION"
+            exit 1
+          fi
+          echo "✅ Dagger CLI verified successfully"
+      - name: 🏗️ Generate Module Light
+        run: |
+          echo "Creating a new module: ${{ env.MODULE_NAME }}..."
+          cd .daggerx/daggy && cargo build --release
+          cd ../..
+          ./.daggerx/daggy/target/release/daggy --task=create --module=${{ env.MODULE_NAME }} --module-type=light
+          echo "✅ Module ${{ env.MODULE_NAME }} created successfully"
+      - name: 📦 Upload generated module
+        uses: actions/upload-artifact@v3
+        with:
+          name: generated-module
+          path: ${{ env.MODULE_NAME }}
+  ci:
+    name: 🧪 CI for Generated Module
+    needs: codegen
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+      - name: 📦 Download generated module
+        uses: actions/download-artifact@v3
+        with:
+          name: generated-module
+          path: ${{ env.MODULE_NAME }}
+      - name: 🛠️ Set up environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install jq
+          curl -L https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=${{ env.DAG_VERSION }} sh
+          sudo mv bin/dagger /usr/local/bin/
+          echo "🔧 Environment setup complete"
+      - name: 🐳 Verify Dagger CLI
+        run: |
+          dagger version
+          if [[ $(dagger version | grep -oP '(?<=dagger v)\S+') != "${{ env.DAG_VERSION }}" ]]; then
+            echo "::error::❌ Installed Dagger version does not match DAG_VERSION"
+            exit 1
+          fi
+          echo "✅ Dagger CLI verified successfully"
+      - name: 🔄 Reload Dagger module
+        run: |
+          echo "Reloading Dagger module and tests..."
+          cd ${{ env.MODULE_NAME }} && dagger develop
+          cd tests && dagger develop
+          cd ../examples/go && dagger develop
+          cd ../../
+          echo "✅ Module reloaded successfully"
+          dagger call && dagger functions
+      - name: 🛠️ Install golangci-lint
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s latest
+          sudo mv ./bin/golangci-lint /usr/local/bin/golangci-lint
+          golangci-lint --version
+      - name: 🧹 Run GolangCI Lint
+        run: |
+          echo "Running Go (GolangCI)... 🧹"
+          cd ${{ env.MODULE_NAME }}
+          golangci-lint run --config=../.golangci.yml --verbose
+          cd tests
+          golangci-lint run --config=../../.golangci.yml --verbose
+          cd ../examples/go
+          golangci-lint run --config=../../../.golangci.yml --verbose
+      - name: 🧹 Run GolangCI Lint
+        run: |
+          echo "Running Go (GolangCI)... 🧹"
+          cd ${{ env.MODULE_NAME }} && golangci-lint run --config ../.golangci.yml
+          cd tests && golangci-lint run --config ../../.golangci.yml
+          cd ../examples/go && golangci-lint run --config ../../../.golangci.yml
+      - name: 🧪 Run module tests
+        run: |
+          echo "Running Dagger module tests..."
+          cd ${{ env.MODULE_NAME }}/tests
+          dagger functions
+          dagger call test-all
+      - name: 📚 Run module examples
+        run: |
+          echo "Running Dagger module examples (Go SDK)..."
+          cd ${{ env.MODULE_NAME }}/examples/go
+          dagger call all-recipes
+      - name: 🎉 CI Success Notification
+        if: success()
+        run: echo "::notice::🎊 CI for ${{ env.MODULE_NAME }} completed successfully!"
+      - name: ❌ CI Failure Notification
+        if: failure()
+        run: echo "::error::💥 CI for ${{ env.MODULE_NAME }} failed. Please check the logs for details."

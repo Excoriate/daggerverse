@@ -1,230 +1,216 @@
----
 name: CI terragrunt 🧹
 on:
-    push:
-        branches:
-            - main
-            - master
-        paths:
-            - terragrunt/**/*.go
-    pull_request:
-        paths:
-            - terragrunt/**/*.go
-    workflow_dispatch:
-
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - terragrunt/**/*.go
+  pull_request:
+    paths:
+      - terragrunt/**/*.go
+  workflow_dispatch:
 permissions:
-    contents: read
-    pull-requests: read
-    checks: write
-
+  contents: read
+  pull-requests: read
+  checks: write
 defaults:
-    run:
-        working-directory: terragrunt
-
+  run:
+    working-directory: terragrunt
 env:
-    DAGGER_VERSION_EXAMPLES_GO: 0.14.0
-
+  DAGGER_VERSION_EXAMPLES_GO: 0.14.0
 jobs:
-    dagger-linter:
-        strategy:
-            matrix:
-                go: ['1.22']
-                dagversion: [0.14.0]
-        name: Lint terragrunt on ${{ matrix.go }} with Dagger ${{ matrix.dagversion }}
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v4
-            - uses: actions/setup-go@v5
-              with:
-                  go-version: ${{ matrix.go }}
-            - name: Dagger Develop on Module 📦 with Dagger ${{ matrix.dagversion }}
-              uses: dagger/dagger-for-github@v6
-              with:
-                  verb: develop
-                  module: terragrunt
-                  version: ${{ matrix.dagversion }}
-                  cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-            - name: Dagger Develop on Test Module 🧪 with Dagger ${{ matrix.dagversion }}
-              uses: dagger/dagger-for-github@v6
-              with:
-                  verb: develop
-                  module: terragrunt/tests
-                  version: ${{ matrix.dagversion }}
-                  cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-            - name: Dagger Develop on Examples Module for Go 📄 with Dagger ${{ matrix.dagversion }}
-              uses: dagger/dagger-for-github@v6
-              with:
-                  verb: develop
-                  module: terragrunt/examples/go
-                  version: ${{ matrix.dagversion }}
-                  cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-            - name: Dagger Call on Module 📦 with Dagger ${{ matrix.dagversion }}
-              uses: dagger/dagger-for-github@v6
-              with:
-                  verb: call
-                  module: terragrunt
-                  version: ${{ matrix.dagversion }}
-                  cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-            - name: Dagger Call on Test Module 🧪 with Dagger ${{ matrix.dagversion }}
-              uses: dagger/dagger-for-github@v6
-              with:
-                  verb: call
-                  module: terragrunt/tests
-                  version: ${{ matrix.dagversion }}
-                  cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-            - name: Dagger Call on Test Examples/Go Module 📄 with Dagger ${{ matrix.dagversion }}
-              uses: dagger/dagger-for-github@v6
-              with:
-                  verb: call
-                  module: terragrunt/examples/go
-                  version: ${{ matrix.dagversion }}
-                  cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    golangci-lint:
-        strategy:
-            matrix:
-                go: ['1.22']
-        name: GolangCI-Lint for terragrunt
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v4
-            - uses: actions/setup-go@v5
-              with:
-                  go-version: ${{ matrix.go }}
-
+  dagger-linter:
+    strategy:
+      matrix:
+        go: ["1.22"]
+        dagversion: [0.14.0]
+    name: Lint terragrunt on ${{ matrix.go }} with Dagger ${{ matrix.dagversion }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+      - name: Dagger Develop on Module 📦 with Dagger ${{ matrix.dagversion }}
+        uses: dagger/dagger-for-github@v6
+        with:
+          verb: develop
+          module: terragrunt
+          version: ${{ matrix.dagversion }}
+          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Dagger Develop on Test Module 🧪 with Dagger ${{ matrix.dagversion }}
+        uses: dagger/dagger-for-github@v6
+        with:
+          verb: develop
+          module: terragrunt/tests
+          version: ${{ matrix.dagversion }}
+          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Dagger Develop on Examples Module for Go 📄 with Dagger ${{ matrix.dagversion }}
+        uses: dagger/dagger-for-github@v6
+        with:
+          verb: develop
+          module: terragrunt/examples/go
+          version: ${{ matrix.dagversion }}
+          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Dagger Call on Module 📦 with Dagger ${{ matrix.dagversion }}
+        uses: dagger/dagger-for-github@v6
+        with:
+          verb: call
+          module: terragrunt
+          version: ${{ matrix.dagversion }}
+          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Dagger Call on Test Module 🧪 with Dagger ${{ matrix.dagversion }}
+        uses: dagger/dagger-for-github@v6
+        with:
+          verb: call
+          module: terragrunt/tests
+          version: ${{ matrix.dagversion }}
+          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Dagger Call on Test Examples/Go Module 📄 with Dagger ${{ matrix.dagversion }}
+        uses: dagger/dagger-for-github@v6
+        with:
+          verb: call
+          module: terragrunt/examples/go
+          version: ${{ matrix.dagversion }}
+          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  golangci-lint:
+    strategy:
+      matrix:
+        go: ["1.22"]
+    name: GolangCI-Lint for terragrunt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
       # Dagger main module 📦 (develop & golang ci-lint)
-            - name: Dagger Develop on Module 📦 terragrunt with Dagger ${{ matrix.dagversion }}
-              uses: dagger/dagger-for-github@v6
-              with:
-                  verb: develop
-                  module: terragrunt
-                  version: ${{ matrix.dagversion }}
-                  cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+      - name: Dagger Develop on Module 📦 terragrunt with Dagger ${{ matrix.dagversion }}
+        uses: dagger/dagger-for-github@v6
+        with:
+          verb: develop
+          module: terragrunt
+          version: ${{ matrix.dagversion }}
+          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       # Install golangci-lint using curl
-            - name: Install golangci-lint
-              run: |
-                  curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s latest
-                  sudo mv ./bin/golangci-lint /usr/local/bin/golangci-lint
-
-            - name: Run golangci-lint on terragrunt 📦
-              run: |
-                  golangci-lint run --config=../.golangci.yml --verbose
-
+      - name: Install golangci-lint
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s latest
+          sudo mv ./bin/golangci-lint /usr/local/bin/golangci-lint
+      - name: Run golangci-lint on terragrunt 📦
+        run: |
+          golangci-lint run --config=../.golangci.yml --verbose
       # Dagger test module 🧪 (develop & golang ci-lint)
-            - name: Dagger Develop on Module tests 🧪 terragrunt with Dagger ${{ matrix.dagversion }}
-              uses: dagger/dagger-for-github@v6
-              with:
-                  verb: develop
-                  module: terragrunt/tests
-                  version: ${{ matrix.dagversion }}
-                  cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-            - name: Run golangci-lint on terragrunt/tests 🧪
-              run: |
-                  cd tests
-                  ls -ltrah
-                  golangci-lint run --config=../../.golangci.yml --verbose
-
+      - name: Dagger Develop on Module tests 🧪 terragrunt with Dagger ${{ matrix.dagversion }}
+        uses: dagger/dagger-for-github@v6
+        with:
+          verb: develop
+          module: terragrunt/tests
+          version: ${{ matrix.dagversion }}
+          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Run golangci-lint on terragrunt/tests 🧪
+        run: |
+          cd tests
+          ls -ltrah
+          golangci-lint run --config=../../.golangci.yml --verbose
       # Dagger examples (go) module 📄 (develop & golang ci-lint)
-            - name: Dagger Develop on Module Examples/Go 📄 terragrunt with Dagger ${{ matrix.dagversion }}
-              uses: dagger/dagger-for-github@v6
-              with:
-                  verb: develop
-                  module: terragrunt/examples/go
-                  version: ${{ matrix.dagversion }}
-                  cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-            - name: Run golangci-lint on terragrunt/examples/go 📄 (develop & golang ci-lint)
-              run: |
-                  cd examples/go
-                  ls -ltrah
-                  golangci-lint run --config=../../../.golangci.yml --verbose
-
-    module-test:
-        strategy:
-            matrix:
-                go: ['1.22']
-                dagversion: [0.14.0]
-        needs: [dagger-linter, golangci-lint]
-        name: Run Tests 🧪 in terragrunt on ${{ matrix.go }} with Dagger ${{ matrix.dagversion }}
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v4
-            - uses: actions/setup-go@v5
-              with:
-                  go-version: ${{ matrix.go }}
-            - name: Dagger Develop on Module 📦 with Dagger ${{ matrix.dagversion }}
-              uses: dagger/dagger-for-github@v6
-              with:
-                  verb: develop
-                  module: terragrunt
-                  version: ${{ matrix.dagversion }}
-                  cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-            - name: Dagger Develop on Test Module 🧪 with Dagger ${{ matrix.dagversion }}
-              uses: dagger/dagger-for-github@v6
-              with:
-                  verb: develop
-                  module: terragrunt/tests
-                  version: ${{ matrix.dagversion }}
-                  cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-            - name: Running Tests 💣 in terragrunt on ${{ matrix.go }} with Dagger ${{ matrix.dagversion }}
-              uses: dagger/dagger-for-github@v6
-              with:
-                  verb: call
-                  args: test-all
-                  module: terragrunt/tests
-                  version: ${{ matrix.dagversion }}
-                  cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    terragrunt-recipes-go:
-        needs: [dagger-linter, golangci-lint]
-        name: Run recipes 🥗 in terragrunt/examples/go
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v4
-            - uses: actions/setup-go@v5
-              with:
-                  go-version: '1.22'
-            - name: Dagger Develop on Module Examples 📄
-              uses: dagger/dagger-for-github@v6
-              with:
-                  verb: develop
-                  module: terragrunt/examples/go
-                  version: ${{ env.DAGGER_VERSION_EXAMPLES_GO }}
-                  cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-            - name: Running all recipes 💣 in terragrunt/examples/go
-              uses: dagger/dagger-for-github@v6
-              with:
-                  verb: call
-                  args: all-recipes
-                  module: terragrunt/examples/go
-                  version: ${{ env.DAGGER_VERSION_EXAMPLES_GO }}
-                  cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Dagger Develop on Module Examples/Go 📄 terragrunt with Dagger ${{ matrix.dagversion }}
+        uses: dagger/dagger-for-github@v6
+        with:
+          verb: develop
+          module: terragrunt/examples/go
+          version: ${{ matrix.dagversion }}
+          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Run golangci-lint on terragrunt/examples/go 📄 (develop & golang ci-lint)
+        run: |
+          cd examples/go
+          ls -ltrah
+          golangci-lint run --config=../../../.golangci.yml --verbose
+  module-test:
+    strategy:
+      matrix:
+        go: ["1.22"]
+        dagversion: [0.14.0]
+    needs: [dagger-linter, golangci-lint]
+    name: Run Tests 🧪 in terragrunt on ${{ matrix.go }} with Dagger ${{ matrix.dagversion }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+      - name: Dagger Develop on Module 📦 with Dagger ${{ matrix.dagversion }}
+        uses: dagger/dagger-for-github@v6
+        with:
+          verb: develop
+          module: terragrunt
+          version: ${{ matrix.dagversion }}
+          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Dagger Develop on Test Module 🧪 with Dagger ${{ matrix.dagversion }}
+        uses: dagger/dagger-for-github@v6
+        with:
+          verb: develop
+          module: terragrunt/tests
+          version: ${{ matrix.dagversion }}
+          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Running Tests 💣 in terragrunt on ${{ matrix.go }} with Dagger ${{ matrix.dagversion }}
+        uses: dagger/dagger-for-github@v6
+        with:
+          verb: call
+          args: test-all
+          module: terragrunt/tests
+          version: ${{ matrix.dagversion }}
+          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  terragrunt-recipes-go:
+    needs: [dagger-linter, golangci-lint]
+    name: Run recipes 🥗 in terragrunt/examples/go
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+      - name: Dagger Develop on Module Examples 📄
+        uses: dagger/dagger-for-github@v6
+        with:
+          verb: develop
+          module: terragrunt/examples/go
+          version: ${{ env.DAGGER_VERSION_EXAMPLES_GO }}
+          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Running all recipes 💣 in terragrunt/examples/go
+        uses: dagger/dagger-for-github@v6
+        with:
+          verb: call
+          args: all-recipes
+          module: terragrunt/examples/go
+          version: ${{ env.DAGGER_VERSION_EXAMPLES_GO }}
+          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

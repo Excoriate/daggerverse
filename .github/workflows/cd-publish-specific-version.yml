@@ -1,118 +1,108 @@
----
 name: 🎯 Publish Specific Dagger Module Version
-
 on:
-    workflow_dispatch:
-        inputs:
-            module:
-                description: Module to publish (e.g., module-template)
-                required: true
-            version:
-                description: Version to publish (e.g., v0.1.0)
-                required: true
-
+  workflow_dispatch:
+    inputs:
+      module:
+        description: Module to publish (e.g., module-template)
+        required: true
+      version:
+        description: Version to publish (e.g., v0.1.0)
+        required: true
 env:
-    GO_VERSION: ~1.22
-    DAG_VERSION: 0.14.0
-
+  GO_VERSION: ~1.22
+  DAG_VERSION: 0.14.0
 permissions:
-    contents: write
-    id-token: write
-
+  contents: write
+  id-token: write
 jobs:
-    publish-specific-version:
-        runs-on: ubuntu-latest
-        steps:
-            - name: 📥 Checkout repository
-              uses: actions/checkout@v4
-              with:
-                  fetch-depth: 0
+  publish-specific-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: 🛠️ Set up environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install jq
+          curl -L https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=${{ env.DAG_VERSION }} sh
+          sudo mv bin/dagger /usr/local/bin/
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          echo "🔧 Environment setup complete"
+      - name: 🐳 Verify Dagger CLI
+        run: |
+          dagger version
+          if [[ $(dagger version | grep -oP '(?<=dagger v)\S+') != "${{ env.DAG_VERSION }}" ]]; then
+            echo "::error::❌ Installed Dagger version does not match DAG_VERSION"
+            exit 1
+          fi
+          echo "✅ Dagger CLI verified successfully"
+      - name: 🔍 Validate inputs and tag
+        id: validate-inputs
+        run: |
+          module="${{ github.event.inputs.module }}"
+          version="${{ github.event.inputs.version }}"
+          normalized_module=$(echo "$module" | tr '[:upper:]' '[:lower:]' | tr -d ' ')
 
-            - name: 🛠️ Set up environment
-              run: |
-                  sudo apt-get update
-                  sudo apt-get install jq
-                  curl -L https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=${{ env.DAG_VERSION }} sh
-                  sudo mv bin/dagger /usr/local/bin/
-                  git config --global user.name 'github-actions[bot]'
-                  git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-                  echo "🔧 Environment setup complete"
+          if [[ ! -d "$normalized_module" ]]; then
+            echo "::error::❌ Module directory not found: $normalized_module"
+            exit 1
+          fi
 
-            - name: 🐳 Verify Dagger CLI
-              run: |
-                  dagger version
-                  if [[ $(dagger version | grep -oP '(?<=dagger v)\S+') != "${{ env.DAG_VERSION }}" ]]; then
-                    echo "::error::❌ Installed Dagger version does not match DAG_VERSION"
-                    exit 1
-                  fi
-                  echo "✅ Dagger CLI verified successfully"
+          if [[ ! $version =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::❌ Invalid version format: $version. Expected format: vX.Y.Z"
+            exit 1
+          fi
 
-            - name: 🔍 Validate inputs and tag
-              id: validate-inputs
-              run: |
-                  module="${{ github.event.inputs.module }}"
-                  version="${{ github.event.inputs.version }}"
-                  normalized_module=$(echo "$module" | tr '[:upper:]' '[:lower:]' | tr -d ' ')
+          tag="${normalized_module}/${version}"
+          echo "module=$normalized_module" >> $GITHUB_OUTPUT
+          echo "version=$version" >> $GITHUB_OUTPUT
+          echo "tag=$tag" >> $GITHUB_OUTPUT
+          echo "✅ Inputs validated. Module: $normalized_module, Version: $version, Tag: $tag"
+      - name: 🐹 Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: 🚀 Publish to Daggerverse
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          module="${{ steps.validate-inputs.outputs.module }}"
+          version="${{ steps.validate-inputs.outputs.version }}"
+          tag="${{ steps.validate-inputs.outputs.tag }}"
 
-                  if [[ ! -d "$normalized_module" ]]; then
-                    echo "::error::❌ Module directory not found: $normalized_module"
-                    exit 1
-                  fi
+          echo "📢 Publishing module: $module with version $version"
+          echo "🏷️ Using tag: $tag"
 
-                  if [[ ! $version =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-                    echo "::error::❌ Invalid version format: $version. Expected format: vX.Y.Z"
-                    exit 1
-                  fi
+          # Fetch all tags and find the correct one
+          git fetch --all --tags --force
 
-                  tag="${normalized_module}/${version}"
-                  echo "module=$normalized_module" >> $GITHUB_OUTPUT
-                  echo "version=$version" >> $GITHUB_OUTPUT
-                  echo "tag=$tag" >> $GITHUB_OUTPUT
-                  echo "✅ Inputs validated. Module: $normalized_module, Version: $version, Tag: $tag"
+          # Check if the tag exists
+          if ! git rev-parse "refs/tags/$tag" >/dev/null 2>&1; then
+            echo "::error::❌ Tag $tag does not exist in the repository"
+            echo "Available tags:"
+            git tag -l
+            exit 1
+          fi
 
-            - name: 🐹 Set up Go
-              uses: actions/setup-go@v5
-              with:
-                  go-version: ${{ env.GO_VERSION }}
+          # Checkout the specific tag
+          git checkout "refs/tags/$tag"
 
-            - name: 🚀 Publish to Daggerverse
-              env:
-                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              run: |
-                  module="${{ steps.validate-inputs.outputs.module }}"
-                  version="${{ steps.validate-inputs.outputs.version }}"
-                  tag="${{ steps.validate-inputs.outputs.tag }}"
+          # Clean untracked files
+          git clean -fd
 
-                  echo "📢 Publishing module: $module with version $version"
-                  echo "🏷️ Using tag: $tag"
+          # Stash any changes
+          git stash --include-untracked
 
-                  # Fetch all tags and find the correct one
-                  git fetch --all --tags --force
+          # Use the tag directly in the publish command with --force
+          if dagger publish --force -m "$module" "github.com/Excoriate/daggerverse/${module}@${version#v}"; then
+            echo "✅ Successfully published $module version $version to Daggerverse"
+            echo "🔗 Install with: dagger install github.com/Excoriate/daggerverse/${module}@${version}"
+          else
+            echo "::error::❌ Failed to publish $module version $version"
+            exit 1
+          fi
 
-                  # Check if the tag exists
-                  if ! git rev-parse "refs/tags/$tag" >/dev/null 2>&1; then
-                    echo "::error::❌ Tag $tag does not exist in the repository"
-                    echo "Available tags:"
-                    git tag -l
-                    exit 1
-                  fi
-
-                  # Checkout the specific tag
-                  git checkout "refs/tags/$tag"
-
-                  # Clean untracked files
-                  git clean -fd
-
-                  # Stash any changes
-                  git stash --include-untracked
-
-                  # Use the tag directly in the publish command with --force
-                  if dagger publish --force -m "$module" "github.com/Excoriate/daggerverse/${module}@${version#v}"; then
-                    echo "✅ Successfully published $module version $version to Daggerverse"
-                    echo "🔗 Install with: dagger install github.com/Excoriate/daggerverse/${module}@${version}"
-                  else
-                    echo "::error::❌ Failed to publish $module version $version"
-                    exit 1
-                  fi
-
-                  # Pop stashed changes if any
+          # Pop stashed changes if any

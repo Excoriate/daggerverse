@@ -45,7 +45,10 @@ fn create_module_task(args: &Args) -> Result<(), Error> {
         }
         None => {
             eprintln!("Module name is required for 'create' task");
-            Err(Error::new(ErrorKind::InvalidInput, "Module name is required"))
+            Err(Error::new(
+                ErrorKind::InvalidInput,
+                "Module name is required",
+            ))
         }
     }
 }
