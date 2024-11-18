@@ -43,27 +43,51 @@
         # Pre-commit hooks configuration
         pre-commit-check = pre-commit-hooks.lib.${system}.run {
           src = ./.;
-          hooks = {
-            # Treefmt will handle most formatting
-            treefmt.enable = true;
+          # Add excludes to skip unnecessary files/dirs
+          excludes = [
+            "^(.direnv/.*)"
+            "^(target/.*)"
+            "^(dist/.*)"
+            "^(result.*)"
+            "^(.git/.*)"
+          ];
 
-            # Additional specific hooks
+          hooks = {
+            treefmt = {
+              enable = true;
+              # Only run on changed files
+              pass_filenames = true;
+            };
+
             rustfmt = {
               enable = true;
               entry = "${pkgs.rustfmt}/bin/rustfmt";
               types = ["rust"];
+              # Only run on changed files
+              pass_filenames = true;
             };
 
             golangci-lint = {
               enable = true;
               entry = "${pkgs.golangci-lint}/bin/golangci-lint run";
               types = ["go"];
+              # Only run on changed files
+              pass_filenames = true;
+              # Add performance optimizations
+              args = [
+                "--fast"
+                "--max-same-issues=0"
+                "--max-issues-per-linter=0"
+                "--modules-download-mode=readonly"
+              ];
             };
 
             yamllint = {
               enable = true;
               entry = "${pkgs.yamllint}/bin/yamllint";
               types = ["yaml"];
+              # Only run on changed files
+              pass_filenames = true;
             };
           };
         };
@@ -110,8 +134,17 @@
             export RUST_SRC_PATH=${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}
             export GOROOT=${pkgs.go}/share/go
 
-            # Run pre-commit checks
-            ${pre-commit-check.shellHook}
+            # Cache Go modules
+            export GOMODCACHE="$PWD/.direnv/go/pkg/mod"
+            export GOCACHE="$PWD/.direnv/go/cache"
+
+            # Only run pre-commit on changed files
+            export PRE_COMMIT_FILES_CHANGED=$(git diff --name-only HEAD)
+
+            # Run pre-commit checks only if there are changes
+            if [ -n "$PRE_COMMIT_FILES_CHANGED" ]; then
+              ${pre-commit-check.shellHook}
+            fi
 
             echo "🌟 Welcome to the Daggerverse development environment! 🚀"
             echo "Happy coding! 💻"
