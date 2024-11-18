@@ -17,6 +17,7 @@ env:
   DAG_VERSION: ${{ github.event.inputs.dag_version || '0.14.0' }}
   RUST_VERSION: 1.74.0
   MODULE_NAME: mymoduleci
+  GOLANGCI_LINT_VERSION: v1.62.0
 permissions:
   contents: read
   id-token: write
@@ -61,8 +62,9 @@ jobs:
         with:
           name: generated-module
           path: ${{ env.MODULE_NAME }}
-  ci:
-    name: 🧪 CI for Generated Module
+
+  ci-main:
+    name: 🧪 CI Main Module
     needs: codegen
     runs-on: ubuntu-latest
     steps:
@@ -79,58 +81,114 @@ jobs:
           sudo apt-get install jq
           curl -L https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=${{ env.DAG_VERSION }} sh
           sudo mv bin/dagger /usr/local/bin/
-          echo "🔧 Environment setup complete"
-      - name: 🐳 Verify Dagger CLI
-        run: |
-          dagger version
-          if [[ $(dagger version | grep -oP '(?<=dagger v)\S+') != "${{ env.DAG_VERSION }}" ]]; then
-            echo "::error::❌ Installed Dagger version does not match DAG_VERSION"
-            exit 1
-          fi
-          echo "✅ Dagger CLI verified successfully"
-      - name: 🔄 Reload Dagger module
-        run: |
-          echo "Reloading Dagger module and tests..."
-          cd ${{ env.MODULE_NAME }} && dagger develop
-          cd tests && dagger develop
-          cd ../examples/go && dagger develop
-          cd ../../
-          echo "✅ Module reloaded successfully"
-          dagger call && dagger functions
       - name: 🛠️ Install golangci-lint
         run: |
-          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s latest
-          sudo mv ./bin/golangci-lint /usr/local/bin/golangci-lint
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin ${{ env.GOLANGCI_LINT_VERSION }}
+          sudo mv $(go env GOPATH)/bin/golangci-lint /usr/local/bin/
           golangci-lint --version
-      - name: 🧹 Run GolangCI Lint
+      - name: 🏗️ Build Main Module
         run: |
-          echo "Running Go (GolangCI)... 🧹"
+          cd ${{ env.MODULE_NAME }}
+          dagger develop
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: 🧹 Lint Main Module
+        run: |
           cd ${{ env.MODULE_NAME }}
           golangci-lint run --config=../.golangci.yml --verbose
-          cd tests
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  ci-test:
+    name: 🧪 CI Test Module
+    needs: codegen
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+      - name: 📦 Download generated module
+        uses: actions/download-artifact@v3
+        with:
+          name: generated-module
+          path: ${{ env.MODULE_NAME }}
+      - name: 🛠️ Set up environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install jq
+          curl -L https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=${{ env.DAG_VERSION }} sh
+          sudo mv bin/dagger /usr/local/bin/
+      - name: 🛠️ Install golangci-lint
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin ${{ env.GOLANGCI_LINT_VERSION }}
+          sudo mv $(go env GOPATH)/bin/golangci-lint /usr/local/bin/
+          golangci-lint --version
+      - name: 🏗️ Build Test Module
+        run: |
+          cd ${{ env.MODULE_NAME }}/tests
+          dagger develop
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: 🧹 Lint Test Module
+        run: |
+          cd ${{ env.MODULE_NAME }}/tests
           golangci-lint run --config=../../.golangci.yml --verbose
-          cd ../examples/go
-          golangci-lint run --config=../../../.golangci.yml --verbose
-      - name: 🧹 Run GolangCI Lint
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: 🧪 Run Tests
         run: |
-          echo "Running Go (GolangCI)... 🧹"
-          cd ${{ env.MODULE_NAME }} && golangci-lint run --config ../.golangci.yml
-          cd tests && golangci-lint run --config ../../.golangci.yml
-          cd ../examples/go && golangci-lint run --config ../../../.golangci.yml
-      - name: 🧪 Run module tests
-        run: |
-          echo "Running Dagger module tests..."
           cd ${{ env.MODULE_NAME }}/tests
           dagger functions
           dagger call test-all
-      - name: 📚 Run module examples
+
+  ci-examples:
+    name: 🧪 CI Examples Module
+    needs: codegen
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+      - name: 📦 Download generated module
+        uses: actions/download-artifact@v3
+        with:
+          name: generated-module
+          path: ${{ env.MODULE_NAME }}
+      - name: 🛠️ Set up environment
         run: |
-          echo "Running Dagger module examples (Go SDK)..."
+          sudo apt-get update
+          sudo apt-get install jq
+          curl -L https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=${{ env.DAG_VERSION }} sh
+          sudo mv bin/dagger /usr/local/bin/
+      - name: 🛠️ Install golangci-lint
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin ${{ env.GOLANGCI_LINT_VERSION }}
+          sudo mv $(go env GOPATH)/bin/golangci-lint /usr/local/bin/
+          golangci-lint --version
+      - name: 🏗️ Build Examples Module
+        run: |
+          cd ${{ env.MODULE_NAME }}/examples/go
+          dagger develop
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: 🧹 Lint Examples Module
+        run: |
+          cd ${{ env.MODULE_NAME }}/examples/go
+          golangci-lint run --config=../../../.golangci.yml --verbose
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: 📚 Run Examples
+        run: |
           cd ${{ env.MODULE_NAME }}/examples/go
           dagger call all-recipes
+
+  notify:
+    name: 📢 Notification
+    needs: [ci-main, ci-test, ci-examples]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
       - name: 🎉 CI Success Notification
-        if: success()
+        if: needs.ci-main.result == 'success' && needs.ci-test.result == 'success' && needs.ci-examples.result == 'success'
         run: echo "::notice::🎊 CI for ${{ env.MODULE_NAME }} completed successfully!"
       - name: ❌ CI Failure Notification
-        if: failure()
+        if: needs.ci-main.result == 'failure' || needs.ci-test.result == 'failure' || needs.ci-examples.result == 'failure'
         run: echo "::error::💥 CI for ${{ env.MODULE_NAME }} failed. Please check the logs for details."
