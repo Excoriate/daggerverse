@@ -12,7 +12,8 @@
         inputs.treefmt-nix.flakeModule
       ];
 
-      systems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
+      systems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" "x86_64-windows" ];
+
 
       perSystem = { config, self', inputs', pkgs, system, ... }:
         let
@@ -26,7 +27,7 @@
         in
         {
           devShells.default = pkgs.mkShell {
-            name = "dev-environment";
+            name = "dev-environment-daggerverse";
 
             packages = with pkgs; [
               # Rust
@@ -51,6 +52,7 @@
               jq
               yq-go
               moreutils
+              yamllint
             ];
 
             shellHook = ''
@@ -70,8 +72,8 @@
               rustfmt.enable = true;
               prettier = {
                 enable = true;
-                # Configure Prettier to format JSON and YAML files
-                include = [ "**/*.{js,jsx,ts,tsx,json,yml,yaml}" ];
+                # Configure Prettier to format JSON files
+                include = [ "**/*.{js,jsx,ts,tsx,json}" ];
               };
               gofmt.enable = true;
               terraform-fmt = {
@@ -83,6 +85,11 @@
                 enable = true;
                 command = "${pkgs.terragrunt}/bin/terragrunt hclfmt";
                 include = [ "**/*.hcl" ];
+              };
+              yamllint = {
+                enable = true;
+                command = "${pkgs.yamllint}/bin/yamllint -c .yamllint.yml";
+                include = [ "**/*.yaml" "**/*.yml" ];
               };
             };
           };

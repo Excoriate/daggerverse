@@ -1,10 +1,5 @@
 ---
 repos:
-    - repo: https://github.com/adrienverge/yamllint.git
-      rev: v1.35.1
-      hooks:
-          - id: yamllint
-
     - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
       rev: 0.2.3
       hooks:
