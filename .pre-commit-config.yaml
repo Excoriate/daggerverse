@@ -5,56 +5,47 @@ default_language_version:
   golang: "1.21"
   node: system
 
-# Skip these files/directories for all hooks
-exclude: |
-  (?x)(
-    ^(.direnv/.*)|
-    ^(target/.*)|
-    ^(dist/.*)|
-    ^(result.*)|
-    ^(.git/.*)|
-    ^(.terraform/.*)|
-    ^(.terragrunt-cache/.*)|
-    ^(devenv/.*)
+# Simplified exclude pattern
+exclude: >-
+  (?x)^(
+    \.direnv/|
+    target/|
+    dist/|
+    result|
+    \.git/|
+    \.terraform/|
+    \.terragrunt-cache/|
+    devenv/
   )
 
 repos:
-  - repo: meta
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
     hooks:
-      - id: check-hooks-apply
-      - id: check-useless-excludes
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+        exclude: ^\.pre-commit-config\.yaml$  # Exclude this file from end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: detect-aws-credentials
+      - id: check-json
 
-  - repo: local
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.96.2  # Use the latest stable version
     hooks:
-      - id: check-useless-excludes
-        name: Check for useless excludes
-        entry: check-useless-excludes
-        language: system
-        pass_filenames: false
-
-      - id: treefmt
-        name: treefmt
-        entry: treefmt
-        language: system
-        types_or: [file]
-        pass_filenames: true
-
-      - id: yamlfmt
-        name: yamlfmt
-        entry: yamlfmt
-        language: system
-        types: [yaml]
-        args: []
-
-      - id: golangci-lint
-        name: golangci-lint
-        entry: golangci-lint run
-        language: system
-        types: [go]
+      - id: terraform_fmt
+        name: Terraform Format
+        description: Automatically format Terraform code
+      - id: terragrunt_fmt
+        name: Terragrunt Format
+        description: Automatically format Terragrunt HCL files
 
 # Global settings
 minimum_pre_commit_version: "3.0.0"
 ci:
   autofix_commit_msg: "style: auto-format pre-commit hooks"
   autoupdate_commit_msg: "chore: pre-commit autoupdate"
-  skip: [treefmt, rustfmt, golangci-lint, yamllint]
+  skip: [treefmt, rustfmt, yamllint]
