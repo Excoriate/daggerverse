@@ -1,5 +1,5 @@
 ---
-name: CI Mod Templates 🧰
+name: CI Mod Boilerplates 🧰
 on:
   push:
     branches:
@@ -12,7 +12,7 @@ on:
     paths:
       - module-template/**
       - module-template-light/**
-      - .github/workflows/ci-mod-templates.yaml
+      - .github/workflows/ci-mod-boilerplates.yaml
   workflow_dispatch:
 
 permissions:
