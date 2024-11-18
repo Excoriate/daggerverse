@@ -32,9 +32,40 @@
             allowUnfree = true;
           };
         };
+
+        # Pre-commit hooks configuration
+        pre-commit-check = inputs.pre-commit-hooks.lib.${system}.run {
+          src = ./.;
+          hooks = {
+            treefmt = {
+              enable = true;
+              entry = "nix develop .#devShell -c treefmt";
+              types_or = ["file"];
+              pass_filenames = false;
+            };
+
+            terraform-fmt = {
+              enable = true;
+              entry = "nix develop .#devShell -c terraform fmt";
+              types = ["terraform"];
+            };
+
+            terragrunt-fmt = {
+              enable = true;
+              entry = "nix develop .#devShell -c terragrunt hclfmt";
+              types = ["hcl"];
+            };
+
+            golangci-lint = {
+              enable = true;
+              entry = "nix develop .#devShell -c golangci-lint run";
+              types = ["go"];
+            };
+          };
+        };
       in
       {
-        # Define development shell and other configurations
+        # Define development shell with pre-commit hooks
         devShells.default = pkgs.mkShell {
           buildInputs = with pkgs; [
             treefmt
@@ -44,7 +75,14 @@
             go
             terraform
             terragrunt
+            golangci-lint
+            pre-commit-hooks.packages.${system}.pre-commit
           ];
+
+          # Attach pre-commit hooks to the shell
+          shellHook = ''
+            ${pre-commit-check.shellHook}
+          '';
         };
 
         # Define the treefmt app
@@ -107,6 +145,9 @@
             };
           };
         };
+
+        # Optional: Make pre-commit check available as a check
+        checks.pre-commit-check = pre-commit-check;
       };
     };
 }
