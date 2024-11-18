@@ -42,38 +42,43 @@
 
         # Pre-commit hooks configuration
         pre-commit-check = pre-commit-hooks.lib.${system}.run {
-          src = ./.;
-          # Add excludes to skip unnecessary files/dirs
-          excludes = [
-            "^(.direnv/.*)"
-            "^(target/.*)"
-            "^(dist/.*)"
-            "^(result.*)"
-            "^(.git/.*)"
-          ];
-
+          src = builtins.filterSource
+            (path: type:
+              let
+                excludes = [
+                  ".direnv/"
+                  "target/"
+                  "dist/"
+                  "result*"
+                  ".git/"
+                  "AI/"
+                  ".aider/"
+                  ".terraform/"
+                  ".terragrunt-cache/"
+                  ".devenv/"
+                  "node_modules/"
+                ];
+              in
+                !(builtins.any (pattern: builtins.match pattern path != null) excludes)
+            )
+            ./.;
+          
           hooks = {
             treefmt = {
               enable = true;
-              # Only run on changed files
               pass_filenames = true;
             };
-
             rustfmt = {
               enable = true;
               entry = "${pkgs.rustfmt}/bin/rustfmt";
               types = ["rust"];
-              # Only run on changed files
               pass_filenames = true;
             };
-
             golangci-lint = {
               enable = true;
               entry = "${pkgs.golangci-lint}/bin/golangci-lint run";
               types = ["go"];
-              # Only run on changed files
               pass_filenames = true;
-              # Add performance optimizations
               args = [
                 "--fast"
                 "--max-same-issues=0"
@@ -81,12 +86,10 @@
                 "--modules-download-mode=readonly"
               ];
             };
-
             yamllint = {
               enable = true;
               entry = "${pkgs.yamllint}/bin/yamllint";
               types = ["yaml"];
-              # Only run on changed files
               pass_filenames = true;
             };
           };

@@ -33,7 +33,7 @@ fmt:
 # Recipe to run pre-commit hooks 🔍
 run-hooks:
   @echo "Running pre-commit hooks 🔍 ..."
-  @nix develop .# --command bash -c "pre-commit run --all-files"
+  @pre-commit run --all-files
   @echo "Pre-commit hooks passed ✅"
 
 # Recipe to bump version of a module 🔄
