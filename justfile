@@ -93,22 +93,17 @@ examplesgo mod *args: (reloadmod mod) (reloadexamples mod)
 # Recipe to run GolangCI Lint in top-level module🧹
 lintmod mod *args: (reloadmod mod)
   @echo "Running Go (GolangCI)... 🧹 in module [{{mod}}] 📦"
-  @echo "📦 Currently in {{mod}} module, path=`pwd`/{{mod}}"
-  @cd ./{{mod}} && nix-shell -p golangci-lint --run "golangci-lint run --config ../.golangci.yml {{args}}"
-  @echo "📄 Checking now the examples project ..."
-  @cd ./{{mod}}/examples/go && nix-shell -p golangci-lint --run "golangci-lint run --config ../../../.golangci.yml {{args}}"
+  @nix develop .# --command bash -c "cd {{mod}} && golangci-lint run --config ../.golangci.yml --verbose {{args}}"
 
 # Recipe to run GolangCI Lint in tests module 🧹
 linttests mod *args: (reloadtest mod)
   @echo "Running Go (GolangCI)... 🧹 in module [{{mod}}/tests] 🧪"
-  @echo "📦 Currently in {{mod}}/tests module, path=`pwd`/{{mod}}/tests"
-  @cd ./{{mod}}/tests && nix-shell -p golangci-lint --run "golangci-lint run --config ../../.golangci.yml {{args}}"
+  @nix develop .# --command bash -c "cd {{mod}}/tests && golangci-lint run --config ../../.golangci.yml --verbose {{args}}"
 
 # Recipe to run GolangCI Lint in examples/go module 🧹
 lintexamples mod *args: (reloadexamples mod)
   @echo "Running Go (GolangCI)... 🧹 in module [{{mod}}/examples/go] 📄"
-  @echo "📦 Currently in {{mod}}/examples/go module, path=`pwd`"
-  @cd ./{{mod}}/examples/go && nix-shell -p golangci-lint --run "golangci-lint run --config ../../../.golangci.yml {{args}}"
+  @nix develop .# --command bash -c "cd {{mod}}/examples/go && golangci-lint run --config ../../../.golangci.yml --verbose {{args}}"
 
 # Recipe to run GolangCI Lint in all modules 🧹
 lintall mod: (lintmod mod) (linttests mod) (lintexamples mod)

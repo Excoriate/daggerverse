@@ -4,12 +4,17 @@
     flake-parts.url = "github:hercules-ci/flake-parts";
     treefmt-nix.url = "github:numtide/treefmt-nix";
     rust-overlay.url = "github:oxalica/rust-overlay";
+
+    # Add this for direnv support
+    flake-root.url = "github:srid/flake-root";
+    nix-direnv.url = "github:nix-community/nix-direnv";
   };
 
   outputs = inputs@{ flake-parts, nixpkgs, rust-overlay, ... }:
     flake-parts.lib.mkFlake { inherit inputs; } {
       imports = [
         inputs.treefmt-nix.flakeModule
+        inputs.flake-root.flakeModule
       ];
 
       systems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" "x86_64-windows" ];
@@ -30,6 +35,9 @@
             shell = "${pkgs.bash}/bin/bash --noprofile --norc";
 
             packages = with pkgs; [
+              # Direnv
+              nix-direnv
+
               # Rust
               rust-bin.stable.latest.default
               cargo
