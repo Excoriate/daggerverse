@@ -65,6 +65,13 @@ repos:
         stages: [pre-commit]
         args: ["--strict", "-c", ".yamllint.yml"]
 
+  - repo: https://github.com/google/yamlfmt
+    rev: v0.10.0
+    hooks:
+      - id: yamlfmt
+        language: system
+        args: ["-config", ".yamlfmt.yml"]
+
 # Global settings
 minimum_pre_commit_version: "3.0.0"
 ci:

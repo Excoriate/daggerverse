@@ -1,0 +1,22 @@
+# Yamlfmt configuration aligned with yamllint best practices
+formatter:
+  type: basic
+  indent: 2
+  line_ending: lf
+  retain_line_breaks: false
+  retain_line_breaks_single: true
+  max_line_length: 80
+  trim_trailing_whitespace: true
+  eof_newline: true
+
+# Global configuration
+line_ending: lf
+continue_on_error: false
+include:
+  - "**/*.yml"
+  - "**/*.yaml"
+exclude:
+  - ".git/**"
+  - ".github/**"
+  - "target/**"
+  - "dist/**"

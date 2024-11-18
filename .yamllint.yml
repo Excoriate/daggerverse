@@ -3,11 +3,15 @@ extends: default
 rules:
   indentation:
     spaces: 2
+    indent-sequences: true
   line-length:
     max: 80
     level: warning
+    allow-non-breakable-words: true
   trailing-spaces:
     level: warning
   braces:
     max-spaces-inside: 1
     level: warning
+  new-lines:
+    type: unix
