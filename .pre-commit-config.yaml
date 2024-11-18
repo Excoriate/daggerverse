@@ -47,15 +47,14 @@ repos:
         name: Lint Go code
         entry: golangci-lint run
         language: system
-        pass_filenames: true
-        types: [go]
+        pass_filenames: false
         stages: [pre-commit]
-        args: [
-          "--fast",
-          "--max-same-issues=0",
-          "--max-issues-per-linter=0",
-          "--modules-download-mode=readonly"
-        ]
+        args:
+          - "--config=.golangci.yml"
+          - "--fast"
+          - "--max-same-issues=0"
+          - "--max-issues-per-linter=0"
+          - "--modules-download-mode=readonly"
 
       - id: yamllint
         name: Lint YAML files
@@ -64,7 +63,7 @@ repos:
         pass_filenames: true
         types: [yaml]
         stages: [pre-commit]
-        args: ["--strict"]
+        args: ["--strict", "-c", ".yamllint.yml"]
 
 # Global settings
 minimum_pre_commit_version: "3.0.0"

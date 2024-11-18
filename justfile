@@ -27,8 +27,8 @@ clean-all:
   @nix-collect-garbage -d
 
 fmt:
-  @echo "Formatting code 🔍 ..."
-  @treefmt
+    @echo "Formatting code 🔍 ..."
+    @nix develop --command treefmt
 
 # Recipe to run pre-commit hooks 🔍
 run-hooks:
