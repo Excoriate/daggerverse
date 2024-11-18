@@ -4,8 +4,6 @@
     flake-parts.url = "github:hercules-ci/flake-parts";
     treefmt-nix.url = "github:numtide/treefmt-nix";
     rust-overlay.url = "github:oxalica/rust-overlay";
-
-    # Add this for direnv support
     flake-root.url = "github:srid/flake-root";
     nix-direnv.url = "github:nix-community/nix-direnv";
     pre-commit-hooks.url = "github:cachix/pre-commit-hooks.nix";
