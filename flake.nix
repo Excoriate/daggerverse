@@ -14,7 +14,6 @@
 
       systems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" "x86_64-windows" ];
 
-
       perSystem = { config, self', inputs', pkgs, system, ... }:
         let
           overlays = [
@@ -27,7 +26,8 @@
         in
         {
           devShells.default = pkgs.mkShell {
-            name = "dev-environment-daggerverse";
+            name = "dev-environment";
+            shell = "${pkgs.bash}/bin/bash --noprofile --norc";
 
             packages = with pkgs; [
               # Rust
@@ -53,11 +53,13 @@
               yq-go
               moreutils
               yamllint
+              yamlfmt
             ];
 
             shellHook = ''
               export RUST_SRC_PATH=${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}
               export GOROOT=${pkgs.go}/share/go
+
               echo "🌟 Welcome to the Daggerverse development environment! 🚀"
               echo "Happy coding! 💻"
             '';
@@ -72,7 +74,6 @@
               rustfmt.enable = true;
               prettier = {
                 enable = true;
-                # Configure Prettier to format JSON files
                 include = [ "**/*.{js,jsx,ts,tsx,json}" ];
               };
               gofmt.enable = true;
@@ -89,6 +90,11 @@
               yamllint = {
                 enable = true;
                 command = "${pkgs.yamllint}/bin/yamllint -c .yamllint.yml";
+                include = [ "**/*.yaml" "**/*.yml" ];
+              };
+              yamlfmt = {
+                enable = true;
+                command = "${pkgs.yamlfmt}/bin/yamlfmt -w";
                 include = [ "**/*.yaml" "**/*.yml" ];
               };
             };
