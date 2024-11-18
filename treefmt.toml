@@ -2,21 +2,23 @@ exclude_patterns = ["*/internal/*", "dagger.gen.go"]
 
 check_before_format = true
 
-[formatter.alejandra]
-command = "alejandra"
-include = ["**/*.nix"]
+[formatter]
+# Specify formatters with their includes
+[formatter.gofmt]
+command = "gofmt"
+includes = ["*.go"]
 
 [formatter.rustfmt]
 command = "rustfmt"
-include = ["**/*.rs"]
+includes = ["*.rs"]
+
+[formatter.alejandra]
+command = "alejandra"
+includes = ["*.nix"]
 
 [formatter.prettier]
 command = "prettier --write"
 include = ["**/*.{js,jsx,ts,tsx,json,md,markdown,yaml,yml}"]
-
-[formatter.gofmt]
-command = "gofmt -w"
-include = ["**/*.go"]
 
 [formatter.terraform-fmt]
 command = "terraform fmt -"

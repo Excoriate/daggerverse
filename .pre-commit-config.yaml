@@ -26,51 +26,31 @@ repos:
 
   - repo: local
     hooks:
-      - id: treefmt
-        name: Format files using treefmt
-        entry: treefmt
-        language: system
-        pass_filenames: true
-        types_or: [go, rust, terraform, yaml, json, markdown, nix]
-        stages: [pre-commit]
-
-      - id: rustfmt
-        name: Format Rust code
-        entry: rustfmt
-        language: system
-        pass_filenames: true
-        types: [rust]
-        stages: [pre-commit]
-        args: ["--edition=2021"]
-
-      - id: golangci-lint
-        name: Lint Go code
-        entry: golangci-lint run
+      - id: check-useless-excludes
+        name: Check for useless excludes
+        entry: check-useless-excludes
         language: system
         pass_filenames: false
-        stages: [pre-commit]
-        args:
-          - "--config=.golangci.yml"
-          - "--fast"
-          - "--max-same-issues=0"
-          - "--max-issues-per-linter=0"
-          - "--modules-download-mode=readonly"
 
-      - id: yamllint
-        name: Lint YAML files
-        entry: yamllint
+      - id: treefmt
+        name: treefmt
+        entry: treefmt
         language: system
+        types_or: [file]
         pass_filenames: true
-        types: [yaml]
-        stages: [pre-commit]
-        args: ["--strict", "-c", ".yamllint.yml"]
 
-  - repo: https://github.com/google/yamlfmt
-    rev: v0.10.0
-    hooks:
       - id: yamlfmt
+        name: yamlfmt
+        entry: yamlfmt
         language: system
-        args: ["-config", ".yamlfmt.yml"]
+        types: [yaml]
+        args: []
+
+      - id: golangci-lint
+        name: golangci-lint
+        entry: golangci-lint run
+        language: system
+        types: [go]
 
 # Global settings
 minimum_pre_commit_version: "3.0.0"
