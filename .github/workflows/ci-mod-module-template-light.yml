@@ -1,4 +1,4 @@
-name: CI🧹module-template-light📦
+name: CI module-template-light 🧹
 
 on:
   push:
@@ -64,46 +64,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  dagger-list-functions:
-    needs: dagger-build
-    name: 📞 Call Functions
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-
-      - name: 📦 List Main Module Functions
-        uses: dagger/dagger-for-github@6b6e9832f7dffd6cd9cdd989a577bb2cbfc45432 # v6.13.0
-        with:
-          verb: functions
-          module: ${{ env.MODULE }}
-          version: ${{ env.DAGGER_VERSION }}
-          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: 🧪 List Test Module Functions
-        uses: dagger/dagger-for-github@6b6e9832f7dffd6cd9cdd989a577bb2cbfc45432 # v6.13.0
-        with:
-          verb: functions
-          module: ${{ env.MODULE }}/tests
-          version: ${{ env.DAGGER_VERSION }}
-          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: 📄 List Example Module Functions
-        uses: dagger/dagger-for-github@6b6e9832f7dffd6cd9cdd989a577bb2cbfc45432 # v6.13.0
-        with:
-          verb: functions
-          module: ${{ env.MODULE }}/examples/go
-          version: ${{ env.DAGGER_VERSION }}
-          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   main-module-ci:
     needs: dagger-build
     name: 🔬 Main Module Continuous Integration
@@ -113,6 +73,26 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
+
+      - name: 📦 Dagger Develop Main Module
+        uses: dagger/dagger-for-github@6b6e9832f7dffd6cd9cdd989a577bb2cbfc45432 # v6.13.0
+        with:
+          verb: develop
+          module: ${{ env.MODULE }}
+          version: ${{ env.DAGGER_VERSION }}
+          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📞 List Main Module Functions
+        uses: dagger/dagger-for-github@6b6e9832f7dffd6cd9cdd989a577bb2cbfc45432 # v6.13.0
+        with:
+          verb: functions
+          module: ${{ env.MODULE }}
+          version: ${{ env.DAGGER_VERSION }}
+          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🔧 Install Linter
         run: |
