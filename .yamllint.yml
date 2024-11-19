@@ -31,7 +31,6 @@ rules:
     max: 1
   empty-values:
     level: error
-    forbid: all
   hyphens:
     level: error
     max-spaces-after: 1
@@ -67,4 +66,5 @@ ignore: |
   devenv/
   **/.goreleaser.yaml
   **/.github/workflows/*.yml
+  tests/testdata/  # Ensure this is included if needed
 yaml-files: ['*.yaml', '*.yml', .yamllint.yml]

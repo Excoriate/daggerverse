@@ -1,18 +1,27 @@
 ---
-# Yamlfmt configuration aligned with yamllint best practices
+# Comprehensive yamlfmt configuration
 formatter:
   type: basic
   indent: 2
   line_ending: lf
+  include_document_start: true  # Added to include '---' at the document start
   retain_line_breaks: true
   retain_line_breaks_single: true
   max_line_length: 120
   trim_trailing_whitespace: true
   eof_newline: true
+  pad_line_comments: 2
+  disallow_anchors: false
+
 # Global configuration
 line_ending: lf
 continue_on_error: false
-include: ['**/*.yml', '**/*.yaml']
+doublestar: true
+
+# Path handling
+include:
+  - '**/*.yml'
+  - '**/*.yaml'
 exclude:
   - .git/**
   - .github/ISSUE_TEMPLATE/**
@@ -24,3 +33,8 @@ exclude:
   - .terraform/**
   - .terragrunt-cache/**
   - devenv/**
+  - '**/.goreleaser.yaml'
+  - '.github/workflows/*.yml'
+  - 'tests/testdata/**'  # Ensure this is excluded if needed
+
+gitignore_excludes: true
