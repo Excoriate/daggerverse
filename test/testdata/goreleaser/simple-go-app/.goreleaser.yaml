@@ -1,19 +1,12 @@
+---
 project_name: simple-go-app
 before:
-  hooks:
-    - go mod tidy
+  hooks: [go mod tidy]
 builds:
-  - env:
-      - CGO_ENABLED=0
+  - env: [CGO_ENABLED=0]
     main: ./test/goreleaser/simple-go-app/main.go
-    goos:
-      - linux
-      - windows
-      - darwin
-    goarch:
-      - amd64
-      - arm
-      - arm64
+    goos: [linux, windows, darwin]
+    goarch: [amd64, arm, arm64]
 release:
   prerelease: auto
 sboms:
@@ -26,12 +19,9 @@ archives:
 checksum:
   name_template: checksums.txt
 snapshot:
-  name_template: "{{ .Tag }}-snapshot"
+  name_template: '{{ .Tag }}-snapshot'
 changelog:
   skip: true
   sort: asc
   filters:
-    exclude:
-      - "^docs:"
-      - "^test:"
-      - "^*.md:"
+    exclude: ['^docs:', '^test:', '^*.md:']

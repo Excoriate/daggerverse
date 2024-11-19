@@ -1,10 +1,10 @@
+---
 # Cache pre-commit hooks for better performance
 default_language_version:
   python: python3
   rust: stable
-  golang: "1.21"
+  golang: '1.21'
   node: system
-
 # Simplified exclude pattern
 exclude: >-
   (?x)^(
@@ -17,10 +17,8 @@ exclude: >-
     \.terragrunt-cache/|
     devenv/|
     node_modules/|
-    vendor/|
-    .*/testdata/.*
+    vendor/
   )
-
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
@@ -33,22 +31,25 @@ repos:
       - id: check-merge-conflict
       - id: detect-aws-credentials
       - id: check-json
-
   - repo: https://github.com/antonbabenko/pre-commit-terraform
     rev: v1.96.2
     hooks:
       - id: terraform_fmt
       - id: terragrunt_fmt
-
+  - repo: https://github.com/lyz-code/yamlfix
+    rev: 1.17.0
+    hooks:
+      - id: yamlfix
+        args: [-c, .yamllint.yml]
+        types: [yaml]
   - repo: https://github.com/adrienverge/yamllint
     rev: v1.35.1
     hooks:
       - id: yamllint
         args: [-c=.yamllint.yml]
-
 # Global settings
-minimum_pre_commit_version: "3.0.0"
+minimum_pre_commit_version: 3.0.0
 ci:
-  autofix_commit_msg: "style: auto-format pre-commit hooks"
-  autoupdate_commit_msg: "chore: pre-commit autoupdate"
+  autofix_commit_msg: 'style: auto-format pre-commit hooks'
+  autoupdate_commit_msg: 'chore: pre-commit autoupdate'
   skip: [treefmt, rustfmt]

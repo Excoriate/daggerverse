@@ -1,3 +1,4 @@
+---
 name: 🎯 Publish Specific Dagger Module Version
 on:
   workflow_dispatch:
@@ -45,17 +46,14 @@ jobs:
           module="${{ github.event.inputs.module }}"
           version="${{ github.event.inputs.version }}"
           normalized_module=$(echo "$module" | tr '[:upper:]' '[:lower:]' | tr -d ' ')
-
           if [[ ! -d "$normalized_module" ]]; then
             echo "::error::❌ Module directory not found: $normalized_module"
             exit 1
           fi
-
           if [[ ! $version =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "::error::❌ Invalid version format: $version. Expected format: vX.Y.Z"
             exit 1
           fi
-
           tag="${normalized_module}/${version}"
           echo "module=$normalized_module" >> $GITHUB_OUTPUT
           echo "version=$version" >> $GITHUB_OUTPUT
@@ -72,7 +70,6 @@ jobs:
           module="${{ steps.validate-inputs.outputs.module }}"
           version="${{ steps.validate-inputs.outputs.version }}"
           tag="${{ steps.validate-inputs.outputs.tag }}"
-
           echo "📢 Publishing module: $module with version $version"
           echo "🏷️ Using tag: $tag"
 

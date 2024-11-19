@@ -1,3 +1,4 @@
+---
 run:
   tests: false
   modules-download-mode: readonly
@@ -62,12 +63,7 @@ linters:
     - govet
     - revive
     - depguard
-  disable:
-    - gci
-    - gofumpt
-    - exhaustruct
-    - mnd
-    - recvcheck
+  disable: [gci, gofumpt, exhaustruct, mnd, recvcheck]
   presets:
     - bugs
     - comment
@@ -86,66 +82,46 @@ issues:
   max-issues-per-linter: 0
   max-same-issues: 0
   exclude-dirs-use-default: true
-  exclude:
-    - abcdef
+  exclude: [abcdef]
   exclude-rules:
     # Disable goimports linter for specific files
-    - linters:
-        - goimports
+    - linters: [goimports]
       text: File is not `goimports`-ed
       path: ^.*config\.go$
-    - linters:
-        - goimports
+    - linters: [goimports]
       text: File is not `goimports`-ed
       path: ^.*main\.go$
-    - linters:
-        - goimports
+    - linters: [goimports]
       text: File is not `goimports`-ed
       path: ^.*apis\.go$
     # Disable gofmt linter for specific files
-    - linters:
-        - gofmt
+    - linters: [gofmt]
       text: File is not `gofmt`-ed with `-s`
       path: ^.*config\.go$
-    - linters:
-        - gofmt
+    - linters: [gofmt]
       text: File is not `gofmt`-ed with `-s`
       path: ^.*main\.go$
-    - linters:
-        - gofmt
+    - linters: [gofmt]
       text: File is not `gofmt`-ed with `-s`
       path: ^.*apis\.go$
     - path: _test\.go
-      linters:
-        - gocyclo
-        - errcheck
-        - dupl
-        - gosec
+      linters: [gocyclo, errcheck, dupl, gosec]
     - path: main.go
-      linters:
-        - unused
-        - goconst
-        - gosec
+      linters: [unused, goconst, gosec]
     - path-except: _test\.go
-      linters:
-        - forbidigo
+      linters: [forbidigo]
     - path: internal/hmac/
       text: weak cryptographic primitive
-      linters:
-        - gosec
-    - linters:
-        - staticcheck
-      text: "SA9003:"
-    - linters:
-        - lll
-      source: "^//go:generate "
-    - linters:
-        - revive
+      linters: [gosec]
+    - linters: [staticcheck]
+      text: 'SA9003:'
+    - linters: [lll]
+      source: '^//go:generate '
+    - linters: [revive]
       text: don't use underscores in Go names
       path: main\.go$
-    - linters:
-        - stylecheck
-      text: "ST1003: should not use underscores in Go names"
+    - linters: [stylecheck]
+      text: 'ST1003: should not use underscores in Go names'
       path: main\.go$
   exclude-use-default: false
   exclude-case-sensitive: false
@@ -157,9 +133,7 @@ issues:
     - ^.devenv/
     - ^.direnv/
     - ^.aider.tags.cache.v3
-  exclude-files:
-    - ^querybuilder/.+\.go
-    - dagger.gen.go
+  exclude-files: [^querybuilder/.+\.go, dagger.gen.go]
 output:
   print-issued-lines: true
   print-linter-name: true

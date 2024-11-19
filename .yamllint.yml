@@ -1,43 +1,44 @@
+---
 extends: default
-
 rules:
   braces:
-    level: warning
+    level: error
     max-spaces-inside: 1
   brackets:
-    level: warning
+    level: error
     max-spaces-inside: 1
   colons:
-    level: warning
+    level: error
     max-spaces-after: 1
     max-spaces-before: 0
   commas:
-    level: warning
+    level: error
     max-spaces-after: 1
     max-spaces-before: 0
   comments:
-    level: warning
+    level: error
     min-spaces-from-content: 1
   comments-indentation:
-    level: warning
+    level: error
   document-end:
-    level: warning
+    level: error
     present: false
   document-start:
-    level: warning
+    level: error
     present: true
   empty-lines:
-    level: warning
+    level: error
     max: 1
   empty-values:
-    level: warning
+    level: error
   hyphens:
-    level: warning
+    level: error
     max-spaces-after: 1
   indentation:
     spaces: 2
     indent-sequences: true
     check-multi-line-strings: false
+    level: error
   key-duplicates: enable
   key-ordering: disable
   line-length:
@@ -50,9 +51,8 @@ rules:
     type: unix
   trailing-spaces: enable
   truthy:
-    level: warning
+    level: error
     check-keys: false
-
 ignore: |
   .git/
   .github/ISSUE_TEMPLATE/
@@ -60,17 +60,8 @@ ignore: |
   dist/
   vendor/
   target/
-  **/*.gotmpl
-  **/*.tpl
-  **/*.tmpl
   .direnv/
   .terraform/
   .terragrunt-cache/
   devenv/
-  **/testdata/**/*.yaml
-  **/testdata/**/*.yml
-
-yaml-files:
-  - "*.yaml"
-  - "*.yml"
-  - ".yamllint.yml"
+yaml-files: ['*.yaml', '*.yml', .yamllint.yml]

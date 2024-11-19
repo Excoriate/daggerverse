@@ -1,3 +1,4 @@
+---
 name: 🏗️ CI CodeGen Daggy (Light)
 on:
   workflow_dispatch:
@@ -7,11 +8,9 @@ on:
         required: false
         default: 0.14.0
   schedule:
-    - cron: 0 8,20 * * * # Runs at 8:00 AM and 8:00 PM UTC
+    - cron: 0 8,20 * * *  # Runs at 8:00 AM and 8:00 PM UTC
   push:
-    paths:
-      - .daggerx/**
-      - module-template-light/**
+    paths: [.daggerx/**, module-template-light/**]
 env:
   GO_VERSION: ~1.22
   DAG_VERSION: ${{ github.event.inputs.dag_version || '0.14.0' }}
@@ -62,7 +61,6 @@ jobs:
         with:
           name: generated-module
           path: ${{ env.MODULE_NAME }}
-
   ci-main:
     name: 🧪 CI Main Module
     needs: codegen
@@ -98,7 +96,6 @@ jobs:
           golangci-lint run --config=../.golangci.yml --verbose
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   ci-test:
     name: 🧪 CI Test Module
     needs: codegen
@@ -139,7 +136,6 @@ jobs:
           cd ${{ env.MODULE_NAME }}/tests
           dagger functions
           dagger call test-all
-
   ci-examples:
     name: 🧪 CI Examples Module
     needs: codegen
@@ -179,7 +175,6 @@ jobs:
         run: |
           cd ${{ env.MODULE_NAME }}/examples/go
           dagger call all-recipes
-
   notify:
     name: 📢 Notification
     needs: [ci-main, ci-test, ci-examples]
@@ -187,8 +182,11 @@ jobs:
     if: always()
     steps:
       - name: 🎉 CI Success Notification
-        if: needs.ci-main.result == 'success' && needs.ci-test.result == 'success' && needs.ci-examples.result == 'success'
+        if: needs.ci-main.result == 'success' && needs.ci-test.result == 'success'
+          && needs.ci-examples.result == 'success'
         run: echo "::notice::🎊 CI for ${{ env.MODULE_NAME }} completed successfully!"
       - name: ❌ CI Failure Notification
-        if: needs.ci-main.result == 'failure' || needs.ci-test.result == 'failure' || needs.ci-examples.result == 'failure'
-        run: echo "::error::💥 CI for ${{ env.MODULE_NAME }} failed. Please check the logs for details."
+        if: needs.ci-main.result == 'failure' || needs.ci-test.result == 'failure'
+          || needs.ci-examples.result == 'failure'
+        run: echo "::error::💥 CI for ${{ env.MODULE_NAME }} failed. Please check the
+          logs for details."

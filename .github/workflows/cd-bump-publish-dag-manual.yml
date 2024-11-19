@@ -1,3 +1,4 @@
+---
 name: 🚀 CD Bump and Publish Dagger Module(s)
 on:
   workflow_dispatch:
@@ -11,11 +12,7 @@ on:
         required: true
         default: auto
         type: choice
-        options:
-          - auto
-          - patch
-          - minor
-          - major
+        options: [auto, patch, minor, major]
 permissions:
   contents: write
   pull-requests: write
@@ -75,7 +72,6 @@ jobs:
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-
           determine_bump_type() {
             local current_version=$1
             if [[ "${{ github.event.inputs.bump }}" != "auto" ]]; then
@@ -84,24 +80,18 @@ jobs:
               echo "minor"  # Default to 'minor' if auto is selected
             fi
           }
-
           for module in $TARGET_MODULES; do
             echo "🔧 Processing module: $module"
-
             latest_tag=$(git describe --tags --abbrev=0 --match "${module}/*" 2>/dev/null || echo "${module}/v0.0.0")
             current_version=$(echo $latest_tag | sed "s|${module}/v||")
             echo "📌 Current version: $current_version"
-
             bump_type=$(determine_bump_type "$current_version")
             echo "📈 Bump type: $bump_type"
-
             new_version="v$(semver bump $bump_type "v$current_version")"
             new_tag="${module}/$new_version"
-
             git tag -a "$new_tag" -m "Bump $module to $new_version"
             git push https://${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git "$new_tag"
             echo "🏷️ New version bumped to $new_version and tagged as $new_tag for $module"
-
             echo "🚀 Publishing $module to Daggerverse"
             git checkout "refs/tags/$new_tag"
 
@@ -110,7 +100,6 @@ jobs:
 
             # Stash any changes
             git stash --include-untracked
-
             if dagger publish --force -m $module github.com/Excoriate/daggerverse/${module}@${new_version#v}; then
               echo "✅ Successfully published $module version $new_version to Daggerverse"
             else
@@ -120,7 +109,6 @@ jobs:
 
             # Pop stashed changes if any
             git stash pop || true
-
             git checkout -
           done
       - name: 🎉 Publish success notification

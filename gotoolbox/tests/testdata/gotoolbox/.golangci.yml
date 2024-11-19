@@ -1,3 +1,4 @@
+---
 run:
   # Timeout for golangci-lint execution.
   # Default is 1 minute.
@@ -12,11 +13,11 @@ run:
 # List of linters to use.
 linters:
   enable:
-    - govet # Reports suspicious constructs, e.g., Printf calls whose arguments do not align with the format string.
-    - staticcheck # A comprehensive linter for Go, covering a lot of different checks.
-    - errcheck # Checks for unchecked errors in your code.
-    - gosimple # A linter for Go, detecting code that could be rewritten in a simpler way.
-    - unused # Checks for unused global variables, functions, constants, etc.
+    - govet  # Reports suspicious constructs, e.g., Printf calls whose arguments do not align with the format string.
+    - staticcheck  # A comprehensive linter for Go, covering a lot of different checks.
+    - errcheck  # Checks for unchecked errors in your code.
+    - gosimple  # A linter for Go, detecting code that could be rewritten in a simpler way.
+    - unused  # Checks for unused global variables, functions, constants, etc.
 # Configuration specific to individual linters.
 linters-settings:
   govet:
@@ -35,9 +36,9 @@ issues:
 # This is helpful to avoid certain linting checks in generated files or external dependencies.
 exclude-use-default: true
 exclude:
-  - error return value not checked.*[=(] # Common error checking exclusion for specific cases.
+  - error return value not checked.*[=(]  # Common error checking exclusion for specific cases.
 # Output settings
 output:
-  format: colored-line-number # Use colored-line-number format for readability.
-  print-issued-lines: true # Print the line of code that caused an issue.
-  print-linter-name: true # Include the name of the linter that identified the issue.
+  format: colored-line-number  # Use colored-line-number format for readability.
+  print-issued-lines: true  # Print the line of code that caused an issue.
+  print-linter-name: true  # Include the name of the linter that identified the issue.

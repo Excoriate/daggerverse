@@ -1,9 +1,9 @@
+---
 name: 🚀 CD Publish Dagger Module(s) latest versions
 on:
   workflow_dispatch:
   push:
-    tags:
-      - "*/v*.*.*"
+    tags: ['*/v*.*.*']
 env:
   GO_VERSION: ~1.22
   DAG_VERSION: 0.14.0
@@ -45,7 +45,6 @@ jobs:
               all_modules+=("$module_name")
             fi
           done < <(find . -maxdepth 1 -type d -print0)
-
           modules_to_publish=()
           if [[ "${{ github.event_name }}" == "push" ]]; then
             tag="${{ github.ref_name }}"
@@ -65,7 +64,6 @@ jobs:
               fi
             done
           fi
-
           json_modules=$(printf '%s\n' "${modules_to_publish[@]}" | jq -R . | jq -sc)
           echo "modules_to_publish=$json_modules" >> $GITHUB_OUTPUT
           echo "🔢 Total modules to publish: $(echo $json_modules | jq length)"
@@ -80,9 +78,7 @@ jobs:
           echo "$MODULES" | jq -r '.[]' | while read -r module_info; do
             module_name=$(echo "$module_info" | cut -d':' -f1)
             version=$(echo "$module_info" | cut -d':' -f2)
-
             echo "📢 Publishing module: $module_name with version $version"
-
             git fetch --all --tags --force
             git checkout "refs/tags/${module_name}/${version}"
 
@@ -91,7 +87,6 @@ jobs:
 
             # Stash any changes
             git stash --include-untracked
-
             if dagger publish --force -m $module_name github.com/Excoriate/daggerverse/${module_name}@${version#v}; then
               echo "✅ Successfully published $module_name version $version"
             else
@@ -101,7 +96,6 @@ jobs:
 
             # Pop stashed changes if any
             git stash pop || true
-
             git checkout -
           done
       - name: 🎉 Publish success notification

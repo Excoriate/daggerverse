@@ -30,22 +30,6 @@ fmt:
     @echo "Formatting code 🔍 ..."
     @nix develop --command treefmt
 
-# Recipe to format YAML files recursively 🔍
-fmtyaml:
-    #!/usr/bin/env bash
-    echo "Formatting YAML files recursively 🔍 ..."
-    find . -type f \( -name "*.yml" -o -name "*.yaml" \) \
-      -not -path "./node_modules/*" \
-      -not -path "./dist/*" \
-      -not -path "./vendor/*" \
-      -not -path "./target/*" \
-      -not -path "./.direnv/*" \
-      -not -path "./.terraform/*" \
-      -not -path "./.terragrunt-cache/*" \
-      -not -path "./devenv/*" \
-      -exec yamlfmt -conf .yamlfmt.yml {} \;
-    echo "✅ YAML formatting complete"
-
 # Recipe to run pre-commit hooks 🔍
 run-hooks:
   @echo "Running pre-commit hooks 🔍 ..."

@@ -1,18 +1,17 @@
+---
 name: 🏷️ CD Bump Dagger Module Versions on Change
 on:
   workflow_dispatch:
   pull_request:
     types: [closed]
-    branches:
-      - main
-      - master
+    branches: [main, master]
 permissions:
   contents: write
   pull-requests: write
 jobs:
   detect-modules:
-    if: github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged == true && (github.base_ref == 'main'
-      || github.base_ref == 'master'))
+    if: github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged
+      == true && (github.base_ref == 'main' || github.base_ref == 'master'))
     runs-on: ubuntu-latest
     outputs:
       changed_modules: ${{ steps.set-modules.outputs.changed_modules }}
@@ -35,7 +34,6 @@ jobs:
               modules+=("${dir#./}")
             fi
           done < <(find . -maxdepth 1 -type d -print0)
-
           all_modules=$(printf '%s\n' "${modules[@]}" | jq -R . | jq -sc)
           echo "all_modules=$all_modules" >> $GITHUB_OUTPUT
           echo "📦 All identified modules: $all_modules"
@@ -48,7 +46,6 @@ jobs:
               modules+=("${dir#./}")
             fi
           done < <(find . -maxdepth 1 -type d -print0)
-
           changed_modules=$(printf '%s\n' "${modules[@]}" | jq -R . | jq -sc)
           echo "changed_modules=$changed_modules" >> $GITHUB_OUTPUT
           echo "🔄 Modules with changes: $changed_modules"
@@ -79,18 +76,15 @@ jobs:
             echo "::notice::🚫 No changes detected in any modules. Skipping version bump."
             exit 0
           fi
-
           echo "$changed_modules" | jq -r '.[]' | while read -r module_path; do
             if [ -z "$module_path" ]; then
               echo "::warning::⚠️ Empty module path detected. Skipping."
               continue
             fi
-
             latest_tag=$(git describe --tags --abbrev=0 --match "${module_path}/*" 2>/dev/null || echo "${module_path}/v0.0.0")
             current_version=$(echo $latest_tag | sed "s|${module_path}/v||")
             new_version="v$(semver bump ${bump} "v$current_version")"
             new_tag="${module_path}/$new_version"
-
             if git rev-parse "$new_tag" >/dev/null 2>&1; then
                 echo "::warning::⚠️ Tag $new_tag already exists, skipping tag creation"
             else

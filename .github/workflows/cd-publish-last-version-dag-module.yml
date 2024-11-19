@@ -1,3 +1,4 @@
+---
 name: 🚀 Publish Latest Version of Specified Dagger Module
 on:
   workflow_dispatch:
@@ -44,13 +45,11 @@ jobs:
             echo "::error::❌ Invalid module: $module. Module directory not found or missing dagger.json"
             exit 1
           fi
-
           latest_tag=$(git describe --tags --abbrev=0 --match "${module}/*" 2>/dev/null || echo "")
           if [[ ! $latest_tag =~ ^${module}/v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "::error::❌ No valid version tag found for module: $module"
             exit 1
           fi
-
           version=${latest_tag#${module}/}
           echo "module=$module" >> $GITHUB_OUTPUT
           echo "version=$version" >> $GITHUB_OUTPUT
@@ -63,9 +62,7 @@ jobs:
         run: |
           module="${{ steps.identify-module.outputs.module }}"
           version="${{ steps.identify-module.outputs.version }}"
-
           echo "📢 Publishing module: $module with version $version"
-
           git fetch --all --tags --force
           git checkout "refs/tags/${module}/${version}"
 
@@ -74,7 +71,6 @@ jobs:
 
           # Stash any changes
           git stash --include-untracked
-
           if dagger publish --force -m $module github.com/Excoriate/daggerverse/${module}@${version#v}; then
             echo "✅ Successfully published $module version $version"
           else
@@ -84,7 +80,6 @@ jobs:
 
           # Pop stashed changes if any
           git stash pop || true
-
           git checkout -
       - name: 🎉 Publish success notification
         if: success()

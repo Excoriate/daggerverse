@@ -1,3 +1,4 @@
+---
 contents:
   repositories:
     - https://dl-cdn.alpinelinux.org/alpine/v3.18/main
@@ -23,9 +24,7 @@ accounts:
   run-as: tflinter
 entrypoint:
   command: /bin/bash -l
-archs:
-  - x86_64
-  - aarch64
+archs: [x86_64, aarch64]
 environment:
   PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/tflinter/bin:/home/tflinter/.local/bin
   TZ: UTC
@@ -65,7 +64,8 @@ paths:
     permissions: 0o755
 annotations:
   title: Base Alpine for TFLinter
-  description: A minimal Alpine base image built with APKO for TFLinter, optimized for security and performance.
+  description: A minimal Alpine base image built with APKO for TFLinter, optimized
+    for security and performance.
   version: 1.1.0
   vendor: github.com/Excoriate - Alex Torres
   licenses: Apache-2.0

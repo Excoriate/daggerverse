@@ -1,3 +1,4 @@
+---
 contents:
   repositories:
     - https://dl-cdn.alpinelinux.org/alpine/v3.20/main
@@ -28,13 +29,11 @@ accounts:
 entrypoint:
   command: /bin/bash -l
 # cmd: /bin/sh -l
-archs:
-  - x86_64
-  - aarch64
+archs: [x86_64, aarch64]
 environment:
   PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/terragrunt/bin:/home/terragrunt/.local/bin
   TERRAGRUNT_PROVIDER_CACHE_DIR: /home/terragrunt/.terragrunt-cache
-  TERRAGRUNT_PROVIDER_CACHE: "1"
+  TERRAGRUNT_PROVIDER_CACHE: '1'
   TZ: UTC
   LANG: en_US.UTF-8
   LC_ALL: en_US.UTF-8

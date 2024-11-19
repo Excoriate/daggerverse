@@ -1,3 +1,4 @@
+---
 repository:
   name: daggerverse
   description: A collection of Dagger modules powered by Dagger.
@@ -21,7 +22,7 @@ labels:
     color: CC0000
     description: Something is not working fine 🐛.
   - name: feature
-    color: "#336699"
+    color: '#336699'
     description: New functionality 🚀.
   - name: Help Wanted
     new_name: help wanted 🙏
@@ -40,8 +41,7 @@ branches:
         required_conversation_resolution: true
       required_status_checks:
         strict: true
-        contexts:
-          - DCO
+        contexts: [DCO]
       enforce_admins: false
       required_linear_history: true
       restrictions:

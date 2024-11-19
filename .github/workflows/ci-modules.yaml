@@ -1,23 +1,18 @@
+---
 name: CI Modules 📦
-
 on:
   push:
-    branches:
-      - main
-      - master
+    branches: [main, master]
   pull_request:
   workflow_dispatch:
-
 permissions:
   contents: read
   pull-requests: read
   checks: write
-
 env:
-  GO_VERSION: "1.22"
-  DAGGER_VERSION: "0.14.0"
+  GO_VERSION: '1.22'
+  DAGGER_VERSION: 0.14.0
   GOLANGCI_LINT_VERSION: v1.62.0
-
 jobs:
   dagger-build:
     strategy:
@@ -36,39 +31,34 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
-
       - name: 🔧 Install Dagger CLI
         run: |
           curl -fsSL https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=${{ env.DAGGER_VERSION }} BIN_DIR=/usr/local/bin sudo -E sh
           dagger version
-
       - name: 📦 Dagger Develop Main Module
-        uses: dagger/dagger-for-github@6b6e9832f7dffd6cd9cdd989a577bb2cbfc45432 # v6.13.0
+        uses: dagger/dagger-for-github@6b6e9832f7dffd6cd9cdd989a577bb2cbfc45432  # v6.13.0
         with:
           verb: develop
           module: ${{ matrix.module }}
           version: ${{ env.DAGGER_VERSION }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: 🧪 Dagger Develop Test Module
-        uses: dagger/dagger-for-github@6b6e9832f7dffd6cd9cdd989a577bb2cbfc45432 # v6.13.0
+        uses: dagger/dagger-for-github@6b6e9832f7dffd6cd9cdd989a577bb2cbfc45432  # v6.13.0
         with:
           verb: develop
           module: ${{ matrix.module }}/tests
           version: ${{ env.DAGGER_VERSION }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: 📄 Dagger Develop Examples Module
-        uses: dagger/dagger-for-github@6b6e9832f7dffd6cd9cdd989a577bb2cbfc45432 # v6.13.0
+        uses: dagger/dagger-for-github@6b6e9832f7dffd6cd9cdd989a577bb2cbfc45432  # v6.13.0
         with:
           verb: develop
           module: ${{ matrix.module }}/examples/go
           version: ${{ env.DAGGER_VERSION }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   dagger-list-functions:
     needs: dagger-build
     strategy:
@@ -87,9 +77,8 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
-
       - name: 📦 List Main Module Functions
-        uses: dagger/dagger-for-github@6b6e9832f7dffd6cd9cdd989a577bb2cbfc45432 # v6.13.0
+        uses: dagger/dagger-for-github@6b6e9832f7dffd6cd9cdd989a577bb2cbfc45432  # v6.13.0
         with:
           verb: functions
           module: ${{ matrix.module }}
@@ -97,7 +86,6 @@ jobs:
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   run-tests:
     needs: dagger-build
     strategy:
@@ -116,9 +104,8 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
-
       - name: 💣 Run All Tests
-        uses: dagger/dagger-for-github@6b6e9832f7dffd6cd9cdd989a577bb2cbfc45432 # v6.13.0
+        uses: dagger/dagger-for-github@6b6e9832f7dffd6cd9cdd989a577bb2cbfc45432  # v6.13.0
         with:
           verb: call
           args: test-all
@@ -127,7 +114,6 @@ jobs:
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   run-recipes:
     needs: dagger-build
     strategy:
@@ -146,9 +132,8 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
-
       - name: 🥗 Run All Example Recipes
-        uses: dagger/dagger-for-github@6b6e9832f7dffd6cd9cdd989a577bb2cbfc45432 # v6.13.0
+        uses: dagger/dagger-for-github@6b6e9832f7dffd6cd9cdd989a577bb2cbfc45432  # v6.13.0
         with:
           verb: call
           args: all-recipes
@@ -157,7 +142,6 @@ jobs:
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   golangci-lint:
     needs: dagger-build
     strategy:
@@ -176,52 +160,44 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
-
       - name: 🔧 Install Dagger CLI
         run: |
           curl -fsSL https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=${{ env.DAGGER_VERSION }} BIN_DIR=/usr/local/bin sudo -E sh
           dagger version
-
       - name: 🔧 Install golangci-lint
         run: |
           curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s ${{ env.GOLANGCI_LINT_VERSION }}
           sudo mv ./bin/golangci-lint /usr/local/bin/golangci-lint
-
       - name: 🚀 Dagger Develop Main Module
         run: |
           cd ${{ matrix.module }}
           dagger develop
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: 📝 Run lint on Main Module
         run: |
           cd ${{ matrix.module }}
           golangci-lint run --config=../.golangci.yml --verbose
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: 🚀 Dagger Develop Test Module
         run: |
           cd ${{ matrix.module }}/tests
           dagger develop
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: 📝 Run lint on Test Module
         run: |
           cd ${{ matrix.module }}/tests
           golangci-lint run --config=../../.golangci.yml --verbose
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: 🚀 Dagger Develop Example Module
         run: |
           cd ${{ matrix.module }}/examples/go
           dagger develop
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: 📝 Run lint on Example Module
         run: |
           cd ${{ matrix.module }}/examples/go
