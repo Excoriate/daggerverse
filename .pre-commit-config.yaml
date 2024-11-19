@@ -46,7 +46,13 @@ repos:
     rev: v1.35.1
     hooks:
       - id: yamllint
-        args: [-c=.yamllint.yml]
+        args: [-c=.yamllint.yml, --strict]
+        exclude: >-
+          (?x)^(
+            .github/workflows/|
+            tests/testdata/|
+            .goreleaser.yaml
+          )
 # Global settings
 minimum_pre_commit_version: 3.0.0
 ci:
