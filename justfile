@@ -30,6 +30,10 @@ fmt:
     @echo "Formatting code 🔍 ..."
     @nix develop --command treefmt
 
+fmtyaml:
+  @echo "Formatting YAML files 🔍 ..."
+  @nix develop --command yamlfmt -conf .yamlfmt.yml -debug "**/*.{yml,yaml}"
+
 # Recipe to run pre-commit hooks 🔍
 run-hooks:
   @echo "Running pre-commit hooks 🔍 ..."

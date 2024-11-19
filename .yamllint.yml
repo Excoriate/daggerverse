@@ -1,20 +1,57 @@
 extends: default
 
 rules:
+  braces:
+    level: warning
+    max-spaces-inside: 1
+  brackets:
+    level: warning
+    max-spaces-inside: 1
+  colons:
+    level: warning
+    max-spaces-after: 1
+    max-spaces-before: 0
+  commas:
+    level: warning
+    max-spaces-after: 1
+    max-spaces-before: 0
+  comments:
+    level: warning
+    min-spaces-from-content: 1
+  comments-indentation:
+    level: warning
+  document-end:
+    level: warning
+    present: false
+  document-start:
+    level: warning
+    present: true
+  empty-lines:
+    level: warning
+    max: 1
+  empty-values:
+    level: warning
+  hyphens:
+    level: warning
+    max-spaces-after: 1
   indentation:
     spaces: 2
     indent-sequences: true
+    check-multi-line-strings: false
+  key-duplicates: enable
+  key-ordering: disable
   line-length:
-    max: 80
+    max: 120
     level: warning
     allow-non-breakable-words: true
-  trailing-spaces:
-    level: warning
-  braces:
-    max-spaces-inside: 1
-    level: warning
+    allow-non-breakable-inline-mappings: true
+  new-line-at-end-of-file: enable
   new-lines:
     type: unix
+  trailing-spaces: enable
+  truthy:
+    level: warning
+    check-keys: false
 
 ignore: |
   .git/
@@ -23,3 +60,16 @@ ignore: |
   dist/
   vendor/
   target/
+  **/*.gotmpl
+  **/*.tpl
+  **/*.tmpl
+  .direnv/
+  .terraform/
+  .terragrunt-cache/
+  devenv/
+
+# Disable specific rules that might be too strict
+yaml-files:
+  - "*.yaml"
+  - "*.yml"
+  - ".yamllint.yml"

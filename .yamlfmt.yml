@@ -3,9 +3,9 @@ formatter:
   type: basic
   indent: 2
   line_ending: lf
-  retain_line_breaks: false
+  retain_line_breaks: true
   retain_line_breaks_single: true
-  max_line_length: 80
+  max_line_length: 120
   trim_trailing_whitespace: true
   eof_newline: true
 
@@ -17,6 +17,12 @@ include:
   - "**/*.yaml"
 exclude:
   - ".git/**"
-  - ".github/**"
-  - "target/**"
+  - ".github/ISSUE_TEMPLATE/**"
+  - "node_modules/**"
   - "dist/**"
+  - "vendor/**"
+  - "target/**"
+  - ".direnv/**"
+  - ".terraform/**"
+  - ".terragrunt-cache/**"
+  - "devenv/**"

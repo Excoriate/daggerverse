@@ -15,7 +15,9 @@ exclude: >-
     \.git/|
     \.terraform/|
     \.terragrunt-cache/|
-    devenv/
+    devenv/|
+    node_modules/|
+    vendor/
   )
 
 repos:
@@ -24,28 +26,28 @@ repos:
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
-        exclude: ^\.pre-commit-config\.yaml$  # Exclude this file from end-of-file-fixer
       - id: check-yaml
+        args: [--allow-multiple-documents]
       - id: check-added-large-files
       - id: check-merge-conflict
-      - id: end-of-file-fixer
-      - id: trailing-whitespace
       - id: detect-aws-credentials
       - id: check-json
 
   - repo: https://github.com/antonbabenko/pre-commit-terraform
-    rev: v1.96.2  # Use the latest stable version
+    rev: v1.96.2
     hooks:
       - id: terraform_fmt
-        name: Terraform Format
-        description: Automatically format Terraform code
       - id: terragrunt_fmt
-        name: Terragrunt Format
-        description: Automatically format Terragrunt HCL files
+
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        args: [-c=.yamllint.yml]
 
 # Global settings
 minimum_pre_commit_version: "3.0.0"
 ci:
   autofix_commit_msg: "style: auto-format pre-commit hooks"
   autoupdate_commit_msg: "chore: pre-commit autoupdate"
-  skip: [treefmt, rustfmt, yamllint]
+  skip: [treefmt, rustfmt]
