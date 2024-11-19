@@ -16,8 +16,7 @@ builds:
     mod_timestamp: '{{ .CommitTimestamp }}'
     main: main.go
     flags:
-      # trims path
-[-trimpath]
+      - -trimpath
     ldflags:
       # use commit date instead of current date as main.date
       # only needed if you actually use those things in your main package, otherwise can be ignored.
