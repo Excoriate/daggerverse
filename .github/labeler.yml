@@ -21,3 +21,75 @@ source:
 ci/cd:
   - changed-files:
       - any-glob-to-any-file: ["**/.github/workflows/*", "**/.gitlab-ci.yml"]
+
+# Core changes
+core:
+- changed-files:
+  - any-glob-to-any-file: 'core/**/*'
+
+# Documentation changes
+documentation:
+- changed-files:
+  - any-glob-to-any-file: 
+    - '**/*.md'
+    - 'docs/**/*'
+    - '**/README.md'
+    - '**/CONTRIBUTING.md'
+
+# CI/CD changes
+ci:
+- changed-files:
+  - any-glob-to-any-file: '.github/**/*'
+
+# Dependencies changes
+dependencies:
+- changed-files:
+  - any-glob-to-any-file:
+    - '**/go.mod'
+    - '**/go.sum'
+    - '**/package.json'
+    - '**/package-lock.json'
+    - '**/yarn.lock'
+
+# Test changes
+tests:
+- changed-files:
+  - any-glob-to-any-file: 
+    - '**/*_test.go'
+    - '**/test/**/*'
+    - '**/tests/**/*'
+
+# Examples changes
+examples:
+- changed-files:
+  - any-glob-to-any-file: 'examples/**/*'
+
+# Breaking changes label based on commit messages
+breaking:
+- head-branch: 
+  - '^breaking/'
+  - '^major/'
+
+# Feature changes label based on branch names
+feature:
+- head-branch: 
+  - '^feature/'
+  - '^feat/'
+
+# Bug fix changes label based on branch names
+bug:
+- head-branch: 
+  - '^fix/'
+  - '^bugfix/'
+  - '^bug/'
+
+# Maintenance changes
+maintenance:
+- changed-files:
+  - any-glob-to-any-file:
+    - '.gitignore'
+    - '.editorconfig'
+    - '.golangci.yml'
+    - 'Makefile'
+    - 'Justfile'
+    - '.dockerignore'
