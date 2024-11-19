@@ -1,4 +1,4 @@
-name: Yaml Linter and Formatter
+name: YAML Lint
 
 on:
   workflow_dispatch:
@@ -12,57 +12,44 @@ permissions:
   statuses: write
 
 jobs:
-  yaml-lint-and-format:
-    name: Yaml Lint and Format
+  yaml-lint:
+    name: YAML Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Setup Go
-        uses: actions/setup-go@v5
+      - name: Lint Workflows
+        uses: ibiqlik/action-yamllint@v3
         with:
-          go-version: stable
-          cache: true
+          file_or_dir: .github/workflows/
+          config_file: .yamllint.yml
+          strict: true
+          format: github
 
-      - name: Install yamlfmt
-        run: go install github.com/google/yamlfmt/cmd/yamlfmt@latest
-
-      - name: Run yamlfmt
-        run: |
-          yamlfmt -config .yamlfmt.yml
-          if [[ -n $(git status --porcelain) ]]; then
-            echo "YAML files need formatting. Please run 'yamlfmt' locally."
-            exit 1
-          fi
-
-      - name: Lint GitHub Workflows
-        uses: karancode/yamllint-github-action@v2.1.1
+      - name: Lint GitHub Config
+        uses: ibiqlik/action-yamllint@v3
         with:
-          yamllint_config_filepath: .yamllint.yml
-          yamllint_file_or_dir: .github/workflows
-          yamllint_strict: true
-          yamllint_comment: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Lint GitHub Config Files
-        uses: karancode/yamllint-github-action@v2.1.1
-        with:
-          yamllint_config_filepath: .yamllint.yml
-          yamllint_file_or_dir: .github
-          yamllint_strict: true
-          yamllint_comment: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          file_or_dir: .github/
+          config_file: .yamllint.yml
+          strict: true
+          format: github
 
       - name: Lint Root YAML Files
-        uses: karancode/yamllint-github-action@v2.1.1
+        uses: ibiqlik/action-yamllint@v3
         with:
-          yamllint_config_filepath: .yamllint.yml
-          yamllint_file_or_dir: .
-          yamllint_strict: true
-          yamllint_comment: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          file_or_dir: .
+          config_file: .yamllint.yml
+          strict: true
+          format: github
+
+      - name: Upload Lint Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: yamllint-results
+          path: |
+            ${{ steps.yaml-lint-workflows.outputs.logfile }}
+            ${{ steps.yaml-lint-config.outputs.logfile }}
+            ${{ steps.yaml-lint-root.outputs.logfile }}
