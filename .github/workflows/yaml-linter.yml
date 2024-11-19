@@ -21,21 +21,39 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: Lint GitHub Workflows
+        id: lint-workflows
+        uses: ibiqlik/action-yamllint@v3.1.1
         with:
-          python-version: "3.x"
+          config_file: .yamllint.yml
+          file_or_dir: .github/workflows/
+          format: github
+          strict: false
 
-      - name: Install yamllint
-        run: |
-          python -m pip install --upgrade pip
-          pip install yamllint
-
-      - name: Run yamllint
-        run: |
-          yamllint -c .yamllint.yml .
-
-      - name: Run yamlfmt check
-        uses: docker://google/yamlfmt:v0.10.0
+      - name: Lint GitHub Config
+        id: lint-github
+        uses: ibiqlik/action-yamllint@v3.1.1
         with:
-          args: -lint .
+          config_file: .yamllint.yml
+          file_or_dir: .github/
+          format: github
+          strict: false
+
+      - name: Lint Root YAML Files
+        id: lint-root
+        uses: ibiqlik/action-yamllint@v3.1.1
+        with:
+          config_file: .yamllint.yml
+          file_or_dir: .
+          format: github
+          strict: false
+
+      - name: Upload Lint Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: yamllint-results
+          path: |-
+            ${{ steps.lint-workflows.outputs.logfile }}
+            ${{ steps.lint-github.outputs.logfile }}
+            ${{ steps.lint-root.outputs.logfile }}

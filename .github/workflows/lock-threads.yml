@@ -10,14 +10,12 @@ jobs:
         with:
           github-token: ${{ github.token }}
           issue-lock-comment: >
-            I'm going to lock this issue because it has been closed for _30 days_
-            ⏳. This helps our maintainers find and focus on the active issues. #magic___^_^___line
-            If you have found a problem that seems similar to this, please open a
-            new issue and complete the issue template so we can capture all the details
-            necessary to investigate further. #magic___^_^___line
+            I'm going to lock this issue because it has been closed for _30 days_ ⏳. This helps our maintainers find and focus
+            on the active issues. #magic___^_^___line If you have found a problem that seems similar to this, please open
+            a new issue and complete the issue template so we can capture all the details necessary to investigate further.
+
           issue-lock-inactive-days: "30"
           pr-lock-comment: >
-            I'm going to lock this pull request because it has been closed for _30
-            days_ ⏳. This helps our maintainers find and focus on the active contributions.
-
+            I'm going to lock this pull request because it has been closed for _30 days_ ⏳. This helps our maintainers find
+            and focus on the active contributions. #magic___^_^___line
           pr-lock-inactive-days: "30"

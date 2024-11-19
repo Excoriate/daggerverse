@@ -76,8 +76,7 @@ paths:
     permissions: 0o755
 annotations:
   title: Base Alpine for Terragrunt
-  description: A minimal Alpine base image built with APKO for Terragrunt, optimized
-    for security and performance.
+  description: A minimal Alpine base image built with APKO for Terragrunt, optimized for security and performance.
   version: 1.1.0
   vendor: github.com/Excoriate - Alex Torres
   licenses: Apache-2.0

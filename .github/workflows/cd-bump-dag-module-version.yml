@@ -11,8 +11,8 @@ permissions:
   pull-requests: write
 jobs:
   detect-modules:
-    if: github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged
-      == true && (github.base_ref == 'main' || github.base_ref == 'master'))
+    if: github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged == true && (github.base_ref == 'main'
+      || github.base_ref == 'master'))
     runs-on: ubuntu-latest
     outputs:
       changed_modules: ${{ steps.set-modules.outputs.changed_modules }}
