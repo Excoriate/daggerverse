@@ -15,3 +15,11 @@ rules:
     level: warning
   new-lines:
     type: unix
+
+ignore: |
+  .git/
+  .github/ISSUE_TEMPLATE/
+  node_modules/
+  dist/
+  vendor/
+  target/
