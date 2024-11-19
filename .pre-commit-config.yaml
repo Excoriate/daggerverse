@@ -19,8 +19,9 @@ exclude: >-
     node_modules/|
     vendor/|
     \.github/ISSUE_TEMPLATE/|
-    .github/workflows/|
+    \.github/workflows/|
     tests/testdata/|
+    testdata/|
     \.goreleaser\.yaml
   )
 repos:

@@ -66,5 +66,6 @@ ignore: |
   devenv/
   **/.goreleaser.yaml
   **/.github/workflows/*.yml
-  tests/testdata/  # Ensure this is included if needed
+  tests/testdata/
+  **/testdata/
 yaml-files: ['*.yaml', '*.yml', .yamllint.yml]

@@ -4,7 +4,7 @@ formatter:
   type: basic
   indent: 2
   line_ending: lf
-  include_document_start: true  # Added to include '---' at the document start
+  include_document_start: true
   retain_line_breaks: true
   retain_line_breaks_single: true
   max_line_length: 120
@@ -35,6 +35,7 @@ exclude:
   - devenv/**
   - '**/.goreleaser.yaml'
   - '.github/workflows/*.yml'
-  - 'tests/testdata/**'  # Ensure this is excluded if needed
+  - tests/testdata/**  # Added to exclude test data
+  - '**/testdata/**'  # Also exclude any testdata directories at any level
 
 gitignore_excludes: true
