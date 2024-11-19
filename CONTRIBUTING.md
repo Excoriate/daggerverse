@@ -51,7 +51,6 @@ That means that you should add or update a test case, run all tests and verify
 that the new test fails with a clear error message and then start implementing
 the code changes to get that test to pass.
 
-
 ## Update the code
 
 At this point, make your code changes and constantly test again your new test case to make sure that everything working
@@ -72,6 +71,8 @@ If everything looks good, they will merge the code and release a new version whi
 <!-- References -->
 
 <!-- markdown-link-check-disable -->
+
 [Pull Requests]: https://github.com/mineiros-io/terraform-aws-dynamodb/pulls
 [pre-commit-file]: https://github.com/mineiros-io/terraform-aws-dynamodb/blob/master/.pre-commit-config.yaml
+
 <!-- markdown-link-check-enable -->

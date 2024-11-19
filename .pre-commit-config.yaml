@@ -1,64 +1,70 @@
 ---
+# Cache pre-commit hooks for better performance
+default_language_version:
+  python: python3
+  rust: stable
+  golang: '1.21'
+  node: system
+# Global exclude pattern (if necessary)
+exclude: >-
+  (?x)^(
+    \.direnv/|
+    target/|
+    dist/|
+    result|
+    \.git/|
+    \.terraform/|
+    \.terragrunt-cache/|
+    \.devenv/|
+    node_modules/|
+    vendor/|
+    \.github/ISSUE_TEMPLATE/|
+    \.github/workflows/|
+    tests/testdata/|
+    testdata/|
+    \.goreleaser\.yaml
+  )
 repos:
-    - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
-      rev: 0.2.3
-      hooks:
-          - id: yamlfmt
-
-    - repo: https://github.com/pre-commit/pre-commit-hooks
-      rev: v4.6.0
-      hooks:
-          - id: trailing-whitespace
-          - id: check-added-large-files
-          - id: check-case-conflict
-          - id: check-merge-conflict
-          - id: check-shebang-scripts-are-executable
-          - id: check-symlinks
-          - id: check-toml
-          - id: check-yaml
-          - id: check-json
-          - id: detect-private-key
-          - id: end-of-file-fixer
-
-    - repo: https://github.com/jumanjihouse/pre-commit-hooks
-      rev: 3.0.0
-      hooks:
-          - id: git-check # Configure in .gitattributes
-          - id: git-dirty # Configure in .gitignore
-          - id: script-must-have-extension
-
-
-    - repo: https://github.com/gruntwork-io/pre-commit
-      rev: v0.1.23
-      hooks:
-          - id: shellcheck
-
-    - repo: https://github.com/mineiros-io/pre-commit-hooks
-      rev: v0.5.1
-      hooks:
-          - id: terraform-fmt
-            files: .+\.tf$
-          - id: terraform-validate
-            files: .+\.tf$
-
-    - repo: https://github.com/dnephin/pre-commit-golang
-      rev: v0.5.1
-      hooks:
-          - id: go-fmt
-            files: .+\.go$
-          - id: go-mod-tidy
-            files: .+\.go$
-
-    - repo: https://github.com/igorshubovych/markdownlint-cli
-      rev: v0.41.0
-      hooks:
-          - id: markdownlint
-            args: [--fix, .]
-
-    - repo: https://github.com/tcort/markdown-link-check
-      rev: v3.12.2
-      hooks:
-          - id: markdown-link-check
-            args:
-                - -q
-                - --config=.markdown-link-check.json
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: detect-aws-credentials
+      - id: check-json
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.96.2
+    hooks:
+      - id: terraform_fmt
+      - id: terragrunt_fmt
+  # Updated yamlfmt hook
+  - repo: https://github.com/google/yamlfmt
+    rev: v0.14.0
+    hooks:
+      - id: yamlfmt
+        language: system
+        additional_dependencies: []
+        args:
+          - -conf=.yamlfmt.yml
+        files: \.(yml|yaml)$
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        args: [-c=.yamllint.yml]
+        files: \.(yml|yaml)$
+        exclude: >-
+          (?x)^(
+            \.github/workflows/|
+            tests/testdata/|
+            \.goreleaser\.yaml|
+            \.markdownlint\.yaml
+          )
+# Global settings
+minimum_pre_commit_version: 3.0.0
+ci:
+  autofix_commit_msg: 'style: auto-format pre-commit hooks'
+  autoupdate_commit_msg: 'chore: pre-commit autoupdate'
+  skip: [treefmt, rustfmt]

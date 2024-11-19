@@ -1,30 +1,81 @@
 ---
 root:
-    - changed-files:
-          - any-glob-to-any-file: '*'
-
+  - changed-files:
+      - any-glob-to-any-file: '*'
 AnyChange:
-    - changed-files:
-          - any-glob-to-any-file: '**'
-
+  - changed-files:
+      - any-glob-to-any-file: '**'
 Documentation:
-    - changed-files:
-          - any-glob-to-any-file: '**/*.md'
-
+  - changed-files:
+      - any-glob-to-any-file: '**/*.md'
 feature:
-    - head-branch: [^feature, feature]
-
+  - head-branch: [^feature, feature]
 infrastructure:
-    - head-branch: [^infrastructure, infrastructure]
-    - changed-files:
-          - any-glob-to-any-file: ['**/*.tf', '**/*.tfvars', '**/*.hcl']
-
+  - head-branch: [^infrastructure, infrastructure]
+  - changed-files:
+      - any-glob-to-any-file: ['**/*.tf', '**/*.tfvars', '**/*.hcl']
 release:
-    - base-branch: main
-
+  - base-branch: main
 source:
-    - changed-files:
-          - any-glob-to-any-file: '**/*.go'
+  - changed-files:
+      - any-glob-to-any-file: '**/*.go'
 ci/cd:
-    - changed-files:
-          - any-glob-to-any-file: ['**/.github/workflows/*', '**/.gitlab-ci.yml']
+  - changed-files:
+      - any-glob-to-any-file: ['**/.github/workflows/*', '**/.gitlab-ci.yml']
+# Core changes
+core:
+  - changed-files:
+      - any-glob-to-any-file: core/**/*
+# Documentation changes
+documentation:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/*.md'
+          - docs/**/*
+          - '**/README.md'
+          - '**/CONTRIBUTING.md'
+# CI/CD changes
+ci:
+  - changed-files:
+      - any-glob-to-any-file: .github/**/*
+# Dependencies changes
+dependencies:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/go.mod'
+          - '**/go.sum'
+          - '**/package.json'
+          - '**/package-lock.json'
+          - '**/yarn.lock'
+# Test changes
+tests:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/*_test.go'
+          - '**/test/**/*'
+          - '**/tests/**/*'
+# Examples changes
+examples:
+  - changed-files:
+      - any-glob-to-any-file: examples/**/*
+# Breaking changes label based on commit messages
+breaking:
+  - head-branch:
+      - ^breaking/
+      - ^major/
+# Bug fix changes label based on branch names
+bug:
+  - head-branch:
+      - ^fix/
+      - ^bugfix/
+      - ^bug/
+# Maintenance changes
+maintenance:
+  - changed-files:
+      - any-glob-to-any-file:
+          - .gitignore
+          - .editorconfig
+          - .golangci.yml
+          - Makefile
+          - Justfile
+          - .dockerignore

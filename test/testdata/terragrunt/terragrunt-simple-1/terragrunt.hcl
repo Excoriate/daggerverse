@@ -3,9 +3,9 @@ terraform {
 }
 
 generate "provider" {
-  path = "provider.tf"
+  path      = "provider.tf"
   if_exists = "overwrite_terragrunt"
-    contents = <<EOF
+  contents  = <<EOF
 provider "random" {
     version = "3.5.1"
 }

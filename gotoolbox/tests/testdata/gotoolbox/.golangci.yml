@@ -2,51 +2,43 @@
 run:
   # Timeout for golangci-lint execution.
   # Default is 1 minute.
-    timeout: 2m
-
+  timeout: 2m
   # Which directories to include in the linting process.
   # By default, all directories are included.
   # This config allows you to specify directories explicitly.
-    skip-dirs-use-default: false
-    skip-dirs:
-        - vendor
-        - .git
-
+  skip-dirs-use-default: false
+  skip-dirs:
+    - vendor
+    - .git
 # List of linters to use.
 linters:
-    enable:
-        - govet      # Reports suspicious constructs, e.g., Printf calls whose arguments do not align with the format string.
-        - staticcheck # A comprehensive linter for Go, covering a lot of different checks.
-        - errcheck   # Checks for unchecked errors in your code.
-        - gosimple   # A linter for Go, detecting code that could be rewritten in a simpler way.
-        - unused     # Checks for unused global variables, functions, constants, etc.
-
+  enable:
+    - govet  # Reports suspicious constructs, e.g., Printf calls whose arguments do not align with the format string.
+    - staticcheck  # A comprehensive linter for Go, covering a lot of different checks.
+    - errcheck  # Checks for unchecked errors in your code.
+    - gosimple  # A linter for Go, detecting code that could be rewritten in a simpler way.
+    - unused  # Checks for unused global variables, functions, constants, etc.
 # Configuration specific to individual linters.
 linters-settings:
-    govet:
+  govet:
     # Configure which vet checks to run.
     # Default is to run all checks.
-        check-shadowing: true
-
+    check-shadowing: true
 issues:
   # Config to allow multiple issues with the same text.
   # By default, golangci-lint won't report more than one issue with the same text on the same line.
-    max-same-issues: 2
-
+  max-same-issues: 2
   # Config to limit the number of issues per linter.
-    max-issues-per-linter: 10
-
+  max-issues-per-linter: 10
   # Config to limit the number of issues in the whole program.
-    max-issues: 50
-
+  max-issues: 50
 # Exclude specific linters or directories.
 # This is helpful to avoid certain linting checks in generated files or external dependencies.
 exclude-use-default: true
 exclude:
-    - error return value not checked.*[=(]  # Common error checking exclusion for specific cases.
-
+  - error return value not checked.*[=(]  # Common error checking exclusion for specific cases.
 # Output settings
 output:
-    format: colored-line-number # Use colored-line-number format for readability.
-    print-issued-lines: true   # Print the line of code that caused an issue.
-    print-linter-name: true    # Include the name of the linter that identified the issue.
+  format: colored-line-number  # Use colored-line-number format for readability.
+  print-issued-lines: true  # Print the line of code that caused an issue.
+  print-linter-name: true  # Include the name of the linter that identified the issue.

@@ -1,11 +1,11 @@
 terraform {
-  source  = "github.com/cloudposse/terraform-aws-s3-bucket"
+  source = "github.com/cloudposse/terraform-aws-s3-bucket"
 }
 
 generate "provider" {
-  path = "provider.tf"
+  path      = "provider.tf"
   if_exists = "overwrite_terragrunt"
-    contents = <<EOF
+  contents  = <<EOF
 provider "aws" {
   region = "us-west-2"
 }

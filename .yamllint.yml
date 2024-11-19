@@ -1,36 +1,71 @@
 ---
-
-yaml-files:
-    - '*.yaml'
-    - '*.yml'
-    - .yamllint
-
-ignore: |
-    /.github/METADATA.yaml
-
+extends: default
 rules:
-    braces: enable
-    brackets: enable
-    colons: enable
-    commas: enable
-    comments:
-        level: warning
-    comments-indentation:
-        level: warning
-    document-end: disable
-    document-start:
-        level: warning
-    empty-lines: enable
-    empty-values: disable
-    hyphens: enable
-    indentation: enable
-    key-duplicates: enable
-    key-ordering: disable
-    line-length: disable
-    new-line-at-end-of-file: enable
-    new-lines: enable
-    octal-values: disable
-    quoted-strings: disable
-    trailing-spaces: enable
-    truthy:
-        level: warning
+  braces:
+    level: error
+    max-spaces-inside: 1
+  brackets:
+    level: error
+    max-spaces-inside: 1
+  colons:
+    level: error
+    max-spaces-after: 1
+    max-spaces-before: 0
+  commas:
+    level: error
+    max-spaces-after: 1
+    max-spaces-before: 0
+  comments:
+    level: error
+    min-spaces-from-content: 1
+  comments-indentation:
+    level: error
+  document-end:
+    level: error
+    present: false
+  document-start:
+    level: error
+    present: true
+  empty-lines:
+    level: error
+    max: 1
+  empty-values:
+    level: error
+  hyphens:
+    level: error
+    max-spaces-after: 1
+  indentation:
+    spaces: 2
+    indent-sequences: true
+    check-multi-line-strings: false
+    level: error
+  key-duplicates: enable
+  key-ordering: disable
+  line-length:
+    max: 120
+    level: warning
+    allow-non-breakable-words: true
+    allow-non-breakable-inline-mappings: true
+  new-line-at-end-of-file: enable
+  new-lines:
+    type: unix
+  trailing-spaces: enable
+  truthy:
+    level: error
+    check-keys: false
+ignore: |
+  .git/
+  .github/ISSUE_TEMPLATE/
+  node_modules/
+  dist/
+  vendor/
+  target/
+  .direnv/
+  .terraform/
+  .terragrunt-cache/
+  \.devenv/
+  **/.goreleaser.yaml
+  **/.github/workflows/*.yml
+  tests/testdata/
+  **/testdata/
+yaml-files: ['*.yaml', '*.yml', .yamllint.yml]

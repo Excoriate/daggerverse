@@ -4,103 +4,150 @@
     flake-parts.url = "github:hercules-ci/flake-parts";
     treefmt-nix.url = "github:numtide/treefmt-nix";
     rust-overlay.url = "github:oxalica/rust-overlay";
+    flake-root.url = "github:srid/flake-root";
+    nix-direnv.url = "github:nix-community/nix-direnv";
+    pre-commit-hooks.url = "github:cachix/pre-commit-hooks.nix";
   };
 
-  outputs = inputs@{ flake-parts, nixpkgs, rust-overlay, ... }:
+  outputs = inputs @ {
+    flake-parts,
+    nixpkgs,
+    rust-overlay,
+    pre-commit-hooks,
+    ...
+  }:
     flake-parts.lib.mkFlake { inherit inputs; } {
       imports = [
         inputs.treefmt-nix.flakeModule
+        inputs.flake-root.flakeModule
       ];
 
-      systems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" "x86_64-windows" ];
+      systems = ["x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin"];
 
       perSystem = { config, self', inputs', pkgs, system, ... }:
-        let
-          overlays = [
-            (import rust-overlay)
-          ];
-          pkgs = import nixpkgs {
-            inherit system overlays;
-            config.allowUnfree = true;
+      let
+        pkgs = import nixpkgs {
+          inherit system;
+          config = {
+            allowUnfree = true;
           };
-        in
-        {
-          devShells.default = pkgs.mkShell {
-            name = "dev-environment";
-            shell = "${pkgs.bash}/bin/bash --noprofile --norc";
+        };
 
-            packages = with pkgs; [
-              # Rust
-              rust-bin.stable.latest.default
-              cargo
-              rustc
-              rustfmt
-              clippy
+        # Pre-commit hooks configuration
+        pre-commit-check = inputs.pre-commit-hooks.lib.${system}.run {
+          src = ./.;
+          hooks = {
+            treefmt = {
+              enable = true;
+              entry = "nix develop .#devShell -c treefmt";
+              types_or = ["file"];
+              pass_filenames = false;
+            };
 
-              # Go tools
-              go
-              golangci-lint
+            terraform-fmt = {
+              enable = true;
+              entry = "nix develop .#devShell -c terraform fmt";
+              types = ["terraform"];
+            };
 
-              # Terraform and Terragrunt
-              terraform
-              terragrunt
+            terragrunt-fmt = {
+              enable = true;
+              entry = "nix develop .#devShell -c terragrunt hclfmt";
+              types = ["hcl"];
+            };
 
-              # Required tools
-              just
-              git
-              semver-tool
-              jq
-              yq-go
-              moreutils
-              yamllint
-              yamlfmt
-            ];
-
-            shellHook = ''
-              export RUST_SRC_PATH=${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}
-              export GOROOT=${pkgs.go}/share/go
-
-              echo "🌟 Welcome to the Daggerverse development environment! 🚀"
-              echo "Happy coding! 💻"
-            '';
-          };
-
-          treefmt.config = {
-            inherit (config.flake-root) projectRootFile;
-            package = pkgs.treefmt;
-
-            programs = {
-              alejandra.enable = true;
-              rustfmt.enable = true;
-              prettier = {
-                enable = true;
-                include = [ "**/*.{js,jsx,ts,tsx,json}" ];
-              };
-              gofmt.enable = true;
-              terraform-fmt = {
-                enable = true;
-                command = "${pkgs.terraform}/bin/terraform fmt -";
-                include = [ "**/*.tf" ];
-              };
-              terragrunt-fmt = {
-                enable = true;
-                command = "${pkgs.terragrunt}/bin/terragrunt hclfmt";
-                include = [ "**/*.hcl" ];
-              };
-              yamllint = {
-                enable = true;
-                command = "${pkgs.yamllint}/bin/yamllint -c .yamllint.yml";
-                include = [ "**/*.yaml" "**/*.yml" ];
-              };
-              yamlfmt = {
-                enable = true;
-                command = "${pkgs.yamlfmt}/bin/yamlfmt -w";
-                include = [ "**/*.yaml" "**/*.yml" ];
-              };
+            golangci-lint = {
+              enable = true;
+              entry = "nix develop .#devShell -c golangci-lint run";
+              types = ["go"];
             };
           };
-
-          formatter = config.treefmt.build.wrapper;
         };
+      in
+      {
+        # Define development shell with pre-commit hooks
+        devShells.default = pkgs.mkShell {
+          buildInputs = with pkgs; [
+            treefmt
+            alejandra
+            rustfmt
+            nodePackages.prettier
+            go
+            terraform
+            terragrunt
+            golangci-lint
+            pre-commit-hooks.packages.${system}.pre-commit
+          ];
+
+          # Attach pre-commit hooks to the shell
+          shellHook = ''
+            ${pre-commit-check.shellHook}
+          '';
+        };
+
+        # Define the treefmt app
+        apps.treefmt = {
+          type = "app";
+          program = "${pkgs.treefmt}/bin/treefmt";
+        };
+
+        treefmt.config = {
+          projectRootFile = "flake.nix";
+          programs = {
+            alejandra.enable = true;
+            gofmt.enable = true;
+            prettier.enable = true;
+            rustfmt.enable = true;
+            terraform.enable = true;
+            terragrunt.enable = true;
+          };
+          settings.formatter = {
+            nix = {
+              command = "alejandra";
+              includes = ["*.nix"];
+            };
+            go = {
+              command = "gofmt";
+              includes = ["*.go"];
+              excludes = [
+                "*/internal/*"
+                "dagger.gen.go"
+              ];
+            };
+            prettier = {
+              command = "prettier";
+              options = ["--write"];
+              includes = [
+                "*.js"
+                "*.jsx"
+                "*.ts"
+                "*.tsx"
+                "*.json"
+                "*.md"
+                "*.markdown"
+                "*.yaml"
+                "*.yml"
+              ];
+            };
+            rust = {
+              command = "rustfmt";
+              includes = ["*.rs"];
+            };
+            terraform = {
+              command = "terraform";
+              options = ["fmt"];
+              includes = ["*.tf"];
+            };
+            terragrunt = {
+              command = "terragrunt";
+              options = ["hclfmt"];
+              includes = ["*.hcl"];
+            };
+          };
+        };
+
+        # Optional: Make pre-commit check available as a check
+        checks.pre-commit-check = pre-commit-check;
+      };
     };
 }

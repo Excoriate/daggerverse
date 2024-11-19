@@ -1,111 +1,94 @@
 ---
 name: 🚀 Publish Latest Version of Specified Dagger Module
-
 on:
-    workflow_dispatch:
-        inputs:
-            module:
-                description: Module to publish (e.g., module-template)
-                required: true
-
+  workflow_dispatch:
+    inputs:
+      module:
+        description: Module to publish (e.g., module-template)
+        required: true
 env:
-    GO_VERSION: ~1.22
-    DAG_VERSION: 0.14.0
-
+  GO_VERSION: ~1.22
+  DAG_VERSION: 0.14.0
 permissions:
-    contents: read
-    pull-requests: write
-
+  contents: read
+  pull-requests: write
 jobs:
-    publish-module:
-        runs-on: ubuntu-latest
-        steps:
-            - name: 📥 Checkout repository
-              uses: actions/checkout@v4
-              with:
-                  fetch-depth: 0
+  publish-module:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: 🛠️ Set up environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install jq
+          curl -L https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=${{ env.DAG_VERSION }} sh
+          sudo mv bin/dagger /usr/local/bin/
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          echo "🔧 Environment setup complete"
+      - name: 🐳 Verify Dagger CLI
+        run: |
+          dagger version
+          if [[ $(dagger version | grep -oP '(?<=dagger v)\S+') != "${{ env.DAG_VERSION }}" ]]; then
+            echo "::error::❌ Installed Dagger version does not match DAG_VERSION"
+            exit 1
+          fi
+          echo "✅ Dagger CLI verified successfully"
+      - name: 🔍 Validate and identify module version
+        id: identify-module
+        run: |
+          module="${{ github.event.inputs.module }}"
+          if [[ ! -d "$module" || ! -f "$module/dagger.json" ]]; then
+            echo "::error::❌ Invalid module: $module. Module directory not found or missing dagger.json"
+            exit 1
+          fi
+          latest_tag=$(git describe --tags --abbrev=0 --match "${module}/*" 2>/dev/null || echo "")
+          if [[ ! $latest_tag =~ ^${module}/v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::❌ No valid version tag found for module: $module"
+            exit 1
+          fi
+          version=${latest_tag#${module}/}
+          echo "module=$module" >> $GITHUB_OUTPUT
+          echo "version=$version" >> $GITHUB_OUTPUT
+          echo "📦 Identified for publishing: $module version $version"
+      - name: 🐹 Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: 🚀 Publish module
+        run: |
+          module="${{ steps.identify-module.outputs.module }}"
+          version="${{ steps.identify-module.outputs.version }}"
+          echo "📢 Publishing module: $module with version $version"
+          git fetch --all --tags --force
+          git checkout "refs/tags/${module}/${version}"
 
-            - name: 🛠️ Set up environment
-              run: |
-                  sudo apt-get update
-                  sudo apt-get install jq
-                  curl -L https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=${{ env.DAG_VERSION }} sh
-                  sudo mv bin/dagger /usr/local/bin/
-                  git config --global user.name 'github-actions[bot]'
-                  git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-                  echo "🔧 Environment setup complete"
+          # Clean untracked files
+          git clean -fd
 
-            - name: 🐳 Verify Dagger CLI
-              run: |
-                  dagger version
-                  if [[ $(dagger version | grep -oP '(?<=dagger v)\S+') != "${{ env.DAG_VERSION }}" ]]; then
-                    echo "::error::❌ Installed Dagger version does not match DAG_VERSION"
-                    exit 1
-                  fi
-                  echo "✅ Dagger CLI verified successfully"
+          # Stash any changes
+          git stash --include-untracked
+          if dagger publish --force -m $module github.com/Excoriate/daggerverse/${module}@${version#v}; then
+            echo "✅ Successfully published $module version $version"
+          else
+            echo "::error::❌ Failed to publish $module version $version"
+            exit 1
+          fi
 
-            - name: 🔍 Validate and identify module version
-              id: identify-module
-              run: |
-                  module="${{ github.event.inputs.module }}"
-                  if [[ ! -d "$module" || ! -f "$module/dagger.json" ]]; then
-                    echo "::error::❌ Invalid module: $module. Module directory not found or missing dagger.json"
-                    exit 1
-                  fi
-
-                  latest_tag=$(git describe --tags --abbrev=0 --match "${module}/*" 2>/dev/null || echo "")
-                  if [[ ! $latest_tag =~ ^${module}/v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-                    echo "::error::❌ No valid version tag found for module: $module"
-                    exit 1
-                  fi
-
-                  version=${latest_tag#${module}/}
-                  echo "module=$module" >> $GITHUB_OUTPUT
-                  echo "version=$version" >> $GITHUB_OUTPUT
-                  echo "📦 Identified for publishing: $module version $version"
-
-            - name: 🐹 Set up Go
-              uses: actions/setup-go@v5
-              with:
-                  go-version: ${{ env.GO_VERSION }}
-
-            - name: 🚀 Publish module
-              run: |
-                  module="${{ steps.identify-module.outputs.module }}"
-                  version="${{ steps.identify-module.outputs.version }}"
-
-                  echo "📢 Publishing module: $module with version $version"
-
-                  git fetch --all --tags --force
-                  git checkout "refs/tags/${module}/${version}"
-
-                  # Clean untracked files
-                  git clean -fd
-
-                  # Stash any changes
-                  git stash --include-untracked
-
-                  if dagger publish --force -m $module github.com/Excoriate/daggerverse/${module}@${version#v}; then
-                    echo "✅ Successfully published $module version $version"
-                  else
-                    echo "::error::❌ Failed to publish $module version $version"
-                    exit 1
-                  fi
-
-                  # Pop stashed changes if any
-                  git stash pop || true
-
-                  git checkout -
-
-            - name: 🎉 Publish success notification
-              if: success()
-              run: |
-                  module="${{ steps.identify-module.outputs.module }}"
-                  version="${{ steps.identify-module.outputs.version }}"
-                  echo "::notice::🎊 Successfully published ${module}@${version}!"
-                  echo "::notice::🔗 Install with: dagger install github.com/Excoriate/daggerverse/${module}@${version#v}"
-
-            - name: ❌ Notify on failure
-              if: failure()
-              run: |
-                  echo "::error::💥 Failed to publish the module. Please check the logs for details."
+          # Pop stashed changes if any
+          git stash pop || true
+          git checkout -
+      - name: 🎉 Publish success notification
+        if: success()
+        run: |
+          module="${{ steps.identify-module.outputs.module }}"
+          version="${{ steps.identify-module.outputs.version }}"
+          echo "::notice::🎊 Successfully published ${module}@${version}!"
+          echo "::notice::🔗 Install with: dagger install github.com/Excoriate/daggerverse/${module}@${version#v}"
+      - name: ❌ Notify on failure
+        if: failure()
+        run: |-
+          echo "::error::💥 Failed to publish the module. Please check the logs for details."

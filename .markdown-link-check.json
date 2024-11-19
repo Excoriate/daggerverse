@@ -1,10 +1,5 @@
 {
-  "aliveStatusCodes": [
-    200,
-    206,
-    999,
-    400
-  ],
+  "aliveStatusCodes": [200, 206, 999, 400],
   "fallbackRetryDelay": "30s",
   "ignorePatterns": [
     {

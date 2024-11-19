@@ -2,7 +2,6 @@
 
 ![Dagger Version](https://img.shields.io/badge/dagger%20version-%3E=0.10.0-0f0f19.svg?style=flat-square)
 
-
 A simple [Dagger](https://dagger.io) module that wraps Dagger in Dagger, which means you can call other modules, functions, or Dagger commands from within a Dagger module. It's specially useful for:
 
 - ✅ Test other Dagger modules.
@@ -22,10 +21,10 @@ Through the [Dagger CLI](https://docs.dagger.io/cli/465058/install), or by using
 
 ## Features 🎨
 
-### Commands and Functionalities  📜
+### Commands and Functionalities 📜
 
 | Command or functionality | Command    | Example                       |
-|--------------------------|------------|-------------------------------|
+| ------------------------ | ---------- | ----------------------------- |
 | Terminal                 | `terminal` | `dagger call terminal --help` |
 | Dag (Dagger) CLI         | `dag-cli`  | `dagger call dag-cli` --      |
 
@@ -65,7 +64,7 @@ dagger call use-fn \
 
 For a more detailed information, just run `dagger call --help` and you will get the following output:
 
-```txt
+````txt
 FUNCTIONS
   base                      Base sets the base container for the Dagindag module.
   ctr                       Ctr is the container to use as a base container.
@@ -91,3 +90,4 @@ OPTIONS
   -m, --mod string      Path to dagger.json config file for the module or a directory containing that file. Either local path (e.g. "/path/to/some/dir") or a github repo
                         (e.g. "github.com/dagger/dagger/path/to/some/subdir")
   -o, --output string   Path in the host to save the result to```
+````

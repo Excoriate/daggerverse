@@ -1,0 +1,41 @@
+---
+# Comprehensive yamlfmt configuration
+formatter:
+  type: basic
+  indent: 2
+  line_ending: lf
+  include_document_start: true
+  retain_line_breaks: true
+  retain_line_breaks_single: true
+  max_line_length: 120
+  trim_trailing_whitespace: true
+  eof_newline: true
+  pad_line_comments: 2
+  disallow_anchors: false
+
+# Global configuration
+line_ending: lf
+continue_on_error: false
+doublestar: true
+
+# Path handling
+include:
+  - '**/*.yml'
+  - '**/*.yaml'
+exclude:
+  - .git/**
+  - .github/ISSUE_TEMPLATE/**
+  - node_modules/**
+  - dist/**
+  - vendor/**
+  - target/**
+  - .direnv/**
+  - .terraform/**
+  - .terragrunt-cache/**
+  - .devenv/**
+  - '**/.goreleaser.yaml'
+  - '.github/workflows/*.yml'
+  - tests/testdata/**  # Added to exclude test data
+  - '**/testdata/**'  # Also exclude any testdata directories at any level
+
+gitignore_excludes: true

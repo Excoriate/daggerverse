@@ -1,50 +1,42 @@
 ---
 contents:
-    repositories:
-        - https://dl-cdn.alpinelinux.org/alpine/v3.20/main
-        - https://dl-cdn.alpinelinux.org/alpine/v3.20/community
-    packages:
-        - alpine-baselayout
-        - alpine-keys
-        - apk-tools
-        - busybox
-        - ca-certificates-bundle
-        - musl-dev
-        - curl
-        - bash
-        - wget
-        - unzip
-        - git
-        - tzdata
-        - openssl
-
+  repositories:
+    - https://dl-cdn.alpinelinux.org/alpine/v3.20/main
+    - https://dl-cdn.alpinelinux.org/alpine/v3.20/community
+  packages:
+    - alpine-baselayout
+    - alpine-keys
+    - apk-tools
+    - busybox
+    - ca-certificates-bundle
+    - musl-dev
+    - curl
+    - bash
+    - wget
+    - unzip
+    - git
+    - tzdata
+    - openssl
 accounts:
-    groups:
-        - groupname: terragrunt
-          gid: 65532
-    users:
-        - username: terragrunt
-          uid: 65532
-          gid: 65532
-    run-as: terragrunt
-
+  groups:
+    - groupname: terragrunt
+      gid: 65532
+  users:
+    - username: terragrunt
+      uid: 65532
+      gid: 65532
+  run-as: terragrunt
 entrypoint:
-    command: /bin/bash -l
-
+  command: /bin/bash -l
 # cmd: /bin/sh -l
-
-archs:
-    - x86_64
-    - aarch64
-
+archs: [x86_64, aarch64]
 environment:
-    PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/terragrunt/bin:/home/terragrunt/.local/bin
-    TERRAGRUNT_PROVIDER_CACHE_DIR: /home/terragrunt/.terragrunt-cache
-    TERRAGRUNT_PROVIDER_CACHE: '1'
-    TZ: UTC
-    LANG: en_US.UTF-8
-    LC_ALL: en_US.UTF-8
-
+  PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/terragrunt/bin:/home/terragrunt/.local/bin
+  TERRAGRUNT_PROVIDER_CACHE_DIR: /home/terragrunt/.terragrunt-cache
+  TERRAGRUNT_PROVIDER_CACHE: '1'
+  TZ: UTC
+  LANG: en_US.UTF-8
+  LC_ALL: en_US.UTF-8
 # # Ensure home directory exists and is writable
 # paths:
 #     - path: /home/terragrunt
