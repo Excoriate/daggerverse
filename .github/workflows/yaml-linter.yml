@@ -47,6 +47,9 @@ jobs:
           file_or_dir: .
           format: github
           strict: false
+          exclude: |
+            **/testdata/**/*.yaml
+            **/testdata/**/*.yml
 
       - name: Upload Lint Results
         if: always()

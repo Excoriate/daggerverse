@@ -26,3 +26,5 @@ exclude:
   - ".terraform/**"
   - ".terragrunt-cache/**"
   - "devenv/**"
+  - "**/testdata/**/*.yaml"
+  - "**/testdata/**/*.yml"

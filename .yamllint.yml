@@ -67,8 +67,9 @@ ignore: |
   .terraform/
   .terragrunt-cache/
   devenv/
+  **/testdata/**/*.yaml
+  **/testdata/**/*.yml
 
-# Disable specific rules that might be too strict
 yaml-files:
   - "*.yaml"
   - "*.yml"
