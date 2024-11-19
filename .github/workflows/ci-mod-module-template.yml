@@ -16,17 +16,17 @@
                 - module-template/examples/go/**
                 - .github/workflows/ci-mod-module-template.yaml
         workflow_dispatch:
-    
+
     permissions:
         contents: read
         pull-requests: read
         checks: write
-    
+
     env:
         GO_VERSION: "1.22"
         DAGGER_VERSION: 0.14.0
         GOLANGCI_LINT_VERSION: v1.62.0
-    
+
     jobs:
         dagger-build:
             strategy:
@@ -67,7 +67,7 @@
                       cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
                   env:
                       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    
+
         dagger-list-functions:
             needs: dagger-build
             strategy:
@@ -108,7 +108,7 @@
                       cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
                   env:
                       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    
+
         run-tests:
             needs: dagger-build
             strategy:
@@ -132,7 +132,7 @@
                       cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
                   env:
                       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    
+
         run-recipes:
             needs: dagger-build
             strategy:
@@ -156,7 +156,7 @@
                       cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
                   env:
                       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    
+
         golangci-lint:
             needs: dagger-build
             strategy:
