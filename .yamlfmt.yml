@@ -32,7 +32,7 @@ exclude:
   - .direnv/**
   - .terraform/**
   - .terragrunt-cache/**
-  - devenv/**
+  - .devenv/**
   - '**/.goreleaser.yaml'
   - '.github/workflows/*.yml'
   - tests/testdata/**  # Added to exclude test data

@@ -15,7 +15,7 @@ exclude: >-
     \.git/|
     \.terraform/|
     \.terragrunt-cache/|
-    devenv/|
+    \.devenv/|
     node_modules/|
     vendor/|
     \.github/ISSUE_TEMPLATE/|
