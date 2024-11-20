@@ -15,13 +15,14 @@ import (
 // S3Scanner implements the Scanner interface for S3 buckets
 type S3Scanner struct {
 	BaseResource
-	client    *s3.Client
-	ctx       context.Context
-	batchSize int // Number of buckets to process in parallel
+	client       *s3.Client
+	ctx          context.Context
+	batchSize    int
+	configLoader *configLoader
 }
 
 // NewS3Scanner creates a new S3 scanner instance
-func NewS3Scanner(ctx context.Context, awsClient *AWSClient, opts ...S3ScannerOption) (*S3Scanner, error) {
+func NewS3Scanner(ctx context.Context, awsClient *AWSClient, cfg *configLoader, opts ...S3ScannerOption) (*S3Scanner, error) {
 	client, err := awsClient.GetS3Client()
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize S3 client: %w", err)
@@ -32,14 +33,24 @@ func NewS3Scanner(ctx context.Context, awsClient *AWSClient, opts ...S3ScannerOp
 			ResourceType: "s3:bucket",
 			Region:       awsClient.cfg.Region,
 		},
-		client:    client,
-		ctx:       ctx,
-		batchSize: 10, // Default batch size
+		client:       client,
+		ctx:          ctx,
+		batchSize:    10, // Default batch size
+		configLoader: cfg,
 	}
 
 	// Apply options
 	for _, opt := range opts {
 		opt(scanner)
+	}
+
+	// Apply configuration from loader if available
+	if cfg != nil && cfg.config != nil {
+		if resourceConfig, exists := cfg.config.Resources["s3"]; exists {
+			if resourceConfig.BatchSize != nil {
+				scanner.batchSize = *resourceConfig.BatchSize
+			}
+		}
 	}
 
 	return scanner, nil
@@ -67,14 +78,6 @@ func (s *S3Scanner) Scan(criteria TagCriteria) ([]ScanResult, error) {
 	results := make([]ScanResult, 0, len(buckets))
 	errChan := make(chan error)
 	resultChan := make(chan ScanResult)
-
-	// Use configured batch size if available
-	if s.configLoader != nil {
-		if resourceConfig, exists := s.configLoader.config.Resources["s3"]; exists &&
-			resourceConfig.BatchSize != nil {
-			s.batchSize = *resourceConfig.BatchSize
-		}
-	}
 
 	sem := make(chan struct{}, s.batchSize)
 	var wg sync.WaitGroup
@@ -177,9 +180,15 @@ func (s *S3Scanner) scanBucket(bucketName string, criteria TagCriteria) (ScanRes
 		}
 	}
 
-	// Scan tags using base implementation
-	s.Tags = result.Tags
-	result.Issues = s.ScanTags(criteria)
+	// Determine compliance level from tags or default
+	if level, exists := s.Tags["ComplianceLevel"]; exists {
+		criteria.ComplianceLevel = level
+	} else {
+		criteria.ComplianceLevel = s.configLoader.config.Global.TagCriteria.ComplianceLevel
+	}
+
+	// Scan tags using base implementation, passing compliance levels
+	result.Issues = s.ScanTags(criteria, s.configLoader.config.ComplianceLevels)
 
 	// Set compliance tag based on issues
 	if len(result.Issues) == 0 {

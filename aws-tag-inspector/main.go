@@ -11,6 +11,9 @@
 package main
 
 import (
+	"context"
+	"fmt"
+
 	"github.com/Excoriate/daggerverse/aws-tag-inspector/internal/dagger"
 
 	"github.com/Excoriate/daggerx/pkg/envvars"
@@ -22,6 +25,9 @@ import (
 type AwsTagInspector struct {
 	// Ctr is the container to use as a base container.
 	Ctr *dagger.Container
+	// Cfg is the configuration file to use for the container.
+	// +private
+	Cfg *inspectorConfig
 }
 
 // New creates a new AwsTagInspector module.
@@ -38,13 +44,15 @@ func New(
 	// ctr is the container to use as a base container.
 	// +optional
 	ctr *dagger.Container,
-	// // awsAccessKeyID is the AWS access key ID to use for the container.
-	// awsAccessKeyID *dagger.Secret,
-	// // awsSecretAccessKey is the AWS secret access key to use for the container.
-	// awsSecretAccessKey *dagger.Secret,
-	// // awsRegion is the AWS region to use for the container.
-	// // +optional
-	// awsRegion string,
+	// awsAccessKeyID is the AWS access key ID to use for the container.
+	awsAccessKeyID *dagger.Secret,
+	// awsSecretAccessKey is the AWS secret access key to use for the container.
+	awsSecretAccessKey *dagger.Secret,
+	// configPath is the path to the configuration file to use for the container.
+	config *dagger.File,
+	// awsRegion is the AWS region to use for the container.
+	// +optional
+	awsRegion string,
 	// envVarsFromHost is a list of environment variables to pass from the host to the container in a slice of strings.
 	// +optional
 	envVarsFromHost []string,
@@ -52,9 +60,41 @@ func New(
 	//nolint:exhaustruct // It's 'okaysh' for now, I'll decide later what's going to be the pattern here.
 	dagModule := &AwsTagInspector{}
 
-	if err := dagModule.setupEnvironmentVariables(envVarsFromHost); err != nil {
-		return nil, WrapError(err, "failed to setup environment variables")
+	// Ensure awsRegion has a default value, but only if it's empty
+	if awsRegion == "" {
+		awsRegion = "us-east-1"
 	}
+
+	// Validate input parameters before processing
+	if awsAccessKeyID == nil || awsSecretAccessKey == nil {
+		return nil, Errorf("AWS access key ID and secret access key are required")
+	}
+
+	if config == nil {
+		return nil, Errorf("configuration file is required")
+	}
+
+	// Append AWS region to environment variables
+	envVarsFromHost = append(envVarsFromHost, fmt.Sprintf("AWS_REGION=%s", awsRegion))
+
+	if err := dagModule.setupEnvironmentVariables(envVarsFromHost); err != nil {
+		return nil, WrapError(err,
+			"environment variable setup failed, unable to configure environment variables")
+	}
+
+	cfgLoader := newCfg()
+
+	// Improve error handling and provide more context
+	cfg, cfgErr := cfgLoader.loadConfig(context.Background(), config)
+	if cfgErr != nil {
+		return nil, WrapError(cfgErr, "failed to load configuration file")
+	}
+
+	if cfg == nil {
+		return nil, Errorf("configuration file is empty")
+	}
+
+	dagModule.Cfg = cfg
 
 	return dagModule, nil
 }

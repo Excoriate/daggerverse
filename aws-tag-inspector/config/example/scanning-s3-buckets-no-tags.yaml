@@ -5,17 +5,7 @@ global:
   enabled: true
   batch_size: 20
   tag_criteria:
-    minimum_required_tags: 3
-    required_tags:
-      - Environment
-      - Owner
-      - Project
-    forbidden_tags:
-      - Temporary
-      - Test
-    specific_tags:
-      ComplianceLevel: high
-      ManagedBy: terraform
+    compliance_level: standard
 
 # Resource-specific configurations
 resources:
@@ -23,40 +13,12 @@ resources:
     enabled: true
     batch_size: 10
     tag_criteria:
-      minimum_required_tags: 4
-      required_tags:
-        - DataClassification
-        - BackupPolicy
-        - Environment
-        - Owner
-      forbidden_tags:
-        - Temporary
-        - Test
-      specific_tags:
-        EncryptionRequired: "true"
+      compliance_level: high
     excluded_resources:
       - pattern: terraform-state-*
         reason: Terraform state buckets managed separately
       - pattern: log-archive-*
         reason: Logging buckets excluded from standard compliance
-
-  ec2:
-    enabled: true
-    batch_size: 15
-    tag_criteria:
-      minimum_required_tags: 3
-      required_tags:
-        - Application
-        - PatchGroup
-        - Environment
-      forbidden_tags:
-        - Temporary
-        - Test
-      specific_tags:
-        AutoStop: enabled
-    excluded_resources:
-      - pattern: bastion-*
-        reason: Bastion hosts managed by security team
 
 # Compliance levels and their requirements
 compliance_levels:
@@ -85,12 +47,10 @@ tag_validation:
       - production
       - staging
       - development
-      - sandbox
     DataClassification:
       - public
       - private
       - confidential
-      - restricted
     SecurityLevel:
       - high
       - medium
@@ -98,7 +58,6 @@ tag_validation:
   pattern_rules:
     CostCenter: ^[A-Z]{2}-[0-9]{4}$
     ProjectCode: ^PRJ-[0-9]{5}$
-    Owner: ^[a-z0-9._%+-]+@company\.com$
 
 # Notification settings for non-compliant resources
 notifications:
@@ -112,4 +71,3 @@ notifications:
     recipients:
       - cloud-team@company.com
       - security-team@company.com
-    frequency: daily

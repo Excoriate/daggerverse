@@ -1,70 +1,59 @@
 ---
 users:
-    - id: 1
-      name: John Doe
-      email: john.doe@example.com
-      age: 29
-      active: true
-      roles:
-          - admin
-          - user
-      address:
-          street: 123 Main St
-          city: Springfield
-          state: IL
-          zip: 62701
-    - id: 2
-      name: Jane Smith
-      email: jane.smith@example.com
-      age: 34
-      active: false
-      roles:
-          - user
-      address:
-          street: 456 Oak St
-          city: Metropolis
-          state: NY
-          zip: 10001
-
+  - id: 1
+    name: John Doe
+    email: john.doe@example.com
+    age: 29
+    active: true
+    roles: [admin, user]
+    address:
+      street: 123 Main St
+      city: Springfield
+      state: IL
+      zip: 62701
+  - id: 2
+    name: Jane Smith
+    email: jane.smith@example.com
+    age: 34
+    active: false
+    roles: [user]
+    address:
+      street: 456 Oak St
+      city: Metropolis
+      state: NY
+      zip: 10001
 settings:
-    theme: dark
-    notifications: true
-    language: en-US
-
+  theme: dark
+  notifications: true
+  language: en-US
 products:
-    - id: 1001
-      name: Laptop
-      price: 999.99
-      in_stock: 50
-      categories:
-          - electronics
-          - computers
-    - id: 1002
-      name: Smartphone
-      price: 699.99
-      in_stock: 200
-      categories:
-          - electronics
-          - mobile
-
+  - id: 1001
+    name: Laptop
+    price: 999.99
+    in_stock: 50
+    categories: [electronics, computers]
+  - id: 1002
+    name: Smartphone
+    price: 699.99
+    in_stock: 200
+    categories: [electronics, mobile]
 orders:
-    - id: 5001
-      user_id: 1
-      product_id: 1001
-      quantity: 1
-      status: shipped
-      total: 999.99
-    - id: 5002
-      user_id: 2
-      product_id: 1002
-      quantity: 2
-      status: processing
-      total: 1399.98
-
+  - id: 5001
+    user_id: 1
+    product_id: 1001
+    quantity: 1
+    status: shipped
+    total: 999.99
+  - id: 5002
+    user_id: 2
+    product_id: 1002
+    quantity: 2
+    status: processing
+    total: 1399.98
 logs:
-    - timestamp: 2024-06-22T14:12:00Z
-      level: info
-      message: User John Doe logged in
-    - timestamp: 2024-06-22T15:30:00Z
-      level: error
-      message: Failed to process payment for order 5002
+  - timestamp: 2024-06-22T14:12:00Z
+    level: info
+    message: User John Doe logged in
+  - timestamp: 2024-06-22T15:30:00Z
+    level: error
+    message: Failed to process payment for order 5002
