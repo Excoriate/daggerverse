@@ -4,29 +4,6 @@ import (
 	"fmt"
 )
 
-// TagCriteria defines the criteria for validating resource tags in AWS.
-// It allows specifying required, forbidden, and specific tag requirements.
-type TagCriteria struct {
-	// MinimumRequiredTags specifies the minimum number of tags that must be present
-	// If set to a value > 0, resources with fewer tags will fail validation
-	MinimumRequiredTags int `yaml:"minimum_required_tags"`
-
-	// RequiredTags is a list of tag keys that must be present on the resource.
-	// If any of these tags are missing, the resource will fail tag validation.
-	RequiredTags []string `yaml:"required_tags"`
-
-	// ForbiddenTags is a list of tag keys that must not be present on the resource.
-	// If any of these tags exist, the resource will fail tag validation.
-	ForbiddenTags []string `yaml:"forbidden_tags"`
-
-	// SpecificTags is a map of tag key-value pairs that must exactly match the resource's tags.
-	// Each key-value pair represents a specific tag requirement.
-	SpecificTags map[string]string `yaml:"specific_tags"`
-
-	// ComplianceLevel is the compliance level for the resource
-	ComplianceLevel string `yaml:"compliance_level"`
-}
-
 // ScanResult represents the result of scanning a resource
 type ScanResult struct {
 	// ResourceType is the AWS resource type (e.g., "ec2:instance", "s3:bucket")
@@ -72,7 +49,7 @@ type Scanner interface {
 	// Additional required methods
 	GetMetadata() map[string]interface{}
 	ValidateCompliance(criteria TagCriteria) bool
-	ScanTags(criteria TagCriteria, complianceLevels map[string]ComplianceLevel) []string
+	ScanTags(criteria TagCriteria, complianceLevels map[string]complianceLevel) []string
 
 	// IsExcluded checks if the resource should be excluded from scanning
 	IsExcluded() (bool, string)
@@ -113,6 +90,7 @@ func (r *BaseResource) GetTags() map[string]string {
 	if r.Tags == nil {
 		return make(map[string]string)
 	}
+
 	return r.Tags
 }
 
@@ -124,6 +102,7 @@ func (r *BaseResource) HasTags() bool {
 // HasTag checks if a specific tag exists
 func (r *BaseResource) HasTag(key string) bool {
 	_, exists := r.Tags[key]
+
 	return exists
 }
 
@@ -133,11 +112,12 @@ func (r *BaseResource) GetTagValue(key string) (string, bool) {
 		return "", false
 	}
 	value, exists := r.Tags[key]
+
 	return value, exists
 }
 
 // ScanTags performs tag validation against criteria
-func (r *BaseResource) ScanTags(criteria TagCriteria, complianceLevels map[string]ComplianceLevel) []string {
+func (r *BaseResource) ScanTags(criteria TagCriteria, complianceLevels map[string]complianceLevel) []string {
 	var issues []string
 
 	// Validate input criteria
@@ -191,7 +171,7 @@ func (r *BaseResource) ScanTags(criteria TagCriteria, complianceLevels map[strin
 		}
 	}
 
-	// Apply compliance level requirements
+	// Apply compliance level requirements if specified
 	if criteria.ComplianceLevel != "" {
 		level, exists := complianceLevels[criteria.ComplianceLevel]
 		if !exists {
@@ -216,8 +196,8 @@ func (r *BaseResource) ScanTags(criteria TagCriteria, complianceLevels map[strin
 }
 
 // ValidateCompliance checks if the resource is compliant with tag criteria
-func (r *BaseResource) ValidateCompliance(criteria TagCriteria) bool {
-	return len(r.ScanTags(criteria)) == 0
+func (r *BaseResource) ValidateCompliance(criteria TagCriteria, complianceLevels map[string]complianceLevel) bool {
+	return len(r.ScanTags(criteria, complianceLevels)) == 0
 }
 
 // GetMetadata returns the resource metadata
@@ -225,6 +205,7 @@ func (r *BaseResource) GetMetadata() map[string]interface{} {
 	if r.Metadata == nil {
 		return make(map[string]interface{})
 	}
+
 	return r.Metadata
 }
 

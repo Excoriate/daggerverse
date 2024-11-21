@@ -12,22 +12,34 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"path/filepath"
 
 	"github.com/Excoriate/daggerverse/aws-tag-inspector/internal/dagger"
+	"github.com/Excoriate/daggerx/pkg/apkox"
+	"github.com/Excoriate/daggerx/pkg/fixtures"
+)
 
-	"github.com/Excoriate/daggerx/pkg/envvars"
+// ApkoKeyRingInfo represents the keyring information for Apko.
+type ApkoKeyRingInfo apkox.KeyringInfo
+
+const (
+	defaultApkoImage   = "cgr.dev/chainguard/apko"
+	defaultApkoTarball = "image.tar"
 )
 
 // AwsTagInspector is a Dagger module.
 //
 // This module is used to create and manage containers.
 type AwsTagInspector struct {
-	// Ctr is the container to use as a base container.
-	Ctr *dagger.Container
 	// Cfg is the configuration file to use for the container.
 	// +private
 	Cfg *inspectorConfig
+	// AWSClient is the AWS client to use for the container.
+	// +private
+	AWSClient *AWSClient
+	// Ctr is the main container to use for the module.
+	// +private
+	Ctr *dagger.Container
 }
 
 // New creates a new AwsTagInspector module.
@@ -41,14 +53,15 @@ type AwsTagInspector struct {
 //
 // Returns a pointer to a AwsTagInspector instance and an error, if any.
 func New(
-	// ctr is the container to use as a base container.
+	// ctx is the context for the new function
 	// +optional
-	ctr *dagger.Container,
+	ctx context.Context,
 	// awsAccessKeyID is the AWS access key ID to use for the container.
 	awsAccessKeyID *dagger.Secret,
 	// awsSecretAccessKey is the AWS secret access key to use for the container.
 	awsSecretAccessKey *dagger.Secret,
 	// configPath is the path to the configuration file to use for the container.
+	// +optional
 	config *dagger.File,
 	// awsRegion is the AWS region to use for the container.
 	// +optional
@@ -58,8 +71,65 @@ func New(
 	envVarsFromHost []string,
 ) (*AwsTagInspector, error) {
 	//nolint:exhaustruct // It's 'okaysh' for now, I'll decide later what's going to be the pattern here.
-	dagModule := &AwsTagInspector{}
+	dagModule := &AwsTagInspector{
+		Cfg: &inspectorConfig{},
+	}
 
+	awsClient, awsClientErr := dagModule.setupAWSCredentials(ctx, awsAccessKeyID, awsSecretAccessKey, awsRegion)
+	if awsClientErr != nil {
+		return nil, awsClientErr
+	}
+
+	dagModule.AWSClient = awsClient
+
+	// Only process configuration if a config file is provided
+	if config != nil {
+		cfgLoader := newCfg()
+
+		// Improve error handling and provide more context
+		cfg, cfgErr := cfgLoader.loadConfig(ctx, config)
+		if cfgErr != nil {
+			return nil, WrapError(cfgErr, "failed to load configuration file")
+		}
+
+		if cfg == nil {
+			return nil, Errorf("configuration file is empty")
+		}
+
+		dagModule.Cfg = cfg
+	}
+
+	dagModule.BaseContainer()
+
+	dagModule.WithSource(dag.CurrentModule().
+		Source(),
+		fixtures.MntPrefix,
+	)
+
+	return dagModule, nil
+}
+
+// setupAWSCredentials validates and sets up AWS credentials for the module.
+//
+// Parameters:
+// - ctx: The context for the operation.
+// - awsAccessKeyID: The AWS access key ID secret.
+// - awsSecretAccessKey: The AWS secret access key secret.
+// - awsRegion: The AWS region to use (defaults to us-east-1 if empty).
+//
+// Returns:
+// - *AWSClient: A configured AWS client.
+// - error: Any error encountered during credential setup.
+func (m *AwsTagInspector) setupAWSCredentials(
+	// ctx is the context for the setupAWSCredentials function
+	ctx context.Context,
+	// awsAccessKeyID is the AWS access key ID secret
+	awsAccessKeyID *dagger.Secret,
+	// awsSecretAccessKey is the AWS secret access key secret
+	awsSecretAccessKey *dagger.Secret,
+	// awsRegion is the AWS region to use (defaults to us-east-1 if empty)
+	awsRegion string,
+) (*AWSClient, error) {
 	// Ensure awsRegion has a default value, but only if it's empty
 	if awsRegion == "" {
 		awsRegion = "us-east-1"
@@ -70,52 +140,63 @@ func New(
 		return nil, Errorf("AWS access key ID and secret access key are required")
 	}
 
-	if config == nil {
-		return nil, Errorf("configuration file is required")
+	accessKeyValue, accessKeyErr := awsAccessKeyID.Plaintext(ctx)
+	if accessKeyErr != nil {
+		return nil, WrapError(accessKeyErr, "failed to get AWS access key ID")
 	}
 
-	// Append AWS region to environment variables
-	envVarsFromHost = append(envVarsFromHost, fmt.Sprintf("AWS_REGION=%s", awsRegion))
-
-	if err := dagModule.setupEnvironmentVariables(envVarsFromHost); err != nil {
-		return nil, WrapError(err,
-			"environment variable setup failed, unable to configure environment variables")
+	secretAccessKeyValue, secretAccessKeyErr := awsSecretAccessKey.Plaintext(ctx)
+	if secretAccessKeyErr != nil {
+		return nil, WrapError(secretAccessKeyErr, "failed to get AWS secret access key")
 	}
 
-	cfgLoader := newCfg()
+	awsClient, awsClientErr := NewAWSClient(ctx, AWSClientConfig{
+		Region:          awsRegion,
+		AccessKeyID:     accessKeyValue,
+		SecretAccessKey: secretAccessKeyValue,
+	})
 
-	// Improve error handling and provide more context
-	cfg, cfgErr := cfgLoader.loadConfig(context.Background(), config)
-	if cfgErr != nil {
-		return nil, WrapError(cfgErr, "failed to load configuration file")
+	if awsClientErr != nil {
+		return nil, WrapError(awsClientErr, "failed to create AWS client")
 	}
 
-	if cfg == nil {
-		return nil, Errorf("configuration file is empty")
-	}
-
-	dagModule.Cfg = cfg
-
-	return dagModule, nil
+	return awsClient, nil
 }
 
-// setupEnvironmentVariables sets up the environment variables.
+// BaseContainer sets the base image to an Apko image and creates the base container.
 //
-// If the environment variables are not passed, it returns nil.
-// If the environment variables are passed, it sets the environment variables.
-func (m *AwsTagInspector) setupEnvironmentVariables(envVarsFromHost []string) error {
-	if len(envVarsFromHost) == 0 {
-		return nil
+// Returns a pointer to the Gopkgpublisher instance.
+func (m *AwsTagInspector) BaseContainer() (*AwsTagInspector, error) {
+	apkoCfgFilePath := "config/presets/base-alpine.yaml"
+	apkoCfgFile := dag.CurrentModule().
+		Source().
+		File(apkoCfgFilePath)
+
+	apkoCfgFilePathMounted := filepath.Join(fixtures.MntPrefix, apkoCfgFilePath)
+
+	apkoCtr := dag.Container().
+		From(defaultApkoImage).
+		WithMountedFile(apkoCfgFilePathMounted, apkoCfgFile)
+
+	apkoBuildCmd := []string{
+		"apko",
+		"build",
+		apkoCfgFilePathMounted,
+		"latest",
+		defaultApkoTarball,
+		"--cache-dir",
+		"/var/cache/apko",
 	}
 
-	envVars, err := envvars.ToDaggerEnvVarsFromSlice(envVarsFromHost)
-	if err != nil {
-		return WrapError(err, "failed to parse environment variables")
-	}
+	apkoCtr = apkoCtr.
+		WithExec(apkoBuildCmd)
 
-	for _, envVar := range envVars {
-		m.WithEnvironmentVariable(envVar.Name, envVar.Value, false)
-	}
+	outputTar := apkoCtr.
+		File(defaultApkoTarball)
 
-	return nil
+	m.Ctr = dag.
+		Container().
+		Import(outputTar)
+
+	return m, nil
 }

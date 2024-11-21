@@ -49,18 +49,59 @@ func (l *configLoader) loadConfig(ctx context.Context, cfg *dagger.File) (*inspe
 
 // validateConfig performs validation of the loaded configuration
 func (l *configLoader) validateConfig(config *inspectorConfig) error {
+	// Validate version
 	if config.Version == "" {
 		return fmt.Errorf("config version is required")
 	}
 
 	// Validate global configuration
-	if config.Global.BatchSize != nil && *config.Global.BatchSize <= 0 {
-		defaultBatchSize := 10
-		config.Global.BatchSize = &defaultBatchSize
+	if err := l.validateGlobalConfig(&config.Global); err != nil {
+		return fmt.Errorf("global configuration validation failed: %w", err)
 	}
 
 	// Validate resource configurations
-	for resourceType, resourceConfig := range config.Resources {
+	if err := l.validateResourceConfigs(config.Resources); err != nil {
+		return fmt.Errorf("resource configuration validation failed: %w", err)
+	}
+
+	// Validate compliance levels
+	if err := l.validateComplianceLevels(config.ComplianceLevels); err != nil {
+		return fmt.Errorf("compliance levels validation failed: %w", err)
+	}
+
+	// Validate tag validation rules
+	if err := l.validateTagValidationRules(config.TagValidation); err != nil {
+		return fmt.Errorf("tag validation rules validation failed: %w", err)
+	}
+
+	// Validate notifications
+	if err := l.validateNotifications(config.Notifications); err != nil {
+		return fmt.Errorf("notifications validation failed: %w", err)
+	}
+
+	return nil
+}
+
+// validateGlobalConfig validates the global configuration
+func (l *configLoader) validateGlobalConfig(global *globalConfig) error {
+	// Validate batch size
+	if global.BatchSize != nil && *global.BatchSize <= 0 {
+		defaultBatchSize := 10
+		global.BatchSize = &defaultBatchSize
+	}
+
+	// Validate tag criteria
+	if err := l.validateTagCriteria(global.TagCriteria); err != nil {
+		return fmt.Errorf("global tag criteria validation failed: %w", err)
+	}
+
+	return nil
+}
+
+// validateResourceConfigs validates resource-specific configurations
+func (l *configLoader) validateResourceConfigs(resources map[string]resourceConfig) error {
+	for resourceType, resourceConfig := range resources {
+		// Validate batch size
 		if resourceConfig.BatchSize != nil && *resourceConfig.BatchSize <= 0 {
 			return fmt.Errorf("invalid batch size for resource type %s", resourceType)
 		}
@@ -75,6 +116,83 @@ func (l *configLoader) validateConfig(config *inspectorConfig) error {
 			if _, err := regexp.Compile(excluded.Pattern); err != nil {
 				return fmt.Errorf("invalid exclusion pattern %s for resource type %s: %w",
 					excluded.Pattern, resourceType, err)
+			}
+		}
+	}
+	return nil
+}
+
+// validateTagValidationRules validates the tag validation configuration
+func (l *configLoader) validateTagValidationRules(tagValidation tagValidation) error {
+	// Validate allowed values
+	for tagName, values := range tagValidation.AllowedValues {
+		if len(values) == 0 {
+			return fmt.Errorf("no allowed values specified for tag %s", tagName)
+		}
+
+		// Validate each value is not empty
+		for _, value := range values {
+			if value == "" {
+				return fmt.Errorf("empty value found in allowed values for tag %s", tagName)
+			}
+		}
+	}
+
+	// Validate pattern rules
+	for tagName, pattern := range tagValidation.PatternRules {
+		if pattern == "" {
+			return fmt.Errorf("empty pattern rule for tag %s", tagName)
+		}
+		if _, err := regexp.Compile(pattern); err != nil {
+			return fmt.Errorf("invalid regex pattern for tag %s: %w", tagName, err)
+		}
+	}
+
+	return nil
+}
+
+// validateNotifications validates the notification configuration
+func (l *configLoader) validateNotifications(notifications notificationConfig) error {
+	// Validate Slack notifications
+	if notifications.Slack.Enabled {
+		if len(notifications.Slack.Channels) == 0 {
+			return fmt.Errorf("Slack notifications enabled but no channels specified")
+		}
+
+		// Validate each channel name
+		for _, channel := range notifications.Slack.Channels {
+			if channel == "" {
+				return fmt.Errorf("empty Slack channel name found")
+			}
+		}
+	}
+
+	// Validate Email notifications
+	if notifications.Email.Enabled {
+		if len(notifications.Email.Recipients) == 0 {
+			return fmt.Errorf("email notifications enabled but no recipients specified")
+		}
+
+		// Validate email format for each recipient
+		emailRegex := regexp.MustCompile(`^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$`)
+		for _, email := range notifications.Email.Recipients {
+			if !emailRegex.MatchString(email) {
+				return fmt.Errorf("invalid email format: %s", email)
+			}
+		}
+
+		// Validate frequency
+		validFrequencies := []string{"daily", "hourly", "weekly"}
+		if notifications.Email.Frequency != "" {
+			found := false
+			for _, freq := range validFrequencies {
+				if notifications.Email.Frequency == freq {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return fmt.Errorf("invalid email notification frequency: %s", notifications.Email.Frequency)
 			}
 		}
 	}
@@ -154,6 +272,10 @@ func (l *configLoader) isResourceExcluded(resourceType, resourceID string) (bool
 
 // validateTagCriteria validates the tag criteria for a resource
 func (l *configLoader) validateTagCriteria(criteria TagCriteria) error {
+	if err := l.validateMinimumRequiredTags(criteria); err != nil {
+		return err
+	}
+
 	// Validate required tags
 	for _, tag := range criteria.RequiredTags {
 		if tag == "" {
@@ -181,7 +303,7 @@ func (l *configLoader) validateTagCriteria(criteria TagCriteria) error {
 	return nil
 }
 
-func (l *configLoader) validateComplianceLevels(levels map[string]ComplianceLevel) error {
+func (l *configLoader) validateComplianceLevels(levels map[string]complianceLevel) error {
 	for levelName, level := range levels {
 		if levelName == "" {
 			return Errorf("compliance level name cannot be empty")
@@ -199,5 +321,19 @@ func (l *configLoader) validateComplianceLevels(levels map[string]ComplianceLeve
 			}
 		}
 	}
+	return nil
+}
+
+// Add validateMinimumRequiredTags function
+func (l *configLoader) validateMinimumRequiredTags(criteria TagCriteria) error {
+	if criteria.MinimumRequiredTags < 0 {
+		return fmt.Errorf("minimum required tags cannot be negative")
+	}
+
+	if criteria.MinimumRequiredTags > len(criteria.RequiredTags) {
+		return fmt.Errorf("minimum required tags (%d) cannot be greater than the number of required tags (%d)",
+			criteria.MinimumRequiredTags, len(criteria.RequiredTags))
+	}
+
 	return nil
 }

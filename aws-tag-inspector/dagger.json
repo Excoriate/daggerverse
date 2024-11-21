@@ -9,7 +9,9 @@
     "../.idea",
     "../.trunk",
     "../go.work",
-    "../go.work.sum"
+    "../go.work.sum",
+    "tests",
+    "examples/go"
   ],
   "source": "."
 }
