@@ -1,0 +1,118 @@
+---
+version: "1.0"
+# Global settings applied to all resources unless overridden
+global:
+  enabled: true
+  batch_size: 20
+  tag_criteria:
+    minimum_required_tags: 3
+    required_tags:
+      - Environment
+      - Owner
+      - Project
+    forbidden_tags:
+      - Temporary
+      - Test
+    specific_tags:
+      ComplianceLevel: high
+      ManagedBy: terraform
+    compliance_level: high
+
+# Resource-specific configurations
+resources:
+  s3:
+    enabled: true
+    batch_size: 10
+    tag_criteria:
+      minimum_required_tags: 4
+      required_tags:
+        - DataClassification
+        - BackupPolicy
+        - Environment
+        - Owner
+      forbidden_tags:
+        - Temporary
+        - Test
+      specific_tags:
+        EncryptionRequired: "true"
+      compliance_level: high
+    excluded_resources:
+      - pattern: terraform-state-*
+        reason: Terraform state buckets managed separately
+      - pattern: log-archive-*
+        reason: Logging buckets excluded from standard compliance
+
+  ec2:
+    enabled: true
+    batch_size: 15
+    tag_criteria:
+      minimum_required_tags: 3
+      required_tags:
+        - Application
+        - PatchGroup
+        - Environment
+      forbidden_tags:
+        - Temporary
+        - Test
+      specific_tags:
+        AutoStop: enabled
+      compliance_level: standard
+    excluded_resources:
+      - pattern: bastion-*
+        reason: Bastion hosts managed by security team
+
+# Compliance levels and their requirements
+compliance_levels:
+  high:
+    required_tags:
+      - SecurityLevel
+      - DataClassification
+      - Backup
+      - Owner
+      - CostCenter
+    specific_tags:
+      SecurityApproved: "true"
+      MonitoringEnabled: "true"
+  standard:
+    required_tags:
+      - Owner
+      - Project
+      - Environment
+    specific_tags:
+      MonitoringEnabled: "true"
+
+# Tag validation rules
+tag_validation:
+  allowed_values:
+    Environment:
+      - production
+      - staging
+      - development
+      - sandbox
+    DataClassification:
+      - public
+      - private
+      - confidential
+      - restricted
+    SecurityLevel:
+      - high
+      - medium
+      - low
+  pattern_rules:
+    CostCenter: ^[A-Z]{2}-[0-9]{4}$
+    ProjectCode: ^PRJ-[0-9]{5}$
+    Owner: ^[a-z0-9._%+-]+@company\.com$
+
+# Notification settings for non-compliant resources
+notifications:
+  slack:
+    enabled: true
+    channels:
+      high_priority: "compliance-alerts"
+      standard: "compliance-reports"
+  email:
+    enabled: true
+    recipients:
+      - cloud-team@company.com
+      - security-team@company.com
+    frequency: daily

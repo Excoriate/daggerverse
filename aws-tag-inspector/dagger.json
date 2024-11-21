@@ -1,0 +1,17 @@
+{
+  "name": "aws-tag-inspector",
+  "engineVersion": "v0.14.0",
+  "sdk": "go",
+  "exclude": [
+    "../.direnv",
+    "../.devenv",
+    "../.vscode",
+    "../.idea",
+    "../.trunk",
+    "../go.work",
+    "../go.work.sum",
+    "tests",
+    "examples/go"
+  ],
+  "source": "."
+}

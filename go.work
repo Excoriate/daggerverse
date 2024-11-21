@@ -1,0 +1,11 @@
+go 1.23.3
+
+use (
+	./aws-tag-inspector
+	./module-template
+    ./module-template-light
+    ./terragrunt
+    ./gotoolbox
+    ./gotest
+    ./tflinter
+)
