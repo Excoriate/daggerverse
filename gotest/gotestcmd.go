@@ -434,6 +434,7 @@ func (m *Gotest) RunTest(
 
 	cmdToAppend = append(cmdToAppend, buildOpts.Flags...)
 	cmdToAppend = append(cmdToAppend, testOptions.Flags...)
+	cmdToAppend = append(cmdToAppend, packages...)
 
 	if envVars != nil {
 		if err := m.setupEnvironmentVariables(envVars); err != nil {
